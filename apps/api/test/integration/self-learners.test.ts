@@ -3,7 +3,7 @@
 // ровесников → цель дня → личная карточка: вход с другого устройства, перевыпуск (старая — card_revoked, другие
 // сессии — завершены) → вступление в класс по коду с одобрением учителя (тот же аккаунт на месте) → отзыв согласия
 // закрывает и вход по личной карточке. Взрослый: почта по желанию (карточка отзывается), вход по почте → «Учиться».
-import { randomUUID } from "node:crypto";
+// Ребёнку почта разрешена по решению владельца (ADR 0022 §10): сам адрес не хранится, только ключ входа.
 import { fileURLToPath } from "node:url";
 import { buildPersonalCardPayload, parseLoginCard } from "@teletau/auth-codes";
 import type { Schema } from "@teletau/contracts";
@@ -247,13 +247,33 @@ describe("adults: e-mail is optional, the teacher application only by choice (AD
     const viaEmail = await api.loginAdult(address);
     expect(viaEmail.account).toMatchObject({ id: grown.account.id, nickname: grown.account.nickname, ageBand: "adult", teacherStatus: "none" });
 
-    // Тот же адрес другому аккаунту — 409 email_in_use; ребёнку почта не положена — 403 по роли.
+    // Тот же адрес другому аккаунту — 409 email_in_use.
     const another = await signup("adult");
     const ch2 = await api.post<Schema<"OtpChallenge">>("/auth/otp/request", { body: { email: address }, ip: randomIp() });
     const taken = await api.post<Problem>("/me/email", { token: another.accessToken, body: { challengeId: ch2.body.challengeId, code: DEMO_CODE } });
     expect([taken.status, taken.body.code]).toEqual([409, "email_in_use"]);
+  });
+
+  it("a child attaches e-mail as well (owner decision, ADR 0022 §10): address is not stored, card revoked, e-mail opens the same account", async () => {
     const kid = await signup("age_15_17");
-    expect((await api.post("/me/email", { token: kid.accessToken, body: { challengeId: randomUUID(), code: DEMO_CODE } })).status).toBe(403);
+    const issued = await api.post<Card>("/me/login-card", { token: kid.accessToken });
+    expectStatus(issued, 201);
+    const address = email("self-kid");
+    const ch = await api.post<Schema<"OtpChallenge">>("/auth/otp/request", { body: { email: address }, ip: randomIp() });
+    const attached = await api.post<Me>("/me/email", { token: kid.accessToken, body: { challengeId: ch.body.challengeId, code: DEMO_CODE } });
+    expectStatus(attached, 200);
+    expect(attached.body.emailLogin).toBe(true);
+    expect(attached.body).not.toHaveProperty("profile");
+    expect(attached.body).not.toHaveProperty("loginCard");
+    // Сам адрес не хранится: у детского аккаунта нет строки в pii (миграция 0002) — только ключ входа в credentials.
+    const piiRows = await pool.query<{ count: string }>("select count(*)::text as count from pii.adult_profiles where account_id = $1", [kid.account.id]);
+    expect(piiRows.rows[0]!.count).toBe("0");
+    // Вход по почте — тот же детский аккаунт (ник и прогресс на месте).
+    const viaEmail = await api.loginAdult(address);
+    expect(viaEmail.account).toMatchObject({ id: kid.account.id, nickname: kid.account.nickname });
+    // Личная карточка отозвана — вход по почте теперь единственный способ возврата.
+    const old = await api.post<Problem>("/auth/login-card", { body: { payload: issued.body.payload, device: newDevice() } });
+    expect([old.status, old.body.code]).toEqual([403, "card_revoked"]);
   });
 
   it("an adult who logged in by e-mail chooses «Учиться»: nickname and band via PATCH /me, no teacher application", async () => {

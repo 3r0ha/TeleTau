@@ -73,7 +73,7 @@ export default function WelcomePage() {
       session.updateAccount(updated);
       router.replace("/learn");
     } catch (e) {
-      setError(describeProblem(e, "child"));
+      setError(describeProblem(e, "adult"));
       setBusy(false);
     }
   };

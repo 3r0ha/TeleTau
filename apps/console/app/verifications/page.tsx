@@ -78,7 +78,7 @@ function Queue() {
   const reject = async () => {
     if (!rejecting) return;
     if (reason.trim().length < 3) {
-      setReasonError("Напишите причину, от 3 символов.");
+      setReasonError("Напишите причину подробнее — её увидит учитель.");
       invalid.request();
       return;
     }

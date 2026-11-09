@@ -111,7 +111,7 @@ test.describe("M2: учитель — «Помогите языку»", () => {
     await page.getByRole("navigation", { name: "Разделы кабинета" }).first().getByRole("link", { name: "Помогите языку" }).click();
     await page.waitForURL("**/teacher/duels");
     await expect(page.getByRole("heading", { level: 1, name: "Помогите языку" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Какой перевод звучит естественнее?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Какой перевод лучше?" })).toBeVisible();
     await expect(page.getByText("Здравствуйте!", { exact: true })).toBeVisible();
     await expect(page.locator(".duel [lang=ba]").first()).toHaveText("Һаумыһығыҙ!");
     // До голоса — никаких чужих голосов.
@@ -139,7 +139,7 @@ test.describe("M2: учитель — «Помогите языку»", () => {
 
     await page.getByRole("button", { name: "Следующая пара" }).click();
     await expect(page.getByText("Как Вас зовут?", { exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Какой перевод звучит естественнее?" })).toBeFocused();
+    await expect(page.getByRole("heading", { name: "Какой перевод лучше?" })).toBeFocused();
     await expect(page.getByRole("progressbar", { name: "Пары этого захода" })).toHaveAttribute("aria-valuetext", "Пара 2 из 3");
   });
 

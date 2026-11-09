@@ -33,6 +33,16 @@ const KIND: Record<Schema<"AccountKind">, string> = { child: "ученик", adu
 /** Роли RBAC (ADR 0017) по-русски. Неизвестная роль (список в контракте расширяется) — как есть. */
 const ROLE: Record<Schema<"Role">, string> = { student: "ученик", teacher: "учитель", moderator: "модератор", admin: "администратор" };
 const roleName = (role: string) => ROLE[role as Schema<"Role">] ?? role;
+/** Типы объектов аудита по-русски. Неизвестный тип (контракт открыт) показывается как есть. */
+const TARGET: Record<string, string> = {
+  account: "Аккаунт",
+  class: "Класс",
+  class_seat: "Место ученика",
+  consent: "Согласие",
+  join_request: "Заявка на вход",
+  session: "Сессия",
+  teacher_verification: "Заявка учителя",
+};
 const PAGE = 50;
 const fmt = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Yekaterinburg" });
 const short = (id?: string) => (id ? `…${id.slice(-8)}` : "");
@@ -163,7 +173,7 @@ function AuditLog() {
                   <td>
                     {e.target ? (
                       <>
-                        {e.target.type}
+                        {TARGET[e.target.type] ?? e.target.type}
                         <code className="table__sub">{short(e.target.id)}</code>
                       </>
                     ) : (

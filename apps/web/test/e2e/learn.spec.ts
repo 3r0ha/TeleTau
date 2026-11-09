@@ -214,7 +214,7 @@ test.describe("M2: урок", () => {
     await page.getByRole("button", { name: "Дальше" }).click();
 
     // Дуэль: клавиша 1 — вариант A, «Отдать голос» → «Голос учтён».
-    await expect(page.getByRole("heading", { name: "Какой перевод звучит естественнее?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Какой перевод лучше?" })).toBeVisible();
     await page.keyboard.press("1");
     await page.getByRole("button", { name: "Отдать голос" }).click();
     await expect(page.getByRole("heading", { name: "Голос учтён" })).toBeVisible();

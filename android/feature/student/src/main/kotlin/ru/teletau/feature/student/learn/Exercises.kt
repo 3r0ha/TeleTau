@@ -413,7 +413,7 @@ fun DuelTask(exercise: DuelExercise, enabled: Boolean, onAnswer: (AttemptAnswer?
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
                 TeleTauChip("Помоги языку", tone = ChipTone.Violet, icon = PhosphorIcons.ScalesFill)
-                TaskTitle("Какой перевод звучит естественнее?")
+                TaskTitle("Какой перевод лучше?")
             }
             Illustration(R.drawable.scene_duel, 104.dp, Modifier.offset(x = TeleTauSpace.s100, y = (-TeleTauSpace.s200)))
         }

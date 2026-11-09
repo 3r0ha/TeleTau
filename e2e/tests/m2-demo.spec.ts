@@ -93,7 +93,7 @@ async function answer(page: Page, w: World, mode: "right" | "wrong" | "almost"):
     }
     return "match_pairs";
   }
-  await expect(main.getByRole("heading", { name: "Какой перевод звучит естественнее?" })).toBeVisible();
+  await expect(main.getByRole("heading", { name: "Какой перевод лучше?" })).toBeVisible();
   await expect(main.getByText(w.duel.sourceRu, { exact: true })).toBeVisible();
   await main.getByRole("radio", { name: new RegExp(escapeRe(w.duel.variants[0])) }).click();
   return "duel";
@@ -254,7 +254,7 @@ test("демо M2: урок с дуэлью → итог, серия, лига �
   await test.step(`учитель: «Помогите языку» — та же дуэль «${w.duel.sourceRu}» → голос → «Пару приняли», голоса по группам`, async () => {
     await teacher.getByRole("link", { name: "Помогите языку" }).first().click();
     await teacher.waitForURL("**/teacher/duels");
-    await expect(heading(teacher, "Какой перевод звучит естественнее?")).toBeVisible({ timeout: 15_000 });
+    await expect(heading(teacher, "Какой перевод лучше?")).toBeVisible({ timeout: 15_000 });
     await expect(teacher.locator("main").getByText(w.duel.sourceRu, { exact: true })).toBeVisible();
     const give = teacher.getByRole("button", { name: "Отдать голос" });
     await expect(give).toBeDisabled();

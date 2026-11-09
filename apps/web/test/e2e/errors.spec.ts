@@ -53,7 +53,7 @@ test.describe("M1-55: Retry-After — короткий 429 повторяетс�
     const w = await mockBackend(page, { bffReplies: { qr: [short, short, short] } });
     await page.goto("/student");
     await page.getByLabel("Фото карточки").setInputFiles(await qrPhoto(generateQrCard().payload));
-    await expect(page.getByText("Секунду, много входов. Попробуй ещё раз.")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Подожди секунду и попробуй ещё раз.")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/Подожди минуту/)).toHaveCount(0);
     expect(w.bffCalls["qr"]).toBe(3);
   });

@@ -106,6 +106,37 @@ export function corsMethods(): string[] {
   return [...new Set(contractOperations().map((o) => o.method.toUpperCase())), "OPTIONS"].sort();
 }
 
+/** Loopback и частные адреса (RFC 1918): локальный стенд открывают и по ним. */
+function isLocalHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "::1" ||
+    /^127\./.test(hostname) ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+  );
+}
+
+/**
+ * Origins для CORS: PUBLIC_WEB_URL/PUBLIC_CONSOLE_URL и их loopback-синонимы (localhost и 127.0.0.1 с тем же портом).
+ * Локальный стенд открывают по-разному — localhost:3000, 127.0.0.1:3000, по адресу машины в сети, — а браузеру для
+ * запроса к API нужен в allowlist origin из адресной строки, иначе ответ режется без Access-Control-Allow-Origin и
+ * веб показывает «Нет связи» (BFF сам сверяет origin с фактическим host и такой проблемы не имеет). Публичные адреса
+ * (production) синонимов не получают — их allowlist не расширяется.
+ */
+export function corsOrigins(urls: string[]): string[] {
+  const origins = new Set<string>();
+  for (const url of urls) {
+    const { origin, protocol, hostname, port } = new URL(url);
+    origins.add(origin);
+    if (isLocalHostname(hostname)) {
+      for (const host of ["localhost", "127.0.0.1", hostname]) origins.add(`${protocol}//${host}${port ? `:${port}` : ""}`);
+    }
+  }
+  return [...origins];
+}
+
 /** Общая настройка приложения для main.ts и тестов. */
 export function configureApp<T extends INestApplication>(app: T, config?: AppConfig): T {
   const cfg = config ?? app.get<AppConfig>(APP_CONFIG);
@@ -113,8 +144,9 @@ export function configureApp<T extends INestApplication>(app: T, config?: AppCon
   app.setGlobalPrefix("api/v1");
   app.useGlobalFilters(new ProblemFilter());
   // Веб и консоль ходят в API из браузера со своих origin; refresh-токен веба — в cookie BFF Next.js (ADR 0015 §3).
+  // Origin из адресной строки стенда может отличаться от PUBLIC_*_URL — см. corsOrigins.
   app.enableCors({
-    origin: [cfg.PUBLIC_WEB_URL, cfg.PUBLIC_CONSOLE_URL].map((u) => new URL(u).origin),
+    origin: corsOrigins([cfg.PUBLIC_WEB_URL, cfg.PUBLIC_CONSOLE_URL]),
     // Методы — из контракта: новая операция с другим методом (например, DELETE) не упадёт на preflight в браузере.
     methods: corsMethods(),
     allowedHeaders: ["authorization", "content-type", "idempotency-key", "x-poll-token", "x-device-install-id", "x-request-id"],

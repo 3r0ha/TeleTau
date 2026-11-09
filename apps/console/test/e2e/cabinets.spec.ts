@@ -265,18 +265,21 @@ test("словарь для Фонда: пары с голосами по гру
   await axe(page, "словарь");
   await shot(page, "08-fund");
 
-  const [csv] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать CSV" }).click()]);
+  const [csv] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать таблицу (CSV)" }).click()]);
   expect(csv.suggestedFilename()).toBe("teletau-slovar-fond-2026-11-05.csv");
   const text = readFileSync((await csv.path())!, "utf8");
   expect(text.startsWith("\uFEFFРусский исходник;Башкирский вариант;")).toBe(true);
   expect(text).toContain("Здравствуйте!;Һаумыһығыҙ!;словосочетание;да;предварительно;ждёт проверки носителем;14;2;23;3;0;3;1;0;1;04.11.2026;голосование;duel-v0;из источника;");
   expect(text.trim().split("\r\n")).toHaveLength(1 + dictionary.items.length);
 
-  const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать JSON" }).click()]);
+  const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать данные (JSON)" }).click()]);
   expect(file.suggestedFilename()).toBe("teletau-slovar-fond-2026-11-05.json");
   const body = JSON.parse(readFileSync((await file.path())!, "utf8")) as Schema<"FundDictionary"> & { note: string };
   expect(body.items).toEqual(dictionary.items);
-  expect(body.note).toMatch(/M4/);
+  // Пояснение — для людей, без терминов разработки (ADR, вехи, названия правил).
+  expect(body.note).toMatch(/preliminary/);
+  expect(body.note).toMatch(/экспертами/);
+  expect(body.note).not.toMatch(/ADR|duel-v0|M4|Consensus Engine/);
 });
 
 test("шапка: без выбора — светлая, даже в тёмной системе; значок темы переключает светлую и тёмную и запоминает выбор", async ({ page }) => {
@@ -304,7 +307,7 @@ test("словарь пуст — понятное пустое состояни
   await mock(page, fund, { empty: true });
   await page.goto("/fund");
   await expect(page.getByRole("heading", { name: "Принятых пар пока нет" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Скачать CSV" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Скачать таблицу (CSV)" })).toHaveCount(0);
   await axe(page, "пустой словарь");
 });
 

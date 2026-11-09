@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EnvelopeSimple } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { Button, Card, CodeInput, Form, InlineAlert, LinkButton, TextField, useInvalidFocus } from "@teletau/ui";
+import { Button, ButtonLink, Card, CodeInput, Form, InlineAlert, LinkButton, TextField, useInvalidFocus } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem, fieldErrors } from "@teletau/session/problem";
@@ -27,8 +27,8 @@ function useCountdown(until: number | null): number {
   return until ? Math.max(0, Math.ceil((until - now) / 1000)) : 0;
 }
 
-/** Вход взрослого: e-mail → код (в демо-режиме — фиксированный) → выбор «Учиться / Я учитель» или дальше по этапам. */
-export function OtpLogin({ demoCode, teacherIntent = false }: { demoCode: string | null; teacherIntent?: boolean }) {
+/** Вход по почте: e-mail → код (в демо-режиме — фиксированный). Ребёнок с почтой — сразу на тропу, взрослый — выбор «Учиться / Я учитель» или дальше по этапам. */
+export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demoCode: string | null; teacherIntent?: boolean; consoleUrl?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -43,7 +43,7 @@ export function OtpLogin({ demoCode, teacherIntent = false }: { demoCode: string
   const wait = useCountdown(resendAt);
   const invalid = useInvalidFocus();
   // У шага ввода кода — свой заголовок вкладки, как у шагов заявки и кода класса.
-  useDocumentTitle(challenge ? "Введите код" : "Вход для учителя");
+  useDocumentTitle(challenge ? "Введите код" : teacherIntent ? "Вход для учителя" : "Вход по почте");
 
   const requestCode = async () => {
     if (!EMAIL_RE.test(email.trim())) {
@@ -80,12 +80,14 @@ export function OtpLogin({ demoCode, teacherIntent = false }: { demoCode: string
     setFormError(null);
     try {
       const me = await session.loginWithOtp(challenge.challengeId, value);
-      if (me.kind !== "adult") {
+      if (me.kind === "staff") {
+        // Учётная запись сотрудника — в консоль, не на сайт (тот же случай, что totp_required ниже).
         await session.logout();
         setStaff(true);
         setBusy(false);
         return;
       }
+      // Ребёнок с привязанной почтой — сразу на свою тропу (выбор ника, если его ещё нет).
       // teacherIntent — вход с плитки «Я учитель»: выбор «Учиться / Я учитель» (/welcome) пропускается.
       const home = homeOf(me);
       router.replace(teacherIntent && home === "/welcome" ? nextTeacherStep(me) : (home ?? nextTeacherStep(me)));
@@ -101,14 +103,14 @@ export function OtpLogin({ demoCode, teacherIntent = false }: { demoCode: string
   };
 
   return (
-    <Screen wide top={<SimpleTop wide back="/" title="Вход для учителя" />} className="auth">
+    <Screen wide top={<SimpleTop wide back="/" title={teacherIntent ? "Вход для учителя" : "Вход по почте"} />} className="auth">
       <OnboardLayout step="login">
       <Card roomy className="auth__card">
         {!challenge ? (
           <Form className="tt-stack tt-stack--loose" invalidFocus={invalid} onSubmit={() => void requestCode()}>
             <header className="tt-stack tt-stack--tight">
               <h1 className="tt-title2">Вход по почте</h1>
-              <p className="tt-lead">Пришлём код, пароль не нужен.</p>
+              <p className="tt-lead">Пришлём код, пароль не нужен. Новичку аккаунт создастся сам.</p>
             </header>
             <TextField
               label="Электронная почта"
@@ -116,7 +118,7 @@ export function OtpLogin({ demoCode, teacherIntent = false }: { demoCode: string
               name="email"
               autoComplete="email"
               inputMode="email"
-              placeholder="teacher@school.ru"
+              placeholder="ivan@example.ru"
               icon={<EnvelopeSimple weight="bold" aria-hidden />}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -165,6 +167,13 @@ export function OtpLogin({ demoCode, teacherIntent = false }: { demoCode: string
             {staff ? (
               <InlineAlert live>
                 Это вход сотрудника. Войдите через консоль.
+                {consoleUrl ? (
+                  <p>
+                    <ButtonLink href={consoleUrl} small>
+                      Открыть консоль
+                    </ButtonLink>
+                  </p>
+                ) : null}
               </InlineAlert>
             ) : null}
             <Button type="submit" block loading={busy} disabled={code.length < challenge.codeLength}>

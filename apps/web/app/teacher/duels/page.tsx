@@ -124,7 +124,7 @@ export default function TeacherDuelsPage() {
     <TeacherShell>
       <div className="tt-stack tt-stack--loose duels-page">
         <header className="duels-page__head">
-          {/* Вопрос дуэли — в карточке («Какой перевод звучит естественнее?»): подзаголовок его не повторяет. */}
+          {/* Вопрос дуэли — в карточке («Какой перевод лучше?»): подзаголовок его не повторяет. */}
           <h1 className="tt-title1">Помогите языку</h1>
           <Illustration name="sceneDuel" width={150} className="duels-page__art" />
         </header>

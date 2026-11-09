@@ -122,7 +122,7 @@ test.describe("M1-15: у каждой страницы свой заголово
       "/student": "Вход ученика · ТелеТау",
       "/student/code": "Код класса · ТелеТау",
       "/q": "Вход по карточке · ТелеТау",
-      "/teacher/login": "Вход для учителя · ТелеТау",
+      "/teacher/login": "Вход по почте · ТелеТау",
       "/student/nickname": "Выбери ник · ТелеТау",
       "/student/class": "Мой класс · ТелеТау",
       "/teacher": "Мои классы · ТелеТау",
@@ -402,12 +402,12 @@ test.describe("M1-46: заголовок вкладки шага «Введит�
   test("после отправки почты заголовок вкладки — шаг ввода кода; «Изменить адрес» возвращает прежний", async ({ page }) => {
     await mockBackend(page);
     await page.goto("/teacher/login");
-    await expect(page).toHaveTitle("Вход для учителя · ТелеТау");
+    await expect(page).toHaveTitle("Вход по почте · ТелеТау");
     await page.getByLabel("Электронная почта").fill("teacher@school7.example");
     await page.getByRole("button", { name: "Получить код" }).click();
     await expect(page.getByRole("heading", { name: "Введите код" })).toBeVisible();
     await expect(page).toHaveTitle("Введите код · ТелеТау");
     await page.getByRole("button", { name: "Изменить адрес" }).click();
-    await expect(page).toHaveTitle("Вход для учителя · ТелеТау");
+    await expect(page).toHaveTitle("Вход по почте · ТелеТау");
   });
 });

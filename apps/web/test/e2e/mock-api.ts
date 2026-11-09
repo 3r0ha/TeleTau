@@ -125,6 +125,8 @@ export interface World {
   verification: Schema<"TeacherVerification"> | null;
   /** Ответ на вход по QR. */
   qr: { ok: true; account: Me } | { ok: false; status: number; code: string };
+  /** Кого впускает вход по коду из письма (BFF otp): например, ребёнка с привязанной почтой. Нет — нового взрослого. */
+  otpAccount?: Me;
   /** Постоянный код класса стенда показа (AUTH_DEMO_CLASS_CODE): «Показать код класса» выдаёт «000-000» на год. */
   permanentJoinCode?: boolean;
   /** Статусы заявки по коду класса при опросе (по очереди; последний повторяется). */
@@ -298,7 +300,7 @@ export async function mockBackend(page: Page, init: Partial<World> = {}): Promis
     if (action === "otp") {
       const body = route.request().postDataJSON() as { code: string };
       if (body.code !== "0000") return fail(401, "otp_invalid");
-      w.account = w.account ?? adultMe({ teacherStatus: "none", roles: [], classes: [], pendingConsents: ["terms", "privacy", "consent_adult"] });
+      w.account = w.otpAccount ?? w.account ?? adultMe({ teacherStatus: "none", roles: [], classes: [], pendingConsents: ["terms", "privacy", "consent_adult"] });
       return ok(200, browserSession(w.account));
     }
     if (action === "class-code") {
@@ -368,7 +370,9 @@ export async function mockBackend(page: Page, init: Partial<World> = {}): Promis
     if (key === "POST /me/email") {
       const { code } = req.postDataJSON() as Schema<"AttachEmailRequest">;
       if (code !== "0000") return problem(route, 401, "otp_invalid");
-      const next: Me = { ...(me() as Me), profile: { email: "grown@mail.example" } };
+      const prev = me() as Me;
+      // Как настоящий API: ребёнку адрес не возвращается — только флаг emailLogin (ADR 0022 §10); взрослому — profile.email.
+      const next: Me = prev.kind === "child" ? { ...prev, emailLogin: true } : { ...prev, profile: { email: "grown@mail.example" } };
       delete next.loginCard;
       w.account = next;
       w.me = undefined;

@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import tokens from "@teletau/design-tokens/tokens.json";
+import { useToast } from "@teletau/ui";
 import { useSession } from "@teletau/session/react";
 import { useStudentPaths } from "../learn/paths";
 import { backAction, isSheetEntry, type BackAction } from "./miniapp-nav";
@@ -83,11 +84,13 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
  */
 function LinkChat({ bridge }: { bridge: TelegramBridge }) {
   const authenticated = useSession().status === "authenticated";
+  const toast = useToast();
   useEffect(() => {
     if (!authenticated) return;
     const initData = bridge.takeInitData();
-    if (initData) void linkTelegramChat(initData);
-  }, [authenticated, bridge]);
+    // Молчать нельзя: человек решит, что бот подключён, а напоминания о серии не придут.
+    if (initData) void linkTelegramChat(initData).then((ok) => { if (!ok) toast("Не получилось связать аккаунт с ботом. Напоминания пока не придут.", "info"); });
+  }, [authenticated, bridge, toast]);
   return null;
 }
 

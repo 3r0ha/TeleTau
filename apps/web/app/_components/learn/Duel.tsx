@@ -55,7 +55,7 @@ export function Duel({ sourceRu, a, b, value, onChange, disabled, keyboard, head
         {chipLabel}
       </Chip>
       <Heading ref={headingRef} tabIndex={-1} className="task-title tt-step-heading">
-        Какой перевод звучит естественнее?
+        Какой перевод лучше?
       </Heading>
       <div className="duel__source">
         <small>По-русски</small>

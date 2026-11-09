@@ -2,15 +2,23 @@ import type { NextConfig } from "next";
 
 // Демо с телефона в той же сети: сайт открыт по адресу компьютера (PUBLIC_WEB_URL / PUBLIC_CONSOLE_URL), а Next.js в dev
 // по умолчанию блокирует свои скрипты для «чужого» хоста — страница видна, но кнопки не работают. Разрешаем эти хосты.
-const devHosts = [process.env.PUBLIC_WEB_URL, process.env.PUBLIC_CONSOLE_URL]
-  .flatMap((url) => {
+const devHosts = [
+  // Next в dev пускает только localhost и хост запуска: 127.0.0.1 в списке нет — без записи страница, открытая по
+  // http://127.0.0.1:3100, не гидратируется (HMR-сокет отклоняется, «страница видна, но кнопки не работают»).
+  "127.0.0.1",
+  process.env.PUBLIC_WEB_URL,
+  process.env.PUBLIC_CONSOLE_URL,
+]
+  .flatMap((entry) => {
+    if (!entry) return [];
     try {
-      return url ? [new URL(url).hostname] : [];
+      return [new URL(entry).hostname];
     } catch {
-      return [];
+      // Не URL — уже имя хоста (например, 127.0.0.1).
+      return [entry];
     }
   })
-  .filter((host) => host !== "localhost" && host !== "127.0.0.1");
+  .filter((host) => host !== "localhost");
 
 const config: NextConfig = {
   reactStrictMode: true,

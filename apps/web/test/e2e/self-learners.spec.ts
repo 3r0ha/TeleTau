@@ -157,6 +157,31 @@ test.describe("«Учусь сам» — потоки", () => {
     await expect(page.getByRole("link", { name: /Моя карточка входа/ })).toHaveCount(0);
   });
 
+  test("ребёнок привязывает почту: адрес не возвращается, карточка отзывается (ADR 0022 §10)", async ({ page }) => {
+    const w = await mockBackend(page, { account: soloMe({ loginCard: "issued" }) });
+    await page.goto("/me");
+    await page.getByRole("link", { name: /Сохранить прогресс по почте/ }).click();
+    await page.getByLabel("Электронная почта").fill("kid@mail.example");
+    await page.getByRole("button", { name: "Получить код" }).click();
+    await page.getByLabel("Код из письма: символ 1 из 4").fill("0000");
+    await page.waitForURL("**/me");
+    expect(w.account?.emailLogin).toBe(true);
+    expect(w.account?.profile).toBeUndefined();
+    await expect(page.getByRole("link", { name: /Сохранить прогресс по почте/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Моя карточка входа/ })).toHaveCount(0);
+  });
+
+  test("ребёнок с привязанной почтой входит по ней — сразу на тропу, без выхода", async ({ page }) => {
+    const w = await mockBackend(page, {});
+    w.otpAccount = soloMe({ loginCard: undefined, emailLogin: true });
+    await page.goto("/teacher/login");
+    await page.getByLabel("Электронная почта").fill("kid@mail.example");
+    await page.getByRole("button", { name: "Получить код" }).click();
+    await page.getByLabel("Код из письма: символ 1 из 4").fill("0000");
+    await page.waitForURL("**/learn");
+    expect(w.logouts).toBe(0);
+  });
+
   test("цель дня меняется в профиле", async ({ page }) => {
     const w = await mockBackend(page, { account: soloMe() });
     await page.goto("/me");
@@ -206,6 +231,11 @@ const SCREENS: Screen[] = [
   {
     name: "60-save-email",
     world: { account: adultMe({ roles: [], teacherStatus: "none", classes: [], profile: undefined, nickname: "Мудрая сова", uiMode: "keeper", ageBand: "adult", loginCard: "issued" }) },
+    open: async (p) => (await p.goto("/me/email"), heading(p, "Сохранить прогресс по почте")),
+  },
+  {
+    name: "60b-save-email-child",
+    world: { account: soloMe() },
     open: async (p) => (await p.goto("/me/email"), heading(p, "Сохранить прогресс по почте")),
   },
 ];

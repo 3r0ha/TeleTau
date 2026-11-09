@@ -25,12 +25,14 @@ export class MeService {
   async me(accountId: string): Promise<Me> {
     const account = await this.accounts.get(accountId);
     if (!account || account.status !== "active") throw unauthorized("session_revoked");
-    const [classes, teacherStatus, pendingConsents, profile, loginCard] = await Promise.all([
+    const [classes, teacherStatus, pendingConsents, profile, loginCard, emailLogin] = await Promise.all([
       this.classes.myClasses({ accountId, roles: account.roles }),
       account.kind === "adult" ? this.verifications.teacherStatus(accountId) : Promise.resolve("none" as const),
       this.consents.pendingKinds(accountId, account.kind),
       account.kind === "child" ? Promise.resolve(undefined) : this.accounts.profile(accountId),
       this.selfLearners.cardStatus(account),
+      // Вход по почте у ребёнка (ADR 0022 §10): адрес не хранится, поэтому только флаг — без AdultProfile.
+      account.kind === "child" ? this.accounts.hasEmail(accountId) : Promise.resolve(false),
     ]);
     // Возрастной диапазон (ADR 0022): у ребёнка — по режиму, у взрослого — только если он учится (выбрал ник).
     const staff = staffRolesOf(account.kind, account.roles);
@@ -45,6 +47,7 @@ export class MeService {
       ...(ageBand ? { ageBand } : {}),
       ...(account.dailyGoal ? { dailyGoal: account.dailyGoal } : {}),
       ...(loginCard ? { loginCard } : {}),
+      ...(emailLogin ? { emailLogin: true } : {}),
       locale: account.locale,
       teacherStatus,
       classes,

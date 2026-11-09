@@ -352,7 +352,7 @@ const MATRIX: Record<OperationId, Row> = {
   attachMyEmail: {
     req: () => ({ path: "/me/email", body: { challengeId: randomUUID(), code: "0000" } }),
     anonymous: 401,
-    wrongRole: { as: "student", status: 403, note: "ребёнку — только карточка, почту не привязывает" },
+    wrongRole: { as: "moderator", status: 403, note: "сотруднику почту не привязывает" },
     foreign: NA_SELF,
   },
   requestClassJoin: {

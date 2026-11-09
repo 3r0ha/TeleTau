@@ -65,8 +65,8 @@ interface TrailProps {
   onJump?: (unit: CourseUnit) => void;
 }
 
-/** Сколько держится подсказка у закрытого узла. */
-const HINT_MS = 3200;
+/** Сколько держится подсказка у закрытого узла (медленно читающему нужно время). */
+const HINT_MS = 6000;
 
 /** Подсказка у закрытого узла: какой урок пройти сначала. */
 function lockedHint(course: Course, nodeId: string): string {

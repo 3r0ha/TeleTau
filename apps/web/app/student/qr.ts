@@ -106,7 +106,7 @@ export async function decodeImageFile(file: File): Promise<string | null> {
 /** Отказы по личной карточке — без «покажи учителю»: её делает сам ученик в профиле (ADR 0022). */
 const PERSONAL_CARD_ERRORS: Record<string, string> = {
   card_invalid: "Карточка не найдена. Сделай новую в профиле на устройстве, где ты уже вошёл.",
-  card_revoked: "Эта карточка больше не действует: ты сделал новую. Покажи её.",
+  card_revoked: "Ты сделал новую карточку — старая не действует. Войди по новой.",
 };
 
 export type QrLoginState = { status: "idle" } | { status: "pending" } | { status: "error"; message: string };

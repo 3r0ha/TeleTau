@@ -75,7 +75,7 @@ async function answerRight(page: Page, rows: AnswerSheetRow[]): Promise<void> {
     }
     return;
   }
-  await expect(main.getByRole("heading", { name: "Какой перевод звучит естественнее?" })).toBeVisible();
+  await expect(main.getByRole("heading", { name: "Какой перевод лучше?" })).toBeVisible();
   await main.getByRole("radio").first().click();
 }
 

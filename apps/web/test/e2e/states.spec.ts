@@ -56,7 +56,7 @@ test.describe("M1-43: ошибка загрузки — текст и «Попр
       failures: { "GET /teacher/verification": { status: 500, code: "internal" } },
     });
     await page.goto("/teacher/pending");
-    await expect(page.getByRole("heading", { name: "Что-то сломалось" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Что-то пошло не так" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Заявка на проверке" })).toHaveCount(0);
     delete w.failures["GET /teacher/verification"];
     await page.getByRole("button", { name: "Попробовать снова" }).click();

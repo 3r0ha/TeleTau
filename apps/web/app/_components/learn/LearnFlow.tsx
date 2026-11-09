@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { openSheetEntry, useToast } from "@teletau/ui";
+import { Button, InlineAlert, openSheetEntry, useToast } from "@teletau/ui";
 import { useResource } from "@teletau/session/react";
 import { describeProblem, isNetworkError } from "@teletau/session/problem";
 import { LoadError, LoadingBlock } from "../screens";
@@ -11,7 +11,7 @@ import { learnApi } from "./api";
 import { uuidv7 } from "./ids";
 import { LessonLoading, LessonPlayer, LessonSaving } from "./LessonPlayer";
 import { JumpResultScreen } from "./Jump";
-import { currentExercise, flowReducer, initialFlow, jumpNode, REVIEW_NODE } from "./machine";
+import { currentExercise, flowReducer, initialFlow, jumpNode, REVIEW_NODE, type NodeRef } from "./machine";
 import type { Answer, Course, CourseNode, CourseUnit } from "./model";
 import { LearnTopBar, Splash, StudentShell, useStudent } from "./StudentShell";
 import { Trail, nextNode } from "./Trail";
@@ -54,6 +54,8 @@ export function LearnFlow() {
   const account = useStudent();
   const toast = useToast();
   const [state, dispatch] = useReducer(flowReducer, initialFlow);
+  /** Урок не открылся: ошибка остаётся на тропе плашкой с повтором — тост гаснет через 5 с, а плашка нет. */
+  const [startError, setStartError] = useState<{ node: NodeRef; runId: string; message: string } | null>(null);
   const course = useResource(() => learnApi.course(), [account?.id], { enabled: Boolean(account) });
   const progress = useResource(() => learnApi.progress(), [account?.id], { enabled: Boolean(account) });
   const splash = useSplash(Boolean(course.data || course.error));
@@ -86,6 +88,8 @@ export function LearnFlow() {
   useEffect(() => {
     if (state.screen !== "starting") return;
     let cancelled = false;
+    // Новая попытка открытия урока — прежняя ошибка больше не нужна (повтор идёт с тем же runId).
+    setStartError(null);
     const run =
       state.node.kind === "review"
         ? learnApi.startReview(state.runId)
@@ -97,13 +101,18 @@ export function LearnFlow() {
       (e: unknown) => {
         if (cancelled) return;
         dispatch({ type: "runFailed" });
-        toast(isNetworkError(e) ? "Нет связи. Урок не открылся." : describeProblem(e, "child"), "error");
+        // Тост живёт 5 секунд и гаснет: ошибка остаётся на тропе плашкой с повтором (не «тихо ничего не произошло»).
+        setStartError({
+          node: state.node,
+          runId: state.runId,
+          message: isNetworkError(e) ? "Нет связи. Урок не открылся." : describeProblem(e, "child"),
+        });
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [state, toast]);
+  }, [state]);
 
   // Время ответа — от показа упражнения.
   const shownAt = useRef(Date.now());
@@ -243,6 +252,15 @@ export function LearnFlow() {
         >
           {course.data ? (
             <>
+              {startError ? (
+                <div className="tt-stack tt-stack--tight">
+                  <InlineAlert tone="danger">{startError.message}</InlineAlert>
+                  {/* Повтор — с тем же runId: если сервер его уже создал, дубликата не будет. */}
+                  <Button onClick={() => dispatch({ type: "start", node: startError.node, runId: startError.runId })}>
+                    Попробовать ещё раз
+                  </Button>
+                </div>
+              ) : null}
               <Trail course={course.data} onStart={start} sealed={state.sealed} reviewDue={course.data.review?.due ?? 0} onReview={startReview} onJump={startJump} />
               <TrailIntro
                 open={introOpen}

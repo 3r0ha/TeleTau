@@ -127,10 +127,10 @@ export class AccountsService implements AccountsPort {
     return Boolean(row);
   }
 
-  /** Привязать подтверждённый адрес к взрослому аккаунту (ADR 0022): учётные данные email и строка pii. */
-  async attachEmail(db: Db, accountId: string, email: string): Promise<void> {
+  /** Привязать вход по почте (ADR 0022 §10): учётные данные email; взрослому — ещё и адрес в pii. У ребёнка сам адрес не хранится. */
+  async attachEmail(db: Db, accountId: string, email: string, kind: "child" | "adult"): Promise<void> {
     await db.insert(credentials).values({ accountId, type: "email", subject: this.emailSubject(email), verifiedAt: new Date() });
-    await db.insert(adultProfiles).values({ accountId, email: normalizeEmail(email) });
+    if (kind === "adult") await db.insert(adultProfiles).values({ accountId, email: normalizeEmail(email) });
   }
 
   /**

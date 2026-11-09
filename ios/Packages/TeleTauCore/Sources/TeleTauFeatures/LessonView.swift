@@ -539,7 +539,7 @@ struct DuelTask: View {
             HStack(alignment: .top, spacing: TeleTauSpace.s200) {
                 VStack(alignment: .leading, spacing: 0) {
                     Chip("Помоги языку", icon: .scales, tone: .violet)
-                    TaskTitle(text: "Какой перевод звучит естественнее?")
+                    TaskTitle(text: "Какой перевод лучше?")
                 }
                 if mode.showsMascot { IllustrationView(.sceneDuel, width: 84).padding(.top, TeleTauSpace.s300) }
             }

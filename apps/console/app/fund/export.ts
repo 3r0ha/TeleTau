@@ -75,10 +75,10 @@ export function dictionaryCsv(d: Dictionary): string {
   return csvTable([head, ...rows]);
 }
 
-/** JSON: ответ API как есть и пояснение к флагу `preliminary`. */
+/** JSON: ответ API как есть и пояснение к флагу `preliminary` — без терминов разработки. */
 export function dictionaryJson(d: Dictionary): string {
   const note =
-    "preliminary = true: пара принята по правилам голосования duel-v0 (ADR 0019); до Consensus Engine (веха M4) она не входит в релиз датасета и может измениться при пересчёте.";
+    "Пояснение к полю preliminary: true — пара принята по упрощённым правилам голосования и может уточниться после запуска полной проверки экспертами. В финальные выпуски словаря такие пары не входят.";
   return `${JSON.stringify({ note, ...d }, null, 2)}\n`;
 }
 

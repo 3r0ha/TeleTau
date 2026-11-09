@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Schema } from "@teletau/contracts";
-import { SignOut } from "@phosphor-icons/react/ssr";
+import { SignOut, CircleNotch } from "@phosphor-icons/react/ssr";
 import { ButtonLink, EmptyState, InlineAlert, LinkButton } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
@@ -161,9 +161,20 @@ export default function WaitPage() {
         {ticket ? (
           <>
             Класс <ClassTitle title={ticket.classTitle} />. Скажи учителю свой ник: <b>«{ticket.nickname}»</b>.
+            Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.
+            <p className="tt-pulse">
+              <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
+              Проверяем каждые несколько секунд
+            </p>
           </>
         ) : (
-          "Учитель скоро пустит тебя в класс."
+          <>
+            Учитель скоро пустит тебя в класс. Как только он примет, эта страница сама обновится.
+            <p className="tt-pulse">
+              <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
+              Проверяем каждые несколько секунд
+            </p>
+          </>
         )}
       </EmptyState>
     );

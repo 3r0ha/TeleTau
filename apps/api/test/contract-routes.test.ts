@@ -84,6 +84,11 @@ describe("routes ⇔ contract operations", () => {
       app.getHttpAdapter().getInstance().inject({ method: "OPTIONS", url: "/api/v1/me", headers: { origin, "access-control-request-method": "GET" } });
     expect((await inject("http://localhost:3000")).headers["access-control-allow-origin"]).toBe("http://localhost:3000");
     expect((await inject("http://localhost:3100")).headers["access-control-allow-origin"]).toBe("http://localhost:3100");
+    // Loopback-синонимы (corsOrigins): стенд открыт и как 127.0.0.1 — port сохраняется.
+    expect((await inject("http://127.0.0.1:3000")).headers["access-control-allow-origin"]).toBe("http://127.0.0.1:3000");
+    expect((await inject("http://127.0.0.1:3100")).headers["access-control-allow-origin"]).toBe("http://127.0.0.1:3100");
+    // Чужой origin и другой порт не пускаются.
     expect((await inject("https://evil.example")).headers["access-control-allow-origin"]).toBeUndefined();
+    expect((await inject("http://localhost:3055")).headers["access-control-allow-origin"]).toBeUndefined();
   });
 });

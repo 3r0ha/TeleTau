@@ -15,9 +15,9 @@ import { useStudent } from "./StudentShell";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * «Сохранить прогресс по почте» (ADR 0022): взрослый, начавший «Учусь сам» без почты, привязывает адрес — код из
- * письма, как при входе. Дальше он входит по почте с любого устройства; карточка входа больше не нужна. Детям — только
- * карточка (экрана для них нет).
+ * «Сохранить прогресс по почте» (ADR 0022 §10): аккаунт без почты привязывает адрес — код из письма, как при входе.
+ * Дальше вход по почте с любого устройства; карточка входа больше не нужна. Детям привязка разрешена по решению
+ * владельца: сам адрес не хранится, поэтому на экране он не показывается (у ребёнка о привязке знает только сервер).
  */
 export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
   const me = useStudent();
@@ -78,9 +78,9 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
     <Screen top={<SimpleTop back={paths.me} title="Сохранить по почте" />} className="auth">
       {!me ? (
         <LoadingBlock rows={2} />
-      ) : me.kind !== "adult" || me.profile ? (
-        <EmptyState art="beeIdle" title={me.profile ? "Почта уже сохранена" : "Это для взрослых"}>
-          {me.profile ? "Входи по почте с любого устройства." : "Тебе поможет карточка входа — она в профиле."}
+      ) : me.profile || me.emailLogin ? (
+        <EmptyState art="beeIdle" title="Почта уже сохранена">
+          Входи по почте с любого устройства.
         </EmptyState>
       ) : !challenge ? (
         <Form className="tt-stack tt-stack--loose" invalidFocus={invalid} onSubmit={() => void request()}>

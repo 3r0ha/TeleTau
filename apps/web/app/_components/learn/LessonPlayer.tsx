@@ -434,7 +434,7 @@ export function LessonLoading({ onLeave }: { onLeave: () => void }) {
   );
 }
 
-/** Итог урока сохраняется; при сбое — «Что-то сломалось» с повтором (тот же runId: сервер не начислит дважды). */
+/** Итог урока сохраняется; при сбое — «Что-то пошло не так» с повтором (тот же runId: сервер не начислит дважды). */
 export function LessonSaving({ failed, onRetry, onLeave }: { failed?: boolean; onRetry: () => void; onLeave: () => void }) {
   return (
     <div className="lesson lesson--center">

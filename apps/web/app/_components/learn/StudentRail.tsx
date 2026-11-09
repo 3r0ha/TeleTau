@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { ArrowUp, ArrowsClockwise, CaretRight, ChalkboardTeacher, CheckCircle, Drop, Fire } from "@phosphor-icons/react/ssr";
-import { Button, ButtonLink, Card, Illustration, LEAGUE_TIERS, ProgressBar, SHELL_RAIL_QUERY, Skeleton, hexPath, leagueBadges, useMediaQuery, type StudentSection } from "@teletau/ui";
+import { Button, ButtonLink, Card, Illustration, InlineAlert, LEAGUE_TIERS, ProgressBar, SHELL_RAIL_QUERY, Skeleton, hexPath, leagueBadges, useMediaQuery, type StudentSection } from "@teletau/ui";
 import { serverNow } from "@teletau/session/clock";
+import { describeProblem } from "@teletau/session/problem";
 import { useResource, useSession } from "@teletau/session/react";
 import { assignmentTitle, dueForStudent, ufaDay } from "../assignments";
 import { ClassTitle } from "../screens";
@@ -64,16 +65,31 @@ export function StudentRail({ tab, course: givenCourse, progress: givenProgress,
           <RailStats progress={progress} />
           <GoalCard progress={progress} />
         </>
-      ) : progressRes.error ? null : (
+      ) : progressRes.error ? (
+        // Колонка не может тихо исчезнуть: показываем, что не загрузилось, и даём обновить.
+        <RailError error={progressRes.error} onRetry={progressRes.reload} />
+      ) : (
         <div className="rail__skeleton" aria-hidden>
           <Skeleton height={44} />
           <Skeleton height={196} radius="card" />
         </div>
       )}
       {course ? <RailTasks course={course} tab={tab} onStart={onStart} onReview={onReview} /> : null}
-      {showLeague && league ? <LeagueCard league={league} /> : null}
-      {showQuest && hive && klass ? <QuestCard hive={hive} classTitle={klass.title} /> : null}
+      {showLeague ? (league ? <LeagueCard league={league} /> : leagueRes.error ? <RailError error={leagueRes.error} onRetry={leagueRes.reload} /> : null) : null}
+      {showQuest && klass ? (hive ? <QuestCard hive={hive} classTitle={klass.title} /> : hiveRes.error ? <RailError error={hiveRes.error} onRetry={hiveRes.reload} /> : null) : null}
     </aside>
+  );
+}
+
+/** Карточка колонки не загрузилась: тихо исчезать нельзя — объясняем и даём обновить. */
+function RailError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  return (
+    <div className="tt-stack tt-stack--tight">
+      <InlineAlert tone="danger">{describeProblem(error, "child")}</InlineAlert>
+      <Button small variant="secondary" onClick={onRetry}>
+        Обновить
+      </Button>
+    </div>
   );
 }
 

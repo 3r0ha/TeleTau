@@ -112,7 +112,7 @@ export function LoadError({ error, onRetry, audience = "adult", home }: { error:
   return (
     <EmptyState
       art="emptyError"
-      title="Что-то сломалось"
+      title="Что-то пошло не так"
       role="alert"
       actions={
         <>

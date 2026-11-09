@@ -221,25 +221,28 @@ export class SelfLearnerService {
     return { payload: buildPersonalCardPayload(card.handle, secret), version: card.version, issuedAt: card.createdAt.toISOString() };
   }
 
-  // ── почта взрослого ──
+  // ── привязка почты (взрослым и детям) ──
 
   /**
-   * POST /me/email: взрослый «Учусь сам» без почты привязывает подтверждённый адрес. Адрес другого аккаунта —
-   * 409 email_in_use (код из письма при этом израсходован: он подтверждает только владение адресом). Личная
-   * карточка отзывается — дальше вход по почте.
+   * POST /me/email: аккаунт без почты привязывает подтверждённый адрес (детям — по решению владельца, ADR 0022 §10).
+   * Адрес другого аккаунта — 409 email_in_use (код из письма при этом израсходован: он подтверждает только владение
+   * адресом). Личная карточка отзывается — дальше вход по почте. У ребёнка сам адрес не хранится: только ключ
+   * входа (HMAC-хеш в credentials, строка pii не создаётся).
    */
   async attachEmail(principal: Principal, body: Schema<"AttachEmailRequest">, meta: RequestMeta): Promise<void> {
     const account = await this.accounts.get(principal.accountId);
-    if (!account || account.kind !== "adult") throw forbidden();
+    if (!account || (account.kind !== "child" && account.kind !== "adult")) throw forbidden();
     if (await this.accounts.hasEmail(account.id)) throw conflict("email_already_set");
     const { email, subject } = await this.otp.consumeChallenge(body.challengeId, body.code);
     const owner = await this.accounts.findByEmailSubject(subject);
     if (owner) throw conflict(owner.id === account.id ? "email_already_set" : "email_in_use");
+    // Вид аккаунта проверен выше; в колбэк транзакции сужение типа не протаскивается.
+    const kind: "child" | "adult" = account.kind;
     try {
       await this.db.transaction(async (tx) => {
         await tx.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, account.id)).for("update");
         if (await this.accounts.hasEmail(account.id, tx)) throw conflict("email_already_set");
-        await this.accounts.attachEmail(tx, account.id, email);
+        await this.accounts.attachEmail(tx, account.id, email, kind);
         await tx
           .update(loginCards)
           .set({ revokedAt: sql`now()`, updatedAt: sql`now()` })

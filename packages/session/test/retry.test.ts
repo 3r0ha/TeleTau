@@ -58,8 +58,8 @@ describe("Retry-After → ApiProblem.retryAfter", () => {
 describe("текст 429 зависит от Retry-After", () => {
   it("коротко — «секунду», детям на «ты», взрослым на «вы»; долго или без заголовка — «подожди минуту»", () => {
     const short = new ApiProblem(429, { code: "rate_limited" }, { retryAfter: 1 });
-    expect(describeProblem(short, "child")).toBe("Секунду, много входов. Попробуй ещё раз.");
-    expect(describeProblem(short, "adult")).toBe("Секунду, много входов. Попробуйте ещё раз.");
+    expect(describeProblem(short, "child")).toBe("Подожди секунду и попробуй ещё раз.");
+    expect(describeProblem(short, "adult")).toBe("Подождите секунду и попробуйте ещё раз.");
     const long = new ApiProblem(429, { code: "rate_limited" }, { retryAfter: 60 });
     expect(describeProblem(long, "child")).toBe("Много попыток. Подожди минуту.");
     expect(describeProblem(long, "adult")).toBe("Слишком много попыток. Подождите минуту.");

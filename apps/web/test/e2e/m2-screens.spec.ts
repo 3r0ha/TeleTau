@@ -258,7 +258,7 @@ const SHOTS: Shot[] = [
     })(),
     go: async (p) => (await p.goto("/learn"), await p.getByRole("heading", { name: "На сегодня всё" }).waitFor()),
   },
-  { name: "21-empty-error", world: { failures: { "GET /course": { status: 500, code: "internal" } } }, go: async (p) => (await p.goto("/learn"), await p.getByRole("heading", { name: "Что-то сломалось" }).waitFor()) },
+  { name: "21-empty-error", world: { failures: { "GET /course": { status: 500, code: "internal" } } }, go: async (p) => (await p.goto("/learn"), await p.getByRole("heading", { name: "Что-то пошло не так" }).waitFor()) },
   {
     name: "23-help-empty",
     go: async (p) => {

@@ -84,6 +84,19 @@ const CHILD: Record<string, string> = {
   nickname_not_allowed: "Этот ник нельзя выбрать. Выбери другой.",
   join_request_closed: "Заявка закрыта. Введи код ещё раз.",
   request_in_progress: "Отправляем, подожди секунду.",
+  // Уроки, мотивация, дуэли (коды — в описании схемы Problem в openapi.yaml)
+  lesson_locked: "Этот урок пока закрыт. Сначала пройди предыдущий.",
+  run_completed: "Этот урок уже пройден.",
+  run_incomplete: "Ответь на все задания урока.",
+  already_voted: "Твой голос за эту пару уже учтён.",
+  vote_required: "Сначала проголосуй сам — потом увидишь голоса других.",
+  content_unavailable: "Уроки ещё не загрузились. Попробуй позже.",
+  not_implemented: "Эта возможность ещё не готова.",
+  // Telegram (ADR 0020; аудитория «child» — Mini App и бот)
+  init_data_invalid: "Открой приложение кнопкой в боте ещё раз.",
+  init_data_expired: "Запуск устарел. Открой приложение кнопкой в боте ещё раз.",
+  telegram_unavailable: "Бот ТелеТау пока не подключён.",
+  chat_not_linked: "Сначала войди в «Учиться», потом попроси снова.",
   // «Учусь сам» (ADR 0022)
   already_in_class: "Ты уже в классе.",
   login_card_unavailable: "Входи по карточке от учителя.",
@@ -121,6 +134,14 @@ const ADULT: Record<string, string> = {
   staff_locked: "Слишком много неверных кодов. Вход закрыт на час.",
   assignment_limit: "У класса уже два задания. Снимите одно или дождитесь срока.",
   assignment_exists: "Такое задание уже есть.",
+  // Уроки, мотивация, дуэли (коды — в описании схемы Problem в openapi.yaml)
+  lesson_locked: "Этот урок пока закрыт — сначала пройдите предыдущий.",
+  run_completed: "Урок уже завершён.",
+  run_incomplete: "Ответьте на все задания урока.",
+  already_voted: "Ваш голос за эту пару уже учтён.",
+  vote_required: "Голоса видны после вашего голоса.",
+  content_unavailable: "Курс ещё не загружен. Попробуйте позже.",
+  not_implemented: "Эта возможность ещё не готова.",
   // «Учусь сам» (ADR 0022)
   email_in_use: "Эта почта уже занята. Укажите другую.",
   email_already_set: "Почта уже сохранена.",
@@ -129,12 +150,19 @@ const ADULT: Record<string, string> = {
 /** Понятный текст ошибки API на русском. Неизвестный `code` обрабатывается по статусу (контракт: список открыт). */
 export function describeProblem(e: unknown, audience: Audience = "adult"): string {
   const you = audience === "child";
-  if (isNetworkError(e)) return you ? "Нет связи. Проверь интернет." : "Нет связи. Проверьте интернет.";
-  if (!(e instanceof ApiProblem)) return you ? "Что-то пошло не так. Попробуй ещё раз." : "Что-то пошло не так. Попробуйте ещё раз.";
-  // Короткий 429 — очередь, а не блокировка: хватит секунды, а не минуты.
-  if (isShortRateLimit(e)) return you ? "Секунду, много входов. Попробуй ещё раз." : "Секунду, много входов. Попробуйте ещё раз.";
+  if (!(e instanceof ApiProblem)) {
+    // fetch не дошёл до сервера или истёк таймаут — сети нет, остальное отдаёт ApiProblem.
+    return isNetworkError(e) ? (you ? "Нет связи. Проверь интернет." : "Нет связи. Проверьте интернет.") : you ? "Что-то пошло не так. Попробуй ещё раз." : "Что-то пошло не так. Попробуйте ещё раз.";
+  }
+  // Короткий 429 — очередь, а не блокировка: хватит секунды, а не минуты (важнее словаря кодов).
+  if (isShortRateLimit(e)) return you ? "Подожди секунду и попробуй ещё раз." : "Подождите секунду и попробуйте ещё раз.";
   const byCode = e.code ? (you ? CHILD[e.code] : ADULT[e.code]) : undefined;
   if (byCode) return byCode;
+  // Сервис недоступен — не «проверьте интернет»: с сетью у человека всё в порядке, лежит наша сторона
+  // (BFF не дождался API: 503 api_unavailable, 502 upstream_error; сам API: 503 service_unavailable).
+  if (e.status === 502 || e.status === 503) {
+    return you ? "ТелеТау временно недоступен. Попробуй через минуту." : "Сервис временно недоступен. Попробуйте через минуту.";
+  }
   switch (e.status) {
     case 401:
       return you ? "Нужно войти заново." : "Сессия истекла. Войдите снова.";
@@ -155,10 +183,8 @@ export function describeProblem(e: unknown, audience: Audience = "adult"): strin
     }
     case 429:
       return you ? CHILD.rate_limited! : ADULT.rate_limited!;
-    case 503:
-      return you ? "Сервер недоступен. Попробуй через минуту." : "Сервис временно недоступен. Попробуйте через минуту.";
     default:
-      return you ? "Что-то сломалось. Попробуй ещё раз." : "Что-то пошло не так. Попробуйте ещё раз.";
+      return you ? "Что-то пошло не так. Попробуй ещё раз." : "Что-то пошло не так. Попробуйте ещё раз.";
   }
 }
 

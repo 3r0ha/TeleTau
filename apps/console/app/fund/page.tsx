@@ -52,10 +52,10 @@ function FundDictionary() {
         {data && data.items.length > 0 ? (
           <div className="table__actions">
             <Button small icon={<DownloadSimple weight="bold" />} onClick={() => saveTextFile(exportFileName(data, "csv"), dictionaryCsv(data))}>
-              Скачать CSV
+              Скачать таблицу (CSV)
             </Button>
             <Button small variant="secondary" icon={<DownloadSimple weight="bold" />} onClick={() => saveTextFile(exportFileName(data, "json"), dictionaryJson(data), "application/json;charset=utf-8")}>
-              Скачать JSON
+              Скачать данные (JSON)
             </Button>
           </div>
         ) : null}

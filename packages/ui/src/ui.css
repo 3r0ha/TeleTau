@@ -437,6 +437,17 @@ a {
   animation: tt-spin var(--tt-duration-spin) linear infinite;
 }
 
+/** Живой индикатор опроса (экраны «Ждём учителя»): вращающийся значок и короткая подпись. */
+.tt-pulse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s200);
+  margin-top: var(--tt-space-s300);
+  color: var(--tt-color-text-tertiary);
+  font-size: 0.875rem;
+}
+
 @keyframes tt-spin {
   to {
     transform: rotate(360deg);

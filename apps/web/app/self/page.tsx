@@ -3,7 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Schema } from "@teletau/contracts";
-import { Button, ChoiceGroup, Illustration, ProgressBar, StepHeading } from "@teletau/ui";
+import { EnvelopeSimple } from "@phosphor-icons/react/ssr";
+import { Button, ButtonLink, ChoiceGroup, Illustration, ProgressBar, StepHeading } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { describeProblem } from "@teletau/session/problem";
 import { BackButton, BackLink, Screen, SimpleTop, useDocumentTitle } from "../_components/screens";
@@ -19,7 +20,6 @@ const AGES: { value: AgeBand; label: string }[] = [
   { value: "age_7_10", label: "7–10 лет" },
   { value: "age_11_14", label: "11–14 лет" },
   { value: "age_15_17", label: "15–17 лет" },
-  { value: "adult", label: "18 и старше" },
 ];
 
 const TITLES: Record<Step, string> = { age: "Сколько тебе лет?", nick: "Выбери ник" };
@@ -29,6 +29,9 @@ const TITLES: Record<Step, string> = { age: "Сколько тебе лет?", n
  * в профиле (шаг цели убран из знакомства ради короткого старта, docs/plans/M2-copy-student.md). Ничего личного: ни
  * имени, ни почты, ни телефона. Шаг — в адресе (`?step=…`, как вход по коду класса): системная «Назад» возвращает на
  * предыдущий шаг. Выбранное живёт только на этой странице; после перезагрузки — с первого шага.
+ *
+ * Только дети: анонимные аккаунты без ПДн положены ребёнку (ADR 0009), взрослому — вход и регистрация по почте
+ * (без пароля, ADR 0022 §4); ссылка внизу шага возраста ведёт туда.
  */
 export default function SelfStartPage() {
   const router = useRouter();
@@ -80,6 +83,10 @@ export default function SelfStartPage() {
             <Button block disabled={!age} onClick={() => flow.go("nick")}>
               Дальше
             </Button>
+            {/* Взрослому анонимный аккаунт не создаём (ADR 0022): вход и регистрация по почте — без пароля. */}
+            <ButtonLink href="/teacher/login" variant="secondary" block icon={<EnvelopeSimple weight="fill" aria-hidden />}>
+              Взрослым — вход по почте
+            </ButtonLink>
           </div>
         ) : (
           <div className="tt-stack tt-stack--loose">

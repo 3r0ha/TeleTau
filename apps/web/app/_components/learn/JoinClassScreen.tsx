@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CircleNotch } from "@phosphor-icons/react/ssr";
 import { normalizeCodeInput, parseClassCode } from "@teletau/auth-codes";
 import type { Schema } from "@teletau/contracts";
 import { Button, CodeInput, EmptyState, InlineAlert, LinkButton, StepHeading } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { describeProblem } from "@teletau/session/problem";
-import { useResource } from "@teletau/session/react";
+import { useOnline, useResource } from "@teletau/session/react";
 import { ClassTitle, LoadingBlock, Screen, SimpleTop, useDocumentTitle } from "../screens";
 import { useStudentPaths } from "./paths";
 import { selfApi } from "./self-api";
@@ -17,7 +18,7 @@ type Ticket = Schema<"ClassJoinTicket">;
 
 const CODE_ERRORS = {
   empty: "Введи код с доски.",
-  invalid_character: "Только латинские буквы и цифры.",
+  invalid_character: "В коде только буквы и цифры.",
   invalid_length: "В коде 6 символов.",
 } as const;
 
@@ -62,6 +63,7 @@ export function JoinClassScreen() {
     pollMs: (ticket?.pollIntervalSeconds ?? 3) * 1000,
   });
   const state = status.data?.status ?? ticket?.status;
+  const offline = useOnline();
 
   // Учитель пустил — класс уже в GET /me: обновляем аккаунт и идём в улей класса.
   useEffect(() => {
@@ -125,7 +127,9 @@ export function JoinClassScreen() {
           role="status"
           actions={
             <>
-              {status.error ? <InlineAlert tone="danger">{describeProblem(status.error, "child")}</InlineAlert> : null}
+              {/* Опрос продолжается сам; сеть пропала — заявка не теряется, а страница проверит снова, когда связь вернётся. */}
+              {offline ? <InlineAlert tone="honey">Нет связи. Заявка не потеряется.</InlineAlert> : null}
+              {status.error && !offline ? <InlineAlert tone="danger">{describeProblem(status.error, "child")}</InlineAlert> : null}
               <LinkButton tone="neutral" onClick={again}>
                 Отменить
               </LinkButton>
@@ -133,6 +137,11 @@ export function JoinClassScreen() {
           }
         >
           Класс <ClassTitle title={ticket.class.title} />. Скажи учителю свой ник: <b>«{me.nickname}»</b>.
+          Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.
+          <p className="tt-pulse">
+            <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
+            Проверяем каждые несколько секунд
+          </p>
         </EmptyState>
       ) : (
         <form
@@ -144,7 +153,7 @@ export function JoinClassScreen() {
         >
           <header className="tt-stack tt-stack--tight">
             <StepHeading focusKey="code">Введи код класса</StepHeading>
-            <p className="tt-lead">Он на доске. Мёд и серия останутся с тобой.</p>
+            <p className="tt-lead">Код написан на доске в классе. Мёд и серия сохранятся.</p>
           </header>
           <CodeInput
             length={6}

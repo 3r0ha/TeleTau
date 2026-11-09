@@ -214,7 +214,7 @@ function ProfileView({
         <CaretRight weight="bold" aria-hidden className="dict-link__caret" />
       </Link>
 
-      {/* «Учусь сам» (ADR 0022): вход с другого устройства — личная карточка; взрослому — ещё и почта. */}
+      {/* «Учусь сам» (ADR 0022): вход с другого устройства — личная карточка; почту привязывают и дети, и взрослые (§10). */}
       {me.loginCard ? (
         <Link href={paths.card} className="dict-link dict-link--card">
           <span className="dict-link__icon" aria-hidden>
@@ -222,12 +222,12 @@ function ProfileView({
           </span>
           <span className="dict-link__text">
             <b>Моя карточка входа</b>
-            <span>{me.loginCard === "issued" ? "Вход с другого устройства" : "Чтобы не потерять мёд и серию"}</span>
+            <span>{me.loginCard === "issued" ? "Вход с другого устройства" : "Сохранит мёд и серию"}</span>
           </span>
           <CaretRight weight="bold" aria-hidden className="dict-link__caret" />
         </Link>
       ) : null}
-      {me.kind === "adult" && !me.profile ? (
+      {!me.profile && !me.emailLogin ? (
         <Link href={paths.email} className="dict-link dict-link--email">
           <span className="dict-link__icon" aria-hidden>
             <EnvelopeSimple weight="fill" />

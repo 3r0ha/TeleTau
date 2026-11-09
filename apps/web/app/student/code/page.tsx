@@ -14,7 +14,7 @@ import { useStudentPaths } from "../../_components/learn/paths";
 
 const CODE_ERRORS = {
   empty: "Введи код с доски.",
-  invalid_character: "Только латинские буквы и цифры.",
+  invalid_character: "В коде только буквы и цифры.",
   invalid_length: "В коде 6 символов.",
 } as const;
 
@@ -99,7 +99,7 @@ export default function ClassCodePage() {
         {/* Один заголовок на оба шага: при смене шага на него переходит фокус (StepHeading). */}
         <header className="tt-stack tt-stack--tight">
           <StepHeading focusKey={step}>{step === "code" ? "Введи код класса" : "Выбери ник"}</StepHeading>
-          <p className="tt-lead">{step === "code" ? "Он на доске." : "По нему учитель узнает тебя."}</p>
+          <p className="tt-lead">{step === "code" ? "Код написан на доске в классе." : "По нему учитель узнает тебя."}</p>
         </header>
 
         {step === "code" ? (
