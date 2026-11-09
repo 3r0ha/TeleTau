@@ -1,0 +1,29 @@
+{
+  "suite": "login-card/parse",
+  "version": 2,
+  "function": "parseLoginCard",
+  "cases": [
+    { "id": "p001", "input": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S", "expected": { "ok": true, "kind": "personal", "handle": "0123456789", "secret": "ABCDEFGHJKMNPQRSTVWXYZ0123", "payload": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S" }, "note": "каноническая личная карточка" },
+    { "id": "p002", "input": "TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V", "expected": { "ok": true, "kind": "seat", "handle": "0123456789", "secret": "ABCDEFGHJKMNPQRSTVWXYZ0123", "payload": "TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V" }, "note": "карточка места класса тем же сканером: вид seat, контрольная сумма без разделителя" },
+    { "id": "p003", "input": "https://teletau.study/q#TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V", "expected": { "ok": true, "kind": "seat", "handle": "0123456789", "secret": "ABCDEFGHJKMNPQRSTVWXYZ0123", "payload": "TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V" }, "note": "ссылка с ранних карточек места: берётся фрагмент после первого #" },
+    { "id": "p004", "input": "tp1.7m2qk9xd4t.h3vn8rz6p1cwea0fj5gky2sb7q.eg", "expected": { "ok": true, "kind": "personal", "handle": "7M2QK9XD4T", "secret": "H3VN8RZ6P1CWEA0FJ5GKY2SB7Q", "payload": "TP1.7M2QK9XD4T.H3VN8RZ6P1CWEA0FJ5GKY2SB7Q.EG" }, "note": "нижний регистр" },
+    { "id": "p005", "input": "ТР1.N4F8W2PCZ0.1QX7T3МКD9VRА6Н0BJ5GYЕ2S8С.D1", "expected": { "ok": true, "kind": "personal", "handle": "N4F8W2PCZ0", "secret": "1QX7T3MKD9VRA6H0BJ5GYE2S8C", "payload": "TP1.N4F8W2PCZ0.1QX7T3MKD9VRA6H0BJ5GYE2S8C.D1" }, "note": "кириллические Т и Р в префиксе и двойники в секрете — набрано в русской раскладке" },
+    { "id": "p006", "input": "  TP1.00000 00000.00000-00000-00000-00000-00000-0.XV\n", "expected": { "ok": true, "kind": "personal", "handle": "0000000000", "secret": "00000000000000000000000000", "payload": "TP1.0000000000.00000000000000000000000000.XV" }, "note": "все нули: у личной карточки сумма XV, а не 00; пробелы, дефисы и перевод строки удаляются" },
+    { "id": "p007", "input": "TP1.ZZZZZZZZZZ.ZZZZZZZZZZZZZZZZZZZZZZZZZZ.XQ", "expected": { "ok": true, "kind": "personal", "handle": "ZZZZZZZZZZ", "secret": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "payload": "TP1.ZZZZZZZZZZ.ZZZZZZZZZZZZZZZZZZZZZZZZZZ.XQ" }, "note": "все символы максимальные" },
+    { "id": "p008", "input": "TPI.P6WK3D9QHM.T2X8ZB4NRC7VJ1E5GA0KYF3SWD.3X", "expected": { "ok": true, "kind": "personal", "handle": "P6WK3D9QHM", "secret": "T2X8ZB4NRC7VJ1E5GA0KYF3SWD", "payload": "TP1.P6WK3D9QHM.T2X8ZB4NRC7VJ1E5GA0KYF3SWD.3X" }, "note": "I вместо единицы в префиксе" },
+    { "id": "e001", "input": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V", "expected": { "ok": false, "error": "bad_checksum" }, "note": "префикс карточки места заменён на TP1: сумма TT1 для личной карточки неверна" },
+    { "id": "e002", "input": "TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S", "expected": { "ok": false, "error": "bad_checksum" }, "note": "префикс личной карточки заменён на TT1: карточкой места она не станет" },
+    { "id": "e003", "input": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0124.4S", "expected": { "ok": false, "error": "bad_checksum" }, "note": "опечатка в последнем символе секрета" },
+    { "id": "e004", "input": "TP1.1023456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S", "expected": { "ok": false, "error": "bad_checksum" }, "note": "перестановка соседних символов идентификатора" },
+    { "id": "e005", "input": "TP2.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S", "expected": { "ok": false, "error": "unsupported_version" }, "note": "личная карточка версии, которую порт не знает" },
+    { "id": "e006", "input": "TT2.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V", "expected": { "ok": false, "error": "unsupported_version" }, "note": "карточка места версии, которую порт не знает" },
+    { "id": "e007", "input": "TX1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S", "expected": { "ok": false, "error": "unknown_prefix" }, "note": "чужой префикс" },
+    { "id": "e008", "input": "hello world", "expected": { "ok": false, "error": "unknown_prefix" }, "note": "мусор" },
+    { "id": "e009", "input": "", "expected": { "ok": false, "error": "empty" }, "note": "пустая строка" },
+    { "id": "e010", "input": "TP1", "expected": { "ok": false, "error": "invalid_format" }, "note": "только префикс" },
+    { "id": "e011", "input": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ012.4S", "expected": { "ok": false, "error": "invalid_format" }, "note": "секрет короче 26 символов" },
+    { "id": "e012", "input": "TP1.0123456789.ABCDEFGHJKMNPQRSTUWXYZ0123.4S", "expected": { "ok": false, "error": "invalid_character" }, "note": "U не входит в алфавит" },
+    { "id": "e013", "input": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S.00", "expected": { "ok": false, "error": "invalid_format" }, "note": "лишний сегмент" },
+    { "id": "e014", "input": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ01Ҡ3.4S", "expected": { "ok": false, "error": "invalid_character" }, "note": "башкирская Ҡ не превращается в K" }
+  ]
+}

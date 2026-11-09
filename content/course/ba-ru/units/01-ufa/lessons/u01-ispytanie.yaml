@@ -1,0 +1,173 @@
+# Урок «Испытание места» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u01-ispytanie
+unit: 01-ufa
+kind: place_test
+title_ru: Испытание места
+exercises:
+  - id: u01-ispytanie-e01
+    type: choice_ba_ru
+    prompt:
+      ba: Хәйерле иртә!
+      ru: Доброе утро!
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/2839367
+        locator: предложение №2839367 (CC BY 2.0 FR); русский перевод №329715 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    options_ru:
+      - Доброе утро!
+      - Добрый вечер!
+      - Спокойной ночи!
+    correct: 0
+  - id: u01-ispytanie-e02
+    type: free_ru_ba
+    prompt_ru: Здравствуйте!
+    answers:
+      - ba: Һаумыһығыҙ!
+        ru: Здравствуйте!
+        source:
+          ref: tatoeba
+          url: https://tatoeba.org/ru/sentences/show/2839364
+          locator: предложение №2839364 (CC BY 2.0 FR); русский перевод №483499 — связан косвенно, через перевод на другой язык
+        review: needs_native_review
+      - ba: Иҫәнмеһегеҙ!
+        source:
+          ref: wikipedia-ba
+          url: https://ba.wikipedia.org/w/index.php?title=%D0%91%D0%B0%D1%88%D2%A1%D0%BE%D1%80%D1%82%D1%82%D0%B0%D1%80%D2%99%D1%8B%D2%A3_%D1%82%D0%B5%D0%BB%D0%BC%D3%99%D1%80_%D1%8D%D1%82%D0%B8%D0%BA%D0%B5%D1%82%D1%8B&oldid=1051009
+          locator: статья «Башҡорттарҙың телмәр этикеты», раздел «Сәләмләү»
+        review: needs_native_review
+  - id: u01-ispytanie-e03
+    type: tiles_ru_ba
+    prompt_ru: Как у вас дела?
+    answer:
+      ba: Хәлдәрегеҙ нисек?
+      ru: Как у вас дела?
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Как у вас дела?»
+      review: needs_native_review
+    distractors:
+      - ba: кем
+        ru: кто
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B5%D0%BC
+          locator: статья «кем», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: мин
+        ru: я
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BC%D0%B8%D0%BD
+          locator: статья «мин», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/9/9f/LL-Q13389_%28bak%29-Pastilahor-min.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-min.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-min.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: мин
+  - id: u01-ispytanie-e04
+    type: choice_ba_ru
+    prompt:
+      ba: дәфтәр
+      ru: тетрадь
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B4%D3%99%D1%84%D1%82%D3%99%D1%80
+        locator: статья «дәфтәр», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - тетрадь
+      - книга
+      - карандаш
+      - урок
+    correct: 0
+  - id: u01-ispytanie-e05
+    type: free_ru_ba
+    prompt_ru: школа
+    answers:
+      - ba: мәктәп
+        ru: школа
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BC%D3%99%D0%BA%D1%82%D3%99%D0%BF
+          locator: статья «мәктәп», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/4/4b/LL-Q13389_%28bak%29-Pastilahor-m%C9%99kt%C9%99p.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-m%C9%99kt%C9%99p.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-məktəp.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: мәктәп
+  - id: u01-ispytanie-e06
+    type: tiles_ru_ba
+    prompt_ru: Верный друг.
+    answer:
+      ba: Тоғро дуҫ.
+      ru: Верный друг.
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B4%D1%83%D2%AB
+        locator: статья «дуҫ», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: китап
+        ru: книга
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B8%D1%82%D0%B0%D0%BF
+          locator: статья «китап», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: кис
+        ru: вечер
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «вечер»
+        review: needs_native_review
+  - id: u01-ispytanie-e07
+    type: tiles_ru_ba
+    prompt_ru: Хорошо, спасибо.
+    answer:
+      ba: Рәхмәт, һәйбәт.
+      ru: Хорошо, спасибо.
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Хорошо, спасибо.»
+      review: needs_native_review
+    distractors:
+      - ba: юҡ
+        ru: нет
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8E%D2%A1
+          locator: статья «юҡ», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: кем
+        ru: кто
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B5%D0%BC
+          locator: статья «кем», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u01-ispytanie-e08
+    type: free_ru_ba
+    prompt_ru: Пока!
+    answers:
+      - ba: Һау бул.
+        ru: Пока!
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Пока (прощание).»
+        review: needs_native_review

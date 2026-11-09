@@ -1,0 +1,174 @@
+# Урок «Испытание места» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u04-ispytanie
+unit: 04-yamantau
+kind: place_test
+title_ru: Испытание места
+exercises:
+  - id: u04-ispytanie-e01
+    type: choice_ba_ru
+    prompt:
+      ba: һигеҙ
+      ru: "8"
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Числа», строка «8»
+      review: needs_native_review
+      audio:
+        url: https://upload.wikimedia.org/wikipedia/commons/2/24/Ba-%D2%BB%D0%B8%D0%B3%D0%B5%D2%99.ogg
+        source:
+          ref: wikimedia-commons
+          url: https://commons.wikimedia.org/wiki/File:Ba-%D2%BB%D0%B8%D0%B3%D0%B5%D2%99.ogg
+          locator: File:Ba-һигеҙ.ogg; запись — Borovi4ok
+        license: CC BY-SA 3.0
+    options_ru:
+      - восемь
+      - три
+      - десять
+    correct: 0
+  - id: u04-ispytanie-e02
+    type: free_ru_ba
+    prompt_ru: пять
+    answers:
+      - ba: биш
+        ru: "5"
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Числа», строка «5»
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/6/66/Ba-%D0%B1%D0%B8%D1%88.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B8%D1%88.ogg
+            locator: File:Ba-биш.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u04-ispytanie-e03
+    type: tiles_ru_ba
+    prompt_ru: Два часа
+    answer:
+      ba: сәғәт ике
+      ru: два часа
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Часы», строка «два часа»
+      review: needs_native_review
+    distractors:
+      - ba: өс
+        ru: "3"
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Числа», строка «3»
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/2/21/Ba-%D3%A9%D1%81.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D3%A9%D1%81.ogg
+            locator: File:Ba-өс.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+      - ba: кис
+        ru: вечер
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «вечер»
+        review: needs_native_review
+  - id: u04-ispytanie-e04
+    type: choice_ba_ru
+    prompt:
+      ba: иртәгә
+      ru: завтра
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Дни недели», строка «завтра»
+      review: needs_native_review
+    options_ru:
+      - завтра
+      - вчера
+      - сегодня
+    correct: 0
+  - id: u04-ispytanie-e05
+    type: free_ru_ba
+    prompt_ru: сегодня
+    answers:
+      - ba: бөгөн
+        ru: сегодня
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Дни недели», строка «сегодня»
+        review: needs_native_review
+  - id: u04-ispytanie-e06
+    type: tiles_ru_ba
+    prompt_ru: Дважды два — четыре
+    answer:
+      ba: ике икең дүрт
+      ru: дважды два — четыре
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B8%D0%BA%D0%B5
+        locator: статья «ике», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: бер
+        ru: "1"
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Числа», строка «1»
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/a/a0/Ba-%D0%B1%D0%B5%D1%80.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B5%D1%80.ogg
+            locator: File:Ba-бер.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+      - ba: алты
+        ru: "6"
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Числа», строка «6»
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/b/b6/Ba-%D0%B0%D0%BB%D1%82%D1%8B.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B0%D0%BB%D1%82%D1%8B.ogg
+            locator: File:Ba-алты.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u04-ispytanie-e07
+    type: choice_ba_ru
+    prompt:
+      ba: хәҙер
+      ru: сейчас
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Время», строка «сейчас»
+      review: needs_native_review
+    options_ru:
+      - сейчас
+      - позднее
+      - вечером
+    correct: 0
+  - id: u04-ispytanie-e08
+    type: free_ru_ba
+    prompt_ru: понедельник
+    answers:
+      - ba: дүшәмбе
+        ru: понедельник
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Дни недели», строка «понедельник»
+        review: needs_native_review

@@ -1,0 +1,27 @@
+{
+  "name": "@teletau/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Дизайн-токены «Борть»: единый источник для CSS, Swift и Kotlin.",
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./build/css/tokens.css",
+    "./tokens.json": "./build/json/tokens.json",
+    "./fonts/fonts.json": "./fonts/fonts.json",
+    "./fonts/*": "./fonts/*"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check-generated": "node scripts/build.mjs --check",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint scripts test",
+    "test": "node scripts/build.mjs && vitest run"
+  },
+  "devDependencies": {
+    "@types/fontkit": "^2.0.9",
+    "@types/node": "^24.0.0",
+    "fontkit": "^2.0.4",
+    "style-dictionary": "^5.7.1",
+    "vitest": "^5.0.5"
+  }
+}

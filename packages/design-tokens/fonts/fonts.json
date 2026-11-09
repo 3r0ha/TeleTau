@@ -1,0 +1,61 @@
+{
+  "$comment": "Шрифты платформы — локально, полные (без подмножеств Google Fonts API), лицензия SIL OFL 1.1. Проверка — packages/design-tokens/test/fonts.test.ts (буквы башкирского алфавита, форма Ҫ/Ҙ, locl BSH, целостность по sha256). Обновление шрифта = новый sha256 и повторный прогон теста.",
+  "bashkirLetters": "ӘәӨөҮүҒғҠҡҢңҘҙҪҫҺһ",
+  "fonts": [
+    {
+      "file": "golos-text/GolosText-VariableFont_wght.ttf",
+      "family": "Golos Text",
+      "use": "веб: основной текст интерфейса (вариативный, wght 400–900)",
+      "source": "https://github.com/google/fonts/blob/c1eda9233c33ad7775b27efd794f931095cf6133/ofl/golostext/GolosText%5Bwght%5D.ttf",
+      "upstream": "https://github.com/googlefonts/golos-text/tree/cf2e27222937d97c2d858fff0499bcc667a64e9d",
+      "license": "golos-text/OFL.txt",
+      "sha256": "17bb58fb69aec2dfb047a2ebf52534023e9b688c97a6b7ac795b0a72912c2063",
+      "defaultWeight": 400,
+      "loclBSH": false
+    },
+    {
+      "file": "golos-text/GolosText-Regular.ttf",
+      "family": "Golos Text",
+      "use": "PDF карточек и бланков (pdfkit встраивает статический шрифт; ADR 0018)",
+      "source": "https://github.com/googlefonts/golos-text/blob/cf2e27222937d97c2d858fff0499bcc667a64e9d/fonts/ttf/GolosText-Regular.ttf",
+      "upstream": "https://github.com/googlefonts/golos-text/tree/cf2e27222937d97c2d858fff0499bcc667a64e9d",
+      "license": "golos-text/OFL.txt",
+      "sha256": "7149e646874639bca27661d2cf8a0728f84c8c5e426b63a99f8fd8c6ae1039a7",
+      "defaultWeight": 400,
+      "loclBSH": false
+    },
+    {
+      "file": "golos-text/GolosText-Bold.ttf",
+      "family": "Golos Text",
+      "use": "PDF: заголовки и номер места (ADR 0018)",
+      "source": "https://github.com/googlefonts/golos-text/blob/cf2e27222937d97c2d858fff0499bcc667a64e9d/fonts/ttf/GolosText-Bold.ttf",
+      "upstream": "https://github.com/googlefonts/golos-text/tree/cf2e27222937d97c2d858fff0499bcc667a64e9d",
+      "license": "golos-text/OFL.txt",
+      "sha256": "2477871cbc5377934b039b0a229907cb2fdeb370d7a489b2b149d98023dee7f4",
+      "defaultWeight": 700,
+      "loclBSH": false
+    },
+    {
+      "file": "nunito/Nunito-VariableFont_wght.ttf",
+      "family": "Nunito",
+      "use": "веб: заголовки и крупный текст (вариативный, wght 200–1000; по умолчанию ExtraLight — в PDF не годится)",
+      "source": "https://github.com/google/fonts/blob/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/nunito/Nunito%5Bwght%5D.ttf",
+      "upstream": "https://github.com/googlefonts/nunito/tree/8c6a9bb9732545b9ed53f29ec5e1ab0ff53c4e6f",
+      "license": "nunito/OFL.txt",
+      "sha256": "bb55a5ca5c2042335b3991af27c4d0705d0ef41cac6164ac737fd8f2a1e85207",
+      "defaultWeight": 200,
+      "loclBSH": true
+    },
+    {
+      "file": "nunito/Nunito-Italic-VariableFont_wght.ttf",
+      "family": "Nunito",
+      "use": "веб: курсив заголовков",
+      "source": "https://github.com/google/fonts/blob/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/nunito/Nunito-Italic%5Bwght%5D.ttf",
+      "upstream": "https://github.com/googlefonts/nunito/tree/8c6a9bb9732545b9ed53f29ec5e1ab0ff53c4e6f",
+      "license": "nunito/OFL.txt",
+      "sha256": "b520cc871868b0acfca1beda875df7f4a44ebce914f8a89f83977fc9c09529c8",
+      "defaultWeight": 200,
+      "loclBSH": true
+    }
+  ]
+}

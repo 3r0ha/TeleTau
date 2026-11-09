@@ -1,0 +1,22 @@
+{
+  "name": "@teletau/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Общие рантайм-утилиты серверных приложений: разбор VALKEY_URL, троттлинг логов ошибок инфраструктуры.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src test",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "vitest": "^5.0.5"
+  }
+}

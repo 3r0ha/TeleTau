@@ -1,0 +1,161 @@
+# Урок «Поздравления» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u06-pozdravleniya
+unit: 06-sabantuy
+kind: lesson
+title_ru: Поздравления
+new_words:
+  - Ҡотлайым!
+  - тыуған көн
+  - бүләк
+  - ҡунаҡ
+  - теләк
+exercises:
+  - id: u06-pozdravleniya-e01
+    type: choice_ba_ru
+    prompt:
+      ba: Ҡотлайым!
+      ru: Поздравляю!
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/3865150
+        locator: предложение №3865150 (CC BY 2.0 FR); русский перевод №889116 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    options_ru:
+      - Поздравляю!
+      - Спасибо!
+      - Привет!
+    correct: 0
+  - id: u06-pozdravleniya-e02
+    type: free_ru_ba
+    prompt_ru: Поздравляю!
+    answers:
+      - ba: Ҡотлайым!
+        ru: Поздравляю!
+        source:
+          ref: tatoeba
+          url: https://tatoeba.org/ru/sentences/show/3865150
+          locator: предложение №3865150 (CC BY 2.0 FR); русский перевод №889116 — связан косвенно, через перевод на другой язык
+        review: needs_native_review
+  - id: u06-pozdravleniya-e03
+    type: choice_ba_ru
+    prompt:
+      ba: тыуған көн
+      ru: день рождения
+      source:
+        ref: wikidata
+        url: https://www.wikidata.org/w/index.php?title=Q47223&oldid=2548289153
+        locator: элемент Q47223, метка на башкирском; метка на русском — «день рождения»
+      review: needs_native_review
+    options_ru:
+      - день рождения
+      - праздник
+      - подарок
+    correct: 0
+  - id: u06-pozdravleniya-e04
+    type: tiles_ru_ba
+    prompt_ru: День рождения
+    answer:
+      ba: тыуған көн
+      ru: день рождения
+      source:
+        ref: wikidata
+        url: https://www.wikidata.org/w/index.php?title=Q47223&oldid=2548289153
+        locator: элемент Q47223, метка на башкирском; метка на русском — «день рождения»
+      review: needs_native_review
+    distractors:
+      - ba: байрам
+        ru: праздник
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B0%D0%B9%D1%80%D0%B0%D0%BC
+          locator: статья «байрам», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: йыр
+        ru: песня
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B9%D1%8B%D1%80
+          locator: статья «йыр», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/b/b9/Ba-%D0%B9%D1%8B%D1%80.oga
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B9%D1%8B%D1%80.oga
+            locator: File:Ba-йыр.oga; запись — Borovi4ok
+          license: CC BY 3.0
+  - id: u06-pozdravleniya-e05
+    type: choice_ba_ru
+    prompt:
+      ba: бүләк
+      ru: подарок
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B1%D2%AF%D0%BB%D3%99%D0%BA
+        locator: статья «бүләк», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - подарок
+      - гость
+      - праздник
+    correct: 0
+  - id: u06-pozdravleniya-e06
+    type: free_ru_ba
+    prompt_ru: подарок
+    answers:
+      - ba: бүләк
+        ru: подарок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D2%AF%D0%BB%D3%99%D0%BA
+          locator: статья «бүләк», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u06-pozdravleniya-e07
+    type: choice_ba_ru
+    prompt:
+      ba: ҡунаҡ
+      ru: гость
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%A1%D1%83%D0%BD%D0%B0%D2%A1
+        locator: статья «ҡунаҡ», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - гость
+      - подарок
+      - песня
+    correct: 0
+  - id: u06-pozdravleniya-p01
+    type: match_pairs
+    pairs:
+      - ba: бүләк
+        ru: подарок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D2%AF%D0%BB%D3%99%D0%BA
+          locator: статья «бүләк», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ҡунаҡ
+        ru: гость
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D1%83%D0%BD%D0%B0%D2%A1
+          locator: статья «ҡунаҡ», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: теләк
+        ru: пожелание
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D0%B5%D0%BB%D3%99%D0%BA
+          locator: статья «теләк», раздел «Башкирский», значение 2
+        review: needs_native_review
+      - ba: тыуған көн
+        ru: день рождения
+        source:
+          ref: wikidata
+          url: https://www.wikidata.org/w/index.php?title=Q47223&oldid=2548289153
+          locator: элемент Q47223, метка на башкирском; метка на русском — «день рождения»
+        review: needs_native_review

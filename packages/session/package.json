@@ -1,0 +1,32 @@
+{
+  "name": "@teletau/session",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Сессия веба и консоли (ADR 0015 §3): клиент API по контракту, BFF /api/session/*, часы сервера, заголовки безопасности (CSP). Пакет без сборки — исходники транслирует Next.js (transpilePackages).",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@teletau/contracts": "workspace:*",
+    "openapi-fetch": "^0.17.0"
+  },
+  "peerDependencies": {
+    "next": "^16.4.4",
+    "react": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "next": "^16.4.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,148 @@
+# Урок «Моя школа» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u01-moya-shkola
+unit: 01-ufa
+kind: lesson
+title_ru: Моя школа
+new_words:
+  - мәктәп
+  - дәфтәр
+  - уҡытыусы
+  - уҡыусы
+  - китап
+  - Тоғро дуҫ.
+exercises:
+  - id: u01-moya-shkola-e01
+    type: tiles_ru_ba
+    prompt_ru: Средняя школа
+    answer:
+      ba: Урта мәктәп
+      ru: средняя школа
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%BC%D3%99%D0%BA%D1%82%D3%99%D0%BF
+        locator: статья «мәктәп», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: китап
+        ru: книга
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B8%D1%82%D0%B0%D0%BF
+          locator: статья «китап», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: дәрес
+        ru: урок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B4%D3%99%D1%80%D0%B5%D1%81
+          locator: статья «дәрес», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u01-moya-shkola-e02
+    type: choice_ba_ru
+    prompt:
+      ba: мәктәп
+      ru: школа
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%BC%D3%99%D0%BA%D1%82%D3%99%D0%BF
+        locator: статья «мәктәп», раздел «Башкирский», значение 1
+      review: needs_native_review
+      audio:
+        url: https://upload.wikimedia.org/wikipedia/commons/4/4b/LL-Q13389_%28bak%29-Pastilahor-m%C9%99kt%C9%99p.wav
+        source:
+          ref: lingua-libre-bak
+          url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-m%C9%99kt%C9%99p.wav
+          locator: File:LL-Q13389 (bak)-Pastilahor-məktəp.wav; запись — Pastilahor
+        license: CC BY 4.0
+        word_ba: мәктәп
+    options_ru:
+      - школа
+      - книга
+      - учитель
+      - урок
+    correct: 0
+  - id: u01-moya-shkola-e03
+    type: free_ru_ba
+    prompt_ru: тетрадь
+    answers:
+      - ba: дәфтәр
+        ru: тетрадь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B4%D3%99%D1%84%D1%82%D3%99%D1%80
+          locator: статья «дәфтәр», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u01-moya-shkola-e04
+    type: duel
+  - id: u01-moya-shkola-e05
+    type: choice_ba_ru
+    prompt:
+      ba: уҡытыусы
+      ru: учитель
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%83%D2%A1%D1%8B%D1%82%D1%8B%D1%83%D1%81%D1%8B
+        locator: статья «уҡытыусы», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - учитель
+      - ученик
+      - друг
+      - тетрадь
+    correct: 0
+  - id: u01-moya-shkola-e06
+    type: tiles_ru_ba
+    prompt_ru: Верный друг.
+    answer:
+      ba: Тоғро дуҫ.
+      ru: Верный друг.
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B4%D1%83%D2%AB
+        locator: статья «дуҫ», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: дәрес
+        ru: урок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B4%D3%99%D1%80%D0%B5%D1%81
+          locator: статья «дәрес», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ҡәләм
+        ru: карандаш
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D3%99%D0%BB%D3%99%D0%BC
+          locator: статья «ҡәләм», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u01-moya-shkola-e07
+    type: choice_ba_ru
+    prompt:
+      ba: уҡыусы
+      ru: ученик
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%83%D2%A1%D1%8B%D1%83%D1%81%D1%8B
+        locator: статья «уҡыусы», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - ученик
+      - учитель
+      - школа
+      - карандаш
+    correct: 0
+  - id: u01-moya-shkola-e08
+    type: free_ru_ba
+    prompt_ru: книга
+    answers:
+      - ba: китап
+        ru: книга
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B8%D1%82%D0%B0%D0%BF
+          locator: статья «китап», раздел «Башкирский», значение 1
+        review: needs_native_review

@@ -1,0 +1,10 @@
+{
+  "suite": "login-card/generate",
+  "version": 2,
+  "function": "personalCardFromRandomBytes",
+  "cases": [
+    { "id": "g001", "input": "000102030405060708090a0b0c0d0e0f1011121314151617181920212223242526272829", "expected": { "handle": "0123456789", "secret": "ABCDEFGHJKMNPQRS0123456789", "payload": "TP1.0123456789.ABCDEFGHJKMNPQRS0123456789.K9" }, "note": "36 байт: первые 10 — идентификатор, остальные 26 — секрет; символ = байт & 31" },
+    { "id": "g002", "input": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "expected": { "handle": "ZZZZZZZZZZ", "secret": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "payload": "TP1.ZZZZZZZZZZ.ZZZZZZZZZZZZZZZZZZZZZZZZZZ.XQ" }, "note": "старшие биты байта отбрасываются" },
+    { "id": "g003", "input": "3c91e07b5a26f4d8c1093e6b7fa2d54e81b6c3f0297d5a8e4c13b6f9d2072e8a5c4b91d3", "expected": { "handle": "WH0VT6MR19", "secret": "YBZ2NE1P3G9XTECKPSJ7EAWBHK", "payload": "TP1.WH0VT6MR19.YBZ2NE1P3G9XTECKPSJ7EAWBHK.GB" }, "note": "произвольные байты" }
+  ]
+}

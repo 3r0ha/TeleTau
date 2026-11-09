@@ -1,0 +1,44 @@
+# Юнит 2 «Шүлгәнташ · Семья» — открыт, узлы доступны по порядку после юнита 1 (схема — content/schema/unit.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: 02-shulgantash
+order: 2
+status: open
+place:
+  slug: shulgantash
+  title_ru: Шульган-Таш
+  title_ba:
+    ba: Шүлгәнташ
+    source:
+      ref: wikipedia-ba
+      url: https://ba.wikipedia.org/wiki/%D0%A8%D2%AF%D0%BB%D0%B3%D3%99%D0%BD%D1%82%D0%B0%D1%88
+      locator: заголовок статьи «Шүлгәнташ» (pageid 4488; русская статья — «Капова пещера»)
+    review: needs_native_review
+topic_ru: Семья
+nodes:
+  - id: u02-mama-i-papa
+    kind: lesson
+    icon: star
+  - id: u02-bratya-i-sestry
+    kind: lesson
+    icon: chat-circle-text
+  - id: u02-help-1
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 3
+  - id: u02-moy-dom
+    kind: lesson
+    icon: book-open
+  - id: u02-povtorenie
+    kind: lesson
+    icon: barbell
+  - id: u02-help-2
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 3
+  - id: u02-babushka-i-dedushka
+    kind: lesson
+    icon: star
+  - id: u02-ispytanie
+    kind: place_test

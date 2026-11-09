@@ -1,0 +1,367 @@
+/* Экраны ученика на компьютере и планшете: правая колонка (StudentRail) и место вкладок, урока и итогов в сетке
+ * оболочки (@teletau/ui/shell.css). Телефон (< 768 px) этот файл не меняет, кроме карточек колонки, которых там нет.
+ * Все цвета, отступы, радиусы, шрифты и длительности — только из дизайн-токенов (--tt-*); прозрачность — opacity. */
+
+/* ───────────── правая колонка ───────────── */
+.rail__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s400);
+}
+
+/* Счётчики над карточками — как шапка тропы на телефоне. */
+.rail-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 var(--tt-space-s200);
+  list-style: none;
+}
+
+.rail-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.rail-stat svg {
+  width: var(--tt-size-icon-large);
+  height: var(--tt-size-icon-large);
+}
+
+.rail-stat--streak {
+  color: var(--tt-color-text-tertiary);
+}
+
+.rail-stat--lit {
+  color: var(--tt-color-streak-text);
+}
+
+.rail-stat--lit svg {
+  color: var(--tt-color-streak-fill);
+}
+
+.rail-stat--honey {
+  color: var(--tt-color-accent-text);
+}
+
+.rail-stat--honey svg {
+  color: var(--tt-color-accent-fill);
+}
+
+.rail-stat--league img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.rail-card.tt-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s250);
+  padding: var(--tt-space-s400) var(--tt-space-s450) var(--tt-space-s450);
+}
+
+.rail-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--tt-space-s300);
+}
+
+.rail-card__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.rail-card__meta {
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rail-card__kicker {
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rail-card__sub {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+  line-height: var(--tt-line-height-snug);
+}
+
+.rail-card__link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--tt-space-s100);
+  min-height: var(--tt-size-touch-min);
+  margin: calc(-1 * var(--tt-space-s200)) 0 calc(-1 * var(--tt-space-s250));
+  border-radius: var(--tt-radius-small);
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+}
+
+.rail-card__link svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.rail-card__link:hover {
+  text-decoration: underline;
+}
+
+.rail-card__link:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+/* Цель дня: соты-уроки с «губой». */
+.rail-goal__cells {
+  display: flex;
+  gap: var(--tt-space-s200);
+}
+
+/* Пустая сота — контур пунктиром (docs/05 §5 «Пустая»), без «губы»: её ещё предстоит наполнить. */
+.rail-cell__face {
+  fill: var(--tt-color-surface);
+  stroke: var(--tt-color-border-strong);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+}
+
+.rail-cell__lip {
+  fill: none;
+}
+
+.rail-cell--done .rail-cell__face {
+  fill: var(--tt-color-accent-fill);
+  stroke: var(--tt-color-accent-fill);
+  stroke-dasharray: none;
+}
+
+.rail-cell--done .rail-cell__lip {
+  fill: var(--tt-color-accent-lip);
+}
+
+.rail-cell__check {
+  fill: none;
+  stroke: var(--tt-color-accent-on);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+/* Неделя серии под целью дня. */
+.rail-streak {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s250);
+  margin-top: var(--tt-space-s100);
+  padding-top: var(--tt-space-s350);
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+.rail-streak__count {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.rail-streak__count svg {
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+}
+
+.rail-streak__count--lit {
+  color: var(--tt-color-streak-text);
+}
+
+.rail-streak__count--lit svg {
+  color: var(--tt-color-streak-fill);
+}
+
+.rail-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rail-week__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.rail-week__hex {
+  fill: var(--tt-color-surface);
+  stroke: var(--tt-color-border-default);
+  stroke-width: 2;
+}
+
+.rail-week__day--done .rail-week__hex {
+  fill: var(--tt-color-streak-fill);
+  stroke: var(--tt-color-streak-lip);
+}
+
+.rail-week__day--frozen .rail-week__hex {
+  fill: var(--tt-color-info-fill);
+  stroke: var(--tt-color-info-lip);
+}
+
+.rail-week__day--missed .rail-week__hex {
+  fill: var(--tt-color-locked-fill);
+  stroke: var(--tt-color-locked-lip);
+}
+
+.rail-week__day--today {
+  color: var(--tt-color-streak-text);
+}
+
+.rail-week__day--today .rail-week__hex {
+  stroke: var(--tt-color-streak-fill);
+  stroke-dasharray: 4 3;
+}
+
+/* Лига. */
+.rail-league__row,
+.rail-quest__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s350);
+}
+
+.rail-quest__row {
+  justify-content: space-between;
+}
+
+.rail-league__badge,
+.rail-quest__art {
+  flex: none;
+  object-fit: contain;
+}
+
+.rail-league__status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tt-space-s150);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+  line-height: var(--tt-line-height-snug);
+}
+
+.rail-league__status--up {
+  color: var(--tt-color-success-text);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.rail-league__status svg {
+  flex: none;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  margin-top: var(--tt-space-s050);
+}
+
+.rail-quest .tt-progress {
+  font-size: var(--tt-font-size-footnote);
+}
+
+/* Задание и повторение — те же карточки, что на тропе телефона, без внешних отступов. */
+.rail .review-card {
+  margin-top: 0;
+}
+
+/* ───────────── вкладки в сетке оболочки ───────────── */
+@media (min-width: 768px) {
+  .tt-shell .student__column {
+    padding-top: var(--tt-space-s300);
+    padding-bottom: var(--tt-space-s1200);
+  }
+
+  /* «Словарь» — раздел боковой навигации: ссылка «‹ Профиль» не нужна. */
+  .tt-shell .words__back {
+    display: none;
+  }
+
+  .tt-shell .words__head {
+    padding-top: var(--tt-space-s400);
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Счётчики шапки тропы — в правой колонке: шапки над тропой нет, липкий баннер юнита — у верхнего края. */
+  .tt-shell .learn-top {
+    display: none;
+  }
+
+  .tt-shell .unit-bar {
+    top: var(--tt-space-s400);
+  }
+
+  .tt-shell .student__column {
+    padding-top: var(--tt-space-s500);
+  }
+
+  /* Задания учителя и повторение на тропе — в правой колонке (StudentRail), над тропой их нет. */
+  .tt-shell[data-tab="path"] .student__column .today {
+    display: none;
+  }
+
+  /* Шапка места на широкой колонке — выше, картинка — уже: полоса пейзажа, а не узкая щель. */
+  .tt-shell .unit-head {
+    min-height: 100px;
+  }
+
+  .tt-shell .unit-head__art {
+    width: 54%;
+  }
+
+  .tt-shell .unit-head__body {
+    padding-inline: var(--tt-space-s600);
+  }
+
+  .tt-shell .unit-head__title {
+    font-size: var(--tt-font-size-title2);
+  }
+
+  .tt-shell .unit-head__topic {
+    font-size: var(--tt-font-size-callout);
+  }
+}
+/* Урок и экраны после урока на компьютере (ширина, кнопка справа) — в learn.css, у самих экранов: без оболочки. */
+
+/* «Профиль» ученика: класс .profile есть и у профиля учителя (globals.css, max-width) — у ученика колонку держит сетка. */
+.student__main.profile {
+  max-width: none;
+}

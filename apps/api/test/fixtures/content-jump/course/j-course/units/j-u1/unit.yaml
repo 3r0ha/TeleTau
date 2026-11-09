@@ -1,0 +1,17 @@
+id: j-u1
+order: 1
+status: open
+place:
+  slug: ufa
+  title_ru: Место один
+topic_ru: Синтетика
+nodes:
+  - id: j-l1
+    kind: lesson
+    icon: star
+  - id: j-help
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 1
+  - id: j-t1
+    kind: place_test

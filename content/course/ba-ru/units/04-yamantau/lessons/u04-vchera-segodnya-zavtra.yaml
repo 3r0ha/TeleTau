@@ -1,0 +1,187 @@
+# Урок «Вчера, сегодня, завтра» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u04-vchera-segodnya-zavtra
+unit: 04-yamantau
+kind: lesson
+title_ru: Вчера, сегодня, завтра
+new_words:
+  - бөгөн
+  - кисә
+  - иртәгә
+  - һуңыраҡ
+  - иртәрәк
+  - Кәбисә йылы.
+exercises:
+  - id: u04-vchera-segodnya-zavtra-e01
+    type: choice_ba_ru
+    prompt:
+      ba: бөгөн
+      ru: сегодня
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Дни недели», строка «сегодня»
+      review: needs_native_review
+    options_ru:
+      - сегодня
+      - вчера
+      - завтра
+    correct: 0
+  - id: u04-vchera-segodnya-zavtra-e02
+    type: choice_ba_ru
+    prompt:
+      ba: кисә
+      ru: вчера
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Дни недели», строка «вчера»
+      review: needs_native_review
+    options_ru:
+      - вчера
+      - сегодня
+      - завтра
+    correct: 0
+  - id: u04-vchera-segodnya-zavtra-e03
+    type: free_ru_ba
+    prompt_ru: завтра
+    answers:
+      - ba: иртәгә
+        ru: завтра
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Дни недели», строка «завтра»
+        review: needs_native_review
+  - id: u04-vchera-segodnya-zavtra-e04
+    type: tiles_ru_ba
+    prompt_ru: На прошлой неделе
+    answer:
+      ba: үткән аҙнала
+      ru: на прошлой неделе
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Дни недели», строка «на прошлой неделе»
+      review: needs_native_review
+    distractors:
+      - ba: бөгөн
+        ru: сегодня
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Дни недели», строка «сегодня»
+        review: needs_native_review
+      - ba: иртә
+        ru: утро
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «утро»
+        review: needs_native_review
+  - id: u04-vchera-segodnya-zavtra-e05
+    type: choice_ba_ru
+    prompt:
+      ba: һуңыраҡ
+      ru: позднее
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Время», строка «позднее»
+      review: needs_native_review
+    options_ru:
+      - позднее
+      - раньше
+      - сейчас
+    correct: 0
+  - id: u04-vchera-segodnya-zavtra-e06
+    type: free_ru_ba
+    prompt_ru: раньше
+    answers:
+      - ba: иртәрәк
+        ru: раньше
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «раньше»
+        review: needs_native_review
+  - id: u04-vchera-segodnya-zavtra-e07
+    type: tiles_ru_ba
+    prompt_ru: Високосный год.
+    answer:
+      ba: Кәбисә йылы.
+      ru: Високосный год.
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B9%D1%8B%D0%BB
+        locator: статья «йыл», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: аҙна
+        ru: неделя
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D2%99%D0%BD%D0%B0
+          locator: статья «аҙна», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/2/25/Ba-%D0%B0%D2%99%D0%BD%D0%B0.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B0%D2%99%D0%BD%D0%B0.ogg
+            locator: File:Ba-аҙна.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+      - ba: көн
+        ru: день
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «день»
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/e/e3/Ba-%D0%BA%D3%A9%D0%BD.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%BA%D3%A9%D0%BD.ogg
+            locator: File:Ba-көн.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u04-vchera-segodnya-zavtra-p01
+    type: match_pairs
+    pairs:
+      - ba: бөгөн
+        ru: сегодня
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Дни недели», строка «сегодня»
+        review: needs_native_review
+      - ba: кисә
+        ru: вчера
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Дни недели», строка «вчера»
+        review: needs_native_review
+      - ba: иртәгә
+        ru: завтра
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Дни недели», строка «завтра»
+        review: needs_native_review
+      - ba: ай
+        ru: месяц
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D0%B9
+          locator: статья «ай», раздел «Башкирский», значение 2
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/f/f2/Ba-%D0%B0%D0%B9.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B0%D0%B9.ogg
+            locator: File:Ba-ай.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0

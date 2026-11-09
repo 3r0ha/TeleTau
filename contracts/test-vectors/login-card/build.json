@@ -1,0 +1,11 @@
+{
+  "suite": "login-card/build",
+  "version": 2,
+  "function": "buildPersonalCard",
+  "cases": [
+    { "id": "b001", "input": { "handle": "0123456789", "secret": "ABCDEFGHJKMNPQRSTVWXYZ0123" }, "expected": { "payload": "TP1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.4S" }, "note": "базовый случай: та же пара, что у карточки места p001 (TT1 … 6V), — другая сумма" },
+    { "id": "b002", "input": { "handle": "0000000000", "secret": "00000000000000000000000000" }, "expected": { "payload": "TP1.0000000000.00000000000000000000000000.XV" }, "note": "все нули" },
+    { "id": "b003", "input": { "handle": "7M2QK9XD4T", "secret": "H3VN8RZ6P1CWEA0FJ5GKY2SB7Q" }, "expected": { "payload": "TP1.7M2QK9XD4T.H3VN8RZ6P1CWEA0FJ5GKY2SB7Q.EG" }, "note": "случайная карточка" },
+    { "id": "b004", "input": { "handle": "P6WK3D9QHM", "secret": "T2X8ZB4NRC7VJ1E5GA0KYF3SWD" }, "expected": { "payload": "TP1.P6WK3D9QHM.T2X8ZB4NRC7VJ1E5GA0KYF3SWD.3X" }, "note": "идентификатор начинается с P — с разделителем назначения не путается" }
+  ]
+}

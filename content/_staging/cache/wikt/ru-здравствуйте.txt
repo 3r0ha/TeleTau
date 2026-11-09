@@ -1,0 +1,510 @@
+{{слово дня|7|11|2013}}
+
+= {{-ru-}} =
+{{Омонимы|ru|2}}
+
+== {{з|(междометие)}} ==
+
+=== Морфологические и синтаксические свойства ===
+{{interj ru|слоги={{по-слогам|здра́в|ствуй|те}}}}
+
+{{морфо|корень1=здравствуй|суфф1=те}}
+
+=== Произношение ===
+{{transcription-ru|здра́вствуйте|Ru-здравствуйте.ogg}}
+
+=== Семантические свойства ===
+
+==== Значение ====
+# форма приветствия при встрече (с несколькими лицами либо с одним лицом, к которому обращаются на Вы) {{пример|Здравствуй, Максим. {{выдел|Здравствуйте}}, маэстро. Твой импресарио прислал предложения, но у меня на фестивале нет таких денег.|Сати Спивакова|Не всё|2002|источник=НКРЯ}}
+# {{п.|ru}}, {{ирон.|ru}} выражение удивлённого несогласия, разочарования и т. п. {{пример|}}
+
+==== Синонимы ====
+# {{синонимы:здравствуй}}
+# [[здравствуйте пожалуйста]], [[приехали]]
+# 
+
+==== Антонимы ====
+# [[до свидания]]
+# —
+# 
+
+==== Гиперонимы ====
+# [[приветствие]]
+# ?
+# 
+
+==== Гипонимы ====
+# [[доброе утро]], [[добрый день]], [[добрый вечер]]
+# —
+# 
+
+=== Родственные слова ===
+{{родств-блок
+|умласк=
+|уничиж=
+|увелич=
+|имена-собственные=
+|существительные=здравие
+|прилагательные=здравый
+|числительные=
+|местоимения=
+|глаголы=здравствовать
+|наречия=
+|предикативы=
+|междометия=здравствуй
+|предлоги=
+}}
+
+=== Этимология ===
+Происходит от гл. [[здравствовать]] и прил. [[здравый]], далее из {{этимология:здоровый|да}}
+
+=== Фразеологизмы и устойчивые сочетания ===
+* [[здравствуйте, я ваша тётя]]
+
+=== Перевод ===
+{{перев-блок|приветствие
+|abq=
+|ab=
+|av=
+|ave=
+|agh=
+|aja=
+|ady=
+|az=
+|ay=
+|ain=
+|ain.kana=
+|ain.lat=
+|sq=[[mirëdita]]
+|als=
+|ale=
+|am=[[ጤና ይስጥልኝ]] (tena yestelen)
+|alt=
+|en=[[how do you do]]? [[hello]], [[good morning]]! [[good afternoon]]! [[good evening]]!
+|ar=
+|an=
+|arc.jud=
+|arc.syr=
+|arn=
+|hy=
+|asm=
+|ast=
+|af=[[goeiedag]]
+|bar=
+|bm=
+|eu=
+|ba=
+|be=[[вітаю]], [[добры дзень]]
+|bn=
+|bg=[[здравейте]], [[добър ден]]
+|bs=
+|br=
+|bua=
+|cy=
+|wa=[[bondjoû]], [[diewåde]]
+|hu=[[jó napot]]
+|vep=
+|hsb=
+|vot=
+|vo=
+|wo=
+|vro=
+|vi=
+|gag=
+|haw=
+|ht=
+|gl=
+|ze=
+|kl=
+|el=[[καλημέρα]]
+|ka=[[გამარჯობა]]
+|gn=
+|gu=
+|gd=
+|dar=
+|prs=
+|da=[[goddag]]
+|dv=
+|ang=
+|grc=
+|sgs=
+|zza=
+|zu=
+|he=
+|yi=
+|io=
+|id=[[selamat siang]]
+|ia=
+|iu=
+|ik=
+|ga=
+|is=
+|es=[[salud]]! [[hola]], [[buenos días]]
+|it=[[salute]]!; [[salve]]!; [[buon giorno]], [[buongiorno]]
+|kbd=
+|kk=[[амансыз ба]]?
+|xal=
+|kn=
+|kaa=
+|krc=
+|krl=
+|ca=
+|csb=
+|qu=
+|ky=
+|zh=
+|zh-tw=
+|zh-cn=
+|kom=
+|koi=
+|kok=
+|kw=
+|ko=[[안녕하세요]]
+|co=[[salute]]
+|xh=
+|crh=
+|ku=
+|km=[[ជំរាបសួរ]] (чумрепсуа)
+|lad=
+|lo=
+|la=[[salve]]
+|lv=[[labdien]], [[sveiki]]
+|lez=
+|li=
+|ln=
+|lt=[[sveiki]]; [[labas]], [[laba diena]]
+|lmo=
+|lb=
+|mk=
+|mg=
+|ms=
+|ml=
+|mt=
+|mi=
+|chm=
+|mdf=
+|mo=
+|mn=[[сайн уу]]
+|gv=
+|nv=
+|gld=[[бачигоапу]]
+|nah=
+|na=
+|nio=
+|nap=
+|new=
+|de=[[guten Tag]]!
+|yrk=
+|nl=[[goeie dag]]
+|dsb=
+|no=[[goddag]]
+|oc=
+|os=
+|pa=
+|pap=
+|fa=
+|pl=[[dzień dobry]]
+|pt=[[salve]]!; (утром) [[bom dia]]!; (днем) [[boa tarde]]!; (вечером) [[boa noite]]!
+|ps=
+|pms=
+|rap=
+|rm=
+|ro=[[bună ziua]]
+|sjd=
+|sa=
+|sc=
+|se=
+|sr=[[здраво]]!
+|sr-l=[[zdravo]]!
+|scn=
+|si=[[ආයුබෝවන්]]
+|sd=
+|sk=
+|sl=
+|slovio-c=
+|slovio-l=
+|so=
+|chu.cyr=
+|chu.glag=
+|sw=[[hujambo]], [[hamjambo]]
+|tab=
+|tl=
+|tg=
+|ty=
+|th=[[สวัสดี]]
+|ta=[[வணக்கம்]]
+|tt=
+|tt.cyr=[[исәнмесез]]
+|tt.lat=
+|te=
+|art=
+|tpi=
+|kim=
+|tn=
+|tyv=
+|tr=[[aleykümselâm]]; [[selâmünaleyküm]]; [[merhaba]]; [[günaydın]]
+|tk=
+|udm=
+|ug=
+|uz=
+|uk=[[добрий день]]!, [[добридень]]!; [[вітаю]]!
+|ur=
+|fo=
+|fi=[[hyvää päivää]], [[tervehdys]]; [[päivää]]
+|fr=[[bonjour]]!; [[bonsoir]]! (вечером)
+|fy=
+|fur=
+|kjh=
+|ha=
+|hi=
+|hr=[[zdravo]]!
+|rom=
+|ce=
+|cs=[[dobrý den]]
+|cv=
+|sv={{t|sv|goddag}}!, {{t|sv|god dag}}!, {{t|sv|god morgon}}!, {{t|sv|god afton}}!, {{t|sv|hej}}!
+|cjs=
+|sco=
+|ewe=
+|myv=
+|eo=[[saluton]], [[bonan tagon]]
+|et=[[tere]]
+|jv=
+|sah=
+|ja=
+}}
+
+{{перев-блок|выражение несогласия, разочарования
+|abq=
+|ab=
+|av=
+|ave=
+|agh=
+|aja=
+|ady=
+|az=
+|ay=
+|ain=
+|ain.kana=
+|ain.lat=
+|sq=
+|als=
+|ale=
+|alt=
+|en=
+|ar=
+|an=
+|arc.jud=
+|arc.syr=
+|arn=
+|hy=
+|asm=
+|ast=
+|af=
+|bar=
+|bm=
+|eu=
+|ba=
+|be=
+|bn=
+|bg=
+|bs=
+|br=
+|bua=
+|cy=
+|wa=
+|hu=
+|vep=
+|hsb=
+|vot=
+|vo=
+|wo=
+|vro=
+|vi=
+|gag=
+|haw=
+|ht=
+|gl=
+|ze=
+|kl=
+|el=
+|ka=
+|gn=
+|gu=
+|gd=
+|dar=
+|prs=
+|da=
+|dv=
+|ang=
+|grc=
+|sgs=
+|zza=
+|zu=
+|he=
+|yi=
+|io=
+|id=
+|ia=
+|iu=
+|ik=
+|ga=
+|is=
+|es=
+|it=[[bella roba]]
+|kbd=
+|kk=
+|xal=
+|kn=
+|kaa=
+|krc=
+|krl=
+|ca=
+|csb=
+|qu=
+|ky=
+|zh=
+|zh-tw=
+|zh-cn=
+|kom=
+|koi=
+|kok=
+|kw=
+|ko=
+|co=
+|xh=
+|crh=
+|ku=
+|km=
+|lad=
+|lo=
+|la=
+|lv=
+|lez=
+|li=
+|ln=
+|lt=
+|lmo=
+|lb=
+|mk=
+|mg=
+|ms=
+|ml=
+|mt=
+|mi=
+|chm=
+|mdf=
+|mo=
+|mn=
+|gv=
+|nv=
+|gld=
+|nah=
+|na=
+|nio=
+|nap=
+|new=
+|de=
+|yrk=
+|nl=
+|dsb=
+|no=
+|oc=
+|os=
+|pa=
+|pap=
+|fa=
+|pl=
+|pt=[[imagine sói]]
+|ps=
+|pms=
+|rap=
+|rm=
+|ro=
+|sjd=
+|sa=
+|sc=
+|se=
+|sr=
+|sr-l=
+|scn=
+|si=
+|sd=
+|sk=
+|sl=
+|slovio-c=
+|slovio-l=
+|so=
+|chu.cyr=
+|chu.glag=
+|sw=
+|tab=
+|tl=
+|tg=
+|ty=
+|th=
+|ta=
+|tt=
+|tt.cyr=
+|tt.lat=
+|te=
+|art=
+|tpi=
+|kim=
+|tn=
+|tyv=
+|tr=
+|tk=
+|udm=
+|ug=
+|uz=
+|uk=
+|ur=
+|fo=
+|fi=
+|fr=
+|fy=
+|fur=
+|kjh=
+|ha=
+|hi=
+|hr=
+|rom=
+|ce=
+|cs=
+|cv=
+|sv=
+|cjs=
+|sco=
+|ewe=
+|myv=
+|eo=
+|et=
+|jv=
+|sah=
+|ja=
+}}
+
+=== Библиография ===
+* 
+
+{{improve|ru|примеры}}
+
+{{Категория|язык=ru|Приветствия||}}
+
+== {{з|(глагол)}} ==
+{{Форма-гл
+|база=здравствовать
+|залог=
+|лицо=2
+|число=мн
+|накл=п
+|язык=ru
+|слоги={{по-слогам|здра́в|ствуй|те}}
+|МФА={{t-ru|здра́вствуйте}}
+}} {{пример|}}
+
+{{improve|ru|}}
+
+{{длина слова|12|ru}}

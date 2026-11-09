@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Окно до первого кадра Compose. Цвета экрана — только из дизайн-токенов в Compose. -->
+    <style name="Theme.TeleTau" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sources.schema.json",
+  "title": "Источники контента — content/sources.yaml",
+  "description": "Реестр открытых источников, из которых взят каждый башкирский текст. На id ссылается source.ref в курсе, уроках и дуэлях. Лицензия — как заявлена источником; юридическую оценку не делаем (CLAUDE.md, правило 16).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sources"],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Source" }
+    }
+  },
+  "$defs": {
+    "Source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "license", "accessed"],
+      "anyOf": [{ "required": ["url"] }, { "required": ["edition"] }],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Slug" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "kind": {
+          "description": "Тип источника — для отчёта и фильтров.",
+          "type": "string",
+          "enum": ["dictionary", "wiktionary", "parallel_corpus", "phrasebook", "textbook", "other"]
+        },
+        "url": {
+          "description": "Главная страница источника или набора данных.",
+          "type": "string",
+          "pattern": "^https?://\\S+$"
+        },
+        "edition": {
+          "description": "Для печатных изданий: автор, название, город, издательство, год.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "license": {
+          "description": "Как заявлено источником: «CC BY-SA 4.0», «CC BY 2.0 FR», «не указана».",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "accessed": {
+          "description": "Дата обращения, ГГГГ-ММ-ДД.",
+          "type": "string",
+          "format": "date"
+        },
+        "note": { "type": "string", "maxLength": 1000 }
+      }
+    }
+  },
+  "examples": [
+    {
+      "sources": [
+        {
+          "id": "wiktionary-ru",
+          "title": "Викисловарь (русский раздел)",
+          "kind": "wiktionary",
+          "url": "https://ru.wiktionary.org/",
+          "license": "CC BY-SA 4.0",
+          "accessed": "2026-11-04"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "suite": "xp/lesson",
+  "version": 1,
+  "function": "lessonHoney",
+  "description": "lessonHoney({ kind, firstAttempts, completionToday }) — мёд за завершённый урок: (10 + 1 за каждое упражнение, верное с первой попытки) × множитель повтора, с округлением вниз. Правила — README.md этого каталога.",
+  "cases": [
+    { "id": "l001", "input": { "kind": "lesson", "firstAttempts": ["correct", "correct", "correct", "correct", "correct", "correct"], "completionToday": 1 }, "expected": { "base": 10, "firstTry": 6, "multiplier": 1, "total": 16 }, "note": "6 упражнений, все верно с первой попытки" },
+    { "id": "l002", "input": { "kind": "lesson", "firstAttempts": ["correct", "almost", "typo", "wrong", "correct", "wrong"], "completionToday": 1 }, "expected": { "base": 10, "firstTry": 4, "multiplier": 1, "total": 14 }, "note": "almost и typo засчитываются, wrong — нет" },
+    { "id": "l003", "input": { "kind": "lesson", "firstAttempts": ["wrong", "wrong", "wrong"], "completionToday": 1 }, "expected": { "base": 10, "firstTry": 0, "multiplier": 1, "total": 10 }, "note": "всё с ошибками — только база" },
+    { "id": "l004", "input": { "kind": "lesson", "firstAttempts": ["correct", "recorded", "correct", "recorded"], "completionToday": 1 }, "expected": { "base": 10, "firstTry": 2, "multiplier": 1, "total": 12 }, "note": "дуэли (recorded) не оцениваются и +1 не дают — за голос свой мёд (xp/vote)" },
+    { "id": "l005", "input": { "kind": "lesson", "firstAttempts": ["correct", "correct", "correct", "correct", "correct", "correct"], "completionToday": 2 }, "expected": { "base": 10, "firstTry": 6, "multiplier": 0.5, "total": 8 }, "note": "второй раз за сутки — половина: 16 × 0,5 = 8" },
+    { "id": "l006", "input": { "kind": "lesson", "firstAttempts": ["correct", "correct", "correct", "correct", "correct"], "completionToday": 2 }, "expected": { "base": 10, "firstTry": 5, "multiplier": 0.5, "total": 7 }, "note": "половина с округлением вниз: 15 × 0,5 = 7,5 → 7" },
+    { "id": "l007", "input": { "kind": "lesson", "firstAttempts": ["correct", "correct", "correct", "correct", "correct", "correct"], "completionToday": 3 }, "expected": { "base": 10, "firstTry": 6, "multiplier": 0, "total": 0 }, "note": "с третьего раза за сутки — 0" },
+    { "id": "l008", "input": { "kind": "lesson", "firstAttempts": ["correct", "correct", "correct"], "completionToday": 7 }, "expected": { "base": 10, "firstTry": 3, "multiplier": 0, "total": 0 }, "note": "седьмой раз — тоже 0" },
+    { "id": "l009", "input": { "kind": "place_test", "firstAttempts": ["correct", "correct", "wrong", "correct", "almost", "correct", "correct", "typo"], "completionToday": 1 }, "expected": { "base": 10, "firstTry": 7, "multiplier": 1, "total": 17 }, "note": "«Испытание места» считается как урок" },
+    { "id": "l010", "input": { "kind": "help_language", "firstAttempts": ["recorded", "recorded", "recorded"], "completionToday": 1 }, "expected": { "base": 0, "firstTry": 0, "multiplier": 1, "total": 0 }, "note": "узел «Помоги языку» мёда за урок не даёт — только за голоса (созревает)" },
+    { "id": "l011", "input": { "kind": "lesson", "firstAttempts": [], "completionToday": 1 }, "expected": { "base": 10, "firstTry": 0, "multiplier": 1, "total": 10 }, "note": "урок, где все дуэли пропущены (нечего показать), — база" }
+  ]
+}

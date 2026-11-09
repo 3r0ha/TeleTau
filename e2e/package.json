@@ -1,0 +1,23 @@
+{
+  "name": "@teletau/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Сквозные тесты M1 (Playwright) против настоящего стека: Docker, API, веб и консоль. Запуск — pnpm e2e из корня.",
+  "type": "module",
+  "scripts": {
+    "e2e": "node run.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@teletau/auth-codes": "workspace:*",
+    "@teletau/contracts": "workspace:*",
+    "@playwright/test": "1.64.1",
+    "@types/node": "^24.0.0",
+    "@types/qrcode": "^1.5.6",
+    "ioredis": "^6.0.0",
+    "otplib": "^13.6.0",
+    "qrcode": "^1.5.4"
+  }
+}

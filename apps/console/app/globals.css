@@ -1,0 +1,618 @@
+/* Стили экранов консоли. Компоненты — packages/ui/src/ui.css (@teletau/ui, общие с вебом, подключаются в layout.tsx).
+ * Консоль — рабочий инструмент: тот же визуальный язык, но плотнее и сдержаннее (таблицы, меньше иллюстраций).
+ * Все цвета, размеры и шрифты — только из дизайн-токенов (--tt-*). Хардкод цветов запрещён (scripts/check-hardcoded-colors.mjs). */
+
+.console {
+  background: var(--tt-color-bg);
+}
+
+.console__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--tt-space-s500);
+  padding-bottom: var(--tt-space-s1000);
+}
+
+.console__login {
+  padding-top: var(--tt-space-s1000);
+}
+
+.console__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--tt-space-s400);
+}
+
+.console__filter {
+  min-width: min(260px, 100%);
+}
+
+.console__filter .tt-input {
+  min-height: var(--tt-size-touch-min);
+  padding-block: var(--tt-space-s200);
+  font-size: var(--tt-font-size-body);
+}
+
+/* сегменты статуса: настоящие кнопки с aria-pressed */
+.segmented {
+  display: inline-flex;
+  gap: var(--tt-space-s100);
+  padding: var(--tt-space-s100);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-surface);
+}
+
+.segmented button {
+  min-height: var(--tt-size-touch-min);
+  padding: 0 var(--tt-space-s350);
+  border: 2px solid transparent;
+  border-radius: var(--tt-radius-icon-button);
+  background: none;
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  cursor: pointer;
+}
+
+/* Выбранный статус — сплошная граница accent.text (≥ 3:1 к фону), а не только бледная подложка (WCAG 1.4.11). */
+.segmented button[aria-pressed="true"] {
+  border-color: var(--tt-color-accent-text);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+/* таблицы */
+.table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  overflow-x: auto;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--tt-font-size-callout);
+}
+
+.table th {
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border-bottom: 2px solid var(--tt-color-border-subtle);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border-bottom: 2px solid var(--tt-color-border-subtle);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table--dense td {
+  padding-block: var(--tt-space-s200);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.table__sub {
+  display: block;
+  margin-top: var(--tt-space-s050);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+code.table__sub {
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.table__nowrap {
+  white-space: nowrap;
+}
+
+.table__meta {
+  max-width: 360px;
+  color: var(--tt-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s200);
+}
+
+.table__actions .tt-btn {
+  margin-bottom: var(--tt-size-lip);
+}
+
+.table-wrap > .tt-link-btn {
+  align-self: center;
+  margin-bottom: var(--tt-space-s200);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s400);
+  padding: var(--tt-space-s200) var(--tt-space-s400) var(--tt-space-s300);
+}
+
+@media (max-width: 720px) {
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    padding: var(--tt-space-s300) 0;
+    border-bottom: 2px solid var(--tt-color-border-subtle);
+  }
+
+  .table td {
+    padding: var(--tt-space-s100) var(--tt-space-s400);
+    border-bottom: 0;
+  }
+
+  .table__meta {
+    max-width: none;
+  }
+}
+
+/* ───────────── Республика и словарь для Фонда (ADR 0023) ───────────── */
+
+.section-title {
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* плитки: крупное число, подпись над ним, пояснение мелко */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--tt-space-s300);
+  margin: 0;
+}
+
+.kpis-skeleton {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--tt-space-s300);
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s200);
+  padding: var(--tt-space-s350) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.kpi__label {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-bold);
+  line-height: var(--tt-line-height-snug);
+}
+
+.kpi__icon svg {
+  display: block;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-accent-fill);
+}
+
+.kpi__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--tt-space-s100) var(--tt-space-s200);
+  margin: 0;
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-display);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--tt-line-height-tight);
+}
+
+.kpi__note {
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.kpi__value .hidden-num {
+  color: var(--tt-color-text-tertiary);
+}
+
+.hidden-num {
+  color: var(--tt-color-text-secondary);
+  white-space: nowrap;
+}
+
+/* таблицы раздела: числа справа, сортировка в заголовке, итог */
+.table th.table__num,
+.table td.table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table td.table__num {
+  white-space: nowrap;
+}
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  min-height: var(--tt-size-touch-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.sort-btn svg {
+  flex: none;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.table th[aria-sort="ascending"],
+.table th[aria-sort="descending"] {
+  color: var(--tt-color-accent-text);
+}
+
+.table th {
+  padding-block: var(--tt-space-s100);
+}
+
+/* заголовки с сортировкой переносятся на две строки — таблица помещается без прокрутки */
+.table th[aria-sort] {
+  white-space: normal;
+  vertical-align: bottom;
+}
+
+.table th.table__num .sort-btn {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.table tfoot th,
+.table tfoot td {
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border-top: 2px solid var(--tt-color-border-subtle);
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-callout);
+  letter-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  vertical-align: top;
+}
+
+.table tfoot td.table__num {
+  text-align: right;
+}
+
+.table tfoot th {
+  font-family: var(--tt-font-family-text);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.table__total th,
+.table__total td {
+  background: var(--tt-color-bg-sunken);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.table__link {
+  color: var(--tt-color-accent-text);
+  font-weight: var(--tt-font-weight-bold);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.table__link:hover {
+  text-decoration-color: var(--tt-color-accent-fill);
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s100);
+  margin: 0;
+  padding: 0;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  list-style: none;
+}
+
+.back-link {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  min-height: var(--tt-size-touch-min);
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+}
+
+.back-link svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+/* динамика по неделям: столбцы ≤ 24 px, скругление 4 px у конца данных, сетка — волосок */
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.chart__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tt-space-s300);
+}
+
+.chart__readout {
+  min-height: 1.5em;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__readout b {
+  color: var(--tt-color-text-primary);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.chart__box {
+  width: 100%;
+  min-width: 0;
+}
+
+.chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart__grid {
+  stroke: var(--tt-color-border-subtle);
+  stroke-width: 1;
+}
+
+.chart__axis {
+  stroke: var(--tt-color-border-default);
+  stroke-width: 1;
+}
+
+.chart__tick,
+.chart__x {
+  fill: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__value {
+  fill: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__bar {
+  fill: var(--tt-color-accent-fill);
+}
+
+.chart__hatch-bg {
+  fill: var(--tt-color-accent-soft);
+}
+
+.chart__hatch {
+  stroke: var(--tt-color-accent-fill);
+  stroke-width: 3;
+}
+
+.chart__hit {
+  fill: transparent;
+}
+
+.chart__col {
+  cursor: default;
+  outline: none;
+}
+
+.chart__col--focus .chart__hit {
+  fill: var(--tt-color-accent-soft);
+}
+
+.chart__col:focus-visible .chart__hit {
+  stroke: var(--tt-color-focus);
+  stroke-width: 2;
+}
+
+.chart__table summary {
+  min-height: var(--tt-size-touch-min);
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  cursor: pointer;
+}
+
+.chart__table[open] summary {
+  margin-bottom: var(--tt-space-s200);
+}
+
+/* словарь для Фонда */
+.pair__ba {
+  display: block;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.pair__chips .tt-chip {
+  white-space: nowrap;
+}
+
+.pair__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s100);
+  margin-top: var(--tt-space-s150);
+}
+
+.votes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.votes {
+  min-width: 12rem;
+}
+
+.votes li {
+  display: grid;
+  grid-template-columns: 5.5em auto;
+  justify-content: start;
+  column-gap: var(--tt-space-s200);
+}
+
+.votes b {
+  white-space: nowrap;
+}
+
+.votes__group {
+  color: var(--tt-color-text-secondary);
+}
+
+.table__source {
+  min-width: 15rem;
+}
+
+.votes__both {
+  grid-column: 2;
+  color: var(--tt-color-text-tertiary);
+  white-space: nowrap;
+  font-size: var(--tt-font-size-footnote);
+}
+
+@media (max-width: 720px) {
+  .table td.table__num {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--tt-space-s300);
+    text-align: right;
+  }
+
+  .table td[data-label]::before {
+    content: attr(data-label);
+    color: var(--tt-color-text-tertiary);
+    font-size: var(--tt-font-size-footnote);
+    text-align: left;
+  }
+
+  .table td:not(.table__num)[data-label]::before {
+    display: block;
+  }
+
+  .table td.table__num .table__sub {
+    display: inline;
+    margin: 0 0 0 var(--tt-space-s150);
+  }
+
+  .table tfoot tr {
+    display: block;
+    padding: var(--tt-space-s300) 0;
+  }
+
+  .table tfoot th,
+  .table tfoot td {
+    display: block;
+    padding: var(--tt-space-s100) var(--tt-space-s400);
+    border-top: 0;
+  }
+
+  .table tfoot td.table__num {
+    display: flex;
+  }
+
+  .kpis,
+  .kpis-skeleton {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tt-space-s200);
+  }
+
+  .kpi {
+    padding: var(--tt-space-s300);
+  }
+
+  .kpi__value {
+    font-size: var(--tt-font-size-title1);
+  }
+}

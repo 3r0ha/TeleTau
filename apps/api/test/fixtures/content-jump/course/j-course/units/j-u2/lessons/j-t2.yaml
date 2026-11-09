@@ -1,0 +1,28 @@
+id: j-t2
+unit: j-u2
+kind: place_test
+title_ru: Испытание места
+exercises:
+  - id: j-t2-a
+    type: choice_ba_ru
+    prompt:
+      ba: пиҡол
+      ru: Значение К
+      source: { ref: synthetic, url: https://example.org/synthetic/10, locator: "строка 10" }
+      review: needs_native_review
+    options_ru: [Значение И, Значение К]
+    correct: 1
+  - id: j-t2-b
+    type: free_ru_ba
+    prompt_ru: Синтетика З
+    answers:
+      - ba: тумә
+        source: { ref: synthetic, url: https://example.org/synthetic/9, locator: "строка 9" }
+        review: needs_native_review
+  - id: j-t2-c
+    type: free_ru_ba
+    prompt_ru: Синтетика Ж
+    answers:
+      - ba: ғарыҙ
+        source: { ref: synthetic, url: https://example.org/synthetic/2, locator: "строка 2" }
+        review: needs_native_review

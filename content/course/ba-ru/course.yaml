@@ -1,0 +1,12 @@
+# Курс «Башкирский язык» для русскоязычных учеников (схема — content/schema/course.schema.json).
+id: ba-ru
+version: 7
+title_ru: Башкирский язык
+direction: ru-ba
+units:
+  - 01-ufa
+  - 02-shulgantash
+  - 03-agidel
+  - 04-yamantau
+  - 05-village
+  - 06-sabantuy

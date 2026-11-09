@@ -1,0 +1,463 @@
+{{pagebanner|Welcome banner.jpg}}
+'''Bashkir''' (башҡорт теле) is a Turkic language, spoken in [[Bashkortostan]], a republic in [[Russia]].
+
+==Pronunciation guide and Alphabet==
+
+The Bashkir alphabet is almost identical to the [[Russian_phrasebook#Pronunciation_guide|Russian alphabet]]. The differences are italicized in the list below: the Bashkir alphabet has several additional letters, and some letters that are pronounced slightly differently from their Russian counterparts. Some letters are striken through; they are included for completeness, but are not found in native Bashkir words, only Russian loanwoards.
+
+; ''Аа'' : 	''like English f'''a'''ther {{IPA|ɑ}}''
+; Бб  : like '''b'''oy {{IPA|b}}
+; ''Вв''  : ''like '''w'''on {{IPA|w}}''
+; ''Гг''  : ''like Russian гь, somewhat like English '''g'''eek {{IPA|ɟ}}''
+; ''Ғғ''  : ''guttural R, such as in French {{IPA|ʁ}}''
+; Дд  :  like '''d'''o {{IPA|d}}
+; ''Ҙҙ''  : ''like '''th'''at {{IPA|ð}}''
+; Ее  : like '''ye'''sterday {{IPA|je}}
+; Ёё   : like '''yo'''re {{IPA|jɵ}}
+; ''Жж''  : ''like English mea'''s'''ure {{IPA|ʒ}}''
+; Зз    : like '''z'''oo {{IPA|z}}
+; Ии    : like mach'''i'''ne {{IPA|i}}
+; Йй    : like bo'''y''' {{IPA|j}}
+; {{strike|Кк}}    : {{strike|like '''k'''ite {{IPA|k}}}}
+; ''Ҡҡ''    : ''like Arabic '''Q'''atar; a k-sound further back in the mouth {{IPA|q}}''
+; ''Лл''    : ''somewhat like English '''l'''ike {{IPA|l}}''
+; Мм    : like see'''m''' {{IPA|m}}
+; Нн     : like '''n'''et {{IPA|n}}
+; ''Ңң''     : ''like si'''ng''' {{IPA|ŋ}}''
+; Оо     : like sc'''o'''re {{IPA|o}}
+; ''Өө''     : ''German ö; е pronounced with the upper lip rounded back {{IPA|ø}}''
+; Пп     : like s'''p'''igot {{IPA|p}}
+; Рр     : ''heavily'' rolled as in Spanish rr in pe'''rr'''o {{IPA|r}}
+; Сс      : like '''s'''ailor {{IPA|s}}
+; ''Ҫҫ''      : ''like '''th'''ink {{IPA|θ}}''
+; Тт       : like '''t'''attoo {{IPA|t}}
+; Уу       : like cart'''oo'''n {{IPA|u}}
+; ''Үү''       : ''French or German y, ü; и pronounced with the upper lip rounded back {{IPA|y}}''
+; {{strike|Фф}}       : {{strike|like '''f'''inish {{IPA|f}}}}
+; ''Хх''  : ''a guttural sound, moreso than the Russian, as in German Ba'''ch''' {{IPA|χ}}''
+; ''Һһ''  : ''like '''h'''elp {{IPA|h}}''
+; {{strike|Цц}} : {{strike|like boo'''ts''' {{IPA|t͡s}}}}
+; {{strike|Чч}} : {{strike|like '''ch'''eap {{IPA|t͡ɕ}}}}
+; ''Шш''  : ''like English '''sh'''ot {{IPA|ʃ}}''
+; ''Щщ'' : ''The same as ш''
+; ''Ыы'' : ''somewhat like a curt g'''u'''t {{IPA|[ɤ̆~ʌ̆]}}''
+; ''Ээ'' : ''like the letter е above''
+; ''Әә''  : ''like '''a'''pple {{IPA|æ}}''
+; Юю : like '''Yu'''goslavia {{IPA|ju}}
+; ''Яя''       : ''like '''ya'''cht, with the а pronunciation given above {{IPA|jɑ}}'' <!-- I assume. This doesn't seem to feature in native words, so it comes down to how Bashkir speakers likely pronounce Russian а sounds. With their accents, this is the most likely realization -->
+
+Notice that some of these differences (А, Ж, and Ш) are closer to some sounds in English than the corresponding sounds in Russian, and so should be easier to pronounce.
+
+==Phrase list==
+{{phrase}}
+
+
+===Basics===
+{{infobox|Common signs|
+; OPEN : asYIk (a like Russian a, yi like Russian ы, k like in Arabic)
+; CLOSED : yabYIk (a like Russian a, yi like Russian ы, k like in Arabic) 
+; ENTRANCE : 
+; EXIT : 
+; PUSH : etAr (e like in pen, a like in man)
+; PULL : 
+; TOILET : bathrAf (a like in man, th like in that)
+; MEN : 
+; WOMEN : 
+; FORBIDDEN : }}
+
+; Hello.:Сәләм. ( ''Säläm.'')
+; Hello. (''informal'') :  . ('salAm' 'a like in man')
+; How are you? :Бәләкәс нисек? ('' Bäläkäs nisek?'')
+; Fine, thank you. :Яҡшы, рәхмәт. ('' Yaqşı, räxmät.'')
+; What is your name? :Һеҙҙең исемегеҙ нисек? ('' Heźźeñ isemegeź nisek?'')
+; My name is ______ . :Минең исемем ______ . (''  Mineñ isemem ______ .'' )
+; Nice to meet you. :Һәйбәт таныштырҙы. (''  Häybät tanıştırźı.'')
+; Please. :Зинһар. (''  Zinhar.'')
+; Thank you. :Рәхмәт. ( ''Räxmät.'')
+; You're welcome. :Зинһар. ('' Zinhar.'')
+; Yes. :D. ( ''Д.'')
+; No. :Юҡ  ( ''Yuq.'')
+; Excuse me. (''getting attention'') :  . ('' '')
+; Excuse me. (''begging pardon'') :  . ('' '')
+; I'm sorry. :  . ('' '')
+; Goodbye :  . ('' '')
+; Goodbye (''informal'') :  . ('' '')
+; I can't speak Bashkir [well]. :  [ ]. ('' [ ]'')
+; Do you speak English? :  ? ('' ?'')
+;  Is there someone here who speaks English? : ? ('' ?'')
+; Help! :  ! ('' !'')
+; Look out! :  ! ('' !'')
+; Good morning. :  . ('' '')
+; Good evening. :  . ('' '')
+; Good night. :  . ('' '')
+; Good night (''to sleep'') :  . ('' '')
+; I don't understand. :  . ('' '')
+; Where is the toilet? :  ? ('' ?'')
+
+===Problems===
+
+; Leave me alone. :  . ('' .'')
+; Don't touch me! :  ! ('' !'')
+; I'll call the police. : . ('' .'')
+; Police! : ! ('' !'')
+; Stop! Thief! : ! ! ('' ! !'')
+; I need your help. : . ('' .'')
+; It's an emergency. : . ('' .'')
+; I'm lost. :  . ('' .'')
+; I lost my bag. :  . ('' .'')
+; I lost my wallet. :  . ('' .'')
+; I'm sick. :  . ('' .'')
+; I've been injured. :  . ('' .'')
+; I need a doctor. :  . ('' .'')
+; Can I use your phone? : ? ('' ?'')
+
+===Numbers===
+
+; 1 :  ('ber' 'e like in pen')
+; 2 :  ('ikE' 'E like in pen')
+; 3 :  ('' '')
+; 4 :  ('durt')
+; 5 :  ('bish')
+; 6 :  ('' '')
+; 7 :  ('ete' 'yetE')
+; 8 :  ('higEth' 'th like in that')
+; 9 :  ('' '')
+; 10 :  ('' '')
+; 11 :  ('' '')
+; 12 :  ('' '')
+; 13 :  ('' '')
+; 14 :  ('' '')
+; 15 :  ('' '')
+; 16 :  ('' '')
+; 17 :  ('' '')
+; 18 :  ('' '')
+; 19 :  ('' '')
+; 20 :  ('' '')
+; 21 :  ('' '')
+; 22 :  ('' '')
+; 23 :  ('' '')
+; 30 :  ('' '')
+; 40 :  ('' '')
+; 50 :  ('' '')
+; 60 :  ('' '')
+; 70 :  ('' '')
+; 80 :  ('' '')
+; 90 :  ('' '')
+; 100 :  ('' '')
+; 200 :  ('' '')
+; 300 :  ('' '')
+; 1,000 :  ('' '')
+; 2,000 :  ('' '')
+; 1,000,000 :  ('' '')
+; 1,000,000,000 :  ('' '')
+; 1,000,000,000,000 :  ('' '')
+; number _____ (train, bus, etc.) : ('' '')
+; half : ('' '')
+; less : ('' '')
+; more : ('' '')
+
+===Time===
+
+; now :  ('' '')
+; later :  ('' '')
+; before :  ('' '')
+; morning :  ('' '')
+; afternoon :  ('' '')
+; evening :  ('' '')
+; night :  ('' '')
+
+====Clock time====
+
+; one o'clock AM :  ('' '')
+; two o'clock AM :  ('' '')
+; noon :  ('' '')
+; one o'clock PM :  ('' '')
+; two o'clock PM :  ('' '')
+; midnight :  ('' '')
+
+====Duration====
+
+; _____ minute(s) :  ('' '')
+; _____ hour(s) :  ('' '')
+; _____ day(s) :  ('' '')
+; _____ week(s) :  ('' '')
+; _____ month(s) :  ('' '')
+; _____ year(s) :  ('' '')
+
+====Days====
+; today :  ('' '')
+; yesterday :  ('' '')
+; tomorrow :  ('' '')
+; this week :  ('' '')
+; last week :  ('' '')
+; next week :  ('' '')
+
+; Sunday :  ('' '')
+; Monday :  ('' '')
+; Tuesday :  ('' '')
+; Wednesday :  ('' '')
+; Thursday :  ('' '')
+; Friday :  ('' '')
+; Saturday :  ('' '')
+
+====Months====
+
+<!--If speakers of the language commonly use a calendar other than the Gregorian, explain it here and list its months. See [[Hebrew phrasebook]] for an example.-->
+
+; January :  ('' '')
+; February :  ('' '')
+; March :  ('' '')
+; April :  ('' '')
+; May :  ('' '')
+; June :  ('' '')
+; July :  ('' '')
+; August :  ('' '')
+; September :  ('' '')
+; October :  ('' '')
+; November :  ('' '')
+; December :  ('' '')
+
+====Writing time and date====
+<!--Give some examples how to write clock times and dates if it differs from English.-->
+
+===Colors===
+
+; black :ҡара  (''kah-RAH '')
+; white : аҡ (''ah-KH '')
+; gray : һоро  (''hoh-ORO '')
+; red : ҡыҙыл  (''quh-DHUHL '')
+; blue : күк (''kh-OOKH'')
+; yellow : һары  (''hah-RUH  '')
+; green :йәшел  (''yae-SHEL '')
+; orange : ҡыҙғылт һары  (''quh-DHEGH-uhlt-HAH-ruh '')
+; purple : зәңгәр күк  (''zaeng-GAER-k-OOK '')
+; pink : алһыу (''ahl-HUH '')
+; brown : көрән (''koe-RAEN '')
+
+===Transportation===
+
+====Bus and train====
+; How much is a ticket to _____? :  ('' '')
+; One ticket to _____, please. :  ('' '')
+; Where does this train/bus go? :  ('' '')
+; Where is the train/bus to _____? :  ('' '')
+; Does this train/bus stop in _____? :  ('' '')
+; When does the train/bus for _____ leave? :  ('' '')
+; When will this train/bus arrive in _____? :  ('' '')
+
+====Directions====
+; How do I get to _____ ? :  ('' '')
+; ...the train station? :  ('' '')
+; ...the bus station? :  ('' '')
+; ...the airport? :  ('' '')
+; ...downtown? :  ('' '')
+; ...the youth hostel? :  ('' '')
+; ...the _____ hotel? :  ('' '')
+; ...the American/Canadian/Australian/British consulate? :  ('' '')
+; Where are there a lot of... :  ('' '')
+; ...hotels? :  ('' '')
+; ...restaurants? :  ('' '')
+; ...bars? :  ('' '')
+; ...sites to see? :  ('' '')
+; Can you show me on the map? :  ('' '')
+; street :  ('' '')
+; Turn left. :  ('' '')
+; Turn right. :  ('' '')
+; left :  ('' '')
+; right :  ('' '')
+; straight ahead :  ('' '')
+; towards the _____ :  ('' '')
+; past the _____ :  ('' '')
+; before the _____ :  ('' '')
+; Watch for the _____. :  ('' '')
+; intersection :  ('' '')
+; north :  ('' '')
+; south :  ('' '')
+; east :  ('' '')
+; west :  ('' '')
+; uphill :  ('' '')
+; downhill :  ('' '')
+
+====Taxi====
+; Taxi! :  ('' '')
+; Take me to _____, please. :  ('' '')
+; How much does it cost to get to _____? :  ('' '')
+; Take me there, please. :  ('' '')
+
+===Lodging===
+
+; Do you have any rooms available? :  ('' '')
+; How much is a room for one person/two people? :  ('' '')
+; Does the room come with... :  ('' '')
+; ...bedsheets? :  ('' '')
+; ...a bathroom? :  ('' '')
+; ...a telephone? :  ('' '')
+; ...a TV? :  ('' '')
+; May I see the room first? :  ('' '')
+; Do you have anything quieter? :  ('' '')
+; ...bigger? :  ('' '')
+; ...cleaner? :  ('' '')
+; ...cheaper? :  ('' '')
+; OK, I'll take it. :  ('' '') 
+; I will stay for _____ night(s). :  ('' '')
+; Can you suggest another hotel? :  ('' '')
+; Do you have a safe? :  ('' '')
+; ...lockers? :  ('' '')
+; Is breakfast/supper included? :  ('' '')
+; What time is breakfast/supper? :  ('' '')
+; Please clean my room. :  ('' '')
+; Can you wake me at _____? :  ('' '')
+; I want to check out. :  ('' '')
+
+===Money===
+
+; Do you accept American/Australian/Canadian dollars? :  ('' '')
+; Do you accept British pounds? :  ('' '')
+; Do you accept euros? :  ('' '')
+; Do you accept credit cards? :  ('' '')
+; Can you change money for me? :  ('' '')
+; Where can I get money changed? :  ('' '')
+; Can you change a traveler's check for me? :  ('' '')
+; Where can I get a traveler's check changed? :  ('' '')
+; What is the exchange rate? :  ('' '')
+; Where is an automatic teller machine (ATM)? :  ('' '')
+
+===Eating===
+; A table for one person/two people, please. :  ('' '')
+; Can I look at the menu, please? :  ('' '')
+; Can I look in the kitchen? :  ('' '')
+; Is there a house specialty? :  ('' '')
+; Is there a local specialty? :  ('' '')
+; I'm a vegetarian. :  ('' '')
+; I don't eat pork. :  ('' '')
+; I don't eat beef. :  ('' '')
+; I only eat kosher food. :  ('' '')
+; Can you make it "lite", please? (''less oil/butter/lard'') :  ('' '')
+; fixed-price meal :  ('' '')
+; à la carte :  ('' '')
+; breakfast :  ('' '')
+; lunch :  ('' '')
+; tea (''meal'') :  ('' '')
+; supper :  ('' '')
+; I want _____. :  ('' '')
+; I want a dish containing _____. :  ('' '')
+; chicken :  ('' '')
+; beef :  ('' '')
+; fish :  ('' '')
+; ham :  ('' '')
+; sausage :  ('' '')
+; cheese :  ('' '')
+; eggs :  ('' '')
+; salad :  ('' '')
+; (fresh) vegetables :   ('' '')
+; (fresh) fruit :  ('' '')
+; bread :  ('' '')
+; toast :  ('' '')
+; noodles :  ('' '')
+; rice :  ('' '')
+; beans :  ('' '')
+; May I have a glass of _____? :  ('' '')
+; May I have a cup of _____? :  ('' '')
+; May I have a bottle of _____? :  ('' '')
+; coffee :  ('' '')
+; tea (''drink'') :  ('' '')
+; juice :  ('' '')
+; (bubbly) water :  ('' '')
+; (still) water :  ('' '')
+; beer :  ('' '')
+; red/white wine :  ('' '')
+; May I have some _____? :  ('' '')
+; salt :  ('' '')
+; black pepper :  ('' '')
+; butter :  ('' '')
+; Excuse me, waiter? (''getting attention of server''):  ('' '')
+; I'm finished. :  ('' '')
+; It was delicious. :  ('' '')
+; Please clear the plates. :  ('' '')
+; The check, please. :  ('' '')
+
+===Bars===
+; Do you serve alcohol? :  ('' '')
+; Is there table service? :  ('' '')
+; A beer/two beers, please. :  ('' '')
+; A glass of red/white wine, please. :  ('' '')
+; A pint, please. :  ('' '')
+; A bottle, please. :  ('' '')
+; _____ (''hard liquor'') and _____ (''mixer''), please. :  ('' '')
+; whiskey :  ('' '')
+; vodka :  ('' '')
+; rum :  ('' '')
+; water :  ('' '')
+; club soda :  ('' '')
+; tonic water :  ('' '')
+; orange juice :  ('' '')
+; Coke (''soda'') :  ('' '')
+; Do you have any bar snacks? :  ('' '')
+; One more, please. :  ('' '')
+; Another round, please. :  ('' '')
+; When is closing time? :  ('' '')
+; Cheers! :  ('' '')
+
+===Shopping===
+; Do you have this in my size? :  ('' '')
+; How much is this? :  ('' '')
+; That's too expensive. :  ('' '')
+; Would you take _____? :  ('' '')
+; expensive :  ('' '')
+; cheap :  ('' '')
+; I can't afford it. :  ('' '')
+; I don't want it. :  ('' '')
+; You're cheating me. :  ('' '')
+; I'm not interested. :  (..)
+; OK, I'll take it. :  ('' '')
+; Can I have a bag? :  ('' '')
+; Do you ship (overseas)? :  ('' '')
+; I need... :  ('' '')
+; ...toothpaste. :  ('' '')
+; ...a toothbrush. :  ('' '')
+; ...tampons. : . ('' '')
+; ...soap. :  ('' '')
+; ...shampoo. :  ('' '') 
+; ...pain reliever. (''e.g., aspirin or ibuprofen'') :  ('' '')
+; ...cold medicine. :  ('' '')
+; ...stomach medicine. : ... ('' '')
+; ...a razor. :  ('' '')
+; ...an umbrella. :  ('' '')
+; ...sunblock lotion. :  ('' '')
+; ...a postcard. :  ('' '')
+; ...postage stamps. :  ('' '')
+; ...batteries. :  ('' '')
+; ...writing paper. :  ('' '')
+; ...a pen. :  ('' '')
+; ...English-language books. :  ('' '')
+; ...English-language magazines. :  ('' '')
+; ...an English-language newspaper. :  ('' '')
+; ...an English-English dictionary. :  ('' '')
+
+===Driving===
+; I want to rent a car. :  ('' '')
+; Can I get insurance? :  ('' '')
+; stop (''on a street sign'') :  ('' '')
+; one way :  ('' '')
+; yield :  ('' '')
+; no parking :  ('' '')
+; speed limit :  ('' '')
+; gas (''petrol'') station :  ('' '')
+; petrol :  ('' '')
+; diesel :  ('' '')
+
+===Authority===
+
+; I haven't done anything wrong. :  ('' '')
+; It was a misunderstanding. :  ('' '')
+; Where are you taking me? :  ('' '')
+; Am I under arrest? :  ('' '')
+; I am an American/Australian/British/Canadian citizen. :  ('' '')
+; I want to talk to the American/Australian/British/Canadian embassy/consulate. :  ('' '')
+; I want to talk to a lawyer. :  ('' '')
+; Can I just pay a fine now? :  ('' '')
+
+==Learning more==
+
+{{Outlinephrasebook}}
+{{phrasebookguide}}

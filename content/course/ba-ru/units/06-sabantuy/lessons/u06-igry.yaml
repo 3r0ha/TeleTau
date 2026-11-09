@@ -1,0 +1,180 @@
+# Урок «Игры» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u06-igry
+unit: 06-sabantuy
+kind: lesson
+title_ru: Игры
+new_words:
+  - уйын
+  - туп
+  - бейеү
+  - ҡурай
+  - өҫтәл уйыны
+exercises:
+  - id: u06-igry-e01
+    type: choice_ba_ru
+    prompt:
+      ba: уйын
+      ru: игра
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%83%D0%B9%D1%8B%D0%BD
+        locator: статья «уйын», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - игра
+      - мяч
+      - песня
+    correct: 0
+  - id: u06-igry-e02
+    type: tiles_ru_ba
+    prompt_ru: Настольная игра
+    answer:
+      ba: өҫтәл уйыны
+      ru: настольная игра
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%83%D0%B9%D1%8B%D0%BD
+        locator: статья «уйын», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: туп
+        ru: мяч
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D1%83%D0%BF
+          locator: статья «туп», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: йыр
+        ru: песня
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B9%D1%8B%D1%80
+          locator: статья «йыр», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/b/b9/Ba-%D0%B9%D1%8B%D1%80.oga
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B9%D1%8B%D1%80.oga
+            locator: File:Ba-йыр.oga; запись — Borovi4ok
+          license: CC BY 3.0
+  - id: u06-igry-e03
+    type: choice_ba_ru
+    prompt:
+      ba: туп
+      ru: мяч
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%82%D1%83%D0%BF
+        locator: статья «туп», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - мяч
+      - игра
+      - лошадь
+    correct: 0
+  - id: u06-igry-e04
+    type: free_ru_ba
+    prompt_ru: игра
+    answers:
+      - ba: уйын
+        ru: игра
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%83%D0%B9%D1%8B%D0%BD
+          locator: статья «уйын», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u06-igry-e05
+    type: tiles_ru_ba
+    prompt_ru: Ты любишь игры с мячом?
+    answer:
+      ba: Һин туп уйындарын яратаһыңмы?
+      ru: Ты любишь игры с мячом?
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/4260041
+        locator: предложение №4260041 (CC BY 2.0 FR); русский перевод №4260045
+      review: needs_native_review
+    distractors:
+      - ba: мин
+        ru: я
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BC%D0%B8%D0%BD
+          locator: статья «мин», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/9/9f/LL-Q13389_%28bak%29-Pastilahor-min.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-min.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-min.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: мин
+      - ba: ат
+        ru: лошадь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D1%82
+          locator: статья «ат», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u06-igry-e06
+    type: choice_ba_ru
+    prompt:
+      ba: ҡурай
+      ru: курай
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%A1%D1%83%D1%80%D0%B0%D0%B9
+        locator: статья «ҡурай», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - курай
+      - кумыс
+      - танец
+    correct: 0
+  - id: u06-igry-e07
+    type: free_ru_ba
+    prompt_ru: мяч
+    answers:
+      - ba: туп
+        ru: мяч
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D1%83%D0%BF
+          locator: статья «туп», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u06-igry-p01
+    type: match_pairs
+    pairs:
+      - ba: уйын
+        ru: игра
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%83%D0%B9%D1%8B%D0%BD
+          locator: статья «уйын», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: туп
+        ru: мяч
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D1%83%D0%BF
+          locator: статья «туп», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: бейеү
+        ru: танец
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B5%D0%B9%D0%B5%D2%AF
+          locator: статья «бейеү», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ҡурай
+        ru: курай
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D1%83%D1%80%D0%B0%D0%B9
+          locator: статья «ҡурай», раздел «Башкирский», значение 1
+        review: needs_native_review

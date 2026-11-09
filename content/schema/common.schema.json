@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "title": "Общие определения контента «ТелеТау»",
+  "description": "Строки и ссылки, общие для курса, уроков и дуэлей (docs/plans/M2.md §3 «Ч1 → Хранение»). Кодовые точки, normalize(ba) === ba, ссылки на sources.yaml и строки очереди проверки проверяет scripts/check-content.mjs — JSON Schema их не выражает.",
+  "$defs": {
+    "Slug": {
+      "description": "Стабильный идентификатор: латиница в нижнем регистре, цифры, дефис. Не переиспользуется после удаления — на него ссылаются голоса и попытки.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "RuText": {
+      "description": "Русская строка интерфейса или задания (не башкирский текст).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "Review": {
+      "description": "Статус проверки носителем (CLAUDE.md, правило 6). Всё новое — needs_native_review; вердикт носителя ставится здесь же, в YAML (строка в docs/native-review-queue.md — одна на файл). native_rejected — строка не показывается и не импортируется.",
+      "type": "string",
+      "enum": ["needs_native_review", "native_approved", "native_rejected"]
+    },
+    "SourceRef": {
+      "description": "Где именно засвидетельствована строка. ref — id из content/sources.yaml; url (ссылка на статью или запись) или page (страница печатного издания); locator — как найти строку внутри: заголовок статьи, номер предложения Tatoeba, id строки датасета, номер упражнения.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "locator"],
+      "anyOf": [
+        {
+          "required": ["url"]
+        },
+        {
+          "required": ["page"]
+        }
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/Slug"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https?://\\S+$"
+        },
+        "page": {
+          "description": "Страница или диапазон страниц: «12», «12–13».",
+          "type": ["string", "integer"]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        }
+      }
+    },
+    "BaText": {
+      "description": "Башкирская строка с источником. ba — посимвольная копия из источника после normalize из @teletau/bashkir-text (правило 7); если источник набирал двойниками (латинская ə U+0259 вместо ә U+04D9, казахская қ U+049B вместо ҡ U+04A1), исходная запись сохраняется в raw. Необязательное audio — запись произношения носителем с источником (кнопка «Послушать» в уроке и словаре). Ничего не «исправлять», не придумывать, не переводить машинно (правило 6, план §3 Ч1).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ba", "source", "review"],
+      "properties": {
+        "ba": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "raw": {
+          "description": "Запись как в источнике, если она отличается от ba (только двойники и невидимые символы).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "ru": {
+          "description": "Перевод или толкование из того же источника (для пояснения после ответа). Необязательно.",
+          "$ref": "#/$defs/RuText"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "review": {
+          "$ref": "#/$defs/Review"
+        },
+        "review_note": {
+          "description": "Комментарий носителя к вердикту.",
+          "type": "string",
+          "maxLength": 500
+        },
+        "audio": {
+          "$ref": "#/$defs/Audio"
+        }
+      }
+    },
+    "Audio": {
+      "description": "Запись произношения носителем (заготовка озвучки): файл Wikimedia Commons — туда же выкладывает записи Lingua Libre. url — прямая ссылка на файл (upload.wikimedia.org), source — страница файла (ref из content/sources.yaml, url страницы File:…, locator — диктор или проект записи). Без записи кнопки «Послушать» нет. Синтез речи и записи неизвестного происхождения не допускаются (правило 6).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "source"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://upload\\.wikimedia\\.org/\\S+\\.(ogg|oga|opus|mp3|wav|flac|webm)$"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "license": {
+          "description": "Лицензия записи, как заявлена на странице файла.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "word_ba": {
+          "description": "Слово записи кириллицей — только когда в имени файла (transcription Lingua Libre) оно набрано латиницей: min → мин. Проверка: буква в букву по таблице LATIN_TO_BA в scripts/lib/audio.mjs.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Только debug: API показа работает по HTTP на компьютере в той же сети Wi‑Fi (http://<IP>:4000) или на хозяине эмулятора (10.0.2.2). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

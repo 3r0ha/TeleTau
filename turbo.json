@@ -1,0 +1,82 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "globalEnv": [
+    "NEXT_PUBLIC_API_URL"
+  ],
+  "globalPassThroughEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "VALKEY_URL",
+    "CLICKHOUSE_URL",
+    "S3_ENDPOINT",
+    "S3_ACCESS_KEY",
+    "S3_SECRET_KEY",
+    "API_PORT",
+    "AI_GATEWAY_PORT",
+    "ML_WORKER_PORT",
+    "WEB_PORT",
+    "CONSOLE_PORT",
+    "HEALTH_TIMEOUT_MS",
+    "TELEGRAM_BOT_TOKEN",
+    "TELEGRAM_MINIAPP_URL",
+    "BOT_API_URL",
+    "BOT_SERVICE_TOKEN",
+    "BOT_REMINDER_INTERVAL_SECONDS",
+    "GIGACHAT_AUTH_KEY",
+    "NEXT_TELEMETRY_DISABLED",
+    "DB_QUERY_TIMEOUT_MS",
+    "DB_STATEMENT_TIMEOUT_MS",
+    "VALKEY_COMMAND_TIMEOUT_MS",
+    "VALKEY_SOCKET_TIMEOUT_MS",
+    "VALKEY_WORKER_SOCKET_TIMEOUT_MS",
+    "AUTH_DEMO_OTP",
+    "AUTH_DEMO_STAFF",
+    "AUTH_DEMO_CLASS_CODE",
+    "AUTH_JWT_PRIVATE_KEY",
+    "AUTH_SECRET_PEPPER",
+    "AUTH_ENCRYPTION_KEY",
+    "PUBLIC_WEB_URL",
+    "PUBLIC_CONSOLE_URL",
+    "TRUST_PROXY",
+    "NEST_LOG_LEVEL",
+    "BFF_TRUST_PROXY",
+    "BFF_API_TIMEOUT_MS",
+    "ANDROID_APK_URL"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "build/**"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "dev": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Бренд. needs_native_review: docs/native-review-queue.md, строка 1. -->
+    <string name="teletau_start_brand" translatable="false">ТелеТау</string>
+    <string name="teletau_start_subtitle">Башкирская языковая школа</string>
+    <!-- Все 9 особых букв башкирского алфавита в обоих регистрах (docs/05-design-system.md §4).
+         Внутри пары — неразрывный пробел (U+00A0), чтобы перенос не разрывал пару. -->
+    <string name="teletau_start_glyph_line" translatable="false">Ә\u00A0ә Ө\u00A0ө Ү\u00A0ү Ғ\u00A0ғ Ҡ\u00A0ҡ Ң\u00A0ң Ҙ\u00A0ҙ Ҫ\u00A0ҫ Һ\u00A0һ</string>
+    <string name="teletau_start_glyph_caption">Башкирские буквы</string>
+    <string name="teletau_start_hex_label">Медовая ячейка сот</string>
+    <string name="teletau_start_action">Начать</string>
+</resources>

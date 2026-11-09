@@ -1,0 +1,51 @@
+# Юнит 3 «Ағиҙел · Природа» — открыт: узлы доступны по порядку после предыдущих юнитов (схема — content/schema/unit.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: 03-agidel
+order: 3
+status: open
+place:
+  slug: agidel
+  title_ru: Агидель
+  title_ba:
+    ba: Ағиҙел
+    source:
+      ref: wikipedia-ba
+      url: https://ba.wikipedia.org/wiki/%D0%90%D2%93%D0%B8%D2%99%D0%B5%D0%BB_(%D0%B9%D1%8B%D0%BB%D2%93%D0%B0)
+      locator: заголовок статьи «Ағиҙел (йылға)» (pageid 1649; русская статья — «Белая (приток Камы)»)
+    review: needs_native_review
+    audio:
+      url: https://upload.wikimedia.org/wikipedia/commons/f/fc/Ba-%D0%90%D2%93%D0%B8%D2%99%D0%B5%D0%BB.ogg
+      source:
+        ref: wikimedia-commons
+        url: https://commons.wikimedia.org/wiki/File:Ba-%D0%90%D2%93%D0%B8%D2%99%D0%B5%D0%BB.ogg
+        locator: File:Ba-Ағиҙел.ogg; запись — Borovi4ok
+      license: CC BY-SA 3.0
+topic_ru: Природа
+nodes:
+  - id: u03-reka
+    kind: lesson
+    icon: star
+  - id: u03-les-i-gory
+    kind: lesson
+    icon: chat-circle-text
+  - id: u03-help-1
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 2
+  - id: u03-pogoda
+    kind: lesson
+    icon: book-open
+  - id: u03-povtorenie
+    kind: lesson
+    icon: barbell
+  - id: u03-help-2
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 2
+  - id: u03-zveri-i-ptitsy
+    kind: lesson
+    icon: star
+  - id: u03-ispytanie
+    kind: place_test

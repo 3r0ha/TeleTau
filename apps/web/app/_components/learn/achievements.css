@@ -1,0 +1,357 @@
+/* Награды (Achievements.tsx): сота-значок, сетка в профиле, лист подробностей, экран «Новая награда».
+   Отдельным файлом от learn.css: профиль и тропу оформляют параллельно, здесь — только своё. */
+
+/* ───────────── сота-значок ───────────── */
+.award-badge {
+  --badge-face: var(--tt-color-locked-fill);
+  --badge-lip: var(--tt-color-locked-lip);
+  --badge-ink: var(--tt-color-locked-text);
+  --badge-icon: 28px;
+  --badge-icon-top: 28px;
+  --badge-soft: var(--tt-color-accent-soft);
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  flex: none;
+  color: var(--badge-ink);
+  line-height: 0;
+}
+
+.award-badge--medium {
+  --badge-icon: 42px;
+  --badge-icon-top: 42px;
+}
+
+.award-badge--hero {
+  --badge-icon: 62px;
+  --badge-icon-top: 61px;
+}
+
+.award-badge--honey {
+  --badge-face: var(--tt-color-accent-fill);
+  --badge-lip: var(--tt-color-accent-lip);
+  --badge-ink: var(--tt-color-accent-on);
+}
+
+.award-badge--streak {
+  --badge-soft: var(--tt-color-streak-soft);
+  --badge-face: var(--tt-color-streak-fill);
+  --badge-lip: var(--tt-color-streak-lip);
+  --badge-ink: var(--tt-color-text-on-fill);
+}
+
+.award-badge--green {
+  --badge-soft: var(--tt-color-success-soft);
+  --badge-face: var(--tt-color-success-fill);
+  --badge-lip: var(--tt-color-success-lip);
+  --badge-ink: var(--tt-color-text-on-fill);
+}
+
+.award-badge--water {
+  --badge-soft: var(--tt-color-info-soft);
+  --badge-face: var(--tt-color-info-fill);
+  --badge-lip: var(--tt-color-info-lip);
+  --badge-ink: var(--tt-color-text-on-fill);
+}
+
+.award-badge--violet {
+  --badge-soft: var(--tt-color-violet-soft);
+  --badge-face: var(--tt-color-violet-bright);
+  --badge-lip: var(--tt-color-violet-lip);
+  --badge-ink: var(--tt-color-violet-on);
+}
+
+.award-badge svg {
+  display: block;
+  overflow: visible;
+}
+
+/* Ореол крупного значка: две соты мягкого тона за ним. */
+.award-badge__halo {
+  position: absolute;
+  z-index: -1;
+  max-width: none;
+  height: auto;
+  left: 50%;
+  top: var(--badge-icon-top);
+  transform: translate(-50%, -50%);
+}
+
+.award-badge__halo-outer {
+  fill: var(--badge-soft);
+  opacity: 0.55;
+}
+
+.award-badge__halo-inner {
+  fill: var(--badge-soft);
+}
+
+.award-badge__lip {
+  fill: var(--badge-lip);
+}
+
+.award-badge__face {
+  fill: var(--badge-face);
+}
+
+.award-badge__shine {
+  fill: none;
+  stroke: var(--tt-color-highlight);
+  stroke-width: 3;
+  stroke-dasharray: 16 200;
+  stroke-linecap: round;
+  opacity: 0.4;
+}
+
+.award-badge__icon {
+  position: absolute;
+  left: 50%;
+  top: var(--badge-icon-top);
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.award-badge__icon svg {
+  width: var(--badge-icon);
+  height: var(--badge-icon);
+}
+
+/* Число награды — на ленте поверх нижнего края соты. */
+.award-badge__level {
+  position: absolute;
+  left: 50%;
+  bottom: calc(-1 * var(--tt-space-s100));
+  min-width: 26px;
+  padding: 3px var(--tt-space-s150);
+  border: 2px solid var(--badge-lip);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.award-badge--locked .award-badge__level {
+  color: var(--tt-color-text-tertiary);
+}
+
+.award-badge--hero .award-badge__level {
+  bottom: calc(-1 * var(--tt-space-s150));
+  min-width: 40px;
+  padding: var(--tt-space-s100) var(--tt-space-s250);
+  font-size: var(--tt-font-size-body);
+}
+
+.award-badge--medium .award-badge__level {
+  min-width: 32px;
+  padding: var(--tt-space-s050) var(--tt-space-s200);
+  font-size: var(--tt-font-size-footnote);
+}
+
+/* ───────────── «Награды» в профиле ───────────── */
+.awards__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--tt-space-s200);
+  margin-bottom: var(--tt-space-s300);
+}
+
+.awards__head .tt-card__title {
+  margin-bottom: 0;
+}
+
+.awards__count {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.awards__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--tt-space-s300) var(--tt-space-s150);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 560px) {
+  .awards__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.award {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  width: 100%;
+  min-height: 100%;
+  padding: var(--tt-space-s150) var(--tt-space-s050) var(--tt-space-s100);
+  border: 0;
+  border-radius: var(--tt-radius-tile);
+  background: none;
+  color: var(--tt-color-text-primary);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.award:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.award .award-badge {
+  margin-bottom: var(--tt-space-s150);
+  transition: transform var(--tt-duration-press) ease-out;
+}
+
+.award:active .award-badge {
+  transform: translateY(3px);
+}
+
+.award__name {
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-bold);
+  line-height: var(--tt-line-height-snug);
+}
+
+.award:not(.award--earned) .award__name {
+  color: var(--tt-color-text-secondary);
+}
+
+.award__meta {
+  color: var(--tt-color-text-tertiary);
+  font-size: var(--tt-font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.award__bar {
+  display: block;
+  width: 64px;
+  height: 6px;
+  margin-top: var(--tt-space-s050);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-locked-fill);
+  overflow: hidden;
+}
+
+.award__bar-fill {
+  display: block;
+  min-width: 6px;
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-accent-fill);
+}
+
+/* ───────────── лист подробностей ───────────── */
+.award-sheet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s250);
+  padding-top: var(--tt-space-s200);
+  text-align: center;
+}
+
+.award-sheet .award-badge {
+  margin-bottom: var(--tt-space-s200);
+}
+
+.award-sheet__text {
+  margin: 0;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-body);
+}
+
+.award-sheet__done {
+  margin: 0;
+  color: var(--tt-color-success-text);
+  font-weight: var(--tt-font-weight-bold);
+}
+
+.award-sheet .tt-progress {
+  width: 100%;
+  max-width: 280px;
+}
+
+/* ───────────── «Новая награда» после урока ───────────── */
+.after__visual {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+}
+
+.award-new__name {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  color: var(--tt-color-text-primary);
+}
+
+.award-new__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--tt-space-s400) var(--tt-space-s350);
+  max-width: 420px;
+  margin: var(--tt-space-s200) 0 var(--tt-space-s400);
+  padding: 0;
+  list-style: none;
+}
+
+.award-new__list li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s250);
+  width: 112px;
+  font-weight: var(--tt-font-weight-bold);
+  line-height: var(--tt-line-height-snug);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Сота поднимается с пружиной, по ней проходит блик. */
+  .award-badge--rise {
+    transform-origin: 50% 100%;
+    animation: tt-rise var(--tt-duration-rise) var(--tt-easing-spring) var(--tt-duration-slow) both;
+  }
+
+  .award-new__list li:nth-child(2) .award-badge--rise {
+    animation-delay: calc(var(--tt-duration-slow) + var(--tt-duration-stagger));
+  }
+
+  .award-new__list li:nth-child(n + 3) .award-badge--rise {
+    animation-delay: calc(var(--tt-duration-slow) + var(--tt-duration-stagger) * 2);
+  }
+
+  .award-badge--rise .award-badge__shine {
+    animation: award-shine var(--tt-duration-glint) var(--tt-easing-in-out) calc(var(--tt-duration-slow) + var(--tt-duration-rise)) both;
+  }
+}
+
+@keyframes award-shine {
+  from {
+    stroke-dashoffset: 0;
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+
+  to {
+    stroke-dashoffset: -216;
+    opacity: 0.4;
+  }
+}

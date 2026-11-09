@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "unit.schema.json",
+  "title": "Юнит — content/course/<course>/units/<id>/unit.yaml",
+  "description": "Место экспедиции и узлы тропы в порядке прохождения. Открытый юнит (status: open) играбелен: у каждого узла lesson и place_test есть файл lessons/<id>.yaml с тем же id. Закрытый (status: locked) виден на тропе с вывеской и декорациями, его узлы — только подписи (title_ru), без уроков.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "order", "status", "place", "topic_ru", "nodes"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/Slug" },
+    "order": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string", "enum": ["open", "locked"] },
+    "place": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "title_ru"],
+      "properties": {
+        "slug": {
+          "description": "Ключ иллюстраций места: place-<slug>-sign, place-<slug>-hero, deco-<slug>-* (design/assets/approved).",
+          "$ref": "common.schema.json#/$defs/Slug"
+        },
+        "title_ru": { "$ref": "common.schema.json#/$defs/RuText" },
+        "title_ba": {
+          "description": "Башкирское название места — с источником, как любая башкирская строка.",
+          "$ref": "common.schema.json#/$defs/BaText"
+        }
+      }
+    },
+    "topic_ru": {
+      "description": "Тема юнита: «Знакомство».",
+      "$ref": "common.schema.json#/$defs/RuText"
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/Node" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "locked" } } },
+      "then": { "properties": { "nodes": { "type": "array", "items": { "type": "object", "required": ["title_ru"] } } } }
+    }
+  ],
+  "$defs": {
+    "Node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {
+          "description": "Уникален в курсе. Для lesson и place_test — id файла урока lessons/<id>.yaml (в открытом юните файл обязателен).",
+          "$ref": "common.schema.json#/$defs/Slug"
+        },
+        "kind": {
+          "description": "lesson — урок; help_language — «Помоги языку» (только дуэли из пула юнита); place_test — «Испытание места» (урок-проверка в конце юнита).",
+          "type": "string",
+          "enum": ["lesson", "help_language", "place_test"]
+        },
+        "title_ru": {
+          "description": "Подпись узла на тропе. Для открытых уроков берётся из файла урока; для закрытых юнитов и help_language — отсюда.",
+          "$ref": "common.schema.json#/$defs/RuText"
+        },
+        "icon": {
+          "description": "Иконка узла урока (Phosphor).",
+          "type": "string",
+          "enum": ["star", "chat-circle-text", "book-open", "barbell"]
+        },
+        "duels": {
+          "description": "Только для help_language: сколько дуэлей из пула юнита (content/corpus/duels) показать.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "help_language" } } },
+          "then": { "required": ["duels"] },
+          "else": { "not": { "required": ["duels"] } }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "id": "01-ufa",
+      "order": 1,
+      "status": "open",
+      "place": {
+        "slug": "ufa",
+        "title_ru": "Уфа",
+        "title_ba": {
+          "ba": "<башкирское название из источника>",
+          "source": { "ref": "wiktionary-ru", "url": "https://ru.wiktionary.org/wiki/…", "locator": "раздел «Башкирский»" },
+          "review": "needs_native_review"
+        }
+      },
+      "topic_ru": "Знакомство",
+      "nodes": [
+        { "id": "u01-privet", "kind": "lesson", "icon": "star" },
+        { "id": "u01-kak-tebya-zovut", "kind": "lesson", "icon": "chat-circle-text" },
+        { "id": "u01-help-1", "kind": "help_language", "title_ru": "Помоги языку", "duels": 3 },
+        { "id": "u01-moya-shkola", "kind": "lesson", "icon": "book-open" },
+        { "id": "u01-vezhlivye-slova", "kind": "lesson", "icon": "star" },
+        { "id": "u01-help-2", "kind": "help_language", "title_ru": "Помоги языку", "duels": 3 },
+        { "id": "u01-ispytanie", "kind": "place_test" }
+      ]
+    }
+  ]
+}

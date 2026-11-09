@@ -1,0 +1,8 @@
+# Синтетический курс для тестов API (не учебный контент).
+id: t-course
+version: 1
+title_ru: Синтетический курс
+direction: ru-ba
+units:
+  - t-u1
+  - t-u2

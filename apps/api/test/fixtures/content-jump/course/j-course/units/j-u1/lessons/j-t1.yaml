@@ -1,0 +1,31 @@
+id: j-t1
+unit: j-u1
+kind: place_test
+title_ru: Испытание места
+exercises:
+  - id: j-t1-a
+    type: choice_ba_ru
+    prompt:
+      ba: һөлөк
+      ru: Значение Б
+      source: { ref: synthetic, url: https://example.org/synthetic/4, locator: "строка 4" }
+      review: needs_native_review
+    options_ru: [Значение Б, Значение В]
+    correct: 0
+  - id: j-t1-b
+    type: free_ru_ba
+    prompt_ru: Синтетика Д
+    answers:
+      - ba: ҡаҙым
+        source: { ref: synthetic, url: https://example.org/synthetic/5, locator: "строка 5" }
+        review: needs_native_review
+  - id: j-t1-c
+    type: free_ru_ba
+    prompt_ru: Синтетика Е
+    answers:
+      - ba: сәлдерәм
+        source: { ref: synthetic, url: https://example.org/synthetic/6, locator: "строка 6" }
+        review: needs_native_review
+  - id: j-t1-d
+    type: duel
+    duel: j-none

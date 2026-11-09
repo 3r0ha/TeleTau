@@ -1,0 +1,139 @@
+# Урок «Вежливые слова» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u01-vezhlivye-slova
+unit: 01-ufa
+kind: lesson
+title_ru: Вежливые слова
+new_words:
+  - Рәхмәт!
+  - Ғәфү итегеҙ.
+  - Зинһар.
+  - Эйе.
+  - Ярҙам итегеҙ!
+  - Юҡ.
+exercises:
+  - id: u01-vezhlivye-e01
+    type: choice_ba_ru
+    prompt:
+      ba: Рәхмәт!
+      ru: Спасибо!
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/2312106
+        locator: предложение №2312106 (CC BY 2.0 FR); русский перевод №374869 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    options_ru:
+      - Спасибо!
+      - Привет!
+      - Нет
+      - Пожалуйста
+    correct: 0
+  - id: u01-vezhlivye-e02
+    type: tiles_ru_ba
+    prompt_ru: Простите.
+    answer:
+      ba: Ғәфү итегеҙ.
+      ru: Простите.
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Простите (просить прощения).»
+      review: needs_native_review
+    distractors:
+      - ba: юҡ
+        ru: нет
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8E%D2%A1
+          locator: статья «юҡ», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: рәхмәт
+        ru: спасибо
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%80%D3%99%D1%85%D0%BC%D3%99%D1%82
+          locator: статья «рәхмәт», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u01-vezhlivye-e03
+    type: free_ru_ba
+    prompt_ru: Спасибо!
+    answers:
+      - ba: Рәхмәт!
+        ru: Спасибо!
+        source:
+          ref: tatoeba
+          url: https://tatoeba.org/ru/sentences/show/2312106
+          locator: предложение №2312106 (CC BY 2.0 FR); русский перевод №374869 — связан косвенно, через перевод на другой язык
+        review: needs_native_review
+  - id: u01-vezhlivye-e04
+    type: duel
+  - id: u01-vezhlivye-e05
+    type: choice_ba_ru
+    prompt:
+      ba: Зинһар.
+      ru: Пожалуйста (просьба)
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Пожалуйста  (просьба).»
+      review: needs_native_review
+    options_ru:
+      - Пожалуйста
+      - Спасибо
+      - Да
+      - Простите
+    correct: 0
+  - id: u01-vezhlivye-e06
+    type: choice_ba_ru
+    prompt:
+      ba: Эйе.
+      ru: Да.
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/2312204
+        locator: предложение №2312204 (CC BY 2.0 FR); русский перевод №478743 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    options_ru:
+      - Да
+      - Нет
+      - Привет
+    correct: 0
+  - id: u01-vezhlivye-e07
+    type: tiles_ru_ba
+    prompt_ru: Помогите!
+    answer:
+      ba: Ярҙам итегеҙ!
+      ru: Помогите!
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Помогите!»
+      review: needs_native_review
+    distractors:
+      - ba: эйе
+        ru: да
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8D%D0%B9%D0%B5
+          locator: статья «эйе», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: юҡ
+        ru: нет
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8E%D2%A1
+          locator: статья «юҡ», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u01-vezhlivye-e08
+    type: free_ru_ba
+    prompt_ru: Нет.
+    answers:
+      - ba: Юҡ.
+        ru: Нет.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Нет.»
+        review: needs_native_review

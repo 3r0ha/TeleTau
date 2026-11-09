@@ -1,0 +1,10 @@
+{
+  "suite": "qr-card/generate",
+  "version": 2,
+  "function": "qrCardFromRandomBytes",
+  "cases": [
+    { "id": "g001", "input": "000102030405060708090a0b0c0d0e0f1011121314151617181920212223242526272829", "expected": { "seat": "0123456789", "secret": "ABCDEFGHJKMNPQRS0123456789", "payload": "TT1.0123456789.ABCDEFGHJKMNPQRS0123456789.NB" }, "note": "36 байт: первые 10 — место, остальные 26 — секрет; символ = байт & 31" },
+    { "id": "g002", "input": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "expected": { "seat": "ZZZZZZZZZZ", "secret": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "payload": "TT1.ZZZZZZZZZZ.ZZZZZZZZZZZZZZZZZZZZZZZZZZ.ZS" }, "note": "старшие биты байта отбрасываются" },
+    { "id": "g003", "input": "a7e15c093b62f8d40e9b73c2551fa08d6e3bc91f2486da5e70c3b9481f2a6dd0e5b7c3f1", "expected": { "seat": "71W9V2RMEV", "secret": "K2NZ0DEV9Z46TYG3S8ZADG5Q3H", "payload": "TT1.71W9V2RMEV.K2NZ0DEV9Z46TYG3S8ZADG5Q3H.WP" }, "note": "произвольные байты" }
+  ]
+}

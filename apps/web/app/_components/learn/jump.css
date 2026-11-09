@@ -1,0 +1,48 @@
+/* Испытание для перехода (Jump.tsx): «Уже знаешь? — Пройти испытание» под вывеской закрытого места и итог испытания.
+   Отдельным файлом от learn.css: тропу оформляют параллельно, здесь — только своё. */
+
+.jump-offer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s200) var(--tt-space-s300);
+  margin-top: var(--tt-space-s200);
+  padding: var(--tt-space-s200) var(--tt-space-s200) var(--tt-space-s200) var(--tt-space-s350);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-surface);
+}
+
+.jump-offer__text {
+  margin: 0;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-snug);
+  color: var(--tt-color-text-primary);
+}
+
+/* На узком экране кнопка — на всю ширину под строкой. */
+@media (max-width: 359px) {
+  .jump-offer .tt-btn {
+    flex: 1 1 100%;
+  }
+}
+
+.jump-result__place [lang="ba"] {
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+/* Одна плитка мёда — по центру, шириной как плитка в ряду из трёх на итоге урока. */
+.jump-result__honey {
+  width: 100%;
+}
+
+.jump-result__honey .tt-stiles {
+  grid-template-columns: minmax(0, 1fr);
+  width: 33%;
+  margin-inline: auto;
+}

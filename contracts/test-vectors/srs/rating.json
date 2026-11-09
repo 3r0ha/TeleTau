@@ -1,0 +1,22 @@
+{
+  "suite": "srs/rating",
+  "version": 2,
+  "function": "ratingFromVerdicts",
+  "description": "ratingFromVerdicts({ verdicts, hinted? }) — оценка FSRS (1 Again, 2 Hard, 3 Good, 4 Easy) по вердиктам первых попыток упражнений со словом: correct и typo — 3, almost — 2, wrong — 1; hinted[i] — к упражнению verdicts[i] открывали подсказку к условию: засчитанный ответ (correct, typo, almost) — не выше 2, wrong — 1; нет hinted — подсказок не было; из нескольких — худшая; без упражнений — 3 (слово показано в уроке). Easy автоматически не ставится. Правила — README.md этого каталога.",
+  "cases": [
+    { "id": "r001", "input": { "verdicts": ["correct"] }, "expected": 3, "note": "верно — Good" },
+    { "id": "r002", "input": { "verdicts": ["typo"] }, "expected": 3, "note": "опечатка в длинном слове — слово вспомнил: Good" },
+    { "id": "r003", "input": { "verdicts": ["almost"] }, "expected": 2, "note": "«почти» (не та особая буква) — Hard: слово вернётся раньше" },
+    { "id": "r004", "input": { "verdicts": ["wrong"] }, "expected": 1, "note": "неверно — Again" },
+    { "id": "r005", "input": { "verdicts": [] }, "expected": 3, "note": "слово было в уроке, но без своего упражнения — Good" },
+    { "id": "r006", "input": { "verdicts": ["correct", "wrong", "correct"] }, "expected": 1, "note": "несколько упражнений со словом — худшая оценка" },
+    { "id": "r007", "input": { "verdicts": ["almost", "correct", "typo"] }, "expected": 2, "note": "худшая — almost → Hard" },
+    { "id": "r008", "input": { "verdicts": ["correct"], "hinted": [true] }, "expected": 2, "note": "верно, но с подсказкой — Hard: мёд засчитан, слово вернётся раньше" },
+    { "id": "r009", "input": { "verdicts": ["typo"], "hinted": [true] }, "expected": 2, "note": "опечатка с подсказкой — Hard" },
+    { "id": "r010", "input": { "verdicts": ["almost"], "hinted": [true] }, "expected": 2, "note": "«почти» с подсказкой — по-прежнему Hard, не ниже" },
+    { "id": "r011", "input": { "verdicts": ["wrong"], "hinted": [true] }, "expected": 1, "note": "неверно и с подсказкой — Again" },
+    { "id": "r012", "input": { "verdicts": ["correct", "correct"], "hinted": [false, true] }, "expected": 2, "note": "подсказка в одном из упражнений со словом — худшая оценка Hard" },
+    { "id": "r013", "input": { "verdicts": ["correct", "typo"], "hinted": [false, false] }, "expected": 3, "note": "подсказок не открывали — как без поля: Good" },
+    { "id": "r014", "input": { "verdicts": [], "hinted": [] }, "expected": 3, "note": "слово без своего упражнения — Good" }
+  ]
+}

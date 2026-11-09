@@ -1,0 +1,101 @@
+# Дуэли «Помоги языку» юнита 05-village: русская фраза и два разных засвидетельствованных перевода (схема — content/schema/duels.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+unit: 05-village
+duels:
+  - id: u05-d-dorogo
+    ru: дорого
+    kind: word
+    domain: food
+    variants:
+      - ba: ҡыйбат
+        ru: дорого
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Покупки», строка «дорого»
+        review: needs_native_review
+      - ba: ҡиммәт
+        ru: дорого
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Покупки», строка «дорого», вариант в скобках
+        review: needs_native_review
+  - id: u05-d-deshevo
+    ru: дёшево
+    kind: word
+    domain: food
+    variants:
+      - ba: осһоҙ
+        ru: дёшево
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Покупки», строка «дёшево»
+        review: needs_native_review
+      - ba: арзан
+        ru: дёшево
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Покупки», строка «дёшево», вариант в скобках
+        review: needs_native_review
+  - id: u05-d-skolko-stoit
+    ru: Сколько это стоит?
+    kind: sentence
+    domain: food
+    variants:
+      - ba: Был күпме тора?
+        ru: Сколько это стоит?
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Покупки», строка «Сколько это стоит?»
+        review: needs_native_review
+      - ba: Бының хаҡы күпме?
+        ru: Сколько это стоит?
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Покупки», строка «Сколько это стоит?», вариант в скобках
+        review: needs_native_review
+  - id: u05-d-yagoda
+    ru: ягода
+    kind: word
+    domain: food
+    variants:
+      - ba: еләк
+        ru: ягода
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «ягода»
+        review: needs_native_review
+      - ba: емеш
+        ru: ягода
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8F%D0%B3%D0%BE%D0%B4%D0%B0
+          locator: статья «ягода», раздел «Перевод», строка «Башкирский»
+        review: needs_native_review
+  - id: u05-d-podeshevle
+    ru: подешевле
+    kind: word
+    domain: food
+    variants:
+      - ba: осһоҙораҡ
+        ru: подешевле
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Ночлег», строка «…подешевле?»
+        review: needs_native_review
+      - ba: арзаныраҡ
+        ru: подешевле
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Ночлег», строка «…подешевле?», вариант в скобках
+        review: needs_native_review

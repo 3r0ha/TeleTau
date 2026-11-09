@@ -1,0 +1,103 @@
+# Реестр открытых источников демо-контента (docs/plans/M2.md §3 «Ч1»; схема — content/schema/sources.schema.json).
+# Каждая башкирская строка курса и дуэлей ссылается сюда через source.ref; в source.locator — где именно строка
+# в источнике. Тексты скопированы посимвольно; если источник набран двойниками, исходная запись лежит в raw.
+# Лицензии — как их заявляет источник (юридическую оценку не делаем — CLAUDE.md, правило 16).
+sources:
+  - id: wikivoyage-ru-bashkir-phrasebook
+    title: "Викигид: Башкирский разговорник"
+    kind: phrasebook
+    url: https://ru.wikivoyage.org/wiki/%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA
+    license: CC BY-SA 4.0
+    accessed: "2026-11-03"
+    note: >-
+      Версия oldid=761421 от 20.04.2026, статус статьи «Скелет». В строке «русская фраза : перевод ('' … '')»
+      основной перевод и вариант в скобках — два засвидетельствования (вариант в скобках помечен в locator).
+      Строка «Вы говорите по-русски?» набрана с латинскими h и знаком ¢ — не используется.
+  - id: wiktionary-ru
+    title: "Викисловарь (русский): башкирские статьи и таблицы переводов"
+    kind: wiktionary
+    url: https://ru.wiktionary.org/
+    license: CC BY-SA 4.0
+    accessed: "2026-11-03"
+    note: >-
+      Башкирские статьи (раздел «Башкирский»: значение и примеры с переводом) и строка «Башкирский» в разделе
+      «Перевод» русских статей. Статьи «зинһар» и «хуш» есть только с татарским и таджикским разделами — не используются.
+  - id: tatoeba
+    title: "Tatoeba: башкирские предложения (bak) с русскими переводами"
+    kind: parallel_corpus
+    url: https://tatoeba.org/ru/sentences/show_all_in/bak/rus
+    license: CC BY 2.0 FR
+    accessed: "2026-11-03"
+    note: >-
+      290 предложений bak с переводом на русский на дату обращения (API api_v0/search, from=bak, to=rus).
+      Если русский перевод связан с башкирским предложением не напрямую, а через перевод на другой язык, это сказано в locator.
+  - id: aigizk-bashkir-russian-corpora
+    title: "Bashkir-Russian parallel corpora (Iskander Shakirov, Aigiz Kunafin, 2023) — Hugging Face"
+    kind: parallel_corpus
+    url: https://huggingface.co/datasets/AigizK/bashkir-russian-parallel-corpora
+    license: CC BY 4.0
+    accessed: "2026-11-03"
+    note: >-
+      Коммит 0cddd5ffe7fffa8e23fd64a94a52429668513bbc (1 198 220 пар). По карточке набора пары выровнены
+      алгоритмом и проверены людьми. url — запрос Datasets Viewer /filter по ровно этой паре (ba и ru);
+      в locator — row_idx из ответа /filter и поле corpus («tmx corpus», «https://t.me/bashkort_translate_bot» и др.).
+      Брались только короткие пары, где русская сторона — ровно нужная фраза; пары бота — только если та же
+      строка засвидетельствована ещё одним источником.
+  - id: wikipedia-ba
+    title: "Башкирская Википедия (ba.wikipedia.org)"
+    kind: other
+    url: https://ba.wikipedia.org/
+    license: CC BY-SA 4.0
+    accessed: "2026-11-03"
+    note: >-
+      Статья «Башҡорттарҙың телмәр этикеты» (oldid=1051009) — приветствия и прощания; заголовки статей
+      «Өфө», «Шүлгәнташ», «Ағиҙел (йылға)», «Ямантау», «Һабантуй» — названия мест экспедиции
+      (каждый проверен по межъязыковой ссылке на русскую статью). Для «Башкирской деревни» статьи нет —
+      у юнита 05-village title_ba не задан.
+  - id: wikimedia-commons
+    title: "Wikimedia Commons: Category:Bashkir pronunciation — записи произношения башкирских слов"
+    kind: other
+    url: https://commons.wikimedia.org/wiki/Category:Bashkir_pronunciation
+    license: по файлу — CC BY-SA 3.0, CC BY 3.0 или CC BY-SA 4.0 (как заявлено на странице файла; записана в audio.license)
+    accessed: "2026-11-04"
+    note: >-
+      Записи людей (все взятые — участника Borovi4ok, автора файлов на Commons и в Викисловаре); синтеза речи нет.
+      Записи Lingua Libre из подкатегории Lingua Libre pronunciation-bak — отдельный источник lingua-libre-bak.
+      Копии файлов — content/audio/<слово>.<расширение> (SHA-1 совпадает с Commons); audio.url — прямая ссылка
+      на upload.wikimedia.org, audio.source.url — страница файла. Записи прикреплены к строкам уроков и к названиям
+      мест; к вариантам дуэлей — нет, чтобы звук не подсказывал выбор.
+  - id: lingua-libre-bak
+    title: "Lingua Libre (Wikimedia Commons): Category:Lingua Libre pronunciation-bak — записи произношения башкирских слов"
+    kind: other
+    url: https://commons.wikimedia.org/wiki/Category:Lingua_Libre_pronunciation-bak
+    license: по файлу — CC BY 4.0 или CC BY-SA 4.0 (как заявлено на странице файла; записана в audio.license)
+    accessed: "2026-11-08"
+    note: >-
+      Записи людей через Lingua Libre (шаблон Lingua Libre record: диктор, transcription — записанное слово); синтеза речи нет.
+      В категории 133 файла WAV. Прикреплены записи, у которых слово из имени файла и transcription совпадают со
+      строкой курса после answerTokens из @teletau/bashkir-text. У 26 transcription набрана латиницей (min, hin,
+      məktəp, taw, et…): такая запись прикреплена, только если её слово кириллицей (audio.word_ba) совпадает с
+      латиницей буква в букву по таблице scripts/lib/audio.mjs и со строкой курса — это мин, һин, мәктәп, тау, эт.
+      Копии — content/audio/<слово>.wav (SHA-1 совпадает с Commons); на сайте — AAC и Ogg Opus из этой копии
+      (scripts/prepare-audio.mjs).
+  - id: wikidata
+    title: "Викиданные (wikidata.org): метки элементов на башкирском и русском"
+    kind: other
+    url: https://www.wikidata.org/
+    license: CC0 1.0
+    accessed: "2026-11-04"
+    note: >-
+      Метка ba элемента вместе с меткой ru того же элемента (url — ревизия элемента на дату обращения).
+      В уроках — «Өләсәй» (бабушка) и «Олатай» (дедушка); в дуэлях — ещё «атай» (отец) и «торлаҡ»
+      (метка элемента «дом» — только как второй вариант дуэли «дом»). Метки «улы» (сын), «ҡыҙы» (дочь),
+      «аласыҡ» (кухня) — притяжательные или не в обычном значении слова, не используются.
+  - id: rujourn-bashkir-speech-etiquette
+    title: "«Речевой этикет башкир. Духовная культура башкир — 2», rujourn.ru (копия Wayback Machine от 22.10.2014)"
+    kind: other
+    url: https://web.archive.org/web/20141022050344/http://rujourn.ru/page.php_id=52.html
+    license: не указана
+    accessed: "2026-11-03"
+    note: >-
+      Источник статьи на странице — bashkortostan450.ru; на неё же ссылается статья ba.wikipedia об этикете.
+      Используется только для русского толкования прощаний («до свидания»): башкирские слова там набраны
+      без башкирских букв, поэтому сами строки взяты из ba.wikipedia.

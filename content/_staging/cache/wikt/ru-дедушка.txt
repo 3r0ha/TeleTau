@@ -1,0 +1,449 @@
+= {{-ru-}} =
+{{Лексема в Викиданных|L103931}}
+
+=== Морфологические и синтаксические свойства ===
+{{сущ ru f a 3*a
+|основа=де́душк
+|основа1=де́душек
+|род=муж
+|слоги={{по-слогам|де́|душ|ка}}
+}}
+
+{{морфо-ru|дед|-ушк|+а|и=т}}
+
+=== Произношение ===
+{{transcriptions-ru|де́душка|де́душки|Ru-дедушка.ogg}}
+
+=== Семантические свойства ===
+{{илл|The Favorite by Georgios Iakovidis.jpg|Дедушка [1] с внуком}}
+{{илл|003 p4 dd.JPG|Дедушка [2]}}
+
+==== Значение ====
+# {{умласк.|ru}}, {{разг.|ru}} {{помета|или}} {{детск.|ru}} {{t:=|дед}}; [[отец|отец]] отца или [[мать|матери]] {{пример|За стеной, в другой комнате не спит и ворочается мой {{выдел|дедушка}}, отставной генерал, живущий у меня на хлебах.|Чехов|[[:s:Весь в дедушку (Чехов)|Весь в дедушку]]|1883|источник=source}}
+# {{разг.|ru}}, {{фам.|ru}} или {{умласк.|ru}} [[старый|старый]] [[человек|человек]]; [[обращение|обращение]] к нему {{пример|Стали старичка спрашивать: ты за что, мол, {{выдел|дедушка}}, страдаешь?|Л. Н. Толстой|[[:s:Война и мир (Толстой)/Том IV/Часть III/Глава XIII|Война и мир]]|1869|источник=source}}
+# {{арм.|ru}} [[старослужащий]] срочной службы {{пример|}}
+
+==== Синонимы ====
+# [[дед]], [[праотец]]
+# [[старик]]
+# [[дед]], [[дембель]], [[старослужащий]]
+
+==== Антонимы ====
+# —
+# [[младенец]], [[ребёнок]], [[юноша]]
+# [[дух]], [[салага]]
+
+==== Гиперонимы ====
+# [[родственник]], [[предок]]
+# [[человек]]
+# [[военнослужащий]], [[солдат]] 
+
+==== Гипонимы ====
+# 
+
+=== Родственные слова ===
+{{родств-блок
+|имена-собственные=
+|существительные=прадедушка, дед
+|прилагательные=дедушкин
+|глаголы=
+|наречия=
+}}
+
+=== Этимология ===
+Ласкат. от [[дед]], из {{этимология:дед|да}}
+
+=== Фразеологизмы и устойчивые сочетания ===
+* [[Дедушка Мороз]]
+* [[на деревню дедушке]]
+
+=== Перевод ===
+{{перев-блок|отец отца или матери 
+|ab=
+|av=
+|ave=
+|agh=
+|aja=
+|ady=[[пшъашъэ]]
+|az=[[babacan]]
+|ay=[[jach'a tata]]; [[marmi achachi]]; [[chacha achachi]]; [[achachi]]
+|ain=
+|ain.kana=
+|ain.lat=
+|sq=[[gjysh]], [[babagjysh]]
+|als=
+|ale=[[latux]]
+|alt=
+|en=[[grandfather]]
+|ar=[[جدّ]] (jadd)
+|an=[[agüelo]] {{m}}; [[yayo]]
+|arc.syr=
+|arc.jud=
+|hy=[[պապիկ]] (papik)
+|ast=[[güelu]]
+|af=[[oupa]]; [[grootvader]]
+|bar=
+|bm=[[mɔkɛ]]
+|eu=[[aitona]]
+|ba=
+|be=[[дзед]] {{m}}
+|bn=
+|my=[[အဘိုး]] (ăhpo:), [[ဘိုးဘိုး]] (hpo:hpo:)
+|bg=[[дядко]], [[дядо]]
+|bs=[[djed]] {{m}}
+|br=[[tad-kozh]] {{m}}
+|bua=[[нагаса баабай]] (отец матери)
+|cy=[[taid]]
+|wa=[[grand-popa]], [[tåye]]
+|hu=[[nagypapa]] ([[nagyapa]]); [[öregapa]]
+|vep=
+|hsb=[[dźěd]] {{m}}
+|vot=
+|vo=[[lefat]]
+|wo=[[maame]]
+|vro=
+|vi=[[ông]], (отец отца) [[ông nội]], (отец матери) [[ông ngoại]]
+|haw=
+|gl=[[avó]]
+|ze=[[messiäo]] {{m}}; [[papagrande]] {{m}}; [[poægrande]]
+|kl=[[aataq]]
+|el=[[παππούς]] {{m}}
+|ka=[[პაპა]] (papa)
+|gn=[[taita guasu]]
+|gu=[[દાદા]]
+|gd=[[seanair]]
+|prs=
+|dar=[[хала дудеш]], [[хала ада]]
+|da=[[bedstefader]]
+|ang=[[ealdfæder]] {{m}}
+|grc=[[μητροπάτωρ]] (отец матери); [[πάππος]] {{m}}
+|non=[[afi]] {{m}}
+|sgs=
+|zza=
+|zu=[[ubabamkhulu]] (мой, наш); [[uyihlomkhulu]] (твой, ваш); [[uyisemkhulu]] (его, их)
+|he=[[סָב]] {{m}}
+|yi=[[זיידע]] (zejde) {{m}}
+|io=[[avulo]]
+|id=[[kakek]]; [[nenek]]
+|ia=[[granpatre]]
+|iu=[[ᐊᑖᑕᑦᑎᐊᖅ]] (ataatattiaq)
+|ik=
+|ga=[[seanathair]]
+|is=[[afi]] {{m}}
+|es=[[abuelo]] {{m}}, [[abuelito]] {{m}}; [[papá grande]] (Лат. Амер.)
+|it=[[nonno]] {{m}}
+|kbd=
+|kk=[[ата]]
+|xal=
+|kn=
+|kaa=
+|krc=
+|krl=
+|ca=[[avi]] {{m}}
+|csb=
+|qu=[[jatun yaya]]; [[tata-byeho]]
+|ky=
+|zh=[[老大爷]] (lǎodàyé); [[外祖]] (wàizǔ); [[祖父]] (zǔfù) (отец матери); [[外公]] (wàigōng) (отец матери, разг.) 
+|zh-tw=[[爺爺]] (yéye) (отец отца)
+|zh-cn=[[爷爷]] (yéye) (отец отца)
+|nan=[[阿公]] (a-kong) (отец отца), [[俺公]] (án-kong), [[外公]] (guā-kong), [[火灰公]] (hóe-hu-kong, hé-hu-kong)
+|kom=
+|koi=
+|kw=[[hendas]]; [[tas-gwynn]]
+|ko=[[할아버지]] (harabeoji), [[친할아버지]] (chinharabeoji) (отец отца), [[외할아버]] (отец матери)
+|co=
+|xh=[[ubawomkhulu]]
+|crh=
+|ku=[[bapîr]]
+|ckb=[[باپیر]] (bapír)
+|km=[[តា]] (taa), [[អយ្យកោ]] (ayyeakao)
+|lad=
+|lbe=[[бутталппу]] (отец отца); [[ниттилппу]] (отец матери)
+|la=[[avus]] {{m}}
+|lez=[[чIехи буба]]
+|lv=[[vectētiņš]]; [[vectēvs]]
+|li=[[groetvajer]]; [[peppelemem]]
+|ln=
+|lt=[[senelis]] {{m}}
+|lb=[[Bop]]
+|mk=[[дедо]] {{m}}
+|mg=[[raibe]], [[dadabe]]
+|ms=[[nenek lelaki]]
+|ml=[[മുത്തച്ഛന്‍]] (muthachhan), [[അപ്പൂപ്പന്‍]] (appooppan)
+|mt=
+|mr=[[आजोबा]] (ājobā)
+|chm=
+|mas=[[kuyaa]]
+|mdf=
+|mn=
+|gv=
+|nah=
+|na=
+|nap=[[nonò]]
+|de=[[Großvater]] {{m}}, [[Opa]] {{m}} (''разг.'')
+|yrk=
+|nl=[[grootvader]], [[opa]]
+|dsb=[[starki]] {{m}}, [[stary nan]]
+|no=[[bestefar]]; [[farfar]] (отец отца); [[morfar]] (отец матери)
+|oc=[[papeta]]
+|os=[[дада]], [[баба]]; [[фыдыфыд]]; [[мадыфыд]]
+|pa=[[ਬਾਬਾ]] (bābā)
+|pap=[[tawela]]
+|fa=[[پدربزرگ]] (pedar-bozorg)
+|pl=[[dziadek]] {{m}}
+|pt=[[avô]], [[vovô]] {{m}}
+|rap=[[paparu'au]]
+|rm=[[bazegner]], [[neni]]
+|roh=
+|ro=[[bunic]] {{m}}
+|sjd=
+|sa=[[पितामहः]] (pitāmahaḥ)
+|sat=[[ᱚᱡᱚ]] (aja)
+|sc=
+|ss=[[mkhulu]]
+|se=[[áddjá]], [[ádjá]]
+|sr=[[деда]], [[дедица]], [[дјед]], дед, [[дека]], [[декица]]
+|sr-l=[[deda]], [[dedica]], [[djed]], [[ded]], [[deka]], [[dekica]]
+|sot=[[ntatemoholo]]
+|scn=[[nonnu]]
+|sk=[[dedko]]; [[starý otec]]
+|sl=[[ded]] {{m}}, [[stari oče]]
+|slovio-c=
+|slovio-l=
+|so=[[awoowe]]
+|cu=[[дѣдъ]]
+|cu-Cyrl=
+|cu-Glag=
+|sw=[[babu]]
+|tl=[[lolo]], [[ingkong]], [[lelong]], [[apo]], [[abwelo]]
+|tg=[[бобо]], [[бобоҷон]]
+|th=[[ก๋ง]]
+|tt=
+|tt.cyr=[[бабай]]
+|tt.lat=[[babay]]
+|te=[[తాతయ్య]]
+|art=
+|tpi=
+|kim=
+|tyv=[[кырган-ача]]
+|tr=[[büyükbaba]], [[dede]]
+|tk=
+|udm=
+|ug=
+|uz=[[buva]] ([[бува]])
+|uk=[[дідусь]]
+|ur=
+|fo=[[abbi]]
+|fi=[[isoisä]]; [[vaari]]
+|fr=[[grand-père]] (мн. ч. grands-pères) {{m}}, [[grand-papa]]
+|fy=[[pake]] {{m}}
+|fur=
+|kjh=
+|ha=
+|hi=[[बाबा]] (bābā)
+|hr=[[djed]] {{m}}
+|rom=
+|ce=
+|cs=[[děda]]; [[dědeček]] {{m}}
+|cv=[[асатте]] (со стороны отца), [[кукаҫи|{{fonts|кукаҫи}}]] (со стороны матери)
+|sv=[[farfar]] (отец отца); [[morfar]] (отец матери)
+|cjs=
+|sco=[[gudesire]]
+|ewe=[[tɔgbui]]
+|myv=[[бодяй]], [[покштя]], [[васол-бодя]] (по матери)
+|eo=[[avo]]
+|et=[[vanaisa]]
+|jv=
+|sah=[[эһэ]]; (обращение) [[эһээ]], [[кырдыҕаас]]
+|ja=[[お祖父さん]] ([[おじいさん]], ojīsan), [[祖父]] (sofu), [[外祖父]] (gaisofu)
+}}
+
+{{перев-блок|старый человек
+|ab=
+|av=
+|ave=
+|agh=
+|aja=
+|ady=
+|az=
+|ay=
+|ain=
+|ain.kana=
+|ain.lat=
+|sq=
+|als=
+|ale=
+|alt=
+|en=
+|ar=
+|an=
+|arc.syr=
+|arc.jud=
+|hy=
+|ast=
+|af=
+|bar=
+|bm=
+|eu=
+|ba=
+|be=
+|bn=
+|bg=
+|bs=
+|br=
+|bua=
+|cy=
+|wa=
+|hu=
+|vep=
+|hsb=
+|vot=
+|vo=
+|wo=
+|vro=
+|vi=
+|haw=
+|gl=
+|kl=
+|el=
+|ka=
+|gn=
+|gu=
+|gd=
+|prs=
+|dar=[[ухъна]]
+|da=
+|ang=
+|grc=
+|bat-smg=
+|zza=
+|zu=
+|he=
+|yi=
+|io=
+|id=
+|ia=
+|iu=
+|ik=
+|ga=
+|is=
+|es=[[abuelito]] {{m}}, [[padre]] {{m}}
+|it=[[nonnino]] {{m}}, [[vecchietto]] {{m}}
+|kbd=
+|kk=
+|xal=
+|kn=
+|kaa=
+|krc=
+|krl=
+|ca=
+|csb=
+|qu=
+|ky=
+|zh=
+|zh-tw=
+|zh-cn=
+|kom=
+|koi=
+|kw=
+|ko=
+|co=
+|xh=
+|crh=
+|ku=
+|lad=
+|la=
+|lez=
+|lv=
+|li=
+|ln=
+|lt=
+|mk=
+|ml=
+|ms=
+|mt=
+|chm=
+|mdf=
+|mn=
+|gv=
+|nah=
+|na=
+|de=
+|yrk=
+|nl=
+|dsb=
+|no=
+|oc=
+|os=
+|pa=
+|pap=
+|fa=
+|pl=
+|pt=
+|rm=
+|roh=
+|ro=
+|sjd=
+|sa=
+|sc=
+|se=
+|sr=
+|sr-l=
+|scn=
+|sk=
+|sl=
+|slovio-c=
+|slovio-l=
+|so=
+|chu.cyr=
+|chu.glag=
+|sw=
+|tl=
+|tg=
+|th=
+|tt=
+|tt.cyr=
+|tt.lat=
+|te=
+|art=
+|tpi=
+|kim=
+|tr=[[dede]]
+|tk=
+|udm=
+|ug=
+|uz=
+|uk=
+|ur=
+|fo=
+|fi=
+|fr=
+|fy=
+|fur=
+|kjh=
+|ha=
+|hi=
+|hr=
+|rom=
+|ce=
+|cs=[[děda]]; [[dědeček]] {{m}}
+|cv=
+|sv=
+|cjs=
+|sco=
+|ewe=
+|myv=
+|eo=
+|et=
+|jv=
+|sah=
+|ja=(男性の) [[老人]] (rōjin), [[おじいさん]] (ojīsan), [[じじい]] (jijī)
+}}
+
+=== Библиография ===
+* {{НСЗ|80}}
+
+<!-- Служебное: -->
+{{improve|ru|примеры|семантика|переводы}}
+{{Категория|язык=ru|Отношения родства|Старики|Мужчины|Обращения}}
+{{длина слова|7|ru}}

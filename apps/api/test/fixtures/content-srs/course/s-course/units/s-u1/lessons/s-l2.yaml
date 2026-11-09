@@ -1,0 +1,36 @@
+# Синтетический урок: то же слово с другой пунктуацией («ҡалым.» — то же слово словаря) и новое слово.
+id: s-l2
+unit: s-u1
+kind: lesson
+title_ru: Урок повторения два
+new_words:
+  - ҡалым.
+  - лөкөм
+exercises:
+  - id: s-l2-free
+    type: free_ru_ba
+    prompt_ru: Значение 1
+    answers:
+      - ba: ҡалым.
+        source: { ref: synthetic, url: https://example.org/synthetic/s1b, locator: "строка 1б" }
+        review: needs_native_review
+  - id: s-l2-choice
+    type: choice_ba_ru
+    prompt:
+      ba: лөкөм
+      ru: Значение 9
+      source: { ref: synthetic, url: https://example.org/synthetic/s9, locator: "строка 9" }
+      review: needs_native_review
+    options_ru: [Значение 9, Значение 7]
+    correct: 0
+  - id: s-l2-tiles
+    type: tiles_ru_ba
+    prompt_ru: Значение 9, затем Значение 10
+    answer:
+      ba: лөкөм ҡалым
+      source: { ref: synthetic, url: https://example.org/synthetic/s10, locator: "строка 10" }
+      review: needs_native_review
+    distractors:
+      - ba: һөрөк
+        source: { ref: synthetic, url: https://example.org/synthetic/s2, locator: "строка 2" }
+        review: needs_native_review

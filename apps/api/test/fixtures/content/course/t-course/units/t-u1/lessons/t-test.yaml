@@ -1,0 +1,36 @@
+id: t-test
+unit: t-u1
+kind: place_test
+title_ru: Урок t-test
+new_words:
+  - тумә
+exercises:
+  - id: t-test-free
+    type: free_ru_ba
+    prompt_ru: Синтетика З
+    answers:
+      - ba: тумә
+        source: { ref: synthetic, url: https://example.org/synthetic/9, locator: "строка 9" }
+        review: needs_native_review
+  - id: t-test-choice
+    type: choice_ba_ru
+    prompt:
+      ba: пиҡол
+      source: { ref: synthetic, url: https://example.org/synthetic/10, locator: "строка 10" }
+      review: needs_native_review
+    options_ru: [Значение И, Значение К]
+    correct: 1
+  - id: t-test-tiles
+    type: tiles_ru_ba
+    prompt_ru: Синтетика Л
+    answer:
+      ba: ғарыҙ һөлөк
+      source: { ref: synthetic, url: https://example.org/synthetic/11, locator: "строка 11" }
+      review: needs_native_review
+    distractors:
+      - ba: тумә
+        source: { ref: synthetic, url: https://example.org/synthetic/9, locator: "строка 9" }
+        review: needs_native_review
+  - id: t-test-duel
+    type: duel
+    duel: t-u1-d01

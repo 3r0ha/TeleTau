@@ -1,0 +1,24 @@
+id: t-u1
+order: 1
+status: open
+place:
+  slug: ufa
+  title_ru: Место один
+  title_ba:
+    ba: Ҡывап
+    source: { ref: synthetic, url: https://example.org/synthetic/place, locator: "строка 1" }
+    review: needs_native_review
+topic_ru: Синтетика
+nodes:
+  - id: t-l1
+    kind: lesson
+    icon: star
+  - id: t-help
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 2
+  - id: t-l2
+    kind: lesson
+    icon: book-open
+  - id: t-test
+    kind: place_test

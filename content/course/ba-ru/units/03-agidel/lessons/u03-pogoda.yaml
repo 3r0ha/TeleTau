@@ -1,0 +1,205 @@
+# Урок «Погода» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u03-pogoda
+unit: 03-agidel
+kind: lesson
+title_ru: Погода
+new_words:
+  - ҡар
+  - ямғыр
+  - ҡояш
+  - ел
+  - Епшек ҡар.
+  - саф һауа
+exercises:
+  - id: u03-pogoda-e01
+    type: choice_ba_ru
+    prompt:
+      ba: ҡар
+      ru: снег
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80
+        locator: статья «ҡар», раздел «Башкирский», значение 1
+      review: needs_native_review
+      audio: &a1
+        url: https://upload.wikimedia.org/wikipedia/commons/5/5f/Ba-%D2%A1%D0%B0%D1%80.ogg
+        source:
+          ref: wikimedia-commons
+          url: https://commons.wikimedia.org/wiki/File:Ba-%D2%A1%D0%B0%D1%80.ogg
+          locator: File:Ba-ҡар.ogg; запись — Borovi4ok
+        license: CC BY-SA 3.0
+    options_ru:
+      - снег
+      - дождь
+      - ветер
+    correct: 0
+  - id: u03-pogoda-e02
+    type: tiles_ru_ba
+    prompt_ru: Мокрый снег.
+    answer:
+      ba: Епшек ҡар.
+      ru: Мокрый снег.
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80
+        locator: статья «ҡар», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: ямғыр
+        ru: дождь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8F%D0%BC%D2%93%D1%8B%D1%80
+          locator: статья «ямғыр», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ел
+        ru: ветер
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B5%D0%BB
+          locator: статья «ел», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: &a2
+          url: https://upload.wikimedia.org/wikipedia/commons/9/92/Ba-%D0%B5%D0%BB.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B5%D0%BB.ogg
+            locator: File:Ba-ел.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u03-pogoda-e03
+    type: free_ru_ba
+    prompt_ru: дождь
+    answers:
+      - ba: ямғыр
+        ru: дождь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8F%D0%BC%D2%93%D1%8B%D1%80
+          locator: статья «ямғыр», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u03-pogoda-e04
+    type: choice_ba_ru
+    prompt:
+      ba: ҡояш
+      ru: солнце
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%A1%D0%BE%D1%8F%D1%88
+        locator: статья «ҡояш», раздел «Башкирский», значение 1
+      review: needs_native_review
+      audio: &a3
+        url: https://upload.wikimedia.org/wikipedia/commons/c/c5/Ba-%D2%A1%D0%BE%D1%8F%D1%88.ogg
+        source:
+          ref: wikimedia-commons
+          url: https://commons.wikimedia.org/wiki/File:Ba-%D2%A1%D0%BE%D1%8F%D1%88.ogg
+          locator: File:Ba-ҡояш.ogg; запись — Borovi4ok
+        license: CC BY-SA 3.0
+    options_ru:
+      - солнце
+      - луна
+      - звезда
+    correct: 0
+  - id: u03-pogoda-e05
+    type: tiles_ru_ba
+    prompt_ru: Чистый воздух
+    answer:
+      ba: саф һауа
+      ru: чистый воздух
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%BB%D0%B0%D1%83%D0%B0
+        locator: статья «һауа», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: ҡар
+        ru: снег
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80
+          locator: статья «ҡар», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+      - ba: ел
+        ru: ветер
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B5%D0%BB
+          locator: статья «ел», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a2
+  - id: u03-pogoda-p01
+    type: match_pairs
+    pairs:
+      - ba: ҡар
+        ru: снег
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80
+          locator: статья «ҡар», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+      - ba: ямғыр
+        ru: дождь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8F%D0%BC%D2%93%D1%8B%D1%80
+          locator: статья «ямғыр», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ел
+        ru: ветер
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B5%D0%BB
+          locator: статья «ел», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a2
+      - ba: ҡояш
+        ru: солнце
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%BE%D1%8F%D1%88
+          locator: статья «ҡояш», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a3
+  - id: u03-pogoda-e07
+    type: free_ru_ba
+    prompt_ru: солнце
+    answers:
+      - ba: ҡояш
+        ru: солнце
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%BE%D1%8F%D1%88
+          locator: статья «ҡояш», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a3
+  - id: u03-pogoda-e08
+    type: tiles_ru_ba
+    prompt_ru: Холодная вода
+    answer:
+      ba: һыуыҡ һыу
+      ru: холодная вода
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%BB%D1%8B%D1%83%D1%8B%D2%A1
+        locator: статья «һыуыҡ», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: йылы
+        ru: тёплый
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B9%D1%8B%D0%BB%D1%8B
+          locator: статья «йылы», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ҡар
+        ru: снег
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80
+          locator: статья «ҡар», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1

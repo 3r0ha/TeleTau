@@ -1,0 +1,75 @@
+# Локальное окружение «ТелеТау». Порты хоста нестандартные, чтобы не конфликтовать
+# с уже установленными у разработчика Postgres/Redis (переопределяются в .env).
+name: teletau
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg17-trixie
+    environment:
+      POSTGRES_USER: teletau
+      POSTGRES_PASSWORD: teletau
+      POSTGRES_DB: teletau
+    ports:
+      - "${POSTGRES_HOST_PORT:-15432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teletau -d teletau"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:9.1-alpine
+    ports:
+      - "${VALKEY_HOST_PORT:-16379}:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8
+    environment:
+      CLICKHOUSE_DB: teletau
+      CLICKHOUSE_USER: teletau
+      CLICKHOUSE_PASSWORD: teletau
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "${CLICKHOUSE_HOST_PORT:-18123}:8123"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user teletau --password teletau --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # S3-совместимое хранилище (медиа, офлайн-пакеты, релизы датасета).
+  # SeaweedFS вместо MinIO: образы MinIO больше не публикуются на Docker Hub.
+  s3:
+    image: chrislusf/seaweedfs:4.51
+    command: >
+      server -dir=/data -ip.bind=0.0.0.0
+      -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - "${S3_HOST_PORT:-18333}:8333"
+    volumes:
+      - s3-data:/data
+      - ./infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres-data:
+  valkey-data:
+  clickhouse-data:
+  s3-data:

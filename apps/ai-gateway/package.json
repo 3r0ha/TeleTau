@@ -1,0 +1,24 @@
+{
+  "name": "@teletau/ai-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Шлюз к GigaChat: бюджеты, кеш, реестр промптов, валидаторы вывода (с M5). В M0 — каркас и мок-провайдер.",
+  "type": "module",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "node ../../scripts/run-ts-app.mjs",
+    "start": "node --env-file-if-exists=../../.env dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fastify": "^5.12.8",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "vitest": "^5.0.5"
+  }
+}

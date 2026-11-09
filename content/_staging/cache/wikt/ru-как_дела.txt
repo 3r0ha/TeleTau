@@ -1,0 +1,149 @@
+{{словосочетание дня|20|02|2014}}
+
+= {{-ru-}} =
+
+=== Тип и синтаксические свойства сочетания ===
+{{phrase
+|тип=
+|роль=самостоятельной фразы или дополнения
+|слово1={{по-слогам|как}}
+|лемма1=как
+|слово2={{по-слогам|де|ла́}}
+|лемма2=дела
+|знак2=?
+|тип-кат=Устойчивые сочетания
+|lang=ru
+}}
+
+=== Произношение ===
+{{transcription-ru|как дела́}}
+
+=== Семантические свойства ===
+
+==== Значение ====
+# [[приветствие]], [[вопрос]] о текущем состоянии дел {{пример|Это был грек из России, вернувшийся на свою историческую родину. Нельзя было сказать, что историческая родина сделала его счастливым. Одет он был бедно, выглядел печально.{{--}}{{выдел|Как дела?}}{{-}}спросил я у него. Он немного подумал и таинственно вздохнул:{{--}}У вас хоть керосин есть. Я не сразу догадался, что он имеет в виду нефть.|Фазиль Искандер|Курортная идиллия|1999|источник=НКРЯ}}
+# 
+
+==== Синонимы ====
+# ?
+
+==== Антонимы ====
+# ?
+
+==== Гиперонимы ====
+# [[приветствие]], [[вопрос]]
+
+==== Гипонимы ====
+# ?
+
+=== Этимология ===
+??
+
+=== Перевод ===
+{{перев-блок
+|ain=<!-- Айнский (лат) -->
+|sq=[[si jeni]], [[oysh je]]
+|en=[[how do you do]], [[how are you]]; {{помета|разг.|}}: [[what's up]]
+|ast=<!-- Астурийский -->
+|af=[[hoe gaan dit]]
+|hy=[[ինչպե՞ս ես]] (inčpes es?), [[ինչպե՞ս եք]] (inčpes ek'?)
+|eu=[[zer moduz]]
+|ba=[[ни хәл]], [[эштәр нисек]]
+|be=[[як справы]], [[як маешся]], [[як маецеся]]
+|bn=[[আপনি কেমন আছেন]] (apni kêmôn achen?), [[তুমি কেমন আছো]] (tumi kêmôn acho?), [[তুই কেমন আছিস]] (tui kêmôn achish?)
+|bg=[[как си]], [[как сте]]
+|bs=[[kako si]]
+|br=<!-- Бретонский -->
+|cy=[[sut wyt ti]], [[ppsut 'dach chi]]
+|hu=[[hogy van]]
+|vi=[[bạn khỏe không]], [[bạn có khỏe không]], [[khỏe chứ]] 
+|vro=<!-- Выруский -->
+|haw=[[pehea ʻoe]]
+|gl=<!-- Галисийский -->
+|el=[[τι κάνεις]] (ti káneis?), [[τι κάνετε]] (ti kánete?), [[πως είσαι]] (pos eísai?), [[πως είστε]] (pos eíste?)
+|ka=[[როგორა ხარ]] (rogora xar), [[როგორ ბრძანდებით]] (rogor brdzandebit)
+|gu=[[તમે કેમ છો]] (tame kem chho), [[કેમ છે]] (kem chhe)
+|gd=[[ciamar a tha thu]], [[ciamar a tha sibh]]
+|da=[[hvordan har du det]]
+|he=[[מה שלומך]] (ma shlomkha?)
+|yi=[[וואָס הערט זיך בײַ דיר]] (vos hert zikh bay dir?), [[וואָס מאַכסטו]] (vos makhstu?), [[וואָס מאַכט איר]] (vos makht ir?)
+|io=[[quale vu standas]]
+|id=[[apa kabar]]
+|ia=<!-- Интерлингва -->
+|ga=[[conas atá tú]], [[conas atá sibh]]
+|is=[[hvað segirðu gott]], [[hvað segir þú gott]], [[hvað segiði gott]], [[hvað segið þið gott]], [[hvað segið þér gott]], [[hvað segið yður gott]], [[hvað segirðu]], [[hvað segir þú]]
+|es=[[qué hay]], [[qué tal]], [[cómo te va]]
+|it=[[come va]]; [[come vanno le cose]], [[qual è la situazione]]
+|kk=<!-- Казахский -->
+|kn=[[ನೀವು ಹೇಗಿದ್ದೀರ]] (nIvu hEgiddIra?)
+|krc=[[къалайса]]
+|krl=<!-- Карельский -->
+|ca=[[com estàs]], [[com va]], [[com està]]
+|ky=<!-- Киргизский-->
+|zh-tw=<!-- Китайский (традиц.) -->
+|zh-cn=[[好不好]] (hǎobuhǎo)
+|ko=[[처음 뵙겠읍니다]] (cheoeum boepgetseumnida?), [[어떻게 지내세요]] (eotteoge jinaeseyo?), [[잘 지냈어요]] (jal jinaesseoyo?)
+|co=<!-- Корсиканский -->
+|ckb=[[چۆنی]] (çoní), [[چۆنی باشی]] (çonî başî)
+|km=[[សុខសប្បាយជាទេ]] (sok sopbai jīə dtēi?)
+|la=[[quid agis]]
+|lo=[[ສະບາຍດີບໍ່]]
+|lv=[[kā iet]], [[kā tev iet]], [[kā klājas]], [[kā jums klājas]]
+|lt=[[kaip tau sekasi]]
+|mk=[[како си]]
+|ms=[[apa khabar]]
+|mdf=<!-- Мокшанский -->
+|mn=[[сайн байна уу]], [[сонин сайхан юу байна вэ]]
+|gv=<!-- Мэнский -->
+|nah=<!-- Науатль -->
+|de=[[wie geht es Ihnen]], [[wie gehen die Geschäfte]]; {{помета|разг.}} [[wie geht's]] (тж. [[wie geht's]], [[wie steht's]]), [[was geht]], [[was geht ab]]
+|nl=[[hoe gaat het]], [[hoe is het]], [[alles goed]]
+|no=[[hvordan har du det]]
+|oc=[[oossí va]], [[va plan]]
+|os=<!-- Оссетинский -->
+|pau=[[ke ua ngerang]]
+|fa=[[حالت چطوره]] (hâlet četor-e?); [[حال شما چطوره]] (hâl-e shomâ četor-e?), [[حالتان چطوره]] (hâletân četor-e?); [[حال شما چطور است]] (hâl-e shomâ četor ast?), [[حالتان چطور است؟]] (hâletân četor ast?)
+|pl=[[jak się masz]]
+|pt=[[como está]], [[como estás]]
+|ro=[[ce mai faceţi]], [[ce mai faci]]
+|ceb=[[kumusta]], [[kumusta ka na]]
+|si=[[කොහොමද සැප සනිප]] (kohomada saesa sanipa?)
+|sr=[[како си]]
+|sr-l=[[kako si]]
+|sk=[[ako sa máš]]
+|sl=[[kako si]]
+|chu=<!-- Старославянский -->
+|sw=[[habari gani]]
+|tl=[[kumusta]], [[kumusta ka]]
+|tg=<!-- Таджикский-->
+|th=[[สบายดีไหม]] (sàbaay dii mǎay?), [[เป็นอย่างไรบ้าง]] (bpen yàang rai bâang?)
+|ta=[[எப்படி இருக்கீங்க]] (eppaḍi irukkīngga)
+|te=[[ఎలా ఉన్నారు]] (elaa unnaaru)
+|tt=[[хәлләр ничек]]
+|art=<!-- Токипона -->
+|kim=<!-- Тофаларский -->
+|tn=[[o tsogile jang]]
+|tr=[[nasılsınız]], [[nasılsın]]
+|tk=[[gurgunmyň]]
+|uz=[[qalaysan]]
+|uk=[[як справи]], [[як ся маєте]]
+|ur=[[کیسا هے]] (kaisa hai?), [[کیا حال هے]] (kya haal hai?), [[کیسے مزاج ہیں؟]] (kaise mizaj hai.n?), [[کیسے ہو]] (kaise ho?)
+|fo=[[hvussu gongur]]
+|fi=[[kuinka voitte]]), [[kuinka voit]], [[miten menee]], [[mitä kuuluu]]
+|fr=[[comment allez-vous]], [[comment ça va]], [[ça biche]]; [[quelle nouvelle]] ([[quelles nouvelles]])
+|hi=[[आप कैसे हैं]] (āp kaise h͠ai?), [[कैसे हो]] (kaise ho?)
+|hr=[[kako si]]
+|cs=[[jak se máš]]
+|sv=[[hur är det]], [[hur är läget]], [[hur står det till]]
+|sco=[[hoo are ye]]
+|eo=[[kiel vi fartas]]
+|et=[[kuidas läheb]]
+|ja=[[お元気ですか]] ([[おげんきですか]], ogenki desu ka?), [[ご機嫌いかがですか]] ([[ごきげんいかがですか]], go-kigen ikaga desu ka?)
+}}
+
+=== Библиография ===
+* 
+
+{{unfinished|m=|s=1|e=1}}
+
+{{Категория|язык=ru|Приветствия|}}

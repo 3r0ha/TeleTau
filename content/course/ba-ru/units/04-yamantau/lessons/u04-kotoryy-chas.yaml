@@ -1,0 +1,168 @@
+# Урок «Который час?» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u04-kotoryy-chas
+unit: 04-yamantau
+kind: lesson
+title_ru: Который час?
+new_words:
+  - сәғәт
+  - сәғәт ике
+  - ярты сәғәт
+  - хәҙер
+  - төн уртаһы
+  - көндөҙ
+exercises:
+  - id: u04-kotoryy-chas-e01
+    type: choice_ba_ru
+    prompt:
+      ba: сәғәт
+      ru: часы
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%81%D3%99%D2%93%D3%99%D1%82
+        locator: статья «сәғәт», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - часы
+      - неделя
+      - год
+    correct: 0
+  - id: u04-kotoryy-chas-e02
+    type: tiles_ru_ba
+    prompt_ru: Два часа
+    answer:
+      ba: сәғәт ике
+      ru: два часа
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Часы», строка «два часа»
+      review: needs_native_review
+    distractors:
+      - ba: бер
+        ru: "1"
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Числа», строка «1»
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/a/a0/Ba-%D0%B1%D0%B5%D1%80.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B5%D1%80.ogg
+            locator: File:Ba-бер.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+      - ba: көн
+        ru: день
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «день»
+        review: needs_native_review
+        audio: &a1
+          url: https://upload.wikimedia.org/wikipedia/commons/e/e3/Ba-%D0%BA%D3%A9%D0%BD.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%BA%D3%A9%D0%BD.ogg
+            locator: File:Ba-көн.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u04-kotoryy-chas-e03
+    type: choice_ba_ru
+    prompt:
+      ba: ярты сәғәт
+      ru: полчаса
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Часы», строка «полчаса»
+      review: needs_native_review
+    options_ru:
+      - полчаса
+      - час
+      - полночь
+    correct: 0
+  - id: u04-kotoryy-chas-e04
+    type: free_ru_ba
+    prompt_ru: сейчас
+    answers:
+      - ba: хәҙер
+        ru: сейчас
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «сейчас»
+        review: needs_native_review
+  - id: u04-kotoryy-chas-e05
+    type: duel
+  - id: u04-kotoryy-chas-e06
+    type: tiles_ru_ba
+    prompt_ru: Полночь
+    answer:
+      ba: төн уртаһы
+      ru: полночь
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Часы», строка «полночь»
+      review: needs_native_review
+    distractors:
+      - ba: көн
+        ru: день
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «день»
+        review: needs_native_review
+        audio: *a1
+      - ba: иртә
+        ru: утро
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «утро»
+        review: needs_native_review
+  - id: u04-kotoryy-chas-p01
+    type: match_pairs
+    pairs:
+      - ba: кисен
+        ru: вечером
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «вечером»
+        review: needs_native_review
+      - ba: көндөҙ
+        ru: днём
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «днём»
+        review: needs_native_review
+      - ba: төндә
+        ru: ночью
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «ночью»
+        review: needs_native_review
+      - ba: хәҙер
+        ru: сейчас
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «сейчас»
+        review: needs_native_review
+  - id: u04-kotoryy-chas-e08
+    type: free_ru_ba
+    prompt_ru: днём
+    answers:
+      - ba: көндөҙ
+        ru: днём
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Время», строка «днём»
+        review: needs_native_review

@@ -1,0 +1,24 @@
+/* Шрифты платформы для веба — локальные полные файлы (все башкирские буквы, без подмножеств Google Fonts).
+ * Источник и проверки — fonts.json и test/fonts.test.ts, соответствие этого файла — test/fonts-css.test.ts.
+ * Браузер берёт WOFF2 (вдвое меньше; генерирует scripts/build.mjs из TTF, таблицы те же), TTF — запасной вариант.
+ * Семейства совпадают с токенами fontFamily.text и fontFamily.display.
+ * У вариативного Nunito вес по умолчанию 200 (ExtraLight): элементам задавайте вес явно (--tt-font-weight-*). */
+@font-face {
+  font-family: "Golos Text";
+  src:
+    url("./golos-text/GolosText-VariableFont_wght.woff2") format("woff2"),
+    url("./golos-text/GolosText-VariableFont_wght.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Nunito";
+  src:
+    url("./nunito/Nunito-VariableFont_wght.woff2") format("woff2"),
+    url("./nunito/Nunito-VariableFont_wght.ttf") format("truetype");
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+}

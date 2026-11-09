@@ -1,0 +1,48 @@
+# Юнит 1 «Өфө · Знакомство» (схема — content/schema/unit.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: 01-ufa
+order: 1
+status: open
+place:
+  slug: ufa
+  title_ru: Уфа
+  title_ba:
+    ba: Өфө
+    source:
+      ref: wikipedia-ba
+      url: https://ba.wikipedia.org/wiki/%D3%A8%D1%84%D3%A9
+      locator: заголовок статьи «Өфө» (pageid 2021; русская статья — «Уфа»)
+    review: needs_native_review
+    audio:
+      url: https://upload.wikimedia.org/wikipedia/commons/b/b9/Ba-%D3%A8%D1%84%D3%A9.ogg
+      source:
+        ref: wikimedia-commons
+        url: https://commons.wikimedia.org/wiki/File:Ba-%D3%A8%D1%84%D3%A9.ogg
+        locator: File:Ba-Өфө.ogg; запись — Borovi4ok
+      license: CC BY-SA 3.0
+topic_ru: Знакомство
+nodes:
+  - id: u01-privet
+    kind: lesson
+    icon: star
+  - id: u01-kak-tebya-zovut
+    kind: lesson
+    icon: chat-circle-text
+  - id: u01-help-1
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 3
+  - id: u01-moya-shkola
+    kind: lesson
+    icon: book-open
+  - id: u01-vezhlivye-slova
+    kind: lesson
+    icon: star
+  - id: u01-help-2
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 3
+  - id: u01-ispytanie
+    kind: place_test

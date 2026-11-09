@@ -1,0 +1,15 @@
+id: t-u2
+order: 2
+status: locked
+place:
+  slug: agidel
+  title_ru: Место два
+topic_ru: Синтетика два
+nodes:
+  - id: t-u2-l1
+    kind: lesson
+    title_ru: Закрытый урок
+  - id: t-u2-help
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 1

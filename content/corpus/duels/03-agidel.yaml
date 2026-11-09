@@ -1,0 +1,82 @@
+# Дуэли «Помоги языку» юнита 03-agidel: русская фраза и два разных засвидетельствованных перевода (схема — content/schema/duels.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+unit: 03-agidel
+duels:
+  - id: u03-d-pogoda
+    ru: погода
+    kind: word
+    domain: nature
+    variants:
+      - ba: һауа торошо
+        ru: погода
+        source:
+          ref: wikidata
+          url: https://www.wikidata.org/w/index.php?title=Q11663&oldid=2564131866
+          locator: элемент Q11663, метка на башкирском; метка на русском — «погода»
+        review: needs_native_review
+      - ba: көн
+        ru: погода
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0
+          locator: статья «погода», раздел «Перевод», строка «Башкирский»
+        review: needs_native_review
+  - id: u03-d-tsvetok
+    ru: цветок
+    kind: word
+    domain: nature
+    variants:
+      - ba: сәскә
+        ru: цветок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%81%D3%99%D1%81%D0%BA%D3%99
+          locator: статья «сәскә», раздел «Башкирский», значение 2
+        review: needs_native_review
+      - ba: гөл
+        ru: цветок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%81%D3%99%D1%81%D0%BA%D3%99
+          locator: статья «сәскә», раздел «Башкирский», синоним к значению 2
+        review: needs_native_review
+  - id: u03-d-loshad
+    ru: лошадь
+    kind: word
+    domain: nature
+    variants:
+      - ba: ат
+        ru: лошадь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D1%82
+          locator: статья «ат», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: йылҡы
+        ru: лошадь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D1%82
+          locator: статья «ат», раздел «Башкирский», синоним к значению 1
+        review: needs_native_review
+  - id: u03-d-cherv
+    ru: червяк
+    kind: word
+    domain: nature
+    variants:
+      - ba: ҡорт
+        ru: червь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%BE%D1%80%D1%82
+          locator: статья «ҡорт», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: селәүсен
+        ru: червь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%BE%D1%80%D1%82
+          locator: статья «ҡорт», раздел «Башкирский», синоним к значению 1
+        review: needs_native_review

@@ -1,0 +1,2455 @@
+openapi: 3.1.0
+info:
+  title: Кәрәҙ API
+  version: 0.2.0
+  summary: Внутренний API платформы «Кәрәҙ — Башкирская языковая школа»
+  description: |
+    Единственный источник правды для всех клиентов (веб, iOS, Android, Telegram-бот).
+    Клиенты генерируются из этой спецификации; ручные DTO запрещены (CLAUDE.md, правило 1).
+
+    **Соглашения** (docs/07-data-and-api.md §2, ADR 0015–0018):
+    - Базовый путь — `/api/v1`. Время — UTC в формате RFC 3339; учебные сутки — по Уфе (Asia/Yekaterinburg).
+    - Аутентификация — `Authorization: Bearer <access-токен>` (JWT ES256, 15 мин; ADR 0015). Публичные операции помечены `security: []`.
+    - Ошибки — RFC 9457 (`application/problem+json`, схема `Problem`). Машиночитаемая причина — поле `code`, его значения перечислены в описании `Problem`.
+    - Ответы открыты для новых полей: клиенты обязаны игнорировать неизвестные поля. Поля не возвращают `null` — необязательное поле, у которого нет значения, просто отсутствует.
+    - Пагинация курсорная: `limit` и `cursor` в запросе, `nextCursor` в ответе (поля нет на последней странице).
+    - Повтор записи без дублей — заголовок `Idempotency-Key` там, где он объявлен.
+    - Управляющие символы (U+0000–U+0008, U+000B, U+000C, U+000E–U+001F, U+007F–U+009F) в любой строке тела, query,
+      пути и в заголовках-параметрах операции — 422 `validation_failed` с указателем на поле, до выполнения операции
+      (ничего не расходуется: например, код из письма). Табуляция и переводы строк допустимы, кроме однострочных полей
+      для людей (ФИО, должность).
+    - Правило доступа к операции — расширение `x-access` (ADR 0017): `roles` — кто может вызвать
+      (`anonymous` — без токена; `any` — любой вошедший; `student`, `adult` — любой взрослый аккаунт, `teacher` — подтверждённый учитель,
+      `moderator`, `admin`), `policy` — проверка ресурса в сервисе модуля (`class-teacher` — учитель этого класса,
+      `class-member` — учитель или ученик этого класса, `self` — только свои данные, `consent-owner` — субъект согласия
+      или учитель класса для бумажного согласия). Аноним на закрытой операции получает 401, чужая роль — 403,
+      чужой ресурс — 403 (или 404, если само существование ресурса раскрывать нельзя).
+    - Дети не передают и не получают персональных данных: только ник из словаря и номер места (ADR 0009).
+  license:
+    name: Proprietary
+    identifier: LicenseRef-TeleTau
+servers:
+  - url: http://localhost:4000
+    description: Локальное окружение
+tags:
+  - name: system
+    description: Служебные эндпоинты
+  - name: identity
+    description: Вход (QR-карточка, код класса, e-mail и одноразовый код), сессии, профиль, ники (модуль identity)
+  - name: org
+    description: Районы, школы, классы, места и карточки, код класса, заявки на вход (модуль org)
+  - name: consent
+    description: Юридические документы и согласия, электронные и бумажные (модуль consent)
+  - name: moderation
+    description: Подтверждение учителей (модуль moderation)
+  - name: admin
+    description: Журнал аудита (модуль admin)
+paths:
+  /api/v1/health:
+    get:
+      tags: [system]
+      operationId: getHealth
+      summary: Состояние сервиса и зависимостей
+      description: Возвращает 200, если сервис и все обязательные зависимости доступны, иначе 503 с тем же телом.
+      security: []
+      x-access: { roles: [anonymous] }
+      responses:
+        "200":
+          description: Сервис здоров
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: Одна или несколько зависимостей недоступны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── identity: вход и сессии ─────────────────────────────
+  /api/v1/auth/qr:
+    post:
+      tags: [identity]
+      operationId: loginWithQrCard
+      summary: Вход ученика по QR-карточке
+      description: |
+        Принимает полезную нагрузку QR-карточки `TT1.…` — сервер разбирает её пакетом `@teletau/auth-codes`
+        (формат — ADR 0016, векторы `contracts/test-vectors/qr-card/`). В QR карточки лежит только полезная нагрузка,
+        без ссылки: системная камера не открывает браузер с секретом. Её читает сканер приложения («Я ученик» →
+        «Сканировать карточку»). Разбор по векторам принимает и ссылку `…/q#TT1.…` с ранних тестовых карточек.
+        При первом входе по карточке создаётся детский
+        аккаунт без ника (`account.nickname` отсутствует) — клиент ведёт на выбор ника (`PATCH /me`).
+        Режим интерфейса `account.uiMode` выставляется по номеру класса, если ученик не выбирал его сам (`Me.uiMode`).
+        Частота попыток ограничена по IP и по карточке (`seat`) атомарно: 20 неверных попыток с одного IP за минуту
+        и 10 неверных секретов одной карточки за 10 минут — дальше 429 (`Retry-After` — остаток окна), в том числе
+        при параллельных запросах. Верные попытки слотов неудач не занимают: весь класс за одним школьным NAT входит
+        одновременно. Если слоты заняты только попытками, которые ещё проверяются, сервер ждёт до ~2 с, затем 429
+        с `Retry-After: 1`.
+        Причины отказа: `card_invalid` (401 — нет такой карточки или неверный секрет), `card_revoked` (403 — карточку
+        перевыпустили или отозвали), `consent_revoked` (403 — родитель отозвал согласие, вход заблокирован),
+        `class_archived` (403), `payload_invalid` (422 — нагрузка не прошла разбор; клиент проверяет её сам до отправки).
+      security: []
+      x-access: { roles: [anonymous] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QrLoginRequest"
+      responses:
+        "200":
+          description: Вход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/auth/class-code:
+    post:
+      tags: [identity]
+      operationId: requestClassCodeLogin
+      summary: Заявка на вход по коду класса
+      description: |
+        Ученик без карточки вводит код класса (6 символов, живёт 15 минут) и выбирает ник из словаря
+        (`GET /nicknames/suggest`). Создаётся заявка, которую учитель одобряет на экране класса.
+        Клиент опрашивает `GET /auth/class-code/{requestId}` с заголовком `X-Poll-Token` из ответа.
+        Код с опечаткой, несуществующий или истёкший — 404 `class_code_not_found` (без различения причин).
+        Ответ называет только класс (номер и литера), школу не раскрывает: угадавший код не узнаёт, где учится класс.
+        Неверные коды ограничены атомарно, в том числе при параллельных запросах: 10 в минуту с одного устройства
+        (`device.installId`) и 100 в минуту с одного IP — дальше 429. Опечатки одного ученика не блокируют класс
+        за школьным NAT; верные заявки — до 300 в минуту с IP.
+        Ожидающих решения заявок в классе — не больше 40: сверх предела 429 `join_queue_full` (учитель разбирает
+        заявки или гасит код — `DELETE /classes/{id}/join-code`). С одного устройства (`device.installId`) в классе
+        ждёт решения не больше одной заявки: новая заявка заменяет прежнюю ожидающую (та становится `expired`).
+      security: []
+      x-access: { roles: [anonymous] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassCodeLoginRequest"
+      responses:
+        "202":
+          description: Заявка создана и ждёт решения учителя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassCodeLoginTicket"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/auth/class-code/{requestId}:
+    get:
+      tags: [identity]
+      operationId: getClassCodeLoginStatus
+      summary: Статус заявки на вход по коду класса
+      description: |
+        Опрос раз в `pollIntervalSeconds`. Когда учитель одобрил заявку, ответ содержит `session` (статус `approved`).
+        Если ответ с сессией потерялся, повторный опрос с тем же `X-Poll-Token` и заголовком `X-Device-Install-Id`
+        устройства заявки (`device.installId` из `POST /auth/class-code`) до `expiresAt` снова выдаёт сессию —
+        новое семейство, предыдущие сессии этого аккаунта на этом устройстве отзываются. Без заголовка или с чужим
+        устройством повторный опрос возвращает `consumed` без сессии. Неверный `X-Poll-Token` неотличим
+        от несуществующей заявки (404).
+        Сессия выдаётся (первый раз и повторно) только на место, куда можно войти, — та же проверка, что у входа
+        по QR: класс в архиве — 403 `class_archived`, родитель отозвал согласие места — 403 `consent_revoked`.
+        Когда учитель отзывает доступ ученика (отзыв согласия, выпуск или перевыпуск карточки места), выдача по его
+        заявкам закрывается: повторный опрос даёт `consumed` (или `expired` для ещё не забранной сессии) без сессии.
+      security: []
+      x-access: { roles: [anonymous], policy: poll-token }
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Poll-Token
+          in: header
+          required: true
+          description: Секрет опроса из ответа `POST /auth/class-code`
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+        - name: X-Device-Install-Id
+          in: header
+          required: false
+          description: |
+            Идентификатор установки (`DeviceInfo.installId`), с которой подана заявка. Нужен, чтобы забрать сессию
+            повторно, если ответ с ней потерялся.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Текущий статус заявки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassCodeLoginStatus"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/auth/otp/request:
+    post:
+      tags: [identity]
+      operationId: requestEmailOtp
+      summary: Запросить одноразовый код на e-mail (взрослые и сотрудники)
+      description: |
+        Ответ одинаков для существующего и нового адреса — существование аккаунта не раскрывается.
+        Код живёт 10 минут, на проверку даётся 5 попыток. Демо-режим (`AUTH_DEMO_OTP`, например `0000`): письмо
+        не отправляется, принимается фиксированный код, ответ не отличается от обычного. Если демо-режим выключен
+        и почтовый провайдер не настроен — 503 `email_login_unavailable`. Адрес не попадает в логи (только его хеш).
+      security: []
+      x-access: { roles: [anonymous] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpRequest"
+      responses:
+        "202":
+          description: Код выпущен (или адрес принят к обработке)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpChallenge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/auth/otp/verify:
+    post:
+      tags: [identity]
+      operationId: verifyEmailOtp
+      summary: Проверить одноразовый код и войти
+      description: |
+        Для нового адреса создаётся взрослый аккаунт (`kind: adult`); дальше — принятие условий (`POST /consents`)
+        и, для учителя, заявка на подтверждение (`POST /teacher/verification`).
+        Сотрудник (модератор, администратор) дополнительно передаёт `totp`; без него — 401 `totp_required`.
+        Причины 401: `otp_invalid`, `otp_expired`, `totp_required`, `totp_invalid`. Исчерпаны попытки — 429 `otp_attempts_exceeded`.
+        Код одноразовый: попытка расходуется атомарно до сравнения, верный код «потребляется» атомарно — из двух
+        одновременных запросов с верным кодом сессию получает один, второй — 401 `otp_expired`.
+        10 неверных TOTP сотрудника за час блокируют его вход на час — 429 `staff_locked` (в аудит — `staff.locked`).
+      security: []
+      x-access: { roles: [anonymous] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyRequest"
+      responses:
+        "200":
+          description: Вход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [identity]
+      operationId: refreshSession
+      summary: Обновить пару токенов
+      description: |
+        Refresh-токен одноразовый: в ответе — новая пара, старый токен больше не действует (ротация, ADR 0015).
+        Токен привязан к устройству: `deviceInstallId` должен совпасть с устройством сессии.
+        **Льготное окно для потерянного ответа** (60 с после ротации): повтор того же токена с того же устройства,
+        пока выданный ему преемник ещё не использован, выдаёт новую пару без отзыва семейства (преемник отзывается).
+        В остальных случаях повторное предъявление уже использованного токена (или отозванного преемника) отзывает
+        всё семейство сессии — 401 `refresh_reused`; в аудит (`session.refresh_reuse_detected`) это пишется один раз
+        на семейство, повторы по уже отозванному семейству — молча 401. Прочие причины 401: `refresh_invalid`, `session_revoked`.
+        Частота ограничена по IP и по токену — 429 с `Retry-After`. Valkey недоступен — 503: отзыв семейства при
+        повторном использовании всё равно фиксируется в базе.
+        Клиент обновляет токены строго по одному (single-flight), в том числе между вкладками.
+      security: []
+      x-access: { roles: [anonymous] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: Новая пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/auth/logout:
+    post:
+      tags: [identity]
+      operationId: logout
+      summary: Выйти (отозвать сессию)
+      description: Отзывает семейство текущей сессии (`sid` из access-токена) или, с `allDevices`, все сессии аккаунта.
+      x-access: { roles: [any], policy: self }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogoutRequest"
+      responses:
+        "204":
+          description: Сессия отозвана
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── identity: профиль и ники ─────────────────────────────
+  /api/v1/me:
+    get:
+      tags: [identity]
+      operationId: getMe
+      summary: Текущий аккаунт
+      x-access: { roles: [any], policy: self }
+      responses:
+        "200":
+          description: Текущий аккаунт
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        default:
+          $ref: "#/components/responses/Unexpected"
+    patch:
+      tags: [identity]
+      operationId: updateMe
+      summary: Изменить ник, режим интерфейса или язык
+      description: |
+        Ник — только из словаря (`nicknameId` из `GET /nicknames/suggest`), свободный текст не принимается.
+        Ник есть только у детских аккаунтов: взрослому `nicknameId` — 403 `nickname_not_allowed`.
+      x-access: { roles: [any], policy: self }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeRequest"
+      responses:
+        "200":
+          description: Обновлённый аккаунт
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/nicknames/suggest:
+    get:
+      tags: [identity]
+      operationId: suggestNicknames
+      summary: Предложить ники из словаря
+      description: |
+        Ники — «прилагательное + существительное» на русском (башкирские — только после проверки носителем).
+        Доступно без входа: ник выбирают до одобрения заявки по коду класса. Частота ограничена по IP.
+      security:
+        - {}
+        - bearerAuth: []
+      x-access: { roles: [anonymous, any] }
+      parameters:
+        - name: count
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 3
+      responses:
+        "200":
+          description: Варианты ника
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NicknameSuggestions"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── org: справочник ─────────────────────────────
+  /api/v1/districts:
+    get:
+      tags: [org]
+      operationId: listDistricts
+      summary: Районы и городские округа Республики Башкортостан
+      x-access: { roles: [any] }
+      responses:
+        "200":
+          description: Все районы и городские округа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DistrictList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/schools:
+    get:
+      tags: [org]
+      operationId: listSchools
+      summary: Школы — поиск по району и названию
+      description: |
+        Поиск по названию без учёта регистра, «ё/е» и особых башкирских букв (свёртка `@teletau/bashkir-text`),
+        «№ 1» и «№1» равны; при опечатке — нечёткое совпадение по триграммам. Демо-школы помечены `isDemo`.
+      x-access: { roles: [any] }
+      parameters:
+        - name: district
+          in: query
+          required: false
+          description: Идентификатор района
+          schema:
+            type: string
+            format: uuid
+        - name: q
+          in: query
+          required: false
+          description: Часть названия (от 2 символов)
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Страница школ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchoolPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── org: классы ─────────────────────────────
+  /api/v1/classes:
+    post:
+      tags: [org]
+      operationId: createClass
+      summary: Создать класс
+      description: |
+        Только подтверждённый учитель (`teacher_not_verified` — 403). Школа по умолчанию — из одобренной заявки учителя;
+        другая школа — 403 `school_not_allowed`. Такой же класс у этого учителя в этом учебном году — 409 `class_exists`.
+      x-access: { roles: [teacher] }
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassRequest"
+      responses:
+        "201":
+          description: Класс создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+    get:
+      tags: [org]
+      operationId: listClasses
+      summary: Мои классы
+      description: Учителю — классы, которые он ведёт; ученику — классы, где у него есть место.
+      x-access: { roles: [any], policy: self }
+      responses:
+        "200":
+          description: Классы текущего аккаунта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}:
+    get:
+      tags: [org]
+      operationId: getClass
+      summary: Класс
+      description: |
+        Учитель класса получает места, код класса и счётчик заявок — страница класса опрашивает этот ресурс раз в 3 с,
+        чтобы новые ученики появлялись без перезагрузки. Ученик класса получает только общие сведения и свой номер места.
+        Чужой класс — 403.
+      x-access: { roles: [student, teacher], policy: class-member }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+      responses:
+        "200":
+          description: Класс
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/seats:
+    post:
+      tags: [org]
+      operationId: issueSeats
+      summary: Выпустить карточки на N новых мест
+      description: |
+        Создаёт места со следующими свободными номерами и по QR-карточке на каждое. Секреты карточек в JSON не
+        возвращаются: их можно получить только в PDF по `printJob` (`GET /classes/{id}/cards.pdf`) в течение срока
+        жизни задания печати (ADR 0016, 0018). В базе хранится только хеш секрета. Выпуск пишется в аудит (`card.issued`).
+        Больше 99 мест в классе — 409 `seat_limit_exceeded`.
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueSeatsRequest"
+      responses:
+        "201":
+          description: Места созданы, карточки выпущены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeatIssueResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/cards.pdf:
+    get:
+      tags: [org]
+      operationId: getClassCardsPdf
+      summary: PDF с карточками и бланком согласия
+      description: |
+        Карточки задания печати (по 8 на страницу A4) и бланк согласия для родителей (ADR 0018). На карточке — номер
+        места, класс, QR с полезной нагрузкой `TT1.…` (без ссылки — системная камера не откроет браузер с секретом),
+        адрес сайта (`PUBLIC_WEB_URL`, без секрета), шаги входа «Открой сайт → «Я ученик» → «Сканировать карточку»»
+        и пустая строка «Имя — пишет учитель». ПДн в PDF нет.
+        Задание печати живёт 30 минут; после этого — 410 `print_job_expired` (карточки нужно перевыпустить). Если все
+        карточки задания уже заменены новым выпуском (перевыпуск места), — 410 `print_job_replaced`: нужен PDF нового
+        выпуска. Заменённые карточки в PDF не попадают.
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+        - name: printJob
+          in: query
+          required: true
+          description: Идентификатор задания печати из `issueSeats` или `reissueSeatCard`
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: PDF-документ
+          headers:
+            Content-Disposition:
+              description: '`attachment; filename="teletau-cards-<класс>.pdf"`'
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "410":
+          $ref: "#/components/responses/Gone"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/seats/{seat}/reissue:
+    post:
+      tags: [org]
+      operationId: reissueSeatCard
+      summary: Перевыпустить карточку места
+      description: |
+        Старая карточка сразу перестаёт работать (`card_revoked` при входе), выпускается новая с новым секретом;
+        ученик на месте и его прогресс сохраняются. Если на месте есть ученик, все его сессии завершаются на всех
+        устройствах (тот, кто вошёл старой карточкой или по коду класса, получает 401 `session_revoked`), а выдача
+        сессии по его заявкам кода класса закрывается — в том числе при первой карточке места, занятого по коду
+        класса. Пишется в аудит (`card.reissued`, для первой карточки места — `card.issued`; в
+        `metadata.sessionsRevoked` — сколько семейств сессий завершено). Новая карточка — в PDF по `printJob`.
+        С `Idempotency-Key` повтор возвращает первый результат, а не выпускает ещё одну карточку.
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+        - $ref: "#/components/parameters/SeatNumber"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Карточка перевыпущена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeatIssueResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/join-code:
+    post:
+      tags: [org]
+      operationId: createClassJoinCode
+      summary: Показать код класса (выпустить новый)
+      description: |
+        Новый код из 6 символов на 15 минут; предыдущий код класса перестаёт действовать. В базе — только хеш кода,
+        поэтому сам код возвращается один раз — в этом ответе.
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+      responses:
+        "201":
+          description: Код выпущен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinCode"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+    delete:
+      tags: [org]
+      operationId: closeClassJoinCode
+      summary: Погасить код класса
+      description: |
+        Код класса перестаёт действовать сразу, не дожидаясь 15 минут («Закрыть код класса» на доске). Новые заявки
+        по нему — 404 `class_code_not_found`; уже поданные заявки остаются у учителя. Идемпотентно: нет активного
+        кода — тоже 204.
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+      responses:
+        "204":
+          description: Код погашен (или активного кода не было)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/join-requests:
+    get:
+      tags: [org]
+      operationId: listClassJoinRequests
+      summary: Заявки на вход по коду класса
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/JoinRequestStatus"
+      responses:
+        "200":
+          description: Заявки класса (по умолчанию все за последние сутки, новые сверху)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequestList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/join-requests/{rid}/approve:
+    post:
+      tags: [org]
+      operationId: approveJoinRequest
+      summary: Одобрить заявку на вход
+      description: |
+        Ученику выдаётся новое место (следующий свободный номер) без QR-карточки; карточку можно выпустить позже
+        перевыпуском места. Заявка уже решена или истекла — 409 `join_request_closed`.
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+        - $ref: "#/components/parameters/JoinRequestId"
+      responses:
+        "200":
+          description: Заявка одобрена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/join-requests/{rid}/reject:
+    post:
+      tags: [org]
+      operationId: rejectJoinRequest
+      summary: Отклонить заявку на вход
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+        - $ref: "#/components/parameters/JoinRequestId"
+      responses:
+        "200":
+          description: Заявка отклонена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── moderation: подтверждение учителей ─────────────────────────────
+  /api/v1/teacher/verification:
+    post:
+      tags: [moderation]
+      operationId: submitTeacherVerification
+      summary: Подать заявку на подтверждение учителя
+      description: |
+        Взрослый указывает школу из справочника, ФИО и должность. ФИО хранится только в схеме `pii` (ADR 0009).
+        Нужны принятые условия текущей версии — иначе 409 `consent_required`. Уже есть заявка на рассмотрении — 409
+        `verification_pending`; аккаунт уже подтверждён — 409 `already_verified`. Детский аккаунт или сотрудник — 403.
+        Справочник документов недоступен (условия нельзя проверить) — 503 `documents_unavailable`.
+      x-access: { roles: [adult], policy: self }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeacherVerificationRequest"
+      responses:
+        "201":
+          description: Заявка подана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherVerification"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+    get:
+      tags: [moderation]
+      operationId: getMyTeacherVerification
+      summary: Моя последняя заявка на подтверждение
+      x-access: { roles: [adult, teacher], policy: self }
+      responses:
+        "200":
+          description: Последняя заявка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherVerification"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/moderation/teacher-verifications:
+    get:
+      tags: [moderation]
+      operationId: listTeacherVerifications
+      summary: Очередь заявок учителей
+      description: Старые заявки сверху. Модератор видит ФИО и e-mail заявителя; решения по заявкам пишутся в аудит.
+      x-access: { roles: [moderator, admin] }
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/TeacherVerificationStatus"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Страница заявок (по умолчанию — `pending`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherVerificationPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/moderation/teacher-verifications/{id}/approve:
+    post:
+      tags: [moderation]
+      operationId: approveTeacherVerification
+      summary: Одобрить заявку учителя
+      description: Аккаунт получает роль `teacher` (в следующем access-токене). Решение пишется в аудит (`teacher_verification.approved`). Уже решена — 409 `already_decided`.
+      x-access: { roles: [moderator, admin] }
+      parameters:
+        - $ref: "#/components/parameters/VerificationId"
+      responses:
+        "200":
+          description: Заявка одобрена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherVerification"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/moderation/teacher-verifications/{id}/reject:
+    post:
+      tags: [moderation]
+      operationId: rejectTeacherVerification
+      summary: Отклонить заявку учителя
+      description: Причина обязательна и видна заявителю. Решение пишется в аудит (`teacher_verification.rejected`). Уже решена — 409 `already_decided`.
+      x-access: { roles: [moderator, admin] }
+      parameters:
+        - $ref: "#/components/parameters/VerificationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectTeacherVerificationRequest"
+      responses:
+        "200":
+          description: Заявка отклонена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherVerification"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── consent: документы и согласия ─────────────────────────────
+  /api/v1/legal-documents/current:
+    get:
+      tags: [consent]
+      operationId: listCurrentLegalDocuments
+      summary: Действующие версии юридических документов
+      description: Доступно без входа — условия читают до регистрации.
+      security: []
+      x-access: { roles: [anonymous] }
+      parameters:
+        - name: kind
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LegalDocumentKind"
+      responses:
+        "200":
+          description: По одной действующей версии каждого вида
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalDocumentList"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/legal-documents/{kind}/{version}:
+    get:
+      tags: [consent]
+      operationId: getLegalDocument
+      summary: Текст версии юридического документа
+      description: |
+        Доступно без входа. Любая опубликованная версия, в том числе уже не действующая: на неё ссылаются данные
+        согласий. Страница веба `/legal/{kind}/{version}` (её адрес — `LegalDocument.url`) показывает этот текст.
+      security: []
+      x-access: { roles: [anonymous] }
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/LegalDocumentKind"
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            examples: ["2026-11-01"]
+      responses:
+        "200":
+          description: Текст документа по абзацам
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalDocumentText"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/consents:
+    post:
+      tags: [consent]
+      operationId: acceptConsents
+      summary: Принять документы (электронное согласие взрослого)
+      description: |
+        Только взрослые аккаунты (детский — 403). Принимаются только действующие версии — устаревшая версия даёт
+        409 `document_not_current`. Повторное принятие уже принятой версии идемпотентно. Пишется в аудит (`consent.given`).
+        Справочник документов пуст (сид не выполнен) — 503 `documents_unavailable`.
+      x-access: { roles: [adult, teacher, moderator, admin], policy: self }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptConsentsRequest"
+      responses:
+        "201":
+          description: Согласия записаны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/classes/{id}/seats/{seat}/paper-consent:
+    post:
+      tags: [consent]
+      operationId: recordPaperConsent
+      summary: Отметить бумажное согласие родителя для места
+      description: |
+        Учитель класса отмечает, что получил подписанный бланк для места (сам бланк хранится в школе, его скан не
+        загружается). Документ по умолчанию — действующая версия `consent_child`. Действующее согласие уже есть — 409
+        `consent_exists`. Пишется в аудит (`consent.given`). Действующей версии бланка нет (сид не выполнен) — 503
+        `documents_unavailable`.
+      x-access: { roles: [teacher], policy: class-teacher }
+      parameters:
+        - $ref: "#/components/parameters/ClassId"
+        - $ref: "#/components/parameters/SeatNumber"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaperConsentRequest"
+      responses:
+        "201":
+          description: Согласие записано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Consent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/consents/{id}/revoke:
+    post:
+      tags: [consent]
+      operationId: revokeConsent
+      summary: Отозвать согласие
+      description: |
+        Взрослый отзывает своё согласие; бумажное согласие места отзывает учитель класса (по заявлению родителя).
+        После отзыва бумажного согласия вход по карточке места блокируется (`consent_revoked`). Пишется в аудит
+        (`consent.revoked`). Уже отозвано — 409 `consent_already_revoked`.
+      x-access: { roles: [adult, teacher, moderator, admin], policy: consent-owner }
+      parameters:
+        - $ref: "#/components/parameters/ConsentId"
+      responses:
+        "200":
+          description: Согласие отозвано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Consent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── admin: аудит ─────────────────────────────
+  /api/v1/admin/audit-log:
+    get:
+      tags: [admin]
+      operationId: listAuditLog
+      summary: Журнал аудита
+      description: Новые записи сверху. Журнал только для вставки — изменить или удалить запись нельзя даже на уровне БД (ADR 0017).
+      x-access: { roles: [moderator, admin] }
+      parameters:
+        - name: action
+          in: query
+          required: false
+          description: Точное имя действия, например `card.reissued`
+          schema:
+            type: string
+            maxLength: 100
+        - name: actorId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: targetType
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 50
+        - name: targetId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Страница журнала
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+components:
+  parameters:
+    ClassId:
+      name: id
+      in: path
+      required: true
+      description: Идентификатор класса
+      schema:
+        type: string
+        format: uuid
+    SeatNumber:
+      name: seat
+      in: path
+      required: true
+      description: Номер места в классе
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 99
+    JoinRequestId:
+      name: rid
+      in: path
+      required: true
+      description: Идентификатор заявки на вход
+      schema:
+        type: string
+        format: uuid
+    VerificationId:
+      name: id
+      in: path
+      required: true
+      description: Идентификатор заявки учителя
+      schema:
+        type: string
+        format: uuid
+    ConsentId:
+      name: id
+      in: path
+      required: true
+      description: Идентификатор согласия
+      schema:
+        type: string
+        format: uuid
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Непрозрачный курсор из `nextCursor` предыдущей страницы. Битый или чужой курсор — 422 `validation_failed`.
+      schema:
+        type: string
+        maxLength: 512
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Ключ идемпотентности (например, UUID). Повтор с тем же ключом и тем же телом в течение суток возвращает первый
+        результат. Пока первый запрос с этим ключом ещё выполняется, повтор получает 409 `request_in_progress`
+        с `Retry-After` — его нужно повторить позже с тем же ключом. Тот же ключ с другим телом — 422
+        `idempotency_key_reused`. Если первый запрос завершился ошибкой, ключ освобождается.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+
+  headers:
+    RetryAfter:
+      description: Через сколько секунд можно повторить запрос
+      schema:
+        type: integer
+        minimum: 1
+
+  responses:
+    BadRequest:
+      description: Тело запроса не разобрано (не JSON, неверный тип содержимого)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Нет или недействителен access-токен либо неверные учётные данные (см. `code`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: Роль или политика доступа не разрешает операцию (см. `code`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Ресурс не найден или его существование не раскрывается
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Conflict:
+      description: Состояние ресурса не позволяет операцию (см. `code`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Gone:
+      description: Ресурс больше недоступен (истёк срок жизни или заменён — см. `code`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    ValidationFailed:
+      description: Запрос не прошёл проверку схемы или бизнес-правил; подробности — в `errors`
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    TooManyRequests:
+      description: |
+        Превышен лимит частоты запросов. `Retry-After` — через сколько секунд повторить: остаток окна лимита или 1,
+        если мешают только попытки, которые ещё проверяются.
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    ServiceUnavailable:
+      description: Функция временно недоступна (см. `code`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unexpected:
+      description: Непредвиденная ошибка
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    CheckStatus:
+      type: string
+      enum: [ok, down]
+    Health:
+      type: object
+      description: Ответ health-проверки. Схемы ответов открыты для новых полей (клиенты обязаны игнорировать неизвестные поля).
+      required: [status, service, version, checks]
+      properties:
+        status:
+          $ref: "#/components/schemas/CheckStatus"
+        service:
+          type: string
+          examples: [api]
+        version:
+          type: string
+          examples: [0.1.0]
+        checks:
+          type: object
+          required: [postgres, valkey]
+          properties:
+            postgres:
+              $ref: "#/components/schemas/CheckStatus"
+            valkey:
+              $ref: "#/components/schemas/CheckStatus"
+    Problem:
+      type: object
+      description: |
+        RFC 9457 Problem Details. `code` — машиночитаемая причина (клиенты ветвятся по нему, а не по `title`).
+        Значения M1: `unauthenticated`, `token_expired`, `forbidden`, `not_found`, `validation_failed`, `bad_request`,
+        `rate_limited`, `card_invalid`, `card_revoked`, `consent_revoked`, `class_archived`, `payload_invalid`,
+        `class_code_not_found`, `otp_invalid`, `otp_expired`, `otp_attempts_exceeded`, `totp_required`, `totp_invalid`,
+        `email_login_unavailable`, `refresh_invalid`, `refresh_reused`, `session_revoked`, `nickname_not_allowed`,
+        `teacher_not_verified`, `school_not_allowed`, `class_exists`, `seat_limit_exceeded`, `print_job_expired`,
+        `print_job_replaced` (410 — карточки задания печати уже заменены новым выпуском),
+        `join_request_closed`, `consent_required`, `verification_pending`, `already_verified`, `already_decided`,
+        `document_not_current`, `consent_exists`, `consent_already_revoked`, `request_in_progress` (409 — запрос
+        с этим `Idempotency-Key` ещё выполняется), `idempotency_key_reused` (422 — тот же ключ с другим телом),
+        `documents_unavailable` (503 — справочник юридических документов пуст), `staff_locked` (429 — вход сотрудника
+        заблокирован после неверных TOTP), `payload_too_large` (413 — тело запроса больше 64 КБ), `join_queue_full`
+        (429 — в классе уже 40 заявок ждут решения учителя), `service_unavailable`,
+        `internal`. Список открыт: неизвестный `code`
+        клиент обрабатывает по `status`. `title` и `errors[].detail` — понятный человеку текст на русском.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          description: Машиночитаемая причина ошибки
+          examples: [card_revoked]
+        errors:
+          type: array
+          description: Ошибки проверки полей запроса (для 422)
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      required: [pointer, detail]
+      properties:
+        pointer:
+          type: string
+          description: JSON Pointer на поле запроса (RFC 6901), для параметров — `#/query/<имя>` или `#/path/<имя>`
+          examples: ["/count"]
+        detail:
+          type: string
+          description: Что не так с полем — по-русски, для показа человеку
+          examples: ["Неверный идентификатор"]
+
+    # ── identity ──
+    AccountKind:
+      type: string
+      description: "`child` — псевдонимный детский аккаунт без ПДн; `adult` — взрослый (учитель, родитель); `staff` — сотрудник"
+      enum: [child, adult, staff]
+    Role:
+      type: string
+      description: Роль RBAC (ADR 0017). `teacher` — только подтверждённый учитель.
+      enum: [student, teacher, moderator, admin]
+    TeacherStatus:
+      type: string
+      description: Статус подтверждения учителя для взрослого аккаунта
+      enum: [none, pending, verified, rejected]
+    UiMode:
+      type: string
+      description: |
+        Режим интерфейса по возрасту: `bee` — «Пчёлка» (1–4 класс), `bortnik` — «Бортник» (5–8), `keeper` —
+        «Хранитель» (9–11). Ученику режим выставляется при каждом входе по номеру класса, пока он не выбрал его
+        сам (`PATCH /me`).
+      enum: [bee, bortnik, keeper]
+    Locale:
+      type: string
+      enum: [ru, ba]
+    DevicePlatform:
+      type: string
+      enum: [web, ios, android, bot]
+    DeviceInfo:
+      type: object
+      description: Устройство, к которому привязывается сессия. `installId` клиент генерирует один раз на установку (UUID).
+      additionalProperties: false
+      required: [installId, platform]
+      properties:
+        installId:
+          type: string
+          format: uuid
+        platform:
+          $ref: "#/components/schemas/DevicePlatform"
+        appVersion:
+          type: string
+          maxLength: 32
+    QrLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [payload, device]
+      properties:
+        payload:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: Полезная нагрузка из QR-карточки `TT1.<seat>.<secret>.<check>` (ссылка `…/q#TT1.…` с ранних карточек тоже разбирается)
+          examples: ["TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V"]
+        device:
+          $ref: "#/components/schemas/DeviceInfo"
+    ClassCodeLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [code, nicknameId, device]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Код класса как его ввёл ученик; сервер нормализует ввод (регистр, O/0, I/1/L, пробелы, дефисы)
+          examples: ["K7Q-4MZ"]
+        nicknameId:
+          type: string
+          pattern: "^[a-z0-9.:_-]{1,64}$"
+          description: Идентификатор ника из `GET /nicknames/suggest`
+        device:
+          $ref: "#/components/schemas/DeviceInfo"
+    ClassCodeLoginTicket:
+      type: object
+      required: [requestId, pollToken, status, expiresAt, pollIntervalSeconds, class]
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        pollToken:
+          type: string
+          description: Секрет для опроса статуса (заголовок `X-Poll-Token`). Не сохранять дольше срока заявки.
+        status:
+          $ref: "#/components/schemas/JoinRequestStatus"
+        expiresAt:
+          type: string
+          format: date-time
+        pollIntervalSeconds:
+          type: integer
+          minimum: 1
+          examples: [3]
+        class:
+          $ref: "#/components/schemas/ClassCodeLoginClass"
+    ClassCodeLoginClass:
+      type: object
+      description: Класс, в который подана заявка, — только номер и литера; школа не раскрывается (docs/02 §9)
+      required: [title, grade, letter]
+      properties:
+        title:
+          type: string
+          examples: ["5 «Б»"]
+        grade:
+          type: integer
+          minimum: 1
+          maximum: 11
+        letter:
+          type: string
+          examples: ["Б"]
+    ClassCodeLoginStatus:
+      type: object
+      required: [requestId, status, expiresAt, pollIntervalSeconds]
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/JoinRequestStatus"
+        expiresAt:
+          type: string
+          format: date-time
+        pollIntervalSeconds:
+          type: integer
+          minimum: 1
+        session:
+          $ref: "#/components/schemas/AuthSession"
+          description: |
+            Только при `status = approved`: при первом опросе после одобрения и при повторном опросе
+            с `X-Device-Install-Id` устройства заявки до `expiresAt` (если ответ с сессией потерялся)
+    OtpRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+    OtpChallenge:
+      type: object
+      required: [challengeId, expiresAt, resendAfterSeconds, codeLength]
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        resendAfterSeconds:
+          type: integer
+          minimum: 0
+          description: Через сколько секунд можно запросить код повторно
+        codeLength:
+          type: integer
+          minimum: 4
+          maximum: 6
+          description: Длина кода — для поля ввода
+    OtpVerifyRequest:
+      type: object
+      additionalProperties: false
+      required: [challengeId, code, device]
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          pattern: "^[0-9]{4,6}$"
+        totp:
+          type: string
+          pattern: "^[0-9]{6}$"
+          description: Код из приложения-аутентификатора — обязателен для сотрудников
+        device:
+          $ref: "#/components/schemas/DeviceInfo"
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken, deviceInstallId]
+      properties:
+        refreshToken:
+          type: string
+          minLength: 16
+          maxLength: 256
+        deviceInstallId:
+          type: string
+          format: uuid
+    LogoutRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        allDevices:
+          type: boolean
+          description: Выйти на всех устройствах (отозвать все сессии аккаунта). Не указано — как `false`, только текущая сессия.
+    AuthSession:
+      type: object
+      description: Пара токенов и аккаунт (ADR 0015)
+      required: [accessToken, accessTokenExpiresAt, refreshToken, refreshTokenExpiresAt, tokenType, account]
+      properties:
+        accessToken:
+          type: string
+          description: JWT ES256, 15 минут
+        accessTokenExpiresAt:
+          type: string
+          format: date-time
+        refreshToken:
+          type: string
+          description: Непрозрачный одноразовый токен (`ttr_…`); на сервере хранится только SHA-256
+        refreshTokenExpiresAt:
+          type: string
+          format: date-time
+        tokenType:
+          type: string
+          enum: [Bearer]
+        account:
+          $ref: "#/components/schemas/Me"
+    Me:
+      type: object
+      required: [id, kind, roles, locale, teacherStatus, classes, pendingConsents]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/AccountKind"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+        nickname:
+          type: string
+          description: Ник из словаря (только детские аккаунты; нет — ник ещё не выбран)
+          examples: ["Смелая пчела"]
+        uiMode:
+          $ref: "#/components/schemas/UiMode"
+        locale:
+          $ref: "#/components/schemas/Locale"
+        teacherStatus:
+          $ref: "#/components/schemas/TeacherStatus"
+        classes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyClass"
+        profile:
+          $ref: "#/components/schemas/AdultProfile"
+        pendingConsents:
+          type: array
+          description: Виды документов, действующую версию которых аккаунт должен принять (взрослым)
+          items:
+            $ref: "#/components/schemas/LegalDocumentKind"
+    AdultProfile:
+      type: object
+      description: ПДн взрослого — только ему самому (схема `pii`). У детских аккаунтов отсутствует.
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+    MyClass:
+      type: object
+      required: [id, title, schoolName, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          examples: ["5 «Б»"]
+        schoolName:
+          type: string
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+        seatNumber:
+          type: integer
+          description: Номер места ученика
+    MembershipRole:
+      type: string
+      enum: [student, teacher]
+    UpdateMeRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        nicknameId:
+          type: string
+          pattern: "^[a-z0-9.:_-]{1,64}$"
+        uiMode:
+          $ref: "#/components/schemas/UiMode"
+          description: Выбор самого пользователя; после него режим больше не меняется по номеру класса
+        locale:
+          $ref: "#/components/schemas/Locale"
+    NicknameSuggestion:
+      type: object
+      required: [id, text]
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+          examples: ["Смелая пчела"]
+    NicknameSuggestions:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NicknameSuggestion"
+
+    # ── org ──
+    DistrictKind:
+      type: string
+      description: "`municipal_district` — муниципальный район, `urban_okrug` — городской округ"
+      enum: [municipal_district, urban_okrug]
+    District:
+      type: object
+      required: [id, oktmo, nameRu, kind]
+      properties:
+        id:
+          type: string
+          format: uuid
+        oktmo:
+          type: string
+          description: Код ОКТМО
+        nameRu:
+          type: string
+        nameBa:
+          type: string
+          description: Название на башкирском (если есть в источнике)
+        kind:
+          $ref: "#/components/schemas/DistrictKind"
+    DistrictList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/District"
+    SchoolCategory:
+      type: string
+      enum: [city_large, city_small, rural, small_rural]
+    School:
+      type: object
+      required: [id, districtId, nameRu, shortNameRu, isDemo]
+      properties:
+        id:
+          type: string
+          format: uuid
+        districtId:
+          type: string
+          format: uuid
+        nameRu:
+          type: string
+        shortNameRu:
+          type: string
+        nameBa:
+          type: string
+        address:
+          type: string
+        category:
+          $ref: "#/components/schemas/SchoolCategory"
+        bashkirMedium:
+          type: boolean
+          description: Обучение ведётся на башкирском языке (если известно)
+        isDemo:
+          type: boolean
+          description: Демо-запись, не из официального справочника
+    SchoolPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/School"
+        nextCursor:
+          type: string
+    SchoolRef:
+      type: object
+      required: [id, shortNameRu, districtId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        shortNameRu:
+          type: string
+        districtId:
+          type: string
+          format: uuid
+        isDemo:
+          type: boolean
+    ClassProgram:
+      type: string
+      description: "`native` — родной язык, `state` — государственный язык РБ, `elective` — факультатив"
+      enum: [native, state, elective]
+    CreateClassRequest:
+      type: object
+      additionalProperties: false
+      required: [grade, letter, program]
+      properties:
+        schoolId:
+          type: string
+          format: uuid
+          description: Школа; по умолчанию — школа из одобренной заявки учителя
+        grade:
+          type: integer
+          minimum: 1
+          maximum: 11
+        letter:
+          type: string
+          minLength: 1
+          maxLength: 3
+          description: Литера класса (кириллица, в том числе башкирские буквы, или цифры); нормализуется через `bashkir-text`
+          examples: ["Б"]
+        program:
+          $ref: "#/components/schemas/ClassProgram"
+        academicYear:
+          type: integer
+          minimum: 2025
+          maximum: 2100
+          description: Год начала учебного года; по умолчанию — текущий учебный год по Уфе
+    ClassSummary:
+      type: object
+      required: [id, title, grade, letter, program, academicYear, school, myRole]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          examples: ["5 «Б»"]
+        grade:
+          type: integer
+        letter:
+          type: string
+        program:
+          $ref: "#/components/schemas/ClassProgram"
+        academicYear:
+          type: integer
+        school:
+          $ref: "#/components/schemas/SchoolRef"
+        myRole:
+          $ref: "#/components/schemas/MembershipRole"
+        studentCount:
+          type: integer
+          description: Только учителю класса
+        seatCount:
+          type: integer
+          description: Только учителю класса
+    ClassList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClassSummary"
+    ClassDetail:
+      type: object
+      required: [id, title, grade, letter, program, academicYear, school, myRole]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          examples: ["5 «Б»"]
+        grade:
+          type: integer
+        letter:
+          type: string
+        program:
+          $ref: "#/components/schemas/ClassProgram"
+        academicYear:
+          type: integer
+        school:
+          $ref: "#/components/schemas/SchoolRef"
+        myRole:
+          $ref: "#/components/schemas/MembershipRole"
+        mySeatNumber:
+          type: integer
+          description: Только ученику — номер его места
+        seats:
+          type: array
+          description: Только учителю класса, по возрастанию номера
+          items:
+            $ref: "#/components/schemas/Seat"
+        joinCode:
+          $ref: "#/components/schemas/JoinCodeState"
+        pendingJoinRequestCount:
+          type: integer
+          description: Только учителю класса
+    JoinCodeState:
+      type: object
+      description: Действующий код класса (сам код не возвращается повторно — только срок). Только учителю класса.
+      required: [expiresAt]
+      properties:
+        expiresAt:
+          type: string
+          format: date-time
+    CardStatus:
+      type: string
+      description: "Статус карточки места: `none` — карточки нет (ученик вошёл по коду класса); `active` — действует; `revoked` — отозвана, вход по ней невозможен"
+      enum: [none, active, revoked]
+    Seat:
+      type: object
+      required: [number, cardStatus, cardVersion]
+      properties:
+        number:
+          type: integer
+          minimum: 1
+          maximum: 99
+        cardStatus:
+          $ref: "#/components/schemas/CardStatus"
+        cardVersion:
+          type: integer
+          minimum: 0
+          description: Номер выпуска карточки места (растёт при перевыпуске); 0 — место без карточки (вход по коду класса)
+        cardIssuedAt:
+          type: string
+          format: date-time
+        student:
+          $ref: "#/components/schemas/SeatStudent"
+        consent:
+          $ref: "#/components/schemas/SeatConsent"
+    SeatStudent:
+      type: object
+      description: Ученик на месте — только ник (ADR 0009). Нет — место ещё не занято.
+      required: [accountId, joinedAt]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        nickname:
+          type: string
+          description: Нет — ученик ещё не выбрал ник
+          examples: ["Смелая пчела"]
+        joinedAt:
+          type: string
+          format: date-time
+    SeatConsent:
+      type: object
+      description: Последнее бумажное согласие места. Нет — согласие не отмечено.
+      required: [consentId, status, documentVersion, givenAt]
+      properties:
+        consentId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/ConsentStatus"
+        documentVersion:
+          type: string
+        givenAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+    IssueSeatsRequest:
+      type: object
+      additionalProperties: false
+      required: [count]
+      properties:
+        count:
+          type: integer
+          minimum: 1
+          maximum: 40
+    PrintJob:
+      type: object
+      description: Задание печати — секреты карточек доступны только в PDF по этому идентификатору, до `expiresAt`
+      required: [id, expiresAt, seatNumbers, pdfPath]
+      properties:
+        id:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        seatNumbers:
+          type: array
+          items:
+            type: integer
+        pdfPath:
+          type: string
+          description: Путь для скачивания PDF относительно сервера API
+          examples: ["/api/v1/classes/0193f7a4-0000-7000-8000-000000000001/cards.pdf?printJob=0193f7a4-0000-7000-8000-000000000002"]
+    SeatIssueResult:
+      type: object
+      required: [printJob, seats]
+      properties:
+        printJob:
+          $ref: "#/components/schemas/PrintJob"
+        seats:
+          type: array
+          items:
+            $ref: "#/components/schemas/Seat"
+    JoinCode:
+      type: object
+      required: [code, display, expiresAt]
+      properties:
+        code:
+          type: string
+          description: 6 символов base32 Crockford (ADR 0016)
+          examples: [K7Q4MZ]
+        display:
+          type: string
+          description: Для показа на экране
+          examples: ["K7Q-4MZ"]
+        expiresAt:
+          type: string
+          format: date-time
+    JoinRequestStatus:
+      type: string
+      description: "`consumed` — сессия по одобренной заявке уже выдана"
+      enum: [pending, approved, rejected, expired, consumed]
+    JoinRequest:
+      type: object
+      required: [id, status, nickname, createdAt, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/JoinRequestStatus"
+        nickname:
+          type: string
+          examples: ["Смелая пчела"]
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        decidedAt:
+          type: string
+          format: date-time
+        seatNumber:
+          type: integer
+          description: Выданное место (после одобрения)
+    JoinRequestList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/JoinRequest"
+
+    # ── moderation ──
+    TeacherVerificationRequest:
+      type: object
+      additionalProperties: false
+      required: [schoolId, fullName, position]
+      properties:
+        schoolId:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: |
+            ФИО полностью (ПДн взрослого, схема `pii`). После нормализации `@teletau/bashkir-text` допустимы только
+            русские и башкирские буквы, пробел, дефис и апостроф; латиница, цифры, эмодзи и управляющие символы — 422.
+            Не короче 3 символов после нормализации. Сначала проверяются символы, потом длина (422 с указателем на поле).
+          examples: ["Иванова Мария Петровна"]
+        position:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: |
+            Должность. После нормализации `@teletau/bashkir-text` допустимы русские и башкирские буквы, цифры, пробел
+            и знаки препинания (`. , ; : - – — ( ) « » " ' № /`), нужна хотя бы одна буква; эмодзи, латиница и
+            управляющие символы — 422. Не короче 2 символов после нормализации; символы проверяются раньше длины.
+          examples: ["Учитель башкирского языка"]
+    TeacherVerificationStatus:
+      type: string
+      enum: [pending, approved, rejected]
+    TeacherVerification:
+      type: object
+      required: [id, status, applicant, school, position, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/TeacherVerificationStatus"
+        applicant:
+          $ref: "#/components/schemas/TeacherApplicant"
+        school:
+          $ref: "#/components/schemas/SchoolRef"
+        position:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        decidedAt:
+          type: string
+          format: date-time
+        decisionReason:
+          type: string
+          description: Причина отказа (видна заявителю и модераторам; хранится в схеме `pii`)
+    TeacherApplicant:
+      type: object
+      description: Заявитель — видят только он сам и модераторы
+      required: [accountId, email, fullName]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+    TeacherVerificationPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherVerification"
+        nextCursor:
+          type: string
+    RejectTeacherVerificationRequest:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Причина отказа (видна заявителю, хранится в схеме `pii`); переводы строк допустимы, прочие управляющие символы — 422
+
+    # ── consent ──
+    LegalDocumentKind:
+      type: string
+      description: "`privacy` — политика обработки ПДн, `terms` — пользовательское соглашение, `consent_child` — бланк согласия родителя, `consent_adult` — согласие взрослого на обработку ПДн"
+      enum: [privacy, terms, consent_child, consent_adult]
+    LegalDocument:
+      type: object
+      required: [id, kind, version, title, effectiveFrom]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/LegalDocumentKind"
+        version:
+          type: string
+          examples: ["2026-11-01"]
+        title:
+          type: string
+        url:
+          type: string
+          format: uri-reference
+          description: Адрес страницы с текстом документа в вебе (`${PUBLIC_WEB_URL}/legal/{kind}/{version}`)
+        effectiveFrom:
+          type: string
+          format: date-time
+    LegalDocumentText:
+      type: object
+      description: Версия документа с текстом. Текст версии неизменяем, `bodySha256` совпадает с хешем принятого текста.
+      required: [id, kind, version, title, effectiveFrom, body, bodySha256]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/LegalDocumentKind"
+        version:
+          type: string
+          examples: ["2026-11-01"]
+        title:
+          type: string
+        url:
+          type: string
+          format: uri-reference
+          description: Адрес страницы документа в вебе
+        effectiveFrom:
+          type: string
+          format: date-time
+        body:
+          type: array
+          description: Абзацы текста
+          items:
+            type: string
+        bodySha256:
+          type: string
+          description: SHA-256 текста (абзацы через пустую строку), hex
+          pattern: "^[0-9a-f]{64}$"
+    LegalDocumentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LegalDocument"
+    AcceptConsentsRequest:
+      type: object
+      additionalProperties: false
+      required: [documentIds]
+      properties:
+        documentIds:
+          type: array
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    PaperConsentRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        documentId:
+          type: string
+          format: uuid
+          description: Версия бланка; по умолчанию — действующая версия `consent_child`
+        signedOn:
+          type: string
+          format: date
+          description: Дата подписи на бланке (по умолчанию — сегодня по Уфе)
+    ConsentMethod:
+      type: string
+      enum: [electronic, paper]
+    ConsentStatus:
+      type: string
+      enum: [given, revoked]
+    ConsentSubject:
+      type: object
+      description: "Субъект согласия: взрослый аккаунт (`account`) или место ученика (`seat`) для бумажного согласия"
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [account, seat]
+        accountId:
+          type: string
+          format: uuid
+        classId:
+          type: string
+          format: uuid
+        seatNumber:
+          type: integer
+    Consent:
+      type: object
+      required: [id, document, method, status, subject, givenAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        document:
+          $ref: "#/components/schemas/LegalDocumentRef"
+        method:
+          $ref: "#/components/schemas/ConsentMethod"
+        status:
+          $ref: "#/components/schemas/ConsentStatus"
+        subject:
+          $ref: "#/components/schemas/ConsentSubject"
+        givenAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+    LegalDocumentRef:
+      type: object
+      required: [id, kind, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/LegalDocumentKind"
+        version:
+          type: string
+    ConsentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Consent"
+
+    # ── admin ──
+    AuditEntry:
+      type: object
+      required: [id, at, action]
+      properties:
+        id:
+          type: string
+          format: uuid
+        at:
+          type: string
+          format: date-time
+        action:
+          type: string
+          description: Действие в виде `<объект>.<событие>` (перечень — ADR 0017)
+          examples: [card.reissued]
+        actor:
+          $ref: "#/components/schemas/AuditActor"
+        target:
+          $ref: "#/components/schemas/AuditTarget"
+        metadata:
+          type: object
+          description: Детали без ПДн и секретов (например, номер места, версия карточки)
+          additionalProperties: true
+        requestId:
+          type: string
+    AuditActor:
+      type: object
+      description: Кто совершил действие. Нет — система.
+      required: [accountId, kind]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/AccountKind"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+    AuditTarget:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          examples: [class_seat]
+        id:
+          type: string
+          format: uuid
+    AuditLogPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEntry"
+        nextCursor:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access-токен (JWT ES256, 15 минут; ADR 0015)
+security:
+  - bearerAuth: []

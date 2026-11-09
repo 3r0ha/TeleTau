@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "duels.schema.json",
+  "title": "Дуэли «Помоги языку» — content/corpus/duels/<unit>.yaml",
+  "description": "Пул дуэлей юнита: русская фраза и два РАЗНЫХ засвидетельствованных башкирских перевода. Импорт (pnpm --filter @teletau/api corpus:import) создаёт source_items (ru) и variants (ba, origin = import, source_ref). Варианты от LLM или машинного перевода сюда не попадают (правило 6, ADR 0019).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["unit", "duels"],
+  "properties": {
+    "unit": {
+      "description": "id юнита, из пула которого берутся дуэли в уроках и узлах help_language.",
+      "$ref": "common.schema.json#/$defs/Slug"
+    },
+    "duels": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Duel" }
+    }
+  },
+  "$defs": {
+    "Duel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ru", "kind", "variants"],
+      "properties": {
+        "id": {
+          "description": "Уникален в курсе, не переиспользуется: на него ссылаются голоса (judgments).",
+          "$ref": "common.schema.json#/$defs/Slug"
+        },
+        "ru": {
+          "description": "Русский исходник, как его увидит голосующий («Добрый день»).",
+          "$ref": "common.schema.json#/$defs/RuText"
+        },
+        "ru_source": {
+          "description": "Откуда русская сторона (если из параллельного корпуса или словарной статьи).",
+          "$ref": "common.schema.json#/$defs/SourceRef"
+        },
+        "kind": { "type": "string", "enum": ["word", "phrase", "sentence"] },
+        "domain": {
+          "description": "Тематический домен исходника (docs/03 §1): school, greeting, family… Необязательно.",
+          "$ref": "common.schema.json#/$defs/Slug"
+        },
+        "variants": {
+          "description": "Ровно два разных варианта (после toComparable они не совпадают), каждый со своим источником. Порядок не важен: API выдаёт стороны в случайном порядке.",
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "$ref": "common.schema.json#/$defs/BaText" }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "unit": "01-ufa",
+      "duels": [
+        {
+          "id": "u01-d01",
+          "ru": "Добрый день",
+          "kind": "phrase",
+          "variants": [
+            {
+              "ba": "<вариант 1 из источника>",
+              "source": { "ref": "aigizk-corpus", "url": "https://huggingface.co/datasets/…", "locator": "строка 12345" },
+              "review": "needs_native_review"
+            },
+            {
+              "ba": "<вариант 2 из другого источника>",
+              "source": { "ref": "wiktionary-ru", "url": "https://ru.wiktionary.org/wiki/…", "locator": "раздел «Перевод», башкирский" },
+              "review": "needs_native_review"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

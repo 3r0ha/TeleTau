@@ -1,0 +1,2815 @@
+/* Экраны ученика (prototypes/trail-expedition): тропа, урок, после урока, вкладки.
+ * Компоненты — packages/ui (ui.css). Все цвета, радиусы, шрифты и длительности — только из дизайн-токенов (--tt-*);
+ * прозрачность — opacity. Позиции на тропе — классы и атрибуты SVG (строгая CSP не применяет атрибуты style). */
+
+/* ───────────── каркас вкладок ───────────── */
+.student__main {
+  background: var(--tt-color-bg);
+}
+
+.student__column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--tt-space-s600);
+}
+
+.page-title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title2);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.page-lead {
+  margin-top: var(--tt-space-s100);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+}
+
+.page-head-block {
+  padding: var(--tt-space-s450) 0 var(--tt-space-s200);
+}
+
+.tab-card {
+  margin-bottom: var(--tt-space-s350);
+}
+
+.tab-card .tt-card__sub {
+  margin-bottom: var(--tt-space-s300);
+}
+
+.tab-card__comb {
+  margin: var(--tt-space-s100) 0 var(--tt-space-s250);
+}
+
+.tab-card__chip {
+  margin-bottom: var(--tt-space-s200);
+}
+
+/* ───────────── верхняя панель тропы ───────────── */
+.learn-top__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+}
+
+.learn-stat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s150);
+  min-width: var(--tt-size-touch-min);
+  min-height: var(--tt-size-touch-min);
+  padding: var(--tt-space-s200) var(--tt-space-s150);
+  border-radius: var(--tt-radius-icon-button);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-button);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.learn-stat svg {
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+}
+
+/* Серия: огонь и крупная цифра — streak.fill (≥ 3:1), обычный текст — streak.text (≥ 4,5:1). */
+.learn-stat--streak {
+  color: var(--tt-color-streak-text);
+}
+
+.learn-stat--streak svg {
+  color: var(--tt-color-streak-fill);
+}
+
+.learn-stat--honey {
+  color: var(--tt-color-accent-text);
+}
+
+.learn-stat--honey svg {
+  color: var(--tt-color-accent-fill);
+}
+
+.learn-stat--league img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* ───────────── заставка (prototype 22-splash) ───────────── */
+.learn-splash {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s150);
+  background: var(--tt-color-accent-fill);
+  color: var(--tt-color-accent-on);
+  text-align: center;
+}
+
+.learn-splash__bee {
+  width: 200px;
+}
+
+.learn-splash__brand {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-display);
+  font-weight: var(--tt-font-weight-black);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.learn-splash__tagline {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-bold);
+  opacity: 0.8;
+}
+
+/* ───────────── шапка текущего места и плашки «на сегодня» ───────────── */
+.trail {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Шапка места — вместо вывески у текущего места: картинка-полоса справа растворяется в карточке, слева — название,
+ * тема и сколько пройдено, по нижнему краю — медовая полоса прогресса. Компактная: тропа под ней видна с первого
+ * экрана; тропинка выходит из-под шапки (z-index). */
+.unit-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 72px;
+  overflow: hidden;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.unit-head__art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 56%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 58%;
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--tt-color-surface) 46%);
+  mask-image: linear-gradient(to right, transparent, var(--tt-color-surface) 46%);
+}
+
+.unit-head__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--tt-space-s050);
+  width: 64%;
+  padding: var(--tt-space-s250) var(--tt-space-s400) var(--tt-space-s350);
+}
+
+.unit-head__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+  letter-spacing: -0.01em;
+}
+
+.unit-head__title small {
+  color: var(--tt-color-text-tertiary);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-bold);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.unit-head__topic {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  line-height: var(--tt-line-height-snug);
+}
+
+.unit-head__topic span {
+  color: var(--tt-color-accent-text);
+  font-weight: var(--tt-font-weight-bold);
+  white-space: nowrap;
+}
+
+.unit-head > .tt-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.unit-head .tt-progress__track {
+  height: 6px;
+  border-radius: 0;
+}
+
+.unit-head .tt-progress__fill {
+  min-width: 0;
+  border-radius: 0 var(--tt-radius-chip) var(--tt-radius-chip) 0;
+  box-shadow: none;
+}
+
+.unit-head .tt-progress__shine {
+  display: none;
+}
+
+/* Плашки «на сегодня»: строка со значком, что сделать и «Начать» справа; вся строка — кнопка с «губой». */
+.today {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s200);
+}
+
+.today-pill {
+  --pill-edge: var(--tt-color-info-fill);
+  --pill-bg: var(--tt-color-info-soft);
+  --pill-icon: var(--tt-color-info-fill);
+  --pill-icon-ink: var(--tt-color-text-on-fill);
+  --pill-kicker: var(--tt-color-info-text);
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--tt-space-s100) var(--tt-space-s200) var(--tt-space-s100) var(--tt-space-s150);
+  border: 2px solid var(--pill-edge);
+  border-radius: var(--tt-radius-button);
+  background: var(--pill-bg);
+  color: var(--tt-color-text-primary);
+  font: inherit;
+  text-align: left;
+}
+
+.today-pill--review {
+  --pill-edge: var(--tt-color-accent-soft-border);
+  --pill-bg: var(--tt-color-accent-soft);
+  --pill-icon: var(--tt-color-accent-fill);
+  --pill-icon-ink: var(--tt-color-accent-on);
+}
+
+.today-pill--done {
+  --pill-edge: var(--tt-color-success-fill);
+  --pill-bg: var(--tt-color-success-soft);
+  --pill-icon: var(--tt-color-success-fill);
+  --pill-kicker: var(--tt-color-success-text);
+}
+
+.today-pill--action {
+  margin-bottom: var(--tt-size-lip-small);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--pill-edge);
+  cursor: pointer;
+  transition: transform var(--tt-duration-press) ease-out;
+}
+
+.today-pill--action:active:not(:disabled) {
+  box-shadow: none;
+  transform: translateY(var(--tt-size-lip-small));
+}
+
+.today-pill--action:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.today-pill__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tt-radius-small);
+  background: var(--pill-icon);
+  color: var(--pill-icon-ink);
+}
+
+.today-pill__icon svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.today-pill--done .today-pill__icon {
+  background: none;
+  color: var(--pill-icon);
+}
+
+.today-pill--done .today-pill__icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.today-pill__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  min-width: 0;
+}
+
+.today-pill__kicker {
+  color: var(--pill-kicker);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-tight);
+}
+
+.today-pill__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+.today-pill__go {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 32px;
+  padding: 0 var(--tt-space-s300);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-accent-fill);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-accent-lip);
+  color: var(--tt-color-accent-on);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.today-pill__go svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+/* «Все уроки пройдены»: плашки над «На сегодня всё». */
+.today + .tt-empty {
+  margin-top: var(--tt-space-s200);
+}
+
+/* ───────────── липкий баннер юнита (prototype .unit-bar) ───────────── */
+.unit-bar {
+  position: sticky;
+  top: 60px;
+  z-index: 25;
+  height: 0;
+  overflow: visible;
+}
+
+.unit-bar__inner {
+  --u: var(--tt-color-accent-fill);
+  --u-lip: var(--tt-color-accent-lip);
+  padding: var(--tt-space-s250) var(--tt-space-s400);
+  border-radius: var(--tt-radius-button);
+  background: var(--u);
+  color: var(--tt-color-text-on-fill);
+  box-shadow: 0 var(--tt-size-lip) 0 var(--u-lip);
+  opacity: 0;
+  transform: translateY(-14px);
+  pointer-events: none;
+  transition:
+    transform var(--tt-duration-base) var(--tt-easing-out),
+    opacity var(--tt-duration-fast) ease-out;
+}
+
+/* Под баннером — полоса фона до краёв колонки: декорации, уходящие за край экрана, скрываются под баннером целиком,
+ * а не выглядывают обрубками сбоку от него. */
+.unit-bar--show .unit-bar__inner {
+  box-shadow:
+    0 var(--tt-size-lip) 0 var(--u-lip),
+    0 0 0 var(--tt-space-s400) var(--tt-color-bg);
+  opacity: 1;
+  transform: none;
+}
+
+.unit-bar__inner--green {
+  --u: var(--tt-color-success-fill);
+  --u-lip: var(--tt-color-success-lip);
+}
+
+.unit-bar__inner--water {
+  --u: var(--tt-color-info-fill);
+  --u-lip: var(--tt-color-info-lip);
+}
+
+.unit-bar__inner small {
+  display: block;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.unit-bar__inner b {
+  display: block;
+  margin-top: var(--tt-space-s100);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body-large);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+/* ───────────── тропа (prototype .path, .unit, .track) ───────────── */
+.path {
+  position: relative;
+  container: trail / inline-size;
+  margin-inline: calc(-1 * var(--tt-space-s100));
+  padding: var(--tt-space-s200) 0 var(--tt-space-s600);
+}
+
+/* Плашки «на сегодня» — прямо над текущим местом (на тропе — в начале или между местами). */
+.path > .today + .unit {
+  margin-top: var(--tt-space-s200);
+}
+
+.unit + .today {
+  margin-top: var(--tt-space-s500);
+}
+
+.unit {
+  --zone: var(--tt-color-zone-honey);
+  position: relative;
+  overflow: hidden;
+  padding: var(--tt-space-s250) var(--tt-space-s250) var(--tt-space-s200);
+  border-radius: var(--tt-radius-sheet);
+  background: var(--zone);
+}
+
+.unit + .unit {
+  margin-top: var(--tt-space-s500);
+}
+
+.unit--green {
+  --zone: var(--tt-color-zone-green);
+}
+
+.unit--water {
+  --zone: var(--tt-color-zone-water);
+}
+
+.place-sign {
+  position: relative;
+  overflow: hidden;
+  /* Размер названия места зависит от ширины вывески: длинное «Башкирская деревня» помещается целиком и на 320 px. */
+  container-type: inline-size;
+  aspect-ratio: 1584 / 672;
+  border-radius: var(--tt-radius-panel);
+}
+
+.place-sign__art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Текст вывески лежит на нарисованной панели картинки — цвет постоянный в обеих темах (картинка та же). */
+.place-sign__text {
+  position: absolute;
+  left: var(--tt-space-s350);
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--tt-space-s150);
+  /* Только спокойная левая часть вывески: справа рисунок, текст на него не заходит. */
+  width: 44%;
+  color: var(--tt-color-text-on-fill);
+}
+
+.place-sign--on-dark .place-sign__text {
+  color: var(--tt-color-highlight);
+}
+
+.place-sign--plain {
+  aspect-ratio: auto;
+  min-height: 120px;
+  background: var(--tt-color-accent-soft);
+}
+
+.place-sign--plain .place-sign__text {
+  color: var(--tt-color-text-primary);
+}
+
+.place-sign__chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--tt-space-s150);
+  padding: 5px 11px;
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-highlight);
+  color: var(--tt-color-text-on-fill);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.place-sign__chip svg {
+  width: 15px;
+  height: 15px;
+}
+
+.place-sign__name {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+  letter-spacing: -0.01em;
+  /* Слово не рвётся посередине («Башкирска / я»): шрифт уменьшается под ширину вывески, переносы — только между словами. */
+  font-size: clamp(var(--tt-font-size-callout), 5.6cqi, var(--tt-font-size-title3));
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
+}
+
+.place-sign__topic {
+  font-family: var(--tt-font-family-display);
+  font-size: clamp(var(--tt-font-size-footnote), 4.6cqi, var(--tt-font-size-headline));
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-tight);
+}
+
+.track {
+  position: relative;
+  margin-top: 34px;
+}
+
+/* Под шапкой текущего места тропинка начинается сразу; запас — только под пузырь «Начать» у первого узла. */
+.unit--here .track {
+  margin-top: var(--tt-space-s200);
+}
+
+.unit--here.unit--start .track {
+  margin-top: 34px;
+}
+
+.track__art {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  max-width: none;
+  overflow: visible;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.track__road path {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.track__road-base {
+  stroke-width: 30;
+}
+
+.track__road-dash {
+  stroke-width: 4;
+  stroke-dasharray: 1 13;
+}
+
+.track__road--ahead .track__road-base {
+  stroke: var(--tt-color-text-tertiary);
+  stroke-opacity: 0.12;
+}
+
+.track__road--ahead .track__road-dash {
+  stroke: var(--tt-color-text-tertiary);
+  stroke-opacity: 0.3;
+}
+
+.track__road--walked .track__road-base {
+  stroke: var(--tt-color-accent-fill);
+  stroke-opacity: 0.38;
+}
+
+.track__road--walked .track__road-dash {
+  stroke: var(--tt-color-accent-lip);
+  stroke-opacity: 0.85;
+}
+
+.track__nodes {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track__row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 116px;
+}
+
+/* Запас под пузырь «Начать» (BUBBLE_GAP в places.ts). */
+.track__row--current {
+  margin-top: 36px;
+}
+
+.track__node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Змейка узлов (prototype OFFSETS): 0, −58, −86, −58, 0, 58, 86, 58 px от оси. */
+.track__node--o1 {
+  transform: translateX(-58px);
+}
+
+.track__node--o2 {
+  transform: translateX(-86px);
+}
+
+.track__node--o3 {
+  transform: translateX(-58px);
+}
+
+.track__node--o5 {
+  transform: translateX(58px);
+}
+
+.track__node--o6 {
+  transform: translateX(86px);
+}
+
+.track__node--o7 {
+  transform: translateX(58px);
+}
+
+.track__cap {
+  position: absolute;
+  top: 81px;
+  left: 50%;
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.track__cap--current {
+  color: var(--tt-color-accent-text);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.track__bubble {
+  position: absolute;
+  transform-origin: 50% 100%;
+  bottom: calc(100% + var(--tt-space-s150));
+  left: 50%;
+  z-index: 2;
+  padding: var(--tt-space-s250) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-black);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.track__bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid var(--tt-color-border-default);
+  border-bottom: 2px solid var(--tt-color-border-default);
+  background: var(--tt-color-surface);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* «Хранитель» (9–11 класс и взрослые): плотнее, меньше маскота (docs/05 §7). */
+:root[data-mode="keeper"] .track__bee,
+:root[data-mode="keeper"] .prompt__bee {
+  display: none;
+}
+
+.path-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s250);
+  margin-top: var(--tt-space-s1000);
+  padding-bottom: var(--tt-space-s300);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+  text-align: center;
+}
+
+.path-end__title {
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+}
+
+/* ───────────── урок (prototype .lesson) ───────────── */
+.lesson {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--tt-color-bg);
+}
+
+.lesson__head {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--tt-color-bg);
+}
+
+.lesson__head-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  padding-top: var(--tt-space-s300);
+  padding-bottom: var(--tt-space-s150);
+}
+
+.lesson__head .tt-progress {
+  flex: 1;
+}
+
+.lesson__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lesson__column {
+  padding-top: var(--tt-space-s350);
+  padding-bottom: var(--tt-space-s450);
+}
+
+.lesson__column--center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lesson__saving {
+  align-items: center;
+}
+
+.lesson__foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  border-top: 2px solid var(--tt-color-border-subtle);
+  background: var(--tt-color-bg);
+}
+
+.lesson__foot:has(> .tt-sheet) {
+  border-top: 0;
+}
+
+.lesson__check {
+  padding-top: var(--tt-space-s350);
+  padding-bottom: calc(var(--tt-space-s450) + env(safe-area-inset-bottom));
+}
+
+.task-title {
+  margin: var(--tt-space-s250) 0 var(--tt-space-s450);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title2);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.prompt {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--tt-space-s250);
+  margin-bottom: var(--tt-space-s450);
+}
+
+.prompt__bee {
+  flex: none;
+  width: 104px;
+}
+
+.prompt__bee > .tt-bee__base,
+.learn-splash__bee > .tt-bee__base {
+  width: 100%;
+}
+
+:root[data-mode="bee"] .prompt__bee {
+  width: 116px;
+}
+
+.prompt__bubble {
+  position: relative;
+  flex: 1;
+  margin-bottom: 26px;
+  padding: var(--tt-space-s350) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+  font-size: var(--tt-font-size-headline);
+  line-height: var(--tt-line-height-snug);
+}
+
+.prompt__bubble::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  bottom: 18px;
+  width: 14px;
+  height: 14px;
+  border-left: 2px solid var(--tt-color-border-default);
+  border-bottom: 2px solid var(--tt-color-border-default);
+  background: var(--tt-color-surface);
+  transform: rotate(45deg);
+}
+
+:root[data-mode="keeper"] .prompt__bubble {
+  margin-bottom: 0;
+}
+
+:root[data-mode="keeper"] .prompt__bubble::before {
+  display: none;
+}
+
+/* Плитки: ответ ложится на «строки тетради» (prototype .answer-lines), банк — под ними. */
+.tiles-answer,
+.tiles-bank {
+  --tile-h: 49px;
+}
+
+:root[data-mode="bee"] .tiles-answer,
+:root[data-mode="bee"] .tiles-bank {
+  --tile-h: 57px;
+}
+
+.tiles-answer {
+  --row: calc(var(--tile-h) + 13px);
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 13px var(--tt-space-s200);
+  min-height: calc(var(--row) * 2);
+  padding-top: var(--tt-space-s150);
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--row) - 4px),
+    var(--tt-color-border-default) calc(var(--row) - 4px) calc(var(--row) - 2px),
+    transparent calc(var(--row) - 2px) var(--row)
+  );
+}
+
+.tiles-answer .tt-tile,
+.tiles-bank .tt-tile {
+  min-height: var(--tile-h);
+}
+
+.tiles-bank {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--tt-space-s250) var(--tt-space-s200);
+  margin-top: 26px;
+}
+
+/* Выбор: крупное башкирское слово на медовой подложке и «Послушать», если есть запись (prototype .word-card). */
+.word-card {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s350);
+  min-height: 84px;
+  margin-bottom: var(--tt-space-s450);
+  padding: var(--tt-space-s450);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-accent-soft);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title1);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * «Новое слово» (word_intro): пчела-учитель над медовой карточкой, слово — крупно и в центре, «Послушать» рядом,
+ * перевод — под пунктирной «строкой тетради». Карточка показывает, а не спрашивает: без рамок ответа и вариантов.
+ * Карточка стоит в середине свободного места (чуть выше — оптический центр), а не прижата к заголовку: на высоком
+ * телефоне под ней не остаётся пустого поля.
+ */
+.lesson__column--intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.newword {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: var(--tt-space-s1200);
+}
+
+.newword__bee {
+  position: relative;
+  z-index: 1;
+  margin-bottom: calc(var(--tt-space-s500) * -1);
+}
+
+:root[data-mode="bee"] .newword__bee {
+  width: 184px;
+}
+
+:root[data-mode="keeper"] .newword__bee {
+  display: none;
+}
+
+.newword__card {
+  width: 100%;
+  padding: var(--tt-space-s1000) var(--tt-space-s600) var(--tt-space-s800);
+  border: 2px solid var(--tt-color-accent-soft-border);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-accent-soft);
+  box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-accent-soft-border);
+  text-align: center;
+}
+
+.newword__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s300);
+}
+
+.newword__word {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-display);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+/* Фраза длиннее слова — чуть мельче, чтобы не рвалась по слогам на телефоне. */
+.newword__word--long {
+  font-size: var(--tt-font-size-title1);
+}
+
+.newword__ru {
+  margin: var(--tt-space-s600) 0 0;
+  padding-top: var(--tt-space-s500);
+  border-top: 2px dashed var(--tt-color-accent-soft-border);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title2);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-snug);
+}
+
+/*
+ * Подсказка к слову условия: пунктирное подчёркивание, нажатие — тёмный пузырь с переводом под словом
+ * (как подсказка закрытого узла тропы). Область нажатия шире слова, строка от этого не сдвигается.
+ */
+.hint {
+  position: relative;
+  display: inline;
+}
+
+/* Короткое слово («Я») — не меньше 24×24 (WCAG 2.5.8); фраза переносится внутри своей рамки. */
+.hint__word {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+  margin: calc(var(--tt-space-s100) * -1) 0;
+  text-align: center;
+  padding: var(--tt-space-s100) var(--tt-space-s050);
+  border: 0;
+  border-radius: var(--tt-radius-small);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dashed 2px;
+  text-decoration-color: var(--tt-color-text-tertiary);
+  text-underline-offset: 0.22em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hint__word:hover,
+.hint--open .hint__word {
+  background: var(--tt-color-accent-soft);
+  text-decoration-color: var(--tt-color-accent-text);
+}
+
+.hint__word:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.hint__pop {
+  --hint-shift: 0px;
+  position: absolute;
+  top: calc(100% + var(--tt-space-s250));
+  left: 50%;
+  z-index: 5;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: var(--tt-space-s200) var(--tt-space-s350);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-text-primary);
+  color: var(--tt-color-bg);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+  text-align: center;
+  transform: translateX(calc(-50% + var(--hint-shift)));
+}
+
+.hint__pop::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: calc(50% - var(--hint-shift));
+  width: 12px;
+  height: 12px;
+  background: var(--tt-color-text-primary);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* «Пчёлка»: подсказка крупная — читает первоклассник. */
+:root[data-mode="bee"] .hint__pop {
+  padding: var(--tt-space-s300) var(--tt-space-s450);
+  font-size: var(--tt-font-size-title2);
+}
+
+/* Ввод (prototype .input-wrap). */
+.answer-field {
+  padding: var(--tt-space-s100);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+  transition: border-color var(--tt-duration-fast) ease-out;
+}
+
+.answer-field:focus-within {
+  border-color: var(--tt-color-focus);
+}
+
+.answer-field textarea {
+  display: block;
+  width: 100%;
+  min-height: 110px;
+  padding: var(--tt-space-s300);
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-medium);
+  line-height: var(--tt-line-height-snug);
+}
+
+.answer-field textarea::placeholder {
+  color: var(--tt-color-text-tertiary);
+  opacity: 1;
+}
+
+/* Дуэль (prototype .duel-source, .variants). */
+.duel__source {
+  margin-bottom: var(--tt-space-s400);
+  padding: var(--tt-space-s350) var(--tt-space-s400);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-violet-soft);
+}
+
+.duel__source small {
+  display: block;
+  margin-bottom: var(--tt-space-s100);
+  color: var(--tt-color-violet-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-bold);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.duel__source p {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-snug);
+}
+
+.duel .tt-options__cards {
+  gap: var(--tt-space-s300);
+}
+
+/* ───────────── после урока (prototype .full) ───────────── */
+.after {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--tt-color-bg);
+}
+
+.after--violet {
+  background: var(--tt-color-violet-soft);
+}
+
+.after__main {
+  flex: 1;
+  display: flex;
+}
+
+.after__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--tt-space-s800);
+  text-align: center;
+}
+
+.after__body h1:focus {
+  outline: none;
+}
+
+.after__art {
+  margin: var(--tt-space-s450) auto var(--tt-space-s150);
+}
+
+.after__title {
+  margin: var(--tt-space-s250) 0 var(--tt-space-s150);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title1);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+.after__title--tight {
+  margin-top: 0;
+}
+
+.after__lead {
+  max-width: 330px;
+  margin-bottom: 22px;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-body);
+}
+
+.after__foot {
+  padding-top: var(--tt-space-s400);
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+}
+
+.streak__num {
+  margin-top: calc(-1 * var(--tt-space-s150));
+  color: var(--tt-color-streak-fill);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-board);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.week-card {
+  width: 100%;
+  padding: var(--tt-space-s350) var(--tt-space-s250) var(--tt-space-s300);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--tt-space-s150);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.week__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: 1;
+}
+
+.week__day--today {
+  color: var(--tt-color-text-primary);
+}
+
+.week__hex--done .week__face {
+  fill: var(--tt-color-accent-fill);
+}
+
+.week__hex--done .week__lip {
+  fill: var(--tt-color-accent-lip);
+}
+
+.week__hex--frozen .week__face {
+  fill: var(--tt-color-info-fill);
+}
+
+.week__hex--frozen .week__lip {
+  fill: var(--tt-color-info-lip);
+}
+
+.week__hex--empty .week__face {
+  fill: var(--tt-color-surface);
+  stroke: var(--tt-color-border-default);
+  stroke-width: 2;
+}
+
+.week-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s150);
+  margin-top: var(--tt-space-s300);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.week-card__foot img {
+  flex: none;
+  width: 26px;
+  height: auto;
+}
+
+/* ───────────── улей класса: занимались по дням ───────────── */
+.hive-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--tt-space-s150);
+  margin: var(--tt-space-s200) 0 0;
+  padding: var(--tt-space-s300) 0 0;
+  border-top: 2px solid var(--tt-color-border-subtle);
+  list-style: none;
+}
+
+.hive-days__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: 1;
+}
+
+.hive-days__bar {
+  fill: var(--tt-color-accent-fill);
+}
+
+.hive-days__bar--empty {
+  fill: var(--tt-color-locked-fill);
+}
+
+/* ───────────── лига (prototype 16-league) ───────────── */
+.league__badges {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--tt-space-s100);
+  padding: var(--tt-space-s350) 0 var(--tt-space-s100);
+}
+
+.league__badge--future {
+  filter: grayscale(1) contrast(0.75) brightness(1.12);
+  opacity: 0.55;
+}
+
+.league__head {
+  padding: var(--tt-space-s150) 0 var(--tt-space-s200);
+  text-align: center;
+}
+
+.league .tt-board {
+  margin: var(--tt-space-s200) 0 var(--tt-space-s400);
+}
+
+.league__note {
+  margin-bottom: var(--tt-space-s450);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-label);
+  text-align: center;
+}
+
+/* ───────────── профиль (prototype 18-profile) ───────────── */
+.profile__head {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s400);
+  padding: 22px 0 var(--tt-space-s400);
+}
+
+.profile__avatar {
+  flex: none;
+}
+
+.profile__avatar-ring {
+  fill: none;
+  stroke: var(--tt-color-accent-fill);
+  stroke-width: 4;
+}
+
+.pstats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--tt-space-s250);
+  margin: 0 0 var(--tt-space-s350);
+  padding: 0;
+  list-style: none;
+}
+
+.pstat {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s250);
+  padding: var(--tt-space-s300) var(--tt-space-s350);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-button);
+  background: var(--tt-color-surface);
+}
+
+.pstat__icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+}
+
+.pstat__icon--streak {
+  color: var(--tt-color-streak-fill);
+}
+
+.pstat__icon--honey {
+  color: var(--tt-color-accent-fill);
+}
+
+.pstat__icon--words {
+  color: var(--tt-color-info-fill);
+}
+
+.pstat__icon--votes {
+  color: var(--tt-color-violet-bright);
+}
+
+.pstat b {
+  display: block;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.pstat span {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-label);
+}
+
+.settings.tt-card {
+  padding: var(--tt-space-s100) var(--tt-space-s400);
+}
+
+.settings__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  min-height: 56px;
+  padding: var(--tt-space-s150) var(--tt-space-s100);
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+.settings__row:first-child {
+  border-top: 0;
+}
+
+.settings__row > svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--tt-color-text-tertiary);
+}
+
+.settings__name {
+  flex: 1;
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.settings__val {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.settings__row .tt-link-btn {
+  margin-left: calc(-1 * var(--tt-space-s350));
+}
+
+/* ───────────── картинки (design/assets/approved) ───────────── */
+/* Итог урока: новые слова с читающей пчелой. */
+.new-words {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  width: 100%;
+  margin-top: var(--tt-space-s400);
+  padding: var(--tt-space-s300) var(--tt-space-s400) var(--tt-space-s300) var(--tt-space-s300);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+  text-align: left;
+}
+
+.new-words__bee {
+  flex: none;
+  width: 60px;
+}
+
+.new-words__label {
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.new-words__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s150);
+  margin: var(--tt-space-s200) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.new-words__word {
+  padding: var(--tt-space-s100) var(--tt-space-s250);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-snug);
+}
+
+/* Дуэль в уроке: сцена «две соты» справа от заголовка; в режиме «Хранитель» — без неё (меньше маскота, docs/05 §7). */
+.duel__art {
+  float: right;
+  width: 118px;
+  margin: calc(-1 * var(--tt-space-s200)) calc(-1 * var(--tt-space-s100)) var(--tt-space-s200) var(--tt-space-s200);
+}
+
+.duel__source {
+  clear: both;
+}
+
+:root[data-mode="keeper"] .duel__art {
+  display: none;
+}
+
+/* Лига: ученик в зоне повышения — гордая пчела. */
+.league__cheer {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  margin: var(--tt-space-s100) 0 var(--tt-space-s200);
+  padding: var(--tt-space-s250) var(--tt-space-s400) var(--tt-space-s250) var(--tt-space-s250);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-success-soft);
+}
+
+.league__cheer-bee {
+  flex: none;
+  width: 58px;
+}
+
+.league__cheer-title {
+  color: var(--tt-color-success-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+.league__cheer-text {
+  margin-top: var(--tt-space-s100);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  line-height: var(--tt-line-height-snug);
+}
+
+/* Улей класса: сцена улья в шапке вкладки. */
+.hive__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s300);
+}
+
+.hive__art {
+  flex: none;
+  width: 104px;
+  margin: calc(-1 * var(--tt-space-s200)) 0 calc(-1 * var(--tt-space-s300));
+}
+
+/* Профиль: «созрело» в «Моём вкладе» и созревший мёд. */
+.cells-card__art {
+  float: right;
+  width: 96px;
+  margin: calc(-1 * var(--tt-space-s150)) calc(-1 * var(--tt-space-s200)) var(--tt-space-s150) var(--tt-space-s250);
+}
+
+.cells-card .tab-card__comb {
+  clear: both;
+}
+
+.matured {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  margin-bottom: var(--tt-space-s350);
+  padding: var(--tt-space-s300) var(--tt-space-s400) var(--tt-space-s300) var(--tt-space-s300);
+  border: 2px solid var(--tt-color-accent-soft-border);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-accent-soft);
+}
+
+.matured__art {
+  flex: none;
+  width: 92px;
+}
+
+.matured__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+.matured__text {
+  margin-top: var(--tt-space-s100);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  line-height: var(--tt-line-height-snug);
+}
+
+/* ───────────── живое движение (design/prompts/batch-3-animation.md) ─────────────
+ * Только при prefers-reduced-motion: no-preference — при «Уменьшении движения» и в тестах на моках анимаций нет, базовое
+ * состояние — итоговый кадр. Длительности и кривые — токены. Декорации и пчела — в SVG под узлами (pointer-events: none),
+ * кнопки неподвижны: ввод не ждёт анимации. */
+.track__mask {
+  mask-type: alpha;
+}
+
+.track__reveal {
+  fill: none;
+  stroke: var(--tt-color-accent-fill);
+  stroke-width: 36;
+  stroke-linecap: round;
+}
+
+.track__reveal--draw {
+  stroke-dasharray: 1 1;
+}
+
+.track__deco--sway,
+.track__deco--roll,
+.track__deco--rock,
+.track__deco--leap {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.track__deco--rock {
+  transform-origin: 50% 75%;
+}
+
+.track__deco--leap {
+  transform-origin: 50% 50%;
+}
+
+.after__art--hop {
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Тропа: последний отрезок медовой тропинки дорисовывается до текущего узла. */
+  .track__reveal--draw {
+    animation: track-draw var(--tt-duration-draw) var(--tt-easing-out) var(--tt-duration-base) both;
+  }
+
+  /* Пузырь «Начать» подпрыгивает с лёгким сжатием при «приземлении». */
+  .track__bubble {
+    animation: track-hop var(--tt-duration-bob) var(--tt-easing-in-out) infinite;
+  }
+
+  /* Декорации: покачивание от основания, трамвай катается, лодка качается, рыба выпрыгивает. Фазы разные. */
+  .track__deco--sway {
+    animation: deco-sway var(--tt-duration-sway) var(--tt-easing-in-out) infinite;
+  }
+
+  .track__deco--roll {
+    animation: deco-roll var(--tt-duration-roll) var(--tt-easing-in-out) infinite;
+  }
+
+  .track__deco--rock {
+    animation: deco-rock var(--tt-duration-rock) var(--tt-easing-in-out) infinite;
+  }
+
+  .track__deco--leap {
+    animation: deco-leap var(--tt-duration-leap) var(--tt-easing-in-out) infinite;
+  }
+
+  .track__deco--phase1 {
+    animation-delay: calc(var(--tt-duration-sway) * -0.3);
+  }
+
+  .track__deco--phase2 {
+    animation-delay: calc(var(--tt-duration-sway) * -0.55);
+  }
+
+  .track__deco--phase3 {
+    animation-delay: calc(var(--tt-duration-sway) * -0.8);
+  }
+
+  .learn-splash__bee {
+    animation: learn-drift var(--tt-duration-drift) var(--tt-easing-in-out) infinite;
+  }
+
+  /* Огонь серии мерцает (только когда серия есть). */
+  .learn-stat--lit svg,
+  .pstat__icon--streak {
+    transform-origin: 50% 85%;
+    animation: fire-flicker var(--tt-duration-flicker) var(--tt-easing-in-out) infinite;
+  }
+
+  /* «Пока не так»: выбранный ответ коротко покачивается. */
+  .lesson__body[data-verdict="wrong"] :is(.tt-option[aria-checked="true"], .tiles-answer, .answer-field) {
+    animation: learn-shake var(--tt-duration-shake) var(--tt-easing-in-out) both;
+  }
+
+  /* Итог: пчела на сотах прыгает со сжатием — дважды. */
+  .after__art--hop {
+    animation: after-hop var(--tt-duration-hop) var(--tt-easing-in-out) var(--tt-duration-slow) 2 both;
+  }
+
+  /* «Новая лига»: Аҡбуҙат парит. */
+  .after__art--fly {
+    animation: learn-drift var(--tt-duration-drift) var(--tt-easing-in-out) infinite;
+  }
+
+  /* Серия: цифра «выпрыгивает», сегодняшняя сота недели сразу за ней запечатывается мёдом. Прошлые дни уже
+   * закрыты — они не ждут своей очереди (иначе сегодняшняя сота почти секунду висит серой точкой). */
+  .streak__num {
+    animation: streak-pop var(--tt-duration-rise) var(--tt-easing-spring) var(--tt-duration-base) both;
+  }
+
+  .week__day--today .week__hex--done,
+  .week__day--today .week__hex--frozen {
+    transform-origin: 50% 60%;
+    animation: week-pop var(--tt-duration-rise) var(--tt-easing-spring) var(--tt-duration-slow) both;
+  }
+
+  .week__day--today .week__hex--done .week__face {
+    animation: week-light var(--tt-duration-rise) var(--tt-easing-out) var(--tt-duration-slow) both;
+  }
+
+  .week__day--today .week__hex--done .week__lip {
+    animation: week-light-lip var(--tt-duration-rise) var(--tt-easing-out) var(--tt-duration-slow) both;
+  }
+
+  /* Новые картинки появляются с пружиной. */
+  .league__cheer-bee,
+  .matured__art,
+  .new-words__bee {
+    transform-origin: 50% 100%;
+    animation: tt-peek var(--tt-duration-rise) var(--tt-easing-spring) var(--tt-duration-slow) both;
+  }
+
+  .cells-card__art,
+  .hive__art {
+    animation: tt-float var(--tt-duration-float) var(--tt-easing-in-out) infinite;
+  }
+}
+
+@keyframes track-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes track-hop {
+  0%,
+  55%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+
+  25% {
+    transform: translate(-50%, -9px);
+  }
+
+  42% {
+    transform: translate(-50%, 0) scale(1.05, 0.92);
+  }
+}
+
+@keyframes deco-sway {
+  0%,
+  100% {
+    transform: rotate(-1.8deg);
+  }
+
+  50% {
+    transform: rotate(1.8deg);
+  }
+}
+
+@keyframes deco-roll {
+  0%,
+  100% {
+    transform: translateX(-6px);
+  }
+
+  25% {
+    transform: translate(0, -1.5px) rotate(0.6deg);
+  }
+
+  50% {
+    transform: translateX(6px);
+  }
+
+  75% {
+    transform: translate(0, -1.5px) rotate(-0.6deg);
+  }
+}
+
+@keyframes deco-rock {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
+
+  50% {
+    transform: rotate(3deg) translateY(3px);
+  }
+}
+
+@keyframes deco-leap {
+  0%,
+  52%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  60% {
+    transform: translate(-4px, -22px) rotate(-18deg);
+  }
+
+  68% {
+    transform: translate(0, -32px) rotate(0deg);
+  }
+
+  76% {
+    transform: translate(4px, -20px) rotate(18deg);
+  }
+
+  84% {
+    transform: translate(0, 2px) scale(1.06, 0.94);
+  }
+
+  90% {
+    transform: translate(0, 0) scale(0.98, 1.02);
+  }
+}
+
+@keyframes learn-drift {
+  50% {
+    transform: translate(6px, -8px) rotate(-2deg);
+  }
+}
+
+@keyframes fire-flicker {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  20% {
+    transform: scale(1.08, 0.94) rotate(-4deg);
+  }
+
+  45% {
+    transform: scale(0.95, 1.08) rotate(3deg);
+  }
+
+  70% {
+    transform: scale(1.05, 0.97) rotate(-2deg);
+  }
+}
+
+@keyframes learn-shake {
+  15% {
+    transform: translateX(-8px);
+  }
+
+  35% {
+    transform: translateX(7px);
+  }
+
+  55% {
+    transform: translateX(-4px);
+  }
+
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes after-hop {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  18% {
+    transform: scale(1.06, 0.9);
+  }
+
+  45% {
+    transform: translateY(-26px) scale(0.96, 1.05);
+  }
+
+  70% {
+    transform: translateY(0) scale(1.05, 0.92);
+  }
+
+  85% {
+    transform: scale(0.99, 1.02);
+  }
+}
+
+@keyframes streak-pop {
+  from {
+    transform: scale(0.4);
+  }
+}
+
+@keyframes week-pop {
+  from {
+    transform: scale(0.5);
+  }
+}
+
+@keyframes week-light {
+  from {
+    fill: var(--tt-color-locked-fill);
+  }
+}
+
+@keyframes week-light-lip {
+  from {
+    fill: var(--tt-color-locked-lip);
+  }
+}
+
+/* ───────────── повторение слов, «Пары», цель дня, «Мой словарь» ───────────── */
+.word-card__text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Цель дня в шапке тропы (prototype .goal): первая слева, как в прототипе. */
+.learn-goal {
+  padding: 0 var(--tt-space-s100);
+}
+
+/* «Пора повторить N слов» на тропе и в словаре: медовая карточка с читающей пчелой. */
+.review-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  margin-top: var(--tt-space-s350);
+  padding: var(--tt-space-s300) var(--tt-space-s400) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-accent-soft-border);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-accent-soft);
+}
+
+.review-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+}
+
+.review-card__bee {
+  flex: none;
+}
+
+.review-card__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.review-card__lead {
+  margin-top: var(--tt-space-s050);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+/* Задание учителя на тропе (ADR 0021): голубая карточка — не медовая, чтобы не путать с повторением слов. */
+.tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  margin-top: var(--tt-space-s350);
+}
+
+.task-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s300) var(--tt-space-s400) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-info-fill);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-info-soft);
+}
+
+.task-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+}
+
+.task-card__bee {
+  flex: none;
+}
+
+.task-card__kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  color: var(--tt-color-info-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.task-card__kicker svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.task-card__due {
+  white-space: nowrap;
+}
+
+.task-card__title {
+  margin-top: var(--tt-space-s050);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.task-card__title--small {
+  font-size: var(--tt-font-size-body);
+}
+
+/* Выполнено — спокойная зелёная строка с галочкой. */
+.task-card--done {
+  flex-direction: row;
+  align-items: center;
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border-color: var(--tt-color-success-fill);
+  background: var(--tt-color-success-soft);
+}
+
+.task-card--done .task-card__kicker {
+  color: var(--tt-color-success-text);
+}
+
+.task-card__check {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  color: var(--tt-color-success-fill);
+}
+
+/* «Соедини пары»: две колонки кнопок; выбранное — медовое и приподнято, соединённая пара — общий номер и цвет
+   (медовый — только пятой паре, обычно пар не больше четырёх). */
+.pairs__hint {
+  margin: calc(-1 * var(--tt-space-s200)) 0 var(--tt-space-s400);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+}
+
+.pairs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tt-space-s250);
+}
+
+.pairs__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s250);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pair {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s200);
+  width: 100%;
+  min-height: 60px;
+  padding: var(--tt-space-s200) var(--tt-space-s250);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-border-default);
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-body-large);
+  font-weight: var(--tt-font-weight-semibold);
+  line-height: var(--tt-line-height-snug);
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--tt-duration-fast) var(--tt-easing-out);
+}
+
+.pair:active:not(:disabled) {
+  transform: translateY(var(--tt-size-lip-small));
+  box-shadow: none;
+}
+
+.pair:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.pair:disabled {
+  cursor: default;
+}
+
+.pair__text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pair__text[lang="ba"] {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.pair--picked {
+  border-color: var(--tt-color-accent-fill);
+  background: var(--tt-color-accent-soft);
+  box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-accent-lip);
+  transform: translateY(calc(-1 * var(--tt-size-lip-small)));
+}
+
+.pair__mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--pair-fill);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--pair-ink);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.pair--linked {
+  border-color: var(--pair-fill);
+  background: var(--pair-soft);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--pair-fill);
+}
+
+.pair--t0 {
+  --pair-fill: var(--tt-color-info-fill);
+  --pair-soft: var(--tt-color-info-soft);
+  --pair-ink: var(--tt-color-info-text);
+}
+
+.pair--t1 {
+  --pair-fill: var(--tt-color-violet-fill);
+  --pair-soft: var(--tt-color-violet-soft);
+  --pair-ink: var(--tt-color-violet-text);
+}
+
+.pair--t2 {
+  --pair-fill: var(--tt-color-success-fill);
+  --pair-soft: var(--tt-color-success-soft);
+  --pair-ink: var(--tt-color-success-text);
+}
+
+.pair--t3 {
+  --pair-fill: var(--tt-color-streak-fill);
+  --pair-soft: var(--tt-color-streak-soft);
+  --pair-ink: var(--tt-color-streak-text);
+}
+
+.pair--t4 {
+  --pair-fill: var(--tt-color-accent-fill);
+  --pair-soft: var(--tt-color-accent-soft);
+  --pair-ink: var(--tt-color-accent-text);
+}
+
+/* После проверки: верная пара — зелёная, неверная — коралловая (вместе с номером и текстом для читалки). */
+.pair--ok {
+  --pair-fill: var(--tt-color-success-fill);
+  --pair-soft: var(--tt-color-success-soft);
+  --pair-ink: var(--tt-color-success-text);
+}
+
+.pair--bad {
+  --pair-fill: var(--tt-color-danger-fill);
+  --pair-soft: var(--tt-color-danger-soft);
+  --pair-ink: var(--tt-color-danger-text);
+}
+
+.pairs-fix {
+  margin: var(--tt-space-s100) 0 var(--tt-space-s200);
+  padding-left: var(--tt-space-s450);
+}
+
+.pairs-fix li + li {
+  margin-top: var(--tt-space-s100);
+}
+
+/* Строка листа ответа с «Послушать». */
+.feedback-listen {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+}
+
+.feedback-listen > p {
+  flex: 1;
+}
+
+/* Цель дня на итоге урока: выполнена этим уроком — медовая плашка с запечатанной сотой. */
+.goal-note {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  width: 100%;
+  margin-top: var(--tt-space-s400);
+  padding: var(--tt-space-s250) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+  text-align: left;
+}
+
+.goal-note .tt-goal__text {
+  display: none;
+}
+
+.goal-note--done {
+  border-color: var(--tt-color-accent-soft-border);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-text-primary);
+}
+
+.goal-note b {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+}
+
+/* «Мой словарь» в профиле: строка-ссылка с книжкой. */
+.dict-link {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  margin-bottom: var(--tt-space-s350);
+  padding: var(--tt-space-s350) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-border-subtle);
+  color: var(--tt-color-text-primary);
+  text-decoration: none;
+}
+
+.dict-link:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.dict-link:active {
+  transform: translateY(var(--tt-size-lip-small));
+  box-shadow: none;
+}
+
+.dict-link__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tt-radius-icon-button);
+  background: var(--tt-color-info-soft);
+  color: var(--tt-color-info-fill);
+}
+
+.dict-link__icon svg {
+  width: var(--tt-size-icon-large);
+  height: var(--tt-size-icon-large);
+}
+
+.dict-link__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+}
+
+.dict-link__text b {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.dict-link__text span {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.dict-link__caret {
+  flex: none;
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+  color: var(--tt-color-text-tertiary);
+}
+
+/* Экран «Мой словарь». */
+.words__head {
+  padding: var(--tt-space-s300) 0 var(--tt-space-s200);
+}
+
+.words__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  min-height: var(--tt-size-touch-min);
+  margin-left: calc(-1 * var(--tt-space-s100));
+  padding: 0 var(--tt-space-s100);
+  border-radius: var(--tt-radius-small);
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+}
+
+.words__back svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.words__back:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+}
+
+.words__review {
+  margin-top: var(--tt-space-s200);
+}
+
+.word-list {
+  margin-top: var(--tt-space-s500);
+}
+
+.word-list__title {
+  margin-bottom: var(--tt-space-s200);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.word-list__items {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-surface);
+  list-style: none;
+}
+
+.word-row {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s250);
+  min-height: 64px;
+  padding: var(--tt-space-s200) var(--tt-space-s300) var(--tt-space-s200) var(--tt-space-s400);
+}
+
+.word-row + .word-row {
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+.word-row__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  min-width: 0;
+}
+
+.word-row__text b {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+.word-row__text span {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+}
+
+/* Статус — одинаковой ширины в обеих секциях: «Послушать» стоит в одной колонке. */
+.word-row .tt-chip {
+  flex: none;
+  justify-content: center;
+  min-width: 124px;
+}
+
+/* ───────────── ощущение урока: ответ подсвечен, огонёк «подряд», переходы ───────────── */
+/* Пустая строка ответа в плитках подсказывает, что делать. */
+.tiles-answer__hint {
+  display: flex;
+  align-items: center;
+  min-height: var(--tile-h);
+  color: var(--tt-color-text-tertiary);
+  font-size: var(--tt-font-size-callout);
+}
+
+/* После проверки ответ окрашен: верно — зелень, не так — коралл, почти — мёд (вместе с листом и его заголовком). */
+.tiles-answer--ok .tt-tile {
+  border-color: var(--tt-color-success-lip);
+  background: var(--tt-color-success-soft);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-success-lip);
+  color: var(--tt-color-success-text);
+}
+
+.tiles-answer--bad .tt-tile {
+  border-color: var(--tt-color-danger-lip);
+  background: var(--tt-color-danger-soft);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-danger-lip);
+  color: var(--tt-color-danger-text);
+}
+
+.answer-field[data-verdict="ok"] {
+  border-color: var(--tt-color-success-lip);
+  background: var(--tt-color-success-soft);
+}
+
+.answer-field[data-verdict="bad"] {
+  border-color: var(--tt-color-danger-lip);
+  background: var(--tt-color-danger-soft);
+}
+
+.answer-field[data-verdict="almost"] {
+  border-color: var(--tt-color-accent-lip);
+  background: var(--tt-color-accent-soft);
+}
+
+.lesson__progress {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Огонёк «3 подряд» в заголовке листа «Верно». */
+.combo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  margin-left: auto;
+  padding: var(--tt-space-s100) var(--tt-space-s300);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-streak-text);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-black);
+  white-space: nowrap;
+}
+
+.combo svg {
+  width: 18px;
+  height: 18px;
+  color: var(--tt-color-streak-fill);
+}
+
+/* «Почти!»: верное слово крупно, нужная буква подсвечена. */
+.tt-sheet__body .feedback-answer {
+  margin-bottom: var(--tt-space-s100);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-bold);
+  font-size: var(--tt-font-size-title3);
+  line-height: var(--tt-line-height-snug);
+}
+
+.tt-sheet__body .feedback-answer b {
+  font-weight: var(--tt-font-weight-black);
+}
+
+.tt-sheet__body .feedback-answer mark {
+  padding: 0 var(--tt-space-s050);
+  border-radius: var(--tt-radius-small);
+  background: var(--tt-color-accent-fill);
+  color: var(--tt-color-accent-on);
+}
+
+/* «Пчёлка» (1–4 класс): минимум текста — без меток заданий, подсказок под панелью и вторых строк листа. */
+:root[data-mode="bee"] .lesson .tt-chip:not(.tt-chip--violet),
+:root[data-mode="bee"] .lesson .tt-letters__hint,
+:root[data-mode="bee"] .lesson .pairs__hint,
+:root[data-mode="bee"] .lesson .feedback-extra,
+:root[data-mode="bee"] .after .stat-time {
+  display: none;
+}
+
+:root[data-mode="bee"] .prompt__bubble {
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+:root[data-mode="bee"] .lesson .task-title {
+  margin-top: 0;
+}
+
+/* Компьютер: урок шире, кнопка — справа, как подпись к листу; лист — во всю ширину полосой. */
+@media (min-width: 900px) {
+  .lesson .tt-column {
+    max-width: 640px;
+  }
+
+  .lesson .tt-sheet__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--tt-space-s600);
+    /* Края листа — по краям задания: у колонки 640px поля по s400 с каждой стороны. */
+    max-width: calc(640px - 2 * var(--tt-space-s400));
+  }
+
+  .lesson .tt-sheet__inner > .tt-btn,
+  .lesson__check > .tt-btn {
+    width: auto;
+    min-width: 220px;
+  }
+
+  .lesson .tt-sheet__body,
+  .lesson .tt-sheet__row .tt-sheet__body {
+    margin-bottom: 0;
+  }
+
+  .lesson__check {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .lesson .task-title {
+    font-size: var(--tt-font-size-title1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Новое упражнение въезжает справа — урок «листается». */
+  .lesson__column {
+    animation: lesson-in var(--tt-duration-slow) var(--tt-easing-out) both;
+  }
+
+  /* Полоса урока выросла — короткая вспышка мёда. */
+  .lesson__progress--bump .tt-progress__track {
+    animation: lesson-glow var(--tt-duration-rise) var(--tt-easing-out);
+  }
+
+  .lesson__progress--bump .tt-progress__fill {
+    animation: lesson-bright var(--tt-duration-rise) var(--tt-easing-out);
+  }
+
+  .combo {
+    animation: tt-mark-pop var(--tt-duration-rise) var(--tt-easing-spring) var(--tt-duration-fast) both;
+  }
+
+  .combo svg {
+    transform-origin: 50% 85%;
+    animation: fire-flicker var(--tt-duration-flicker) var(--tt-easing-in-out) infinite;
+  }
+
+  /* Ответ окрасился — верный коротко «подпрыгивает». */
+  .tiles-answer--ok .tt-tile,
+  .tt-option.tt-option--ok {
+    animation: lesson-cheer var(--tt-duration-slow) var(--tt-easing-spring) both;
+  }
+
+  .tiles-answer--ok .tt-tile:nth-child(2) {
+    animation-delay: var(--tt-duration-press);
+  }
+
+  .tiles-answer--ok .tt-tile:nth-child(3) {
+    animation-delay: calc(var(--tt-duration-press) * 2);
+  }
+
+  .tiles-answer--ok .tt-tile:nth-child(n + 4) {
+    animation-delay: calc(var(--tt-duration-press) * 3);
+  }
+
+  .lesson__body[data-verdict="wrong"] :is(.tt-option--bad, .tiles-answer, .answer-field) {
+    animation: learn-shake var(--tt-duration-shake) var(--tt-easing-in-out) both;
+  }
+
+  /* Новое слово «выкладывается» на стол, перевод проявляется следом. */
+  .newword__card {
+    animation: newword-pop var(--tt-duration-slow) var(--tt-easing-spring) var(--tt-duration-fast) both;
+  }
+
+  .newword__ru {
+    animation: newword-reveal var(--tt-duration-base) var(--tt-easing-out) var(--tt-duration-slow) both;
+  }
+
+  .hint__pop {
+    animation: hint-in var(--tt-duration-fast) var(--tt-easing-out) both;
+  }
+}
+
+@keyframes newword-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+}
+
+@keyframes newword-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-50% + var(--hint-shift))) translateY(-4px);
+  }
+}
+
+@keyframes lesson-in {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+}
+
+@keyframes lesson-glow {
+  from {
+    box-shadow: 0 0 0 6px var(--tt-color-accent-soft);
+  }
+}
+
+@keyframes lesson-bright {
+  30% {
+    filter: brightness(1.18) saturate(1.2);
+  }
+}
+
+@keyframes lesson-cheer {
+  40% {
+    transform: translateY(-6px) scale(1.04);
+  }
+}
+
+/* ───────────── тропа: подсказка у закрытого узла ───────────── */
+.track__hint {
+  --hint-shift: 0px;
+  position: absolute;
+  bottom: calc(100% + var(--tt-space-s200));
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  width: max-content;
+  max-width: 220px;
+  padding: var(--tt-space-s250) var(--tt-space-s350);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-text-primary);
+  color: var(--tt-color-bg);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-snug);
+  transform: translateX(calc(-50% + var(--hint-shift)));
+  pointer-events: none;
+}
+
+.track__hint svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.track__hint::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - var(--hint-shift));
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--tt-color-text-primary);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* Узлы у края змейки: пузырь сдвинут к середине, чтобы не уйти за экран; хвостик остаётся у узла. */
+.track__node--o1 .track__hint,
+.track__node--o3 .track__hint {
+  --hint-shift: 24px;
+}
+
+.track__node--o2 .track__hint {
+  --hint-shift: 44px;
+}
+
+.track__node--o5 .track__hint,
+.track__node--o7 .track__hint {
+  --hint-shift: -24px;
+}
+
+.track__node--o6 .track__hint {
+  --hint-shift: -44px;
+}
+
+:root[data-mode="bee"] .after .tt-stiles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .track__hint {
+    animation: lesson-hint var(--tt-duration-base) var(--tt-easing-out) both;
+  }
+
+  /* Закрытый узел «качает головой». */
+  .track__node--nope .tt-node {
+    animation: learn-shake var(--tt-duration-shake) var(--tt-easing-in-out) both;
+  }
+}
+
+@keyframes lesson-hint {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-50% + var(--hint-shift))) translateY(6px);
+  }
+}
+
+/* ───────────── знакомство с пчелой (TrailIntro) ───────────── */
+.tt-dialog__panel:has(> .intro) {
+  display: flex;
+  flex-direction: column;
+}
+
+.tt-dialog__panel > .intro {
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  margin-bottom: var(--tt-space-s400);
+}
+
+.intro__art {
+  max-width: 100%;
+  height: auto;
+}
+
+.intro__art--heroLanding {
+  border-radius: var(--tt-radius-card);
+}
+
+.intro__dots {
+  display: flex;
+  gap: var(--tt-space-s150);
+}
+
+.intro__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-locked-lip);
+}
+
+.intro__dot--on {
+  width: 24px;
+  background: var(--tt-color-accent-fill);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .intro {
+    animation: lesson-in var(--tt-duration-slow) var(--tt-easing-out) both;
+  }
+}
+
+/* ───────────── профиль: выключатели «Звуки в уроке», «Тёмная тема» ───────────── */
+/* Название переносится по словам: при крупном шрифте на узком экране строка не шире экрана. */
+.settings__name {
+  min-width: 0;
+}
+
+/* Сам выключатель — .tt-switch в packages/ui (общий с кабинетом учителя и консолью). */
+
+/* Строка настройки с текущим значением под названием («Цель дня» / «2 урока в день»). */
+.settings__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  min-width: 0;
+}
+
+/* Фокус при открытии знакомства — на содержимом шага: это не элемент управления, рамка не нужна (как .tt-step-heading). */
+.intro:focus {
+  outline: none;
+}
+
+/* Широкая колонка тропы (компьютер): крупный «якорь» места мельче — он виден целиком, а не уходит за край экрана, как на
+ * телефоне, и не должен перетягивать внимание с узлов. */
+.track__deco--shrink {
+  transform-box: fill-box;
+  transform-origin: 50% 35%;
+}
+
+@container trail (min-width: 500px) {
+  .track__deco--shrink {
+    scale: 0.78;
+  }
+}

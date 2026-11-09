@@ -1,0 +1,177 @@
+# Урок «Мой дом» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u02-moy-dom
+unit: 02-shulgantash
+kind: lesson
+title_ru: Мой дом
+new_words:
+  - өй
+  - тәҙрә
+  - бүлмә
+  - ишек
+  - өҫтәл
+  - Беҙ өйҙә йәшәйбеҙ.
+exercises:
+  - id: u02-moy-dom-e01
+    type: tiles_ru_ba
+    prompt_ru: Мы живём в доме.
+    answer:
+      ba: Беҙ өйҙә йәшәйбеҙ.
+      ru: Мы живём в доме.
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/12075580
+        locator: предложение №12075580 (CC BY 2.0 FR); русский перевод №1064546 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    distractors:
+      - ba: мин
+        ru: я
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BC%D0%B8%D0%BD
+          locator: статья «мин», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/9/9f/LL-Q13389_%28bak%29-Pastilahor-min.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-min.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-min.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: мин
+      - ba: ауыл
+        ru: деревня
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D1%83%D1%8B%D0%BB
+          locator: статья «ауыл», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/5/5e/LL-Q13389_%28bak%29-Pastilahor-%D0%B0%D1%83%D1%8B%D0%BB.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-%D0%B0%D1%83%D1%8B%D0%BB.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-ауыл.wav; запись — Pastilahor
+          license: CC BY 4.0
+  - id: u02-moy-dom-e02
+    type: choice_ba_ru
+    prompt:
+      ba: өй
+      ru: дом
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D3%A9%D0%B9
+        locator: статья «өй», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - дом
+      - окно
+      - дверь
+      - стол
+    correct: 0
+  - id: u02-moy-dom-e03
+    type: free_ru_ba
+    prompt_ru: окно
+    answers:
+      - ba: тәҙрә
+        ru: окно
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D3%99%D2%99%D1%80%D3%99
+          locator: статья «тәҙрә», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-moy-dom-e04
+    type: duel
+  - id: u02-moy-dom-e05
+    type: choice_ba_ru
+    prompt:
+      ba: бүлмә
+      ru: комната
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B1%D2%AF%D0%BB%D0%BC%D3%99
+        locator: статья «бүлмә», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - комната
+      - дом
+      - деревня
+      - дверь
+    correct: 0
+  - id: u02-moy-dom-e06
+    type: tiles_ru_ba
+    prompt_ru: Мой дом в этой деревне.
+    answer:
+      ba: Минең өйөм ошо ауылда.
+      ru: Мой дом в этой деревне.
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/12073319
+        locator: предложение №12073319 (CC BY 2.0 FR); русский перевод №11844259 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    distractors:
+      - ba: бүлмә
+        ru: комната
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D2%AF%D0%BB%D0%BC%D3%99
+          locator: статья «бүлмә», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: тәҙрә
+        ru: окно
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D3%99%D2%99%D1%80%D3%99
+          locator: статья «тәҙрә», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-moy-dom-p01
+    type: match_pairs
+    pairs:
+      - ba: өй
+        ru: дом
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%A9%D0%B9
+          locator: статья «өй», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: тәҙрә
+        ru: окно
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D3%99%D2%99%D1%80%D3%99
+          locator: статья «тәҙрә», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ишек
+        ru: дверь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D1%88%D0%B5%D0%BA
+          locator: статья «ишек», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/c/c4/Ba-%D0%B8%D1%88%D0%B5%D0%BA.oga
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B8%D1%88%D0%B5%D0%BA.oga
+            locator: File:Ba-ишек.oga; запись — Borovi4ok
+          license: CC BY 3.0
+      - ba: өҫтәл
+        ru: стол
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%A9%D2%AB%D1%82%D3%99%D0%BB
+          locator: статья «өҫтәл», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-moy-dom-e08
+    type: free_ru_ba
+    prompt_ru: стол
+    answers:
+      - ba: өҫтәл
+        ru: стол
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%A9%D2%AB%D1%82%D3%99%D0%BB
+          locator: статья «өҫтәл», раздел «Башкирский», значение 1
+        review: needs_native_review

@@ -1,0 +1,174 @@
+# Урок «Завтрак» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u05-zavtrak
+unit: 05-village
+kind: lesson
+title_ru: Завтрак
+new_words:
+  - иртәнге аш
+  - икмәк
+  - һөт
+  - дөгө
+  - Йылы икмәк
+  - аҡ май
+exercises:
+  - id: u05-zavtrak-e01
+    type: choice_ba_ru
+    prompt:
+      ba: иртәнге аш
+      ru: завтрак
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Еда», строка «завтрак»
+      review: needs_native_review
+    options_ru:
+      - завтрак
+      - обед
+      - ужин
+    correct: 0
+  - id: u05-zavtrak-e02
+    type: tiles_ru_ba
+    prompt_ru: Горячий хлеб
+    answer:
+      ba: Йылы икмәк
+      ru: горячий хлеб
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B8%D0%BA%D0%BC%D3%99%D0%BA
+        locator: статья «икмәк», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: ит
+        ru: мясо
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D1%82
+          locator: статья «ит», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: һыу
+        ru: вода
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «…воды»
+        review: needs_native_review
+  - id: u05-zavtrak-e03
+    type: free_ru_ba
+    prompt_ru: молоко
+    answers:
+      - ba: һөт
+        ru: молоко
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%BB%D3%A9%D1%82
+          locator: статья «һөт», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u05-zavtrak-e04
+    type: choice_ba_ru
+    prompt:
+      ba: икмәк
+      ru: хлеб
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B8%D0%BA%D0%BC%D3%99%D0%BA
+        locator: статья «икмәк», раздел «Башкирский», значение 1
+      review: needs_native_review
+      audio:
+        url: https://upload.wikimedia.org/wikipedia/commons/c/c1/Ba-%D0%B8%D0%BA%D0%BC%D3%99%D0%BA.ogg
+        source:
+          ref: wikimedia-commons
+          url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B8%D0%BA%D0%BC%D3%99%D0%BA.ogg
+          locator: File:Ba-икмәк.ogg; запись — Borovi4ok
+        license: CC BY-SA 3.0
+    options_ru:
+      - хлеб
+      - мясо
+      - рис
+    correct: 0
+  - id: u05-zavtrak-e05
+    type: duel
+  - id: u05-zavtrak-e06
+    type: tiles_ru_ba
+    prompt_ru: Сливочное масло
+    answer:
+      ba: аҡ май
+      ru: сливочное масло
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%BC%D0%B0%D0%B9
+        locator: статья «май», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: тоҙ
+        ru: соль
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «соль»
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/f/f0/Ba-%D1%82%D0%BE%D2%99.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D1%82%D0%BE%D2%99.ogg
+            locator: File:Ba-тоҙ.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+      - ba: бал
+        ru: мёд
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B0%D0%BB
+          locator: статья «бал», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/8/8d/Ba-%D0%B1%D0%B0%D0%BB.oga
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B0%D0%BB.oga
+            locator: File:Ba-бал.oga; запись — Borovi4ok
+          license: CC BY 3.0
+  - id: u05-zavtrak-p01
+    type: match_pairs
+    pairs:
+      - ba: иртәнге аш
+        ru: завтрак
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «завтрак»
+        review: needs_native_review
+      - ba: төшкө аш
+        ru: обед
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «обед»
+        review: needs_native_review
+      - ba: киске аш
+        ru: ужин
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «ужин»
+        review: needs_native_review
+      - ba: дөгө
+        ru: рис
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «рис»
+        review: needs_native_review
+  - id: u05-zavtrak-e08
+    type: free_ru_ba
+    prompt_ru: ужин
+    answers:
+      - ba: киске аш
+        ru: ужин
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «ужин»
+        review: needs_native_review

@@ -1,0 +1,9 @@
+# Синтетический реестр источников для тестов импорта и уроков (apps/api/test). Строки курса — сочетания букв
+# в стиле contracts/test-vectors/answer-check, а не слова языка и не учебный контент (CLAUDE.md, правило 6).
+sources:
+  - id: synthetic
+    title: "Синтетический набор для тестов"
+    kind: other
+    url: https://example.org/synthetic
+    license: "—"
+    accessed: "2026-11-04"

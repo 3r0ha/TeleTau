@@ -1,0 +1,30 @@
+{
+  "name": "@teletau/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenAPI-контракт и сгенерированные TS-типы. Источник правды для всех клиентов.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./openapi.yaml": "./openapi.yaml",
+    "./openapi.json": "./src/generated/openapi.json"
+  },
+  "scripts": {
+    "generate": "openapi-typescript openapi.yaml -o src/generated/api.ts && node scripts/emit-json.mjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "redocly lint openapi.yaml",
+    "check": "node scripts/check.mjs",
+    "test": "node --test 'test/*.test.mjs'"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.72.1",
+    "openapi-typescript": "^7.13.0",
+    "yaml": "^2.8.0"
+  }
+}

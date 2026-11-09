@@ -1,0 +1,23 @@
+id: j-l1
+unit: j-u1
+kind: lesson
+title_ru: Урок один
+new_words:
+  - һөлөк
+exercises:
+  - id: j-l1-choice
+    type: choice_ba_ru
+    prompt:
+      ba: һөлөк
+      ru: Значение Б
+      source: { ref: synthetic, url: https://example.org/synthetic/4, locator: "строка 4" }
+      review: needs_native_review
+    options_ru: [Значение Б, Значение В]
+    correct: 0
+  - id: j-l1-free
+    type: free_ru_ba
+    prompt_ru: Синтетика Д
+    answers:
+      - ba: ҡаҙым
+        source: { ref: synthetic, url: https://example.org/synthetic/5, locator: "строка 5" }
+        review: needs_native_review

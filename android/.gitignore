@@ -1,0 +1,8 @@
+# Остальное (android/.gradle, android/**/build, android/.kotlin, local.properties) — в корневом .gitignore.
+/build-logic/.gradle/
+/build-logic/.kotlin/
+.idea/
+*.iml
+captures/
+.cxx/
+/dist/

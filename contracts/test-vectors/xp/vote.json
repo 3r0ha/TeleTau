@@ -1,0 +1,17 @@
+{
+  "suite": "xp/vote",
+  "version": 1,
+  "function": "voteHoney",
+  "description": "voteHoney({ choice, decision }) — мёд за голос в дуэли: до решения «созревает» (pending 3), после решения начисляется (final): 3 при согласии с итогом, 1 при несогласии; «Не знаю» — 0. decision — принятые варианты по duel-v0 (consensus/duel-v0.json) или null, пока решения нет (в том числе при escalated). Правила — README.md этого каталога.",
+  "cases": [
+    { "id": "v001", "input": { "choice": "a", "decision": null }, "expected": { "status": "pending", "amount": 3 }, "note": "голос до решения — созревает" },
+    { "id": "v002", "input": { "choice": "both", "decision": null }, "expected": { "status": "pending", "amount": 3 }, "note": "«Оба подходят» до решения — тоже созревает" },
+    { "id": "v003", "input": { "choice": "skip", "decision": null }, "expected": { "status": "none", "amount": 0 }, "note": "«Не знаю» — без мёда" },
+    { "id": "v004", "input": { "choice": "a", "decision": { "accepted": ["a"] } }, "expected": { "status": "final", "amount": 3 }, "note": "согласие с итогом" },
+    { "id": "v005", "input": { "choice": "b", "decision": { "accepted": ["a"] } }, "expected": { "status": "final", "amount": 1 }, "note": "несогласие с итогом" },
+    { "id": "v006", "input": { "choice": "both", "decision": { "accepted": ["a"] } }, "expected": { "status": "final", "amount": 1 }, "note": "«оба», а принят один — несогласие (иначе «оба» выигрывал бы всегда)" },
+    { "id": "v007", "input": { "choice": "both", "decision": { "accepted": ["a", "b"] } }, "expected": { "status": "final", "amount": 3 }, "note": "«оба», и приняты оба (решение эксперта) — согласие" },
+    { "id": "v008", "input": { "choice": "b", "decision": { "accepted": ["a", "b"] } }, "expected": { "status": "final", "amount": 3 }, "note": "выбранный вариант среди принятых — согласие" },
+    { "id": "v009", "input": { "choice": "skip", "decision": { "accepted": ["b"] } }, "expected": { "status": "none", "amount": 0 }, "note": "«Не знаю» и после решения — 0" }
+  ]
+}

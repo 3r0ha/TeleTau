@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "course.schema.json",
+  "title": "Курс — content/course/<id>/course.yaml",
+  "description": "Корень курса. Юниты лежат в content/course/<id>/units/<unit>/unit.yaml, уроки — в units/<unit>/lessons/<lesson>.yaml. Импорт (pnpm --filter @teletau/api content:import) идемпотентен: та же version с тем же содержимым — без изменений; другое содержимое при той же version — ошибка (version поднимается вручную).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "version", "title_ru", "direction", "units"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/Slug" },
+    "version": {
+      "description": "Версия контента курса (таблица content_versions). Поднимается при любом изменении файлов курса.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "title_ru": { "$ref": "common.schema.json#/$defs/RuText" },
+    "direction": {
+      "description": "Направление обучения: ru-ba — русскоязычный учит башкирский.",
+      "const": "ru-ba"
+    },
+    "units": {
+      "description": "id юнитов в порядке прохождения (= имена каталогов units/<id>/).",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "common.schema.json#/$defs/Slug" }
+    }
+  },
+  "examples": [{ "id": "ba-ru", "version": 1, "title_ru": "Башкирский язык", "direction": "ru-ba", "units": ["01-ufa", "02-shulgantash", "03-agidel"] }]
+}

@@ -1,0 +1,343 @@
+{
+  "color": {
+    "$type": "color",
+    "palette": {
+      "$description": "Палитра прототипа v2 «Тропа + Экспедиция» (prototypes/trail-expedition, docs/05-design-system.md §0). Не выводится на платформы — только через семантические токены ниже.",
+      "honey": {
+        "50": {
+          "$value": "#FFF5DC"
+        },
+        "100": {
+          "$value": "#FFF3D1"
+        },
+        "200": {
+          "$value": "#FFD979"
+        },
+        "400": {
+          "$value": "#FFB703"
+        },
+        "600": {
+          "$value": "#E39400"
+        },
+        "800": {
+          "$value": "#8A5200"
+        }
+      },
+      "chocolate": {
+        "600": {
+          "$value": "#85705B"
+        },
+        "700": {
+          "$value": "#6F5B47"
+        },
+        "900": {
+          "$value": "#3B2716"
+        }
+      },
+      "cream": {
+        "50": {
+          "$value": "#FFFCF5"
+        },
+        "100": {
+          "$value": "#FFF8EC"
+        },
+        "white": {
+          "$value": "#FFFFFF"
+        }
+      },
+      "wax": {
+        "100": {
+          "$value": "#F0E6D4"
+        },
+        "200": {
+          "$value": "#ECE5D9"
+        },
+        "300": {
+          "$value": "#E2D4BC"
+        },
+        "400": {
+          "$value": "#D6CCBC"
+        },
+        "500": {
+          "$value": "#A99D8B"
+        },
+        "600": {
+          "$value": "#A08A72"
+        }
+      },
+      "urman": {
+        "50": {
+          "$value": "#EDF6E7"
+        },
+        "100": {
+          "$value": "#E7F8EA"
+        },
+        "400": {
+          "$value": "#43C35E"
+        },
+        "600": {
+          "$value": "#2C9C45"
+        },
+        "800": {
+          "$value": "#1E7A33"
+        }
+      },
+      "agidel": {
+        "50": {
+          "$value": "#E8F4FB"
+        },
+        "100": {
+          "$value": "#E4F4FE"
+        },
+        "400": {
+          "$value": "#1CA7F2"
+        },
+        "600": {
+          "$value": "#0B87CB"
+        },
+        "800": {
+          "$value": "#0A6597"
+        }
+      },
+      "marjan": {
+        "100": {
+          "$value": "#FFECEA"
+        },
+        "400": {
+          "$value": "#FF5A5A"
+        },
+        "600": {
+          "$value": "#E03B3B"
+        },
+        "800": {
+          "$value": "#B3261E"
+        }
+      },
+      "violet": {
+        "100": {
+          "$value": "#F2EBFF"
+        },
+        "400": {
+          "$value": "#9B5CFF"
+        },
+        "600": {
+          "$value": "#7B3CE6"
+        },
+        "700": {
+          "$value": "#6B2ED6"
+        },
+        "800": {
+          "$value": "#5E26C0"
+        }
+      },
+      "fire": {
+        "100": {
+          "$value": "#FFEDE2"
+        },
+        "400": {
+          "$value": "#E8590C"
+        },
+        "600": {
+          "$value": "#C2470A"
+        },
+        "800": {
+          "$value": "#B23F07"
+        }
+      }
+    },
+    "bg": {
+      "$value": "{color.palette.cream.50}",
+      "$description": "Фон экрана"
+    },
+    "bgSunken": {
+      "$value": "{color.palette.cream.100}",
+      "$description": "Крем: фон вокруг колонки на широком экране, утопленные области"
+    },
+    "surface": {
+      "$value": "{color.palette.cream.white}",
+      "$description": "Карточки, листы, поля ввода"
+    },
+    "text": {
+      "primary": {
+        "$value": "{color.palette.chocolate.900}",
+        "$description": "Шоколадный текст"
+      },
+      "secondary": {
+        "$value": "{color.palette.chocolate.700}"
+      },
+      "tertiary": {
+        "$value": "{color.palette.chocolate.600}",
+        "$description": "Подписи, кикеры, неактивные вкладки"
+      },
+      "onFill": {
+        "$value": "{color.palette.chocolate.900}",
+        "$description": "Текст на ярких заливках (мёд, зелень, вода, коралл) — тёмный в обеих темах (шоколадный в светлой, графитовый в тёмной): белый на них не проходит AA"
+      }
+    },
+    "accent": {
+      "fill": {
+        "$value": "{color.palette.honey.400}",
+        "$description": "Мёд: главная кнопка, прогресс, пройденные ячейки. Не для текста"
+      },
+      "lip": {
+        "$value": "{color.palette.honey.600}",
+        "$description": "Глубокий мёд: «губа» медовой кнопки и ячейки"
+      },
+      "text": {
+        "$value": "{color.palette.honey.800}",
+        "$description": "Текст-акцент мёда, ссылки"
+      },
+      "on": {
+        "$value": "{color.palette.chocolate.900}",
+        "$description": "Текст на медовой заливке"
+      },
+      "soft": {
+        "$value": "{color.palette.honey.100}",
+        "$description": "Медовая подложка: чипы, выбранная строка, активная вкладка"
+      },
+      "softBorder": {
+        "$value": "{color.palette.honey.200}",
+        "$description": "Граница медовой подложки"
+      }
+    },
+    "success": {
+      "fill": {
+        "$value": "{color.palette.urman.400}",
+        "$description": "Зелень: «верно», успех"
+      },
+      "lip": {
+        "$value": "{color.palette.urman.600}"
+      },
+      "text": {
+        "$value": "{color.palette.urman.800}"
+      },
+      "soft": {
+        "$value": "{color.palette.urman.100}"
+      }
+    },
+    "info": {
+      "fill": {
+        "$value": "{color.palette.agidel.400}",
+        "$description": "Вода (Агидель): информация, задания учителя"
+      },
+      "lip": {
+        "$value": "{color.palette.agidel.600}"
+      },
+      "text": {
+        "$value": "{color.palette.agidel.800}"
+      },
+      "soft": {
+        "$value": "{color.palette.agidel.100}"
+      }
+    },
+    "danger": {
+      "fill": {
+        "$value": "{color.palette.marjan.400}",
+        "$description": "Коралл: ошибка, опасное действие (всегда с иконкой или текстом, не только цветом)"
+      },
+      "lip": {
+        "$value": "{color.palette.marjan.600}"
+      },
+      "text": {
+        "$value": "{color.palette.marjan.800}"
+      },
+      "soft": {
+        "$value": "{color.palette.marjan.100}"
+      }
+    },
+    "violet": {
+      "fill": {
+        "$value": "{color.palette.violet.600}",
+        "$description": "Фиолетовая кнопка («Помоги языку»). Единственная заливка с белым текстом"
+      },
+      "lip": {
+        "$value": "{color.palette.violet.800}"
+      },
+      "text": {
+        "$value": "{color.palette.violet.700}"
+      },
+      "soft": {
+        "$value": "{color.palette.violet.100}"
+      },
+      "bright": {
+        "$value": "{color.palette.violet.400}",
+        "$description": "Яркий фиолетовый для узлов и иконок (не для текста)"
+      },
+      "on": {
+        "$value": "{color.palette.cream.white}",
+        "$description": "Текст на фиолетовой заливке"
+      }
+    },
+    "streak": {
+      "fill": {
+        "$value": "{color.palette.fire.400}",
+        "$description": "Огонь серии (прототип v2): иконка пламени, крупное число дней на экране серии, ячейки дней. Не для мелкого текста (≥ 3:1 — только иконки и крупный текст)"
+      },
+      "lip": {
+        "$value": "{color.palette.fire.600}",
+        "$description": "«Губа» огненной ячейки и кнопки"
+      },
+      "text": {
+        "$value": "{color.palette.fire.800}",
+        "$description": "Текст серии обычного размера: счётчик в шапке, «6 дней подряд» (≥ 4.5:1)"
+      },
+      "soft": {
+        "$value": "{color.palette.fire.100}",
+        "$description": "Подложка серии: чип, ячейка дня с заморозкой рядом"
+      }
+    },
+    "locked": {
+      "fill": {
+        "$value": "{color.palette.wax.200}",
+        "$description": "Воск: закрытое, недоступное"
+      },
+      "lip": {
+        "$value": "{color.palette.wax.400}"
+      },
+      "text": {
+        "$value": "{color.palette.wax.500}",
+        "$description": "Текст недоступного элемента (WCAG не требует контраста для неактивных)"
+      }
+    },
+    "border": {
+      "subtle": {
+        "$value": "{color.palette.wax.100}",
+        "$description": "Декоративные границы карточек и разделители"
+      },
+      "default": {
+        "$value": "{color.palette.wax.300}",
+        "$description": "Границы плиток и вторичных кнопок, их «губа»"
+      },
+      "strong": {
+        "$value": "{color.palette.wax.600}",
+        "$description": "Границы полей ввода и контролов (≥ 3:1, WCAG 1.4.11)"
+      }
+    },
+    "focus": {
+      "$value": "{color.palette.agidel.600}",
+      "$description": "Кольцо фокуса клавиатуры (≥ 3:1)"
+    },
+    "scrim": {
+      "$value": "{color.palette.chocolate.900}",
+      "$description": "Затемнение под листом и диалогом (с прозрачностью в компоненте)"
+    },
+    "highlight": {
+      "$value": "{color.palette.cream.white}",
+      "$description": "Блик на ярких заливках (прогресс, ячейки) — с прозрачностью в компоненте"
+    },
+    "zone": {
+      "honey": {
+        "$value": "{color.palette.honey.50}",
+        "$description": "Подложка места: Уфа"
+      },
+      "green": {
+        "$value": "{color.palette.urman.50}",
+        "$description": "Подложка места: Шульган-Таш"
+      },
+      "water": {
+        "$value": "{color.palette.agidel.50}",
+        "$description": "Подложка места: Агидель"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+id: j-l2
+unit: j-u2
+kind: lesson
+title_ru: Урок два
+new_words:
+  - пиҡол
+exercises:
+  - id: j-l2-choice
+    type: choice_ba_ru
+    prompt:
+      ba: пиҡол
+      ru: Значение К
+      source: { ref: synthetic, url: https://example.org/synthetic/10, locator: "строка 10" }
+      review: needs_native_review
+    options_ru: [Значение И, Значение К]
+    correct: 1

@@ -1,0 +1,191 @@
+# Урок «Повторение» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u03-povtorenie
+unit: 03-agidel
+kind: lesson
+title_ru: Повторение
+new_words:
+  - йондоҙ
+  - сәскә
+  - үлән
+  - Таң йондоҙо.
+  - Ҡойма ямғыр
+exercises:
+  - id: u03-povtorenie-e01
+    type: choice_ba_ru
+    prompt:
+      ba: йондоҙ
+      ru: звезда
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B9%D0%BE%D0%BD%D0%B4%D0%BE%D2%99
+        locator: статья «йондоҙ», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - звезда
+      - луна
+      - солнце
+    correct: 0
+  - id: u03-povtorenie-e02
+    type: tiles_ru_ba
+    prompt_ru: Утренняя звезда.
+    answer:
+      ba: Таң йондоҙо.
+      ru: Утренняя звезда.
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B9%D0%BE%D0%BD%D0%B4%D0%BE%D2%99
+        locator: статья «йондоҙ», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: ай
+        ru: луна
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D0%B9
+          locator: статья «ай», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: &a2
+          url: https://upload.wikimedia.org/wikipedia/commons/f/f2/Ba-%D0%B0%D0%B9.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B0%D0%B9.ogg
+            locator: File:Ba-ай.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+      - ba: ҡояш
+        ru: солнце
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%BE%D1%8F%D1%88
+          locator: статья «ҡояш», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/c/c5/Ba-%D2%A1%D0%BE%D1%8F%D1%88.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D2%A1%D0%BE%D1%8F%D1%88.ogg
+            locator: File:Ba-ҡояш.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u03-povtorenie-e03
+    type: free_ru_ba
+    prompt_ru: лес
+    answers:
+      - ba: урман
+        ru: лес
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%83%D1%80%D0%BC%D0%B0%D0%BD
+          locator: статья «урман», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u03-povtorenie-e04
+    type: choice_ba_ru
+    prompt:
+      ba: сәскә
+      ru: цветок
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%81%D3%99%D1%81%D0%BA%D3%99
+        locator: статья «сәскә», раздел «Башкирский», значение 2
+      review: needs_native_review
+    options_ru:
+      - цветок
+      - трава
+      - лист
+    correct: 0
+  - id: u03-povtorenie-e05
+    type: free_ru_ba
+    prompt_ru: снег
+    answers:
+      - ba: ҡар
+        ru: снег
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80
+          locator: статья «ҡар», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: &a1
+          url: https://upload.wikimedia.org/wikipedia/commons/5/5f/Ba-%D2%A1%D0%B0%D1%80.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D2%A1%D0%B0%D1%80.ogg
+            locator: File:Ba-ҡар.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u03-povtorenie-e06
+    type: tiles_ru_ba
+    prompt_ru: Ливень
+    answer:
+      ba: Ҡойма ямғыр
+      ru: ливень
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%8F%D0%BC%D2%93%D1%8B%D1%80
+        locator: статья «ямғыр», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: ҡар
+        ru: снег
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80
+          locator: статья «ҡар», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+      - ba: ел
+        ru: ветер
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B5%D0%BB
+          locator: статья «ел», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/9/92/Ba-%D0%B5%D0%BB.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B5%D0%BB.ogg
+            locator: File:Ba-ел.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u03-povtorenie-p01
+    type: match_pairs
+    pairs:
+      - ba: йондоҙ
+        ru: звезда
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B9%D0%BE%D0%BD%D0%B4%D0%BE%D2%99
+          locator: статья «йондоҙ», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: сәскә
+        ru: цветок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%81%D3%99%D1%81%D0%BA%D3%99
+          locator: статья «сәскә», раздел «Башкирский», значение 2
+        review: needs_native_review
+      - ba: үлән
+        ru: трава
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%AF%D0%BB%D3%99%D0%BD
+          locator: статья «үлән», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ай
+        ru: луна
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D0%B9
+          locator: статья «ай», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a2
+  - id: u03-povtorenie-e08
+    type: free_ru_ba
+    prompt_ru: река
+    answers:
+      - ba: йылға
+        ru: река
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B9%D1%8B%D0%BB%D2%93%D0%B0
+          locator: статья «йылға», раздел «Башкирский», значение 1
+        review: needs_native_review

@@ -1,0 +1,73 @@
+# Синтетические дуэли юнита t-u1 для тестов уроков (строки — сочетания букв, не слова языка).
+unit: t-u1
+duels:
+  - id: t-u1-d01
+    ru: "Синтетическая пара 1"
+    kind: phrase
+    variants:
+      - ba: ҡывәп
+        source: { ref: synthetic, url: https://example.org/synthetic/d1-a, locator: "пара 1, вариант А" }
+        review: needs_native_review
+      - ba: ҡывәм
+        source: { ref: synthetic, url: https://example.org/synthetic/d1-b, locator: "пара 1, вариант Б" }
+        review: needs_native_review
+  - id: t-u1-d02
+    ru: "Синтетическая пара 2"
+    kind: phrase
+    variants:
+      - ba: ҡывөп
+        source: { ref: synthetic, url: https://example.org/synthetic/d2-a, locator: "пара 2, вариант А" }
+        review: needs_native_review
+      - ba: ҡывөм
+        source: { ref: synthetic, url: https://example.org/synthetic/d2-b, locator: "пара 2, вариант Б" }
+        review: needs_native_review
+  - id: t-u1-d03
+    ru: "Синтетическая пара 3"
+    kind: phrase
+    variants:
+      - ba: ҡывүп
+        source: { ref: synthetic, url: https://example.org/synthetic/d3-a, locator: "пара 3, вариант А" }
+        review: needs_native_review
+      - ba: ҡывүм
+        source: { ref: synthetic, url: https://example.org/synthetic/d3-b, locator: "пара 3, вариант Б" }
+        review: needs_native_review
+  - id: t-u1-d04
+    ru: "Синтетическая пара 4"
+    kind: phrase
+    variants:
+      - ba: ҡывғп
+        source: { ref: synthetic, url: https://example.org/synthetic/d4-a, locator: "пара 4, вариант А" }
+        review: needs_native_review
+      - ba: ҡывғм
+        source: { ref: synthetic, url: https://example.org/synthetic/d4-b, locator: "пара 4, вариант Б" }
+        review: needs_native_review
+  - id: t-u1-d05
+    ru: "Синтетическая пара 5"
+    kind: phrase
+    variants:
+      - ba: ҡывңп
+        source: { ref: synthetic, url: https://example.org/synthetic/d5-a, locator: "пара 5, вариант А" }
+        review: needs_native_review
+      - ba: ҡывңм
+        source: { ref: synthetic, url: https://example.org/synthetic/d5-b, locator: "пара 5, вариант Б" }
+        review: needs_native_review
+  - id: t-u1-d06
+    ru: "Синтетическая пара 6"
+    kind: phrase
+    variants:
+      - ba: ҡывҙп
+        source: { ref: synthetic, url: https://example.org/synthetic/d6-a, locator: "пара 6, вариант А" }
+        review: needs_native_review
+      - ba: ҡывҙм
+        source: { ref: synthetic, url: https://example.org/synthetic/d6-b, locator: "пара 6, вариант Б" }
+        review: needs_native_review
+  - id: t-u1-d07
+    ru: "Синтетическая пара 7 (вариант отклонён носителем)"
+    kind: phrase
+    variants:
+      - ba: ҡывһп
+        source: { ref: synthetic, url: https://example.org/synthetic/d7-a, locator: "пара 7, вариант А" }
+        review: needs_native_review
+      - ba: ҡывһм
+        source: { ref: synthetic, url: https://example.org/synthetic/d7-b, locator: "пара 7, вариант Б" }
+        review: native_rejected

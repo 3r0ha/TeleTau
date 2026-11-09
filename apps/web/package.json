@@ -1,0 +1,40 @@
+{
+  "name": "@teletau/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Веб-платформа: ученик, учитель, родитель, публичный словарь, Telegram Mini App.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port ${WEB_PORT:-3000}",
+    "build": "node ../../scripts/prepare-audio.mjs && next build",
+    "start": "next start --port ${WEB_PORT:-3000}",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint app test proxy.ts instrumentation.ts public/sw.js",
+    "test": "vitest run",
+    "test:a11y": "playwright test"
+  },
+  "dependencies": {
+    "@teletau/auth-codes": "workspace:*",
+    "@teletau/bashkir-text": "workspace:*",
+    "@teletau/contracts": "workspace:*",
+    "@teletau/design-tokens": "workspace:*",
+    "@teletau/session": "workspace:*",
+    "@teletau/ui": "workspace:*",
+    "@phosphor-icons/react": "^2.1.10",
+    "jsqr": "^1.4.0",
+    "next": "^16.4.4",
+    "openapi-fetch": "^0.17.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "^24.0.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "vitest": "^5.0.5"
+  }
+}

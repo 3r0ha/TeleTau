@@ -1,0 +1,65 @@
+# Синтетический урок: выбор с записью, ввод, плитки фразы и «Пары». Шесть новых слов.
+id: s-l1
+unit: s-u1
+kind: lesson
+title_ru: Урок повторения один
+new_words:
+  - ҡалым
+  - һөрөк
+  - Пәләк тумә!
+  - ғүзә
+  - сәңер
+  - ҙыйыр
+exercises:
+  - id: s-l1-choice
+    type: choice_ba_ru
+    prompt:
+      ba: ҡалым
+      ru: Значение 1
+      source: { ref: synthetic, url: https://example.org/synthetic/s1, locator: "строка 1" }
+      review: needs_native_review
+      audio:
+        url: https://upload.wikimedia.org/wikipedia/commons/0/00/Synthetic-s1.ogg
+        source: { ref: synthetic, url: https://example.org/synthetic/s1-audio, locator: "запись 1" }
+        license: CC BY-SA 4.0
+    options_ru: [Значение 1, Значение 7, Значение 8]
+    correct: 0
+  - id: s-l1-free
+    type: free_ru_ba
+    prompt_ru: Значение 2
+    answers:
+      - ba: һөрөк
+        source: { ref: synthetic, url: https://example.org/synthetic/s2, locator: "строка 2" }
+        review: needs_native_review
+  - id: s-l1-tiles
+    type: tiles_ru_ba
+    prompt_ru: Значение 6, как Значение 2
+    answer:
+      ba: Пәләк тумә!
+      ru: Значение 6
+      source: { ref: synthetic, url: https://example.org/synthetic/s6, locator: "строка 6" }
+      review: needs_native_review
+    distractors:
+      - ba: сәңер
+        ru: Значение 4
+        source: { ref: synthetic, url: https://example.org/synthetic/s4, locator: "строка 4" }
+        review: needs_native_review
+  - id: s-l1-pairs
+    type: match_pairs
+    pairs:
+      - ba: ғүзә
+        ru: Значение 3
+        source: { ref: synthetic, url: https://example.org/synthetic/s3, locator: "строка 3" }
+        review: needs_native_review
+      - ba: сәңер
+        ru: Значение 4
+        source: { ref: synthetic, url: https://example.org/synthetic/s4, locator: "строка 4" }
+        review: native_approved
+      - ba: ҙыйыр
+        ru: Значение 5
+        source: { ref: synthetic, url: https://example.org/synthetic/s5, locator: "строка 5" }
+        review: needs_native_review
+      - ba: отклонено
+        ru: Значение отклонённое
+        source: { ref: synthetic, url: https://example.org/synthetic/s-rejected, locator: "строка отклонена" }
+        review: native_rejected

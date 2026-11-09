@@ -1,0 +1,115 @@
+/* «Учусь сам» (ADR 0022): онбординг, выбор взрослого, карточка входа, цель дня. Только токены (--tt-*), хардкод цветов,
+ * радиусов и длительностей запрещён (scripts/check-hardcoded-colors.mjs, scripts/check-hardcoded-tokens.mjs). */
+
+/* Плитка-путь (старт, выбор взрослого) бывает кнопкой: сбрасываем оформление кнопки. */
+button.start-way {
+  width: 100%;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Шаг онбординга: заголовок слева, пчела справа — как подсказка-пчела в уроке. */
+.self__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--tt-space-s300);
+}
+
+.self__bee {
+  flex: none;
+  width: 84px;
+  height: auto;
+  margin-bottom: calc(-1 * var(--tt-space-s100));
+}
+
+:root[data-mode="keeper"] .self__bee {
+  width: 64px;
+}
+
+/* Цель дня: три ячейки сот, мёд — по числу уроков. */
+.goal-pick__comb {
+  display: inline-flex;
+  flex: none;
+}
+
+.goal-pick__comb .tt-comb {
+  width: 66px;
+  height: auto;
+}
+
+/* Карточка входа: ник и QR в рамке-карточке с «губой». */
+.login-card__card.tt-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s500) var(--tt-space-s400);
+  box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-accent-lip);
+  border-color: var(--tt-color-accent-soft-border);
+}
+
+.login-card__who {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+}
+
+.login-card__qr.site-qr {
+  width: min(70vw, 260px);
+}
+
+.login-card__meta {
+  color: var(--tt-color-text-tertiary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.login-card__warn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tt-space-s200);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.login-card__warn svg {
+  flex: none;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-accent-lip);
+}
+
+/* Профиль: строки «Карточка входа» и «Сохранить по почте» — того же вида, что «Мой словарь», своим цветом значка. */
+.dict-link--card .dict-link__icon {
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-lip);
+}
+
+.dict-link--email .dict-link__icon {
+  background: var(--tt-color-success-soft);
+  color: var(--tt-color-success-text);
+}
+
+.settings__link {
+  color: var(--tt-color-text-primary);
+  text-decoration: none;
+}
+
+.settings__link:hover {
+  text-decoration: underline;
+}
+
+/* Шаг онбординга под полосой шагов. На компьютере — по центру свободной высоты, чуть выше середины. */
+.self__step {
+  margin-top: var(--tt-space-s600);
+}
+
+@media (min-width: 900px) and (min-height: 640px) {
+  .self__step {
+    flex: 1;
+    justify-content: center;
+    margin-top: 0;
+    padding-bottom: var(--tt-space-s1000);
+  }
+}

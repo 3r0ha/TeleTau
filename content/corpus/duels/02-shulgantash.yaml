@@ -1,0 +1,158 @@
+# Дуэли «Помоги языку» юнита 02-shulgantash: русская фраза и два разных засвидетельствованных перевода (схема — content/schema/duels.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+unit: 02-shulgantash
+duels:
+  - id: u02-d-mat
+    ru: мать
+    kind: word
+    domain: family
+    variants:
+      - ba: әсә
+        ru: мать
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%99%D1%81%D3%99
+          locator: статья «әсә», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: инәй
+        ru: мать
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D0%BD%D3%99%D0%B9
+          locator: статья «инәй», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-d-mama
+    ru: мама
+    kind: word
+    domain: family
+    variants:
+      - ba: әсәй
+        ru: мама
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%99%D1%81%D3%99%D0%B9
+          locator: статья «әсәй», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: инәй
+        ru: мама
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%99%D1%81%D3%99%D0%B9
+          locator: статья «әсәй», раздел «Башкирский», синоним к значению 1
+        review: needs_native_review
+  - id: u02-d-otets
+    ru: отец
+    kind: word
+    domain: family
+    variants:
+      - ba: ата
+        ru: отец
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D1%82%D0%B0
+          locator: статья «ата», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: атай
+        ru: отец
+        source:
+          ref: wikidata
+          url: https://www.wikidata.org/w/index.php?title=Q7565&oldid=2559471809
+          locator: элемент Q7565, метка на башкирском; метка на русском — «отец»
+        review: needs_native_review
+  - id: u02-d-mladshiy-brat
+    ru: младший брат
+    kind: word
+    domain: family
+    variants:
+      - ba: ҡусты
+        ru: младший брат
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D1%83%D1%81%D1%82%D1%8B
+          locator: статья «ҡусты», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: эне
+        ru: младший брат
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8D%D0%BD%D0%B5
+          locator: статья «эне», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-d-sestra
+    ru: сестра
+    kind: word
+    domain: family
+    variants:
+      - ba: ҡәрендәш
+        ru: сестра
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%81%D0%B5%D1%81%D1%82%D1%80%D0%B0
+          locator: статья «сестра», раздел «Перевод», строка «Башкирский»
+        review: needs_native_review
+      - ba: һеңле
+        ru: сестра
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%81%D0%B5%D1%81%D1%82%D1%80%D0%B0
+          locator: статья «сестра», раздел «Перевод», строка «Башкирский»
+        review: needs_native_review
+  - id: u02-d-tyotya
+    ru: тётя
+    kind: word
+    domain: family
+    variants:
+      - ba: апай
+        ru: тётя
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D0%BF%D0%B0%D0%B9
+          locator: статья «апай», раздел «Башкирский», значение 2
+        review: needs_native_review
+      - ba: әбей
+        ru: тётя
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%99%D0%B1%D0%B5%D0%B9
+          locator: статья «әбей», раздел «Башкирский», значение 2
+        review: needs_native_review
+  - id: u02-d-dedushka
+    ru: дедушка
+    kind: word
+    domain: family
+    variants:
+      - ba: Олатай
+        ru: дедушка
+        source:
+          ref: wikidata
+          url: https://www.wikidata.org/w/index.php?title=Q9238344&oldid=2561086292
+          locator: элемент Q9238344, метка на башкирском; метка на русском — «дедушка»
+        review: needs_native_review
+      - ba: бабай
+        ru: дед
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B0%D0%B1%D0%B0%D0%B9
+          locator: статья «бабай», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-d-dom
+    ru: дом
+    kind: word
+    domain: home
+    variants:
+      - ba: өй
+        ru: дом
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%A9%D0%B9
+          locator: статья «өй», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: торлаҡ
+        ru: дом
+        source:
+          ref: wikidata
+          url: https://www.wikidata.org/w/index.php?title=Q3947&oldid=2564287022
+          locator: элемент Q3947, метка на башкирском; метка на русском — «дом»
+        review: needs_native_review

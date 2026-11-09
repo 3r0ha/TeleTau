@@ -1,0 +1,250 @@
+/* Оболочка приложения на компьютере и планшете (@teletau/ui, подключается после ui.css: `import "@teletau/ui/shell.css"`).
+ * Телефон (< 768 px) — как прототип: колонка и нижние вкладки. С 768 px — боковая навигация (SideNav) вместо нижних
+ * вкладок, с 1024 px — правая колонка карточек (.tt-shell__rail), с 1200 px — боковая навигация с подписями справа.
+ * Точки — те же, что SHELL_SIDE_QUERY и SHELL_RAIL_QUERY в SideNav.tsx. Все цвета, отступы, радиусы, шрифты и
+ * длительности — только из дизайн-токенов (--tt-*). */
+
+/* ───────────── каркас ───────────── */
+.tt-shell__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tt-shell__center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tt-sidenav,
+.tt-shell__rail {
+  display: none;
+}
+
+/* ───────────── боковая навигация ───────────── */
+.tt-sidenav__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  margin: 0 auto var(--tt-space-s600);
+  padding: var(--tt-space-s100);
+  border-radius: var(--tt-radius-tile);
+  color: var(--tt-color-text-primary);
+  text-decoration: none;
+}
+
+.tt-sidenav__brand img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tt-radius-icon-button);
+}
+
+.tt-sidenav__word {
+  display: none;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title2);
+  font-weight: var(--tt-font-weight-black);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.tt-sidenav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s200);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Узкая колонка (768–1199 px): значок в соте, подпись под ним — как нижние вкладки, только вертикально. */
+.tt-sidenav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  min-height: var(--tt-size-touch-min);
+  padding: var(--tt-space-s200) var(--tt-space-s100);
+  border: 2px solid transparent;
+  border-radius: var(--tt-radius-tile);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition:
+    background-color var(--tt-duration-fast) ease-out,
+    color var(--tt-duration-fast) ease-out;
+}
+
+.tt-sidenav__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 44px;
+}
+
+.tt-sidenav__hex {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.tt-sidenav__hex-face {
+  fill: var(--tt-color-bg-sunken);
+  stroke: var(--tt-color-border-default);
+  stroke-width: 2;
+  transition: fill var(--tt-duration-fast) ease-out;
+}
+
+.tt-sidenav__hex-lip {
+  fill: var(--tt-color-border-default);
+}
+
+.tt-sidenav__icon svg:not(.tt-sidenav__hex) {
+  position: relative;
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+  margin-bottom: var(--tt-size-lip);
+}
+
+.tt-sidenav__link:hover {
+  background: var(--tt-color-bg-sunken);
+  color: var(--tt-color-text-secondary);
+}
+
+.tt-sidenav__link:hover .tt-sidenav__hex-face {
+  fill: var(--tt-color-accent-soft);
+}
+
+.tt-sidenav__link:focus-visible,
+.tt-sidenav__brand:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+/* Текущий раздел — сплошная граница accent.text (≥ 3:1 к фону), медовая сота с тёмным значком (8:1). */
+.tt-sidenav__link[aria-current="page"] {
+  border-color: var(--tt-color-accent-text);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.tt-sidenav__link[aria-current="page"] .tt-sidenav__hex-face {
+  fill: var(--tt-color-accent-fill);
+  stroke: var(--tt-color-accent-fill);
+}
+
+.tt-sidenav__link[aria-current="page"] .tt-sidenav__hex-lip {
+  fill: var(--tt-color-accent-lip);
+}
+
+.tt-sidenav__link[aria-current="page"] .tt-sidenav__icon svg:not(.tt-sidenav__hex) {
+  color: var(--tt-color-accent-on);
+}
+
+@media (min-width: 768px) {
+  .tt-shell {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .tt-shell > .tt-tabbar {
+    display: none;
+  }
+
+  .tt-sidenav {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: var(--tt-space-s500) var(--tt-space-s200);
+    border-right: 2px solid var(--tt-color-border-subtle);
+    background: var(--tt-color-bg);
+  }
+
+  .tt-shell__body {
+    min-height: 100dvh;
+  }
+}
+
+/* ───────────── правая колонка ───────────── */
+@media (min-width: 1024px) {
+  .tt-shell__body {
+    display: grid;
+    grid-template-columns: minmax(0, 600px) 320px;
+    justify-content: center;
+    align-items: start;
+    column-gap: var(--tt-space-s1000);
+    padding-inline: var(--tt-space-s600);
+  }
+
+  .tt-shell__center {
+    min-height: 100dvh;
+  }
+
+  /* Колонка содержимого — на всю ширину центра (на телефоне её держит --tt-size-column-narrow). */
+  .tt-shell__center .tt-column {
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  .tt-shell__rail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-s400);
+    padding: var(--tt-space-s500) 0 var(--tt-space-s1000);
+  }
+
+  /* Липкая: выше окна — прилипает низом (--shell-rail-top ≤ 0 ставит приложение по высоте колонки), иначе верхом. */
+  .tt-shell__rail {
+    position: sticky;
+    top: var(--shell-rail-top, 0);
+  }
+}
+
+/* ───────────── широкий экран: подписи справа от значков ───────────── */
+@media (min-width: 1200px) {
+  .tt-shell {
+    grid-template-columns: 256px minmax(0, 1fr);
+  }
+
+  .tt-shell__body {
+    grid-template-columns: minmax(0, 600px) 340px;
+    column-gap: var(--tt-space-s1200);
+  }
+
+  .tt-sidenav {
+    padding: var(--tt-space-s600) var(--tt-space-s400);
+  }
+
+  .tt-sidenav__brand {
+    flex-direction: row;
+    gap: var(--tt-space-s250);
+    margin: 0 0 var(--tt-space-s800);
+    padding: var(--tt-space-s100) var(--tt-space-s200);
+  }
+
+  .tt-sidenav__word {
+    display: block;
+  }
+
+  .tt-sidenav__link {
+    flex-direction: row;
+    gap: var(--tt-space-s350);
+    min-height: 60px;
+    padding: var(--tt-space-s150) var(--tt-space-s300);
+    font-size: var(--tt-font-size-button);
+    letter-spacing: 0.01em;
+  }
+}

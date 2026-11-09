@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кәрәҙ · прототип v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<style>
+/* Прототип v2 «Тропа + Экспедиция». Одноразовый: значения ниже переедут в packages/design-tokens
+   только после утверждения направления (docs/05-design-system.md §0). */
+:root {
+  --honey: #FFB703; --honey-deep: #E39400; --honey-ink: #8A5200; --honey-bg: #FFF3D1;
+  --cream: #FFF8EC; --bg: #FFFCF5; --surface: #FFFFFF;
+  --line: #F0E6D4; --line-strong: #E2D4BC;
+  --ink: #3B2716; --ink-2: #6F5B47; --ink-3: #85705B;
+  --green: #43C35E; --green-deep: #2C9C45; --green-ink: #1E7A33; --green-bg: #E7F8EA;
+  --blue: #1CA7F2; --blue-deep: #0B87CB; --blue-ink: #0A6597; --blue-bg: #E4F4FE;
+  --coral: #FF5A5A; --coral-deep: #E03B3B; --coral-ink: #B3261E; --coral-bg: #FFECEA;
+  --violet: #9B5CFF; --violet-deep: #7B3CE6; --violet-lip: #5E26C0; --violet-ink: #6B2ED6; --violet-bg: #F2EBFF;
+  --locked: #ECE5D9; --locked-deep: #D6CCBC; --locked-ink: #A99D8B;
+  --font-ui: "Golos Text", system-ui, sans-serif;
+  --font-display: "Nunito", system-ui, sans-serif;
+  --r-card: 24px; --r-btn: 16px; --r-tile: 14px; --r-chip: 999px;
+  --lip: 4px;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font: 400 16px/1.45 var(--font-ui); color: var(--ink); background: #F3EBDD; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+img { display: block; max-width: 100%; }
+[lang="ba"] { font-feature-settings: "locl"; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- окно просмотра прототипа (только на широком экране) ---------- */
+.viewer { min-height: 100%; display: flex; gap: 48px; align-items: flex-start; justify-content: center; padding: 32px; }
+.viewer-nav { width: 260px; position: sticky; top: 32px; }
+.viewer-brand { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+.viewer-brand img { width: 48px; height: 48px; border-radius: 12px; }
+.viewer-brand b { font: 900 22px/1 var(--font-display); display: block; }
+.viewer-brand span { font-size: 13px; color: var(--ink-2); }
+.viewer-nav h2 { font: 800 12px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 18px 0 8px; }
+.viewer-nav a { display: block; padding: 7px 10px; border-radius: 10px; color: var(--ink); text-decoration: none; font-size: 14px; }
+.viewer-nav a:hover { background: rgba(255,255,255,.6); }
+.viewer-nav a.on { background: var(--surface); font-weight: 600; box-shadow: 0 1px 0 var(--line-strong); }
+.viewer-note { margin-top: 18px; font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+.device { width: 390px; height: 844px; border-radius: 48px; background: var(--bg); box-shadow: 0 0 0 10px #2B1E12, 0 30px 80px rgba(59,39,22,.35); overflow: hidden; position: relative; flex: none; }
+.bare .viewer { display: block; padding: 0; }
+.bare .viewer-nav { display: none; }
+.bare .device { width: 100%; height: 100vh; border-radius: 0; box-shadow: none; }
+@media (max-width: 760px) {
+  .viewer { display: block; padding: 0; }
+  .viewer-nav { display: none; }
+  .device { width: 100%; height: 100dvh; border-radius: 0; box-shadow: none; }
+}
+
+/* ---------- приложение ---------- */
+.app { height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--bg); position: relative; scroll-behavior: smooth; }
+.app.locked-scroll { overflow: hidden; }
+.screen { min-height: 100%; display: flex; flex-direction: column; }
+
+/* кнопки: роль «действие» — радиус 16, «губа» снизу */
+.btn { --c: var(--honey); --c-deep: var(--honey-deep); --c-ink: var(--ink);
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; padding: 0 20px;
+  border-radius: var(--r-btn); background: var(--c); color: var(--c-ink); box-shadow: 0 var(--lip) 0 var(--c-deep);
+  font: 800 17px/1 var(--font-display); letter-spacing: .01em; transition: transform .08s, box-shadow .08s; }
+.btn:active { transform: translateY(var(--lip)); box-shadow: 0 0 0 var(--c-deep); }
+.btn.green { --c: var(--green); --c-deep: var(--green-deep); }
+.btn.coral { --c: var(--coral); --c-deep: var(--coral-deep); }
+.btn.violet { --c: var(--violet-deep); --c-deep: var(--violet-lip); --c-ink: #fff; }
+.btn.ghost { --c: var(--surface); --c-deep: var(--line-strong); border: 2px solid var(--line-strong); color: var(--honey-ink); }
+.btn[disabled] { --c: var(--locked); --c-deep: var(--locked-deep); --c-ink: var(--locked-ink); cursor: default; }
+.btn[disabled]:active { transform: none; box-shadow: 0 var(--lip) 0 var(--c-deep); }
+.link-btn { font: 800 15px/1 var(--font-display); color: var(--honey-ink); padding: 14px; letter-spacing: .02em; }
+
+/* чипы: роль «метка» — полностью скруглённые */
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: var(--r-chip); font: 800 13px/1 var(--font-display); letter-spacing: .02em; background: var(--honey-bg); color: var(--honey-ink); }
+.chip i { font-size: 15px; }
+.chip.white { background: rgba(255,255,255,.92); color: var(--ink); }
+
+/* ---------- верхняя панель ---------- */
+.topbar { position: sticky; top: 0; z-index: 30; height: 60px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-bottom: 2px solid transparent; transition: border-color .2s; }
+.topbar.scrolled { border-bottom-color: var(--line); }
+.stat { display: flex; align-items: center; gap: 6px; font: 900 17px/1 var(--font-display); padding: 8px 6px; border-radius: 12px; }
+.stat i { font-size: 24px; }
+.stat.streak { color: #E8590C; }
+.stat.honey { color: var(--honey-ink); }
+.stat.honey i { color: var(--honey); }
+.stat .league-mini { width: 30px; height: 30px; object-fit: contain; }
+.goal { display: flex; align-items: center; gap: 6px; font: 800 13px/1.1 var(--font-display); color: var(--ink-2); }
+.goal svg { flex: none; }
+
+/* ---------- карточка экспедиции ---------- */
+.expedition { margin: 4px 16px 0; background: var(--surface); border-radius: var(--r-card); border: 2px solid var(--line); overflow: hidden; }
+.expedition .hero { height: 176px; width: 100%; object-fit: cover; object-position: 50% 60%; }
+.exp-body { padding: 14px 18px 18px; }
+.exp-kicker { display: flex; align-items: center; gap: 6px; font: 800 13px/1 var(--font-display); color: var(--ink-3); letter-spacing: .04em; text-transform: uppercase; }
+.exp-title { margin: 8px 0 2px; font: 900 30px/1.05 var(--font-display); letter-spacing: -.01em; }
+.exp-title small { font: 700 17px/1 var(--font-display); color: var(--ink-3); margin-left: 6px; letter-spacing: 0; }
+.exp-unit { margin: 0 0 14px; color: var(--ink-2); font-size: 15px; }
+.progress { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font: 800 14px/1 var(--font-display); color: var(--ink-2); }
+.bar { flex: 1; height: 14px; border-radius: 99px; background: var(--locked); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 99px; background: var(--honey); box-shadow: inset 0 -4px 0 rgba(227,148,0,.55); position: relative; }
+.bar > i::after { content: ""; position: absolute; left: 8px; right: 8px; top: 3px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.45); }
+
+/* липкий баннер юнита: появляется, когда карточка экспедиции ушла вверх */
+.unit-bar { position: sticky; top: 60px; z-index: 25; margin: 0 16px; height: 0; overflow: visible; }
+.unit-bar-inner { --u: var(--honey); --u-deep: var(--honey-deep); --u-ink: var(--ink);
+  display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 16px;
+  background: var(--u); color: var(--u-ink); box-shadow: 0 4px 0 var(--u-deep);
+  transform: translateY(-14px); opacity: 0; pointer-events: none; transition: transform .22s var(--ease-out), opacity .18s; }
+.unit-bar.show .unit-bar-inner { transform: none; opacity: 1; pointer-events: auto; }
+.unit-bar-text { flex: 1; min-width: 0; }
+.unit-bar-text small { display: block; font: 800 12px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase; opacity: .85; }
+.unit-bar-text b { display: block; margin-top: 4px; font: 900 18px/1.1 var(--font-display); }
+.unit-bar-guide { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; border: 2px solid rgba(59,39,22,.18); }
+.unit-bar-inner.on-dark .unit-bar-guide { border-color: rgba(255,255,255,.4); }
+
+/* ---------- тропа ---------- */
+.path { position: relative; padding: 22px 12px 24px; }
+.unit { position: relative; background: var(--zone, transparent); border-radius: 28px; padding: 10px 10px 8px; overflow: hidden; }
+.unit + .unit { margin-top: 22px; }
+.sign { position: relative; border-radius: 20px; overflow: hidden; aspect-ratio: 1584 / 672; }
+.sign img { width: 100%; height: 100%; object-fit: cover; }
+.sign-text { position: absolute; left: 14px; top: 0; bottom: 0; width: 42%; display: flex; flex-direction: column; justify-content: center; gap: 6px; color: var(--sign-ink, var(--ink)); }
+.sign-text .chip { align-self: flex-start; }
+.sign-text b { font: 900 21px/1.05 var(--font-display); letter-spacing: -.01em; overflow-wrap: anywhere; }
+.sign-text > span:last-child { font: 800 19px/1.1 var(--font-display); }
+.track { position: relative; margin-top: 34px; }
+.trail { position: absolute; left: 50%; transform: translateX(-50%); top: 0; overflow: visible; pointer-events: none; }
+.node-row { position: relative; height: 116px; display: flex; justify-content: center; }
+.node-cap { position: absolute; top: 81px; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 800 13px/1 var(--font-display); color: var(--ink-2); letter-spacing: .01em; }
+.node-cap.locked { color: var(--ink-3); }
+.node-cap.current { color: var(--honey-ink); font-size: 14px; }
+.node { position: relative; transform: translateX(var(--x, 0px)); display: flex; flex-direction: column; align-items: center; }
+.node .hexbtn { position: relative; display: block; }
+.node .hexbtn svg { display: block; overflow: visible; }
+.node .hexbtn .face { transition: transform .08s; }
+.node .hexbtn i { position: absolute; left: 50%; transform: translate(-50%, -50%); font-size: 32px; transition: transform .08s, top .08s; }
+.node .hexbtn:not([aria-disabled="true"]):active .face { transform: translateY(7px); }
+.node .hexbtn:not([aria-disabled="true"]):active i { transform: translate(-50%, calc(-50% + 7px)); }
+.node-label { position: absolute; top: 18px; white-space: nowrap; }
+.node-label.right { left: calc(100% + 10px); }
+.node-label.left { right: calc(100% + 10px); }
+.start-bubble { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 2;
+  padding: 10px 16px; border-radius: 14px; background: var(--surface); border: 2px solid var(--line-strong);
+  font: 900 16px/1 var(--font-display); color: var(--honey-ink); letter-spacing: .02em; white-space: nowrap; animation: bob 1.8s ease-in-out infinite; }
+.start-bubble::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 12px; height: 12px; background: var(--surface); border-right: 2px solid var(--line-strong); border-bottom: 2px solid var(--line-strong); transform: translateX(-50%) rotate(45deg); }
+@keyframes bob { 50% { transform: translate(-50%, -5px); } }
+.deco { position: absolute; pointer-events: none; user-select: none; }
+.path-bee { position: absolute; width: 92px; pointer-events: none; transform: translate(-50%, -58%); }
+.path-end { margin-top: 40px; text-align: center; color: var(--ink-2); font-size: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 12px; }
+.path-end img { width: 120px; }
+.path-end b { font: 900 19px/1.2 var(--font-display); color: var(--ink); }
+
+/* ---------- нижняя навигация ---------- */
+.tabbar { position: sticky; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 2px solid var(--line); }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 5px; border-radius: 14px; border: 2px solid transparent; color: var(--ink-3); font: 800 12px/1 var(--font-display); letter-spacing: .02em; }
+.tab i { font-size: 28px; }
+.tab.on { color: var(--honey-ink); background: var(--honey-bg); border-color: #FFD979; }
+.tab.on i { color: var(--honey-deep); }
+
+/* ---------- урок ---------- */
+.lesson { height: 100%; display: flex; flex-direction: column; }
+.lesson-head { display: flex; align-items: center; gap: 14px; padding: 14px 16px 6px; }
+.icon-btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; font-size: 26px; color: var(--ink-3); }
+.lesson-head .bar { height: 16px; }
+.lesson-body { flex: 1; overflow-y: auto; padding: 14px 18px 18px; }
+.task-title { font: 900 24px/1.2 var(--font-display); margin: 10px 0 18px; }
+.prompt { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 18px; }
+.prompt img { width: 104px; flex: none; }
+.bubble { position: relative; flex: 1; margin-bottom: 26px; padding: 14px 16px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--surface); font-size: 19px; line-height: 1.35; }
+.bubble::before { content: ""; position: absolute; left: -9px; bottom: 18px; width: 14px; height: 14px; background: var(--surface); border-left: 2px solid var(--line-strong); border-bottom: 2px solid var(--line-strong); transform: rotate(45deg); }
+.answer-lines { min-height: 124px; padding: 6px 0; background: repeating-linear-gradient(to bottom, transparent 0 58px, var(--line-strong) 58px 60px, transparent 60px 62px); display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px 8px; }
+.bank { margin-top: 26px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 8px; }
+.tile { padding: 11px 16px; border-radius: var(--r-tile); background: var(--surface); border: 2px solid var(--line-strong); box-shadow: 0 3px 0 var(--line-strong); font: 500 19px/1.2 var(--font-ui); transition: transform .08s; }
+.tile:active { transform: translateY(3px); box-shadow: none; }
+.tile.used { background: var(--locked); border-color: var(--locked); box-shadow: none; color: transparent; pointer-events: none; }
+.answer-lines .tile { animation: pop .16s var(--ease-out); }
+@keyframes pop { from { transform: scale(.85); opacity: .4; } }
+.word-card { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 20px; background: var(--honey-bg); margin-bottom: 18px; }
+.word-card b { font: 900 30px/1.1 var(--font-display); flex: 1; }
+.speak { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--honey); color: var(--ink); font-size: 24px; box-shadow: 0 4px 0 var(--honey-deep); flex: none; }
+.options { display: grid; gap: 10px; }
+.option { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 2px solid var(--line-strong); box-shadow: 0 3px 0 var(--line-strong); background: var(--surface); text-align: left; font-size: 18px; }
+.option .key { width: 30px; height: 30px; border-radius: 9px; border: 2px solid var(--line-strong); display: grid; place-items: center; font: 800 14px/1 var(--font-display); color: var(--ink-3); flex: none; }
+.option.on { border-color: var(--honey); background: var(--honey-bg); box-shadow: 0 3px 0 var(--honey); }
+.option.on .key { border-color: var(--honey-deep); color: var(--honey-ink); }
+.input-wrap { border: 2px solid var(--line-strong); border-radius: 18px; background: var(--surface); padding: 4px; }
+.input-wrap:focus-within { border-color: var(--blue); }
+.input-wrap textarea { width: 100%; min-height: 110px; resize: none; border: 0; outline: 0; padding: 12px; font: 500 21px/1.35 var(--font-ui); color: var(--ink); background: transparent; }
+.input-wrap textarea::placeholder { color: var(--ink-3); }
+.letters { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-top: 12px; }
+.letter { height: 46px; border-radius: 12px; background: var(--surface); border: 2px solid var(--line-strong); box-shadow: 0 3px 0 var(--line-strong); font: 600 21px/1 var(--font-ui); }
+.letter:active { transform: translateY(3px); box-shadow: none; }
+.letters-hint { margin-top: 10px; font-size: 13px; color: var(--ink-3); text-align: center; }
+.chip.violet { background: var(--violet-bg); color: var(--violet-ink); }
+.duel-source { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--violet-bg); margin-bottom: 16px; font: 800 20px/1.25 var(--font-display); }
+.duel-source small { display: block; font: 700 12px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase; color: var(--violet-ink); margin-bottom: 4px; }
+.variants { display: grid; gap: 12px; }
+.variant { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; border: 2px solid var(--line-strong); box-shadow: 0 3px 0 var(--line-strong); background: var(--surface); text-align: left; }
+.variant .vletter { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--violet-bg); color: var(--violet-ink); font: 900 16px/1 var(--font-display); flex: none; }
+.variant b { flex: 1; font: 600 22px/1.2 var(--font-ui); }
+.variant .speak-sm { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--violet-ink); background: var(--violet-bg); font-size: 20px; }
+.variant.on { border-color: var(--violet); box-shadow: 0 3px 0 var(--violet); background: #FBF8FF; }
+.variant.on .vletter { background: var(--violet-deep); color: #fff; }
+.duel-alt { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.duel-alt button { padding: 9px 14px; border-radius: 99px; border: 2px solid var(--line-strong); font: 800 14px/1 var(--font-display); color: var(--ink-2); }
+.duel-alt button.on { border-color: var(--violet); color: var(--violet-ink); background: var(--violet-bg); }
+.lesson-foot { padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); border-top: 2px solid var(--line); background: var(--bg); }
+.sheet { padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); animation: up .22s var(--ease-out); }
+@keyframes up { from { transform: translateY(40%); opacity: 0; } }
+.sheet.ok { background: var(--green-bg); }
+.sheet.bad { background: var(--coral-bg); }
+.sheet.almost { background: var(--honey-bg); }
+.sheet.voted { background: var(--violet-bg); }
+.sheet.voted .sheet-row { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+.sheet.voted .sheet-row img { width: 78px; flex: none; }
+.sheet.voted .sheet-row p { margin: 0; }
+.sheet-head { display: flex; align-items: center; gap: 10px; font: 900 22px/1.1 var(--font-display); margin-bottom: 8px; }
+.sheet-head .mark { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; background: var(--surface); }
+.sheet.ok .sheet-head { color: var(--green-ink); }
+.sheet.bad .sheet-head { color: var(--coral-ink); }
+.sheet.almost .sheet-head { color: var(--honey-ink); }
+.sheet.voted .sheet-head { color: var(--violet-ink); }
+.sheet p { margin: 0 0 16px; font-size: 16px; line-height: 1.45; }
+.sheet p b { font-weight: 600; }
+.sheet mark { background: var(--surface); color: inherit; padding: 1px 6px; border-radius: 6px; font-weight: 700; }
+
+/* ---------- полноэкранные состояния (итог, серия, лига-ап, пустые) ---------- */
+.full { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 28px 22px 0; }
+.full .art { width: 236px; margin: 18px auto 6px; }
+.full h1 { margin: 10px 0 6px; font: 900 30px/1.1 var(--font-display); }
+.full .lead { margin: 0 0 22px; color: var(--ink-2); font-size: 16px; max-width: 320px; }
+.full-foot { padding: 16px 16px calc(22px + env(safe-area-inset-bottom)); display: grid; gap: 4px; }
+.stat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+.stile { border-radius: 16px; border: 2px solid var(--honey); overflow: hidden; background: var(--surface); }
+.stile small { display: block; padding: 6px 4px; background: var(--honey); font: 800 12px/1 var(--font-display); letter-spacing: .04em; text-transform: uppercase; color: var(--ink); }
+.stile b { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 12px 4px; font: 900 22px/1 var(--font-display); }
+.stile b i { font-size: 20px; color: var(--honey); }
+.big-num { font: 900 88px/1 var(--font-display); color: #E8590C; margin-top: -6px; }
+.week-card { width: 100%; padding: 14px 10px 12px; border: 2px solid var(--line); border-radius: 20px; background: var(--surface); }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.week-foot { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; font: 800 14px/1 var(--font-display); color: var(--ink-2); }
+.week-foot i { font-size: 18px; color: var(--ink-3); }
+.day { display: flex; flex-direction: column; align-items: center; gap: 6px; font: 800 12px/1 var(--font-display); color: var(--ink-3); }
+.day.today { color: var(--ink); }
+
+/* ---------- лига ---------- */
+.page-head { padding: 18px 16px 8px; }
+.page-head h1 { margin: 0; font: 900 26px/1.15 var(--font-display); }
+.page-head p { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; }
+.badges { display: flex; align-items: flex-end; justify-content: center; gap: 4px; padding: 14px 8px 4px; }
+.badges img { width: 54px; }
+.badges .cur { width: 104px; }
+.badges .past { opacity: 1; }
+.badges .future { filter: grayscale(1) contrast(.75) brightness(1.12); opacity: .55; }
+.board { margin: 8px 16px 16px; border: 2px solid var(--line); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 2px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .rank { width: 24px; font: 900 16px/1 var(--font-display); color: var(--ink-3); text-align: center; }
+.row .rank.top { color: var(--green-ink); }
+.row .ava { width: 40px; height: 36px; flex: none; }
+.row .nick { flex: 1; font-weight: 600; }
+.row .pts { font: 800 15px/1 var(--font-display); color: var(--ink-2); white-space: nowrap; }
+.row.me { background: var(--honey-bg); }
+.row .nick .chip { padding: 3px 8px; font-size: 12px; margin-left: 4px; vertical-align: 2px; background: var(--honey); color: var(--ink); }
+.row .pts i { color: var(--honey); margin-right: 3px; vertical-align: -2px; }
+.zone { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font: 800 12px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase; border-top: 2px solid var(--line); }
+.zone.up { color: var(--green-ink); background: var(--green-bg); }
+.zone.down { color: var(--coral-ink); background: var(--coral-bg); }
+
+/* ---------- класс ---------- */
+.card { margin: 0 16px 14px; padding: 16px; border: 2px solid var(--line); border-radius: var(--r-card); background: var(--surface); }
+.card h2 { margin: 0 0 4px; font: 900 19px/1.2 var(--font-display); }
+.card .sub { margin: 0 0 12px; color: var(--ink-2); font-size: 14px; }
+.hive-index { display: flex; align-items: center; gap: 16px; }
+.hive-index .num { font: 900 54px/1 var(--font-display); color: var(--honey-ink); }
+.parts { flex: 1; display: grid; gap: 8px; }
+.part { font-size: 13px; color: var(--ink-2); }
+.part .bar { height: 10px; margin-top: 4px; }
+.comb { display: flex; flex-wrap: wrap; gap: 0 2px; padding-left: 0; margin: 4px 0 10px; }
+.class-list .row { padding: 12px 4px; }
+
+.teacher-task { display: flex; gap: 12px; align-items: center; }
+.teacher-task .ti { width: 46px; height: 46px; border-radius: 14px; background: var(--blue-bg); color: var(--blue-ink); display: grid; place-items: center; font-size: 24px; flex: none; }
+
+/* ---------- профиль ---------- */
+.profile-head { display: flex; gap: 16px; align-items: center; padding: 22px 16px 16px; }
+.profile-head svg { flex: none; }
+.profile-head h1 { margin: 0; font: 900 24px/1.15 var(--font-display); }
+.profile-head p { margin: 4px 0 0; color: var(--ink-2); font-size: 14px; }
+.pstats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 16px 14px; }
+.pstat { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border: 2px solid var(--line); border-radius: 16px; background: var(--surface); }
+.pstat i { font-size: 26px; }
+.pstat b { display: block; font: 900 20px/1 var(--font-display); }
+.pstat small { color: var(--ink-2); font-size: 13px; }
+.settings .row { padding: 14px 4px; }
+.settings .row i { font-size: 22px; color: var(--ink-3); }
+.settings .row .val { color: var(--ink-2); font-size: 14px; }
+
+/* ---------- диалог выхода, заставка ---------- */
+.scrim { position: absolute; inset: 0; background: rgba(59,39,22,.45); z-index: 50; display: flex; align-items: flex-end; animation: fade .2s; }
+@keyframes fade { from { opacity: 0; } }
+.dialog { width: 100%; background: var(--bg); border-radius: 28px 28px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); text-align: center; animation: up .24s var(--ease-out); }
+.dialog img { width: 132px; margin: -70px auto 4px; }
+.dialog h2 { margin: 0 0 6px; font: 900 22px/1.2 var(--font-display); }
+.dialog p { margin: 0 0 18px; color: var(--ink-2); }
+.splash { height: 100%; background: var(--honey); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.splash img { width: 200px; animation: drift 2.4s ease-in-out infinite; }
+.splash b { font: 900 44px/1 var(--font-display); color: var(--ink); letter-spacing: .01em; }
+.splash span { font: 700 16px/1 var(--font-display); color: var(--ink); opacity: .8; }
+@keyframes drift { 50% { transform: translate(6px, -8px) rotate(-2deg); } }
+
+.static *, .static *::before, .static *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .app { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+<div class="viewer">
+  <nav class="viewer-nav" aria-label="Экраны прототипа">
+    <div class="viewer-brand"><img src="../../design/assets/approved/app-icon-alt.webp" alt=""><div><b lang="ba">Кәрәҙ</b><span>прототип v2 · «Тропа + Экспедиция»</span></div></div>
+    <div id="viewer-links"></div>
+    <p class="viewer-note">Башкирский текст в прототипе не проверен носителем (needs_native_review, см. docs/native-review-queue.md). Иллюстрации — серия batch-1. Данные учеников вымышлены.</p>
+  </nav>
+  <div class="device"><main id="app" class="app"></main></div>
+</div>
+
+<script>
+"use strict";
+/* ===================== данные ===================== */
+const ASSET = (n) => `../../design/assets/approved/${n}.webp`;
+const params = new URLSearchParams(location.search);
+if (params.get("bare") === "1") document.documentElement.classList.add("bare");
+// static=1 — для снимков экрана: без анимаций, чтобы кадр не попал на середину перехода
+if (params.get("static") === "1") document.documentElement.classList.add("static");
+
+const UNITS = [
+  { id: "ufa", n: 1, ba: "Өфө", ru: "Уфа", topic: "Знакомство", lessons: 8, zone: "#FFF5DC",
+    caps: ["Привет!", "Как тебя зовут?", "Помоги языку", "", "Моя школа", "Читаем", "Помоги языку", "Испытание места"],
+    color: "var(--honey)", deep: "var(--honey-deep)", ink: "var(--ink)", dark: false,
+    decos: [
+      { img: "deco-ufa-tram", x: -118, y: 18, w: 104, rot: -3 },
+      { img: "deco-ufa-river-bank", x: 150, y: 70, w: 74, flip: true },
+      { img: "deco-ufa-monument", x: 124, y: 248, w: 156 },
+      { img: "deco-ufa-river-bank", x: -128, y: 770, w: 178 },
+      { img: "deco-ufa-tram", x: -142, y: 512, w: 62, flip: true },
+    ] },
+  { id: "shulgantash", n: 2, ba: "Шүлгәнташ", ru: "Шульган-Таш", topic: "Семья", lessons: 8, zone: "#EDF6E7",
+    caps: ["Мама и папа", "Братья и сёстры", "Помоги языку", "Мой дом", "Повторение", "Помоги языку", "Бабушка и дедушка", "Испытание места"],
+    color: "var(--green)", deep: "var(--green-deep)", ink: "var(--ink)", dark: false, signInk: "#fff",
+    decos: [
+      { img: "deco-shulgantash-bear-paw", x: -132, y: 46, w: 80, rot: -6 },
+      { img: "deco-shulgantash-bort", x: 138, y: 236, w: 128 },
+      { img: "deco-shulgantash-hive", x: 66, y: 318, w: 58 },
+      { img: "deco-shulgantash-bear-paw", x: 150, y: 520, w: 52, flip: true, rot: 8 },
+      { img: "deco-shulgantash-cave", x: -126, y: 752, w: 188 },
+      { img: "deco-shulgantash-bort", x: 152, y: 905, w: 70, flip: true },
+    ] },
+  { id: "agidel", n: 3, ba: "Ағиҙел", ru: "Агидель", topic: "Природа", lessons: 8, zone: "#E8F4FB",
+    caps: ["Река", "Лес и горы", "Помоги языку", "Погода", "Повторение", "Помоги языку", "Звери и птицы", "Испытание места"],
+    color: "var(--blue)", deep: "var(--blue-deep)", ink: "var(--ink)", dark: false,
+    decos: [
+      { img: "deco-agidel-fish", x: -128, y: 36, w: 66, rot: -12 },
+      { img: "deco-agidel-boat", x: 122, y: 262, w: 168, rot: -4 },
+      { img: "deco-agidel-fish", x: 150, y: 150, w: 46, flip: true, rot: 10 },
+      { img: "deco-agidel-reeds", x: -146, y: 636, w: 84 },
+      { img: "deco-agidel-reeds", x: -96, y: 676, w: 54, flip: true },
+      { img: "deco-agidel-rock", x: -134, y: 880, w: 124 },
+      { img: "deco-agidel-reeds", x: 150, y: 520, w: 48 },
+    ] },
+];
+// узлы первого юнита: что пройдено, что сегодня
+const UFA_NODES = [
+  { kind: "lesson", state: "done", icon: "star" },
+  { kind: "lesson", state: "done", icon: "chat-circle-text" },
+  { kind: "duel", state: "done" },
+  { kind: "phrase", state: "open" },
+  { kind: "lesson", state: "current", icon: "star", progress: 60 },
+  { kind: "lesson", state: "locked", icon: "book-open" },
+  { kind: "duel", state: "locked" },
+  { kind: "trophy", state: "locked" },
+];
+const LOCKED_NODES = [
+  { kind: "lesson", icon: "star" }, { kind: "lesson", icon: "chat-circle-text" }, { kind: "duel" },
+  { kind: "lesson", icon: "book-open" }, { kind: "lesson", icon: "barbell" }, { kind: "duel" },
+  { kind: "lesson", icon: "star" }, { kind: "trophy" },
+].map((n) => ({ ...n, state: "locked" }));
+const OFFSETS = [0, -58, -86, -58, 0, 58, 86, 58];
+
+const EXERCISES = [
+  { type: "tiles", kind: "Новое слово", title: "Переведи на башкирский", prompt: "Я иду в школу.",
+    answer: ["Мин", "мәктәпкә", "барам"], bank: ["барам", "Һин", "мәктәпкә", "өйгә", "Мин", "бара"] },
+  { type: "choice", kind: "Повторение", title: "Что значит это слово?", word: "Сәләм!",
+    options: ["Привет!", "Спасибо", "Спокойной ночи", "Да"], answer: 0 },
+  { type: "input", kind: "Напиши сам", title: "Напиши по-башкирски", prompt: "Спасибо!", answer: "Рәхмәт!", hintLetter: "ә" },
+  { type: "duel", kind: "Помоги языку", title: "Какой перевод звучит естественнее?", source: "Добрый день", a: "Хәйерле көн", b: "Яҡшы көн" },
+];
+
+const LEAGUE = [
+  ["Ловкий шмель", 412], ["Тихая липа", 388], ["Быстрый курай", 351], ["Ясный ручей", 330], ["Смелая пчела", 318, true],
+  ["Звонкий жаворонок", 244], ["Добрый барсук", 201], ["Мудрая сова", 120], ["Сонный ёжик", 64], ["Весёлый хомяк", 31],
+];
+const AVA = ["#FFB703", "#43C35E", "#1CA7F2", "#9B5CFF", "#FF5A5A", "#E39400", "#2C9C45", "#0B87CB", "#7B3CE6", "#E03B3B"];
+const BADGES = ["badge-clover", "badge-buckwheat", "badge-sweetclover", "badge-fireweed", "badge-linden"];
+
+/* ===================== состояние ===================== */
+const S = {
+  screen: params.get("screen") || "home",
+  step: Math.min(EXERCISES.length - 1, Math.max(0, Number(params.get("step") || 0))),
+  picked: [], choice: null, input: "", vote: null, sheet: null, quit: params.get("quit") === "1",
+  kind: params.get("kind") || "offline",
+};
+if (params.get("pick") === "1") {
+  const ex = EXERCISES[S.step];
+  if (ex.type === "tiles") S.picked = ex.answer.map((w) => ex.bank.indexOf(w));
+  if (ex.type === "choice") S.choice = 0;
+  if (ex.type === "input") S.input = "Рахмат!";
+  if (ex.type === "duel") S.vote = "a";
+}
+if (params.get("sheet")) S.sheet = params.get("sheet");
+const app = document.getElementById("app");
+
+/* ===================== примитивы ===================== */
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// скруглённый шестиугольник с плоским верхом в прямоугольнике w×h
+function hexPath(w, h, r, ox = 0, oy = 0) {
+  const p = [[w * .25, 0], [w * .75, 0], [w, h / 2], [w * .75, h], [w * .25, h], [0, h / 2]].map(([x, y]) => [x + ox, y + oy]);
+  const to = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy); return [a[0] + dx / L * r, a[1] + dy / L * r]; };
+  let d = "";
+  p.forEach((v, i) => {
+    const a = to(v, p[(i + 5) % 6]), b = to(v, p[(i + 1) % 6]);
+    d += `${i ? "L" : "M"}${a[0].toFixed(1)},${a[1].toFixed(1)}Q${v[0].toFixed(1)},${v[1].toFixed(1)} ${b[0].toFixed(1)},${b[1].toFixed(1)}`;
+  });
+  return d + "Z";
+}
+function hexSvg({ w, h, r = 8, fill, stroke, sw = 0, deep, lip = 0, cls = "" }) {
+  const pad = sw / 2;
+  return `<svg class="${cls}" width="${w + sw}" height="${h + lip + sw}" viewBox="0 0 ${w + sw} ${h + lip + sw}" aria-hidden="true">
+    ${lip ? `<path d="${hexPath(w, h, r, pad, pad + lip)}" fill="${deep}"/>` : ""}
+    <path d="${hexPath(w, h, r, pad, pad)}" fill="${fill}" ${stroke ? `stroke="${stroke}" stroke-width="${sw}"` : ""}/>
+  </svg>`;
+}
+
+const NODE_STYLE = {
+  done: { fill: "var(--honey)", deep: "var(--honey-deep)", icon: "var(--ink)" },
+  current: { fill: "var(--honey)", deep: "var(--honey-deep)", icon: "var(--ink)" },
+  open: { fill: "var(--honey)", deep: "var(--honey-deep)", icon: "var(--ink)" },
+  locked: { fill: "var(--locked)", deep: "var(--locked-deep)", icon: "var(--locked-ink)" },
+};
+function nodeHtml(node, i, unit) {
+  const W = 78, H = 68, LIP = 7;
+  let st = NODE_STYLE[node.state];
+  let icon = node.icon;
+  if (node.kind === "phrase") icon = "sun-horizon";
+  if (node.kind === "duel") { icon = "scales"; if (node.state !== "locked") st = { fill: "var(--violet)", deep: "var(--violet-lip)", icon: "#fff" }; }
+  if (node.kind === "trophy") icon = "trophy";
+  let weight = "fill";
+  if (node.state === "done" && node.kind === "lesson") { icon = "check"; weight = "bold"; }
+  const cur = node.state === "current";
+  const ring = cur ? `<svg class="ring" width="${W + 26}" height="${H + 24}" viewBox="0 0 ${W + 26} ${H + 24}" style="position:absolute;left:-13px;top:-12px" aria-hidden="true">
+      <path d="${hexPath(W + 20, H + 18, 14, 3, 3)}" fill="none" stroke="var(--locked)" stroke-width="6"/>
+      <path d="${hexPath(W + 20, H + 18, 14, 3, 3)}" fill="none" stroke="var(--honey)" stroke-width="6" stroke-linecap="round" pathLength="100" stroke-dasharray="${node.progress} 100"/>
+    </svg>` : "";
+  const label = {
+    phrase: `<span class="chip node-label ${OFFSETS[i] > 0 ? "left" : "right"}"><i class="ph-fill ph-sun-horizon"></i>Фраза дня · 1 мин</span>`,
+  }[node.kind] || "";
+  const names = { lesson: "Урок", duel: "Помоги языку", phrase: "Фраза дня", trophy: "Испытание юнита" };
+  const stateNames = { done: "пройден", current: "текущий", open: "доступен", locked: "закрыт" };
+  const target = node.kind === "duel" ? 3 : node.kind === "phrase" ? 1 : 0;
+  return `<div class="node-row"><div class="node" style="--x:${OFFSETS[i]}px">
+    ${cur ? `<span class="start-bubble">Начать</span>` : ""}
+    <button class="hexbtn" ${node.state === "locked" ? 'aria-disabled="true"' : `data-go="lesson" data-step="${target}"`} aria-label="${names[node.kind]} ${i + 1}, ${stateNames[node.state]}">
+      ${ring}
+      <svg width="${W}" height="${H + LIP}" viewBox="0 0 ${W} ${H + LIP}" aria-hidden="true">
+        <path d="${hexPath(W, H, 13, 0, LIP)}" fill="${st.deep}"/>
+        <g class="face"><path d="${hexPath(W, H, 13)}" fill="${st.fill}"/>
+        ${node.state !== "locked" ? `<path d="${hexPath(W - 26, H - 26, 8, 13, 9)}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3" stroke-dasharray="18 200" stroke-linecap="round"/>` : ""}</g>
+      </svg>
+      <i class="ph-${weight} ph-${icon}" style="top:${H / 2}px;color:${st.icon}"></i>
+    </button>
+    ${label}
+    ${unit.caps[i] ? `<span class="node-cap ${node.state}">${unit.caps[i]}</span>` : ""}
+  </div></div>`;
+}
+
+const ROW = 116, NODE_MID = 37;
+// тропинка: плавная кривая через центры узлов; пройденная часть — медовая
+function trailSvg(nodes) {
+  const pts = [[0, -48], ...nodes.map((_, i) => [OFFSETS[i], i * ROW + NODE_MID]), [0, nodes.length * ROW - 20]];
+  const seg = (a, b) => `C${a[0]},${a[1] + (b[1] - a[1]) / 2} ${b[0]},${b[1] - (b[1] - a[1]) / 2} ${b[0]},${b[1]}`;
+  const path = (from, to) => { let d = `M${pts[from][0]},${pts[from][1]}`; for (let k = from; k < to; k++) d += seg(pts[k], pts[k + 1]); return d; };
+  const cur = nodes.findIndex((n) => n.state === "current"); // индекс узла; в pts он смещён на 1
+  const walked = cur >= 0 ? cur + 1 : 0;
+  const H = nodes.length * ROW;
+  const road = (d, base, dash) => `<path d="${d}" fill="none" stroke="${base}" stroke-width="30" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${dash}" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 13"/>`;
+  return `<svg class="trail" width="360" height="${H}" viewBox="-180 0 360 ${H}" aria-hidden="true">
+    ${road(path(walked, pts.length - 1), "rgba(120,90,50,.09)", "rgba(120,90,50,.22)")}
+    ${walked ? road(path(0, walked), "#FFE29A", "#F0B323") : ""}
+  </svg>`;
+}
+function decoHtml(d) {
+  const t = `translate(-50%, -50%)${d.flip ? " scaleX(-1)" : ""}${d.rot ? ` rotate(${d.flip ? -d.rot : d.rot}deg)` : ""}`;
+  return `<img class="deco" src="${ASSET(d.img)}" alt="" style="left:calc(50% + ${d.x}px);top:${d.y}px;width:${d.w}px;transform:${t}">`;
+}
+
+function goalHex(done, total) {
+  const w = 30, h = 26, pct = done / total;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+    <defs><clipPath id="gclip"><path d="${hexPath(w, h, 5)}"/></clipPath></defs>
+    <path d="${hexPath(w, h, 5)}" fill="var(--locked)"/>
+    <rect x="0" y="${h * (1 - pct)}" width="${w}" height="${h * pct}" fill="var(--honey)" clip-path="url(#gclip)"/>
+    <path d="${hexPath(w - 4, h - 4, 4, 2, 2)}" fill="none" stroke="var(--honey-deep)" stroke-width="2" opacity=".5"/>
+  </svg>`;
+}
+
+const topbar = () => `<header class="topbar">
+  <div class="goal" title="Дневная цель">${goalHex(1, 2)}<span>1 из 2<br>сот</span></div>
+  <div class="stat streak" aria-label="Серия: 6 дней"><i class="ph-fill ph-fire"></i>6</div>
+  <div class="stat honey" aria-label="Мёд: 245"><i class="ph-fill ph-drop"></i>245</div>
+  <button class="stat" data-go="league" aria-label="Лига Донника"><img class="league-mini" src="${ASSET("badge-sweetclover")}" alt=""></button>
+</header>`;
+
+const tabbar = (on) => `<nav class="tabbar" aria-label="Разделы">
+  ${[["home", "path", "Путь"], ["league", "shield-star", "Лига"], ["class", "users-three", "Класс"], ["profile", "user-circle", "Профиль"]]
+    .map(([k, ic, t]) => `<button class="tab ${on === k ? "on" : ""}" data-go="${k}" ${on === k ? 'aria-current="page"' : ""}><i class="ph-fill ph-${ic}"></i>${t}</button>`).join("")}
+</nav>`;
+
+/* ===================== экраны ===================== */
+function home() {
+  const u0 = UNITS[0];
+  const unitTrack = (unit, nodes) => {
+    const bee = unit.id === "ufa" ? (() => {
+      const i = nodes.findIndex((n) => n.state === "current");
+      const left = OFFSETS[i] <= 0;
+      return `<img class="path-bee" src="${ASSET("bee-idle")}" alt="" style="top:${i * ROW + NODE_MID}px;left:calc(50% + ${OFFSETS[i] + (left ? 92 : -92)}px)">`;
+    })() : "";
+    return `<div class="track">${trailSvg(nodes)}${unit.decos.map(decoHtml).join("")}${bee}${nodes.map((n, i) => nodeHtml(n, i, unit)).join("")}</div>`;
+  };
+  const sign = (u) => `<div class="sign" data-unit="${u.id}" style="--sign-ink:${u.signInk || "var(--ink)"}">
+    <img src="${ASSET(`place-${u.id}-sign`)}" alt="">
+    <div class="sign-text">
+      <span class="chip white"><i class="ph-fill ph-lock-simple"></i>Юнит ${u.n}</span>
+      <b lang="ba">${u.ba}</b>
+      <span>${u.topic}</span>
+    </div>
+  </div>`;
+  return `<div class="screen">
+    ${topbar()}
+    <section class="expedition" data-unit="ufa" aria-label="Экспедиция">
+      <img class="hero" src="${ASSET("place-ufa-hero")}" alt="Уфа: берег реки Белой и памятник Салавату Юлаеву на скале">
+      <div class="exp-body">
+        <div class="exp-kicker"><i class="ph-fill ph-map-trifold"></i>Экспедиция · место 1 из 12</div>
+        <h1 class="exp-title"><span lang="ba">${u0.ba}</span><small>${u0.ru}</small></h1>
+        <p class="exp-unit">Юнит 1 · ${u0.topic}</p>
+        <div class="progress"><div class="bar" role="progressbar" aria-valuenow="4" aria-valuemax="8" aria-label="Пройдено уроков"><i style="width:44%"></i></div>4 из 8</div>
+        <button class="btn" data-go="lesson" data-step="0">Продолжить путь</button>
+      </div>
+    </section>
+    <div class="unit-bar" aria-hidden="true"><div class="unit-bar-inner">
+      <div class="unit-bar-text"><small>Юнит 1 · <span lang="ba">Өфө</span></small><b>Знакомство</b></div>
+      <button class="unit-bar-guide" aria-label="Слова и правила юнита"><i class="ph-fill ph-book-open"></i></button>
+    </div></div>
+    <div class="path">
+      <div class="unit" data-unit="ufa" style="--zone:${u0.zone}">${unitTrack(u0, UFA_NODES)}</div>
+      ${UNITS.slice(1).map((u) => `<div class="unit" data-unit="${u.id}" style="--zone:${u.zone}">${sign(u)}${unitTrack(u, LOCKED_NODES)}</div>`).join("")}
+      <div class="path-end">
+        <img src="${ASSET("bee-fly")}" alt="">
+        <b>Впереди ещё 9 мест</b>
+        <span>Иремель, Янгантау, Сабантуй и другие —<br>открываются по мере пути</span>
+      </div>
+    </div>
+    ${tabbar("home")}
+  </div>`;
+}
+
+function lesson() {
+  const ex = EXERCISES[S.step];
+  const pct = Math.round(((S.step + (S.sheet ? 1 : 0)) / EXERCISES.length) * 100);
+  let body = "", canCheck = false;
+  const isDuel = ex.type === "duel";
+  if (ex.type === "tiles") {
+    canCheck = S.picked.length > 0;
+    body = `<span class="chip"><i class="ph-fill ph-sparkle"></i>${ex.kind}</span>
+      <h1 class="task-title">${ex.title}</h1>
+      <div class="prompt"><img src="${ASSET("bee-explain")}" alt=""><div class="bubble">${esc(ex.prompt)}</div></div>
+      <div class="answer-lines" aria-label="Твой ответ">${S.picked.map((bi) => `<button class="tile" lang="ba" data-unpick="${bi}">${ex.bank[bi]}</button>`).join("")}</div>
+      <div class="bank">${ex.bank.map((w, bi) => `<button class="tile ${S.picked.includes(bi) ? "used" : ""}" lang="ba" data-pick="${bi}">${w}</button>`).join("")}</div>`;
+  } else if (ex.type === "choice") {
+    canCheck = S.choice !== null;
+    body = `<span class="chip"><i class="ph-fill ph-arrows-clockwise"></i>${ex.kind}</span>
+      <h1 class="task-title">${ex.title}</h1>
+      <div class="word-card"><b lang="ba">${ex.word}</b><button class="speak" aria-label="Послушать"><i class="ph-fill ph-speaker-high"></i></button></div>
+      <div class="options" role="radiogroup">${ex.options.map((o, k) => `<button class="option ${S.choice === k ? "on" : ""}" role="radio" aria-checked="${S.choice === k}" data-choice="${k}"><span class="key">${k + 1}</span>${o}</button>`).join("")}</div>`;
+  } else if (ex.type === "input") {
+    canCheck = S.input.trim().length > 0;
+    body = `<span class="chip"><i class="ph-fill ph-pencil-simple"></i>${ex.kind}</span>
+      <h1 class="task-title">${ex.title}</h1>
+      <div class="prompt"><img src="${ASSET("bee-think")}" alt=""><div class="bubble">${esc(ex.prompt)}</div></div>
+      <div class="input-wrap"><textarea id="answer" lang="ba" placeholder="Напиши по-башкирски" ${S.sheet ? "disabled" : ""}>${esc(S.input)}</textarea></div>
+      <div class="letters" aria-label="Башкирские буквы">${"әөүғҡңҙҫһ".split("").map((l) => `<button class="letter" lang="ba" data-letter="${l}">${l}</button>`).join("")}</div>
+      <p class="letters-hint">Особые буквы башкирского — нажми, чтобы вставить</p>`;
+  } else {
+    canCheck = S.vote !== null;
+    body = `<span class="chip violet"><i class="ph-fill ph-scales"></i>${ex.kind}</span>
+      <h1 class="task-title">${ex.title}</h1>
+      <div class="duel-source"><div><small>По-русски</small>${esc(ex.source)}</div></div>
+      <div class="variants" role="radiogroup">${["a", "b"].map((k) => `<button class="variant ${S.vote === k ? "on" : ""}" role="radio" aria-checked="${S.vote === k}" data-vote="${k}"><span class="vletter">${k.toUpperCase()}</span><b lang="ba">${ex[k]}</b><span class="speak-sm" aria-hidden="true"><i class="ph-fill ph-speaker-high"></i></span></button>`).join("")}</div>
+      <div class="duel-alt">${[["both", "Оба подходят"], ["skip", "Не знаю"]].map(([k, t]) => `<button class="${S.vote === k ? "on" : ""}" data-vote="${k}">${t}</button>`).join("")}</div>`;
+  }
+  const foot = S.sheet ? sheetHtml(ex) : `<div class="lesson-foot"><button class="btn ${isDuel ? "violet" : ""}" data-check ${canCheck ? "" : "disabled"}>${isDuel ? "Отдать голос" : "Проверить"}</button></div>`;
+  return `<div class="lesson">
+    <div class="lesson-head">
+      <button class="icon-btn" data-quit aria-label="Выйти из урока"><i class="ph-bold ph-x"></i></button>
+      <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemax="100" aria-label="Прогресс урока"><i style="width:${Math.max(pct, 4)}%"></i></div>
+    </div>
+    <div class="lesson-body">${body}</div>
+    ${foot}
+    ${S.quit ? quitDialog() : ""}
+  </div>`;
+}
+
+const OK_TITLES = ["Верно!", "Так и есть!", "Точно!"];
+function sheetHtml(ex) {
+  const s = S.sheet;
+  if (s === "ok") {
+    const meaning = ex.type === "tiles" ? `<p><span lang="ba"><b>${ex.answer.join(" ")}.</b></span> — «${ex.prompt.replace(/\.$/, "")}»</p>` : ex.type === "choice" ? `<p><b lang="ba">${ex.word}</b> — «${ex.options[ex.answer]}». Так здороваются в любое время дня.</p>` : `<p><b lang="ba">${ex.answer}</b> — «${ex.prompt}»</p>`;
+    return `<div class="sheet ok" role="status"><div class="sheet-head"><span class="mark"><i class="ph-bold ph-check"></i></span>${OK_TITLES[S.step % 3]}</div>${meaning}<button class="btn green" data-next>Дальше</button></div>`;
+  }
+  if (s === "bad") {
+    const ans = ex.type === "tiles" ? ex.answer.join(" ") + "." : ex.type === "choice" ? ex.options[ex.answer] : ex.answer;
+    return `<div class="sheet bad" role="status"><div class="sheet-head"><span class="mark"><i class="ph-bold ph-x"></i></span>Пока не так</div><p>Правильно: <b ${ex.type === "choice" ? "" : 'lang="ba"'}>${ans}</b><br>Вернёмся к этому в конце урока.</p><button class="btn coral" data-next>Понятно</button></div>`;
+  }
+  if (s === "almost") {
+    return `<div class="sheet almost" role="status"><div class="sheet-head"><span class="mark"><i class="ph-bold ph-lightbulb"></i></span>Почти!</div><p>Обрати внимание на букву <mark lang="ba">${ex.hintLetter}</mark> — правильно <mark lang="ba">${ex.answer}</mark>. Засчитываем, но слово вернётся в повторении.</p><button class="btn" data-next>Дальше</button></div>`;
+  }
+  return `<div class="sheet voted" role="status"><div class="sheet-row"><img src="${ASSET("bee-cheer")}" alt=""><div><div class="sheet-head">Голос учтён</div><p>Итог придёт в профиль, когда выскажутся учителя и взрослые носители языка.</p></div></div><button class="btn violet" data-next>Дальше</button></div>`;
+}
+
+const quitDialog = () => `<div class="scrim" data-close-quit><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="qt">
+  <img src="${ASSET("bee-sympathy")}" alt="">
+  <h2 id="qt">Уже уходишь?</h2>
+  <p>Если выйти сейчас, этот урок придётся начать заново.</p>
+  <button class="btn" data-stay>Остаться</button>
+  <button class="link-btn" data-go="home" style="color:var(--coral-ink)">Выйти из урока</button>
+</div></div>`;
+
+function result() {
+  return `<div class="screen">
+    <div class="full">
+      <img class="art" src="${ASSET("scene-lesson-complete")}" alt="Пчела радуется на запечатанных сотах">
+      <h1>Урок пройден!</h1>
+      <p class="lead">Знакомство · урок 5. Новые слова: <span lang="ba">мәктәп, барам, рәхмәт</span></p>
+      <div class="stat-tiles">
+        <div class="stile"><small>Мёд</small><b><i class="ph-fill ph-drop"></i>+18</b></div>
+        <div class="stile"><small>Точность</small><b>92%</b></div>
+        <div class="stile"><small>Время</small><b>2:41</b></div>
+      </div>
+    </div>
+    <div class="full-foot"><button class="btn" data-go="streak">Продолжить</button></div>
+  </div>`;
+}
+
+function streak() {
+  const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const done = [true, true, true, true, true, "today", false];
+  return `<div class="screen">
+    <div class="full">
+      <img class="art" src="${ASSET("scene-streak")}" alt="Цепочка сот с огоньками" style="width:260px">
+      <div class="big-num">6</div>
+      <h1 style="margin-top:0">дней подряд</h1>
+      <p class="lead">Цель дня выполнена. Приходи завтра — цепочка сот вырастет.</p>
+      <div class="week-card"><div class="week">${days.map((d, i) => `<div class="day ${done[i] === "today" ? "today" : ""}">${d}${hexSvg({ w: 32, h: 28, r: 3.5, fill: done[i] ? "var(--honey)" : "var(--surface)", stroke: done[i] ? "" : "var(--line-strong)", sw: done[i] ? 0 : 2, deep: "var(--honey-deep)", lip: done[i] ? 3 : 0 })}</div>`).join("")}</div>
+        <div class="week-foot"><i class="ph-fill ph-snowflake"></i>2 заморозки в запасе</div></div>
+    </div>
+    <div class="full-foot"><button class="btn" data-go="home">Продолжить</button></div>
+  </div>`;
+}
+
+function avaHex(i) { return hexSvg({ w: 40, h: 35, r: 4, fill: AVA[i % AVA.length], cls: "ava" }); }
+function league() {
+  const rows = [];
+  LEAGUE.forEach(([nick, pts, me], i) => {
+    rows.push(`<div class="row ${me ? "me" : ""}"><span class="rank ${i < 5 ? "top" : ""}">${i + 1}</span>${avaHex(i)}<span class="nick">${nick}${me ? ' <span class="chip">ты</span>' : ""}</span><span class="pts"><i class="ph-fill ph-drop"></i>${pts}</span></div>`);
+    if (i === 4) rows.push(`<div class="zone up"><i class="ph-bold ph-arrow-up"></i>Зона повышения</div>`);
+    if (i === 7) rows.push(`<div class="zone down"><i class="ph-bold ph-arrow-down"></i>Зона понижения</div>`);
+  });
+  return `<div class="screen">
+    <div class="badges" aria-label="Лиги медоносов">${BADGES.map((b, i) => `<img class="${i < 2 ? "past" : i === 2 ? "cur" : "future"}" src="${ASSET(b)}" alt="">`).join("")}</div>
+    <div class="page-head" style="text-align:center;padding-top:6px">
+      <h1>Лига Донника</h1>
+      <p>Первые пять перейдут в Лигу Кипрея.<br>Неделя закончится через 3 дня.</p>
+    </div>
+    <div class="board">${rows.join("")}</div>
+    <p style="margin:0 16px 18px;font-size:13px;color:var(--ink-2);text-align:center">В лиге — только ученики твоего возраста, под придуманными никами.</p>
+    <div style="flex:1"></div>
+    ${tabbar("league")}
+  </div>`;
+}
+
+function leagueUp() {
+  return `<div class="screen" style="background:var(--violet-bg)">
+    <div class="full">
+      <img class="art" src="${ASSET("scene-league-up")}" alt="Крылатый жеребёнок Аҡбуҙат" style="width:250px">
+      <h1>Новая лига — Кипрей!</h1>
+      <p class="lead">Ты в пятёрке лучших Лиги Донника. Аҡбуҙат, крылатый конь из эпоса «Урал-батыр», несёт тебя выше.</p>
+      <img src="${ASSET("badge-fireweed")}" alt="Значок Лиги Кипрея" style="width:96px">
+    </div>
+    <div class="full-foot"><button class="btn violet" data-go="league">Ура, дальше</button></div>
+  </div>`;
+}
+
+function comb(total, filled, nectar = 0) {
+  const w = 30, h = 26;
+  let s = "";
+  for (let i = 0; i < total; i++) {
+    const cell = i < filled ? { fill: "var(--honey)" } : i < filled + nectar ? { fill: "rgba(255,183,3,.32)", stroke: "rgba(227,148,0,.55)", sw: 2 } : { fill: "var(--surface)", stroke: "var(--line-strong)", sw: 2 };
+    const sw = cell.sw || 0; // обводка не должна увеличивать ячейку, иначе ряд переносится
+    s += `<span style="margin-top:${i % 2 ? 13 : 0}px;margin-left:${i ? -6 : 0}px">${hexSvg({ w: w - sw, h: h - sw, r: 4, ...cell })}</span>`;
+  }
+  return `<div class="comb" aria-hidden="true">${s}</div>`;
+}
+function klass() {
+  const classes = [["5 «А»", 81], ["5 «Б»", 78, true], ["6 «А»", 74], ["7 «В»", 69], ["6 «Б»", 63]];
+  return `<div class="screen">
+    <div class="page-head"><h1>Улей 5 «Б»</h1><p>Школа № 7 · 24 ученика</p></div>
+    <div class="card">
+      <h2>Квест недели</h2>
+      <p class="sub">Заполнить классом 300 сот: каждый урок и каждый голос за язык — одна сота. Награда: новый узор на тамге класса.</p>
+      ${comb(12, 9)}
+      <div class="progress" style="margin:0"><div class="bar"><i style="width:71%"></i></div>214 из 300</div>
+    </div>
+    <div class="card">
+      <h2>Индекс улья</h2>
+      <p class="sub">Честный рейтинг: считаем долю занимающихся, рост и качество вклада, а не сумму очков — маленький класс может обогнать большой.</p>
+      <div class="hive-index"><span class="num">78</span><div class="parts">
+        <div class="part">Участие · 18 из 24 занимались 3+ дня<div class="bar"><i style="width:75%"></i></div></div>
+        <div class="part">Прогресс<div class="bar"><i style="width:71%"></i></div></div>
+        <div class="part">Качество вклада<div class="bar"><i style="width:88%"></i></div></div>
+      </div></div>
+    </div>
+    <div class="card class-list">
+      <h2>Классы школы</h2>
+      ${classes.map(([n, v, me], i) => `<div class="row ${me ? "me" : ""}" style="${me ? "border-radius:12px;padding-left:8px" : ""}"><span class="rank">${i + 1}</span><span class="nick">${n}</span><span class="pts">${v}</span></div>`).join("")}
+    </div>
+    <div class="card"><div class="teacher-task"><span class="ti"><i class="ph-fill ph-chalkboard-teacher"></i></span><div><b>Задание учителя</b><div class="sub" style="margin:2px 0 0">Тема «Семья» до пятницы · выполнили 14 из 24</div></div></div></div>
+    <div style="flex:1"></div>
+    ${tabbar("class")}
+  </div>`;
+}
+
+function profile() {
+  const W = 88, H = 77;
+  return `<div class="screen">
+    <div class="profile-head">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><clipPath id="pclip"><path d="${hexPath(W, H, 14)}"/></clipPath></defs>
+        <image href="${ASSET("app-icon-alt")}" x="0" y="-6" width="${W}" height="${W}" clip-path="url(#pclip)"/>
+        <path d="${hexPath(W - 4, H - 4, 12, 2, 2)}" fill="none" stroke="var(--honey)" stroke-width="4"/></svg>
+      <div><h1>Смелая пчела</h1><p>Режим 5–8 класса · 5 «Б»</p></div>
+    </div>
+    <div class="pstats">
+      <div class="pstat"><i class="ph-fill ph-fire" style="color:#E8590C"></i><div><b>6</b><small>дней подряд</small></div></div>
+      <div class="pstat"><i class="ph-fill ph-drop" style="color:var(--honey)"></i><div><b>245</b><small>мёда</small></div></div>
+      <div class="pstat"><i class="ph-fill ph-book-open" style="color:var(--blue)"></i><div><b>86</b><small>слов</small></div></div>
+      <div class="pstat"><i class="ph-fill ph-scales" style="color:var(--violet)"></i><div><b>41</b><small>голос за язык</small></div></div>
+    </div>
+    <div class="card">
+      <h2>Мой вклад в словарь</h2>
+      <p class="sub">7 вариантов, за которые был твой голос, созрели и вошли в словарь. Ещё 5 ждут голосов учителей и взрослых.</p>
+      ${comb(12, 7, 5)}
+    </div>
+    <div class="card">
+      <h2>Экспедиция</h2>
+      <p class="sub">Пройдено мест: 0 из 12. Сейчас — <span lang="ba">Өфө</span>, 4 урока из 8.</p>
+      ${comb(12, 0, 1)}
+    </div>
+    <div class="card settings" style="padding:4px 16px">
+      ${[["graduation-cap", "Возрастной режим", "5–8 класс"], ["moon", "Тихие часы", "21:00–08:00"], ["telegram-logo", "Telegram-бот", "подключён"]].map(([ic, t, v]) => `<div class="row"><i class="ph-fill ph-${ic}"></i><span class="nick">${t}</span><span class="val">${v}</span></div>`).join("")}
+    </div>
+    <div style="flex:1"></div>
+    ${tabbar("profile")}
+  </div>`;
+}
+
+const EMPTY = {
+  offline: { img: "empty-offline", title: "Нет связи", text: "Скачанные уроки работают без интернета. Ответы отправятся, когда сеть вернётся.", btn: "Открыть скачанные" },
+  done: { img: "empty-all-done", title: "На сегодня всё", text: "Цель дня выполнена, новых повторений пока нет. Можно отдыхать — завтра тропа продолжится.", btn: "На тропу" },
+  error: { img: "empty-error", title: "Что-то сломалось", text: "Мы уже знаем об ошибке и чиним. Твой прогресс сохранён.", btn: "Попробовать снова" },
+};
+function empty() {
+  const e = EMPTY[S.kind] || EMPTY.offline;
+  return `<div class="screen">
+    <div class="full" style="justify-content:center;padding-bottom:40px">
+      <img class="art" src="${ASSET(e.img)}" alt="" style="width:220px">
+      <h1>${e.title}</h1>
+      <p class="lead">${e.text}</p>
+      <div style="width:100%"><button class="btn" data-go="home">${e.btn}</button></div>
+    </div>
+    ${tabbar("home")}
+  </div>`;
+}
+
+const splash = () => `<div class="splash"><img src="${ASSET("bee-fly")}" alt=""><b lang="ba">Кәрәҙ</b><span>башкирский язык каждый день</span></div>`;
+
+/* ===================== роутер ===================== */
+const SCREENS = { home, lesson, result, streak, league, leagueup: leagueUp, class: klass, profile, empty, splash };
+const NAV = [
+  ["Главная", [["home", "Тропа + экспедиция"], ["home&scroll=720", "Тропа: баннер юнита"], ["home&scroll=1500", "Тропа: следующие места"], ["splash", "Заставка"]]],
+  ["Урок", [["lesson&step=0", "Слова из плиток"], ["lesson&step=0&pick=1&sheet=ok", "…ответ верный"], ["lesson&step=1&pick=1", "Выбор перевода"], ["lesson&step=1&pick=1&sheet=bad", "…ответ неверный"], ["lesson&step=2", "Ввод с башкирскими буквами"], ["lesson&step=2&pick=1&sheet=almost", "…«Почти!»"], ["lesson&step=3&pick=1", "Помоги языку (дуэль)"], ["lesson&step=3&pick=1&sheet=voted", "…голос учтён"], ["lesson&step=0&quit=1", "Выход из урока"]]],
+  ["После урока", [["result", "Урок пройден"], ["streak", "Серия"], ["leagueup", "Повышение в лиге"]]],
+  ["Вкладки", [["league", "Лига"], ["class", "Класс"], ["profile", "Профиль"]]],
+  ["Пустые состояния", [["empty&kind=offline", "Нет сети"], ["empty&kind=done", "Всё пройдено"], ["empty&kind=error", "Ошибка"]]],
+];
+document.getElementById("viewer-links").innerHTML = NAV.map(([h, items]) => `<h2>${h}</h2>${items.map(([q, t]) => {
+  const cur = location.search.replace(/^\?/, "").replace(/&?(bare|static)=1/g, "");
+  const on = cur === `screen=${q}` || (!cur && q === "home");
+  return `<a href="?screen=${q}" class="${on ? "on" : ""}">${t}</a>`;
+}).join("")}`).join("");
+
+let observer;
+function render() {
+  app.innerHTML = (SCREENS[S.screen] || home)();
+  app.classList.toggle("locked-scroll", S.screen === "splash");
+  if (observer) observer.disconnect();
+  if (S.screen === "home") wireHome();
+  const ta = document.getElementById("answer");
+  if (ta) ta.addEventListener("input", () => { S.input = ta.value; const b = app.querySelector("[data-check]"); if (b) b.disabled = !S.input.trim(); });
+}
+
+function wireHome() {
+  const bar = app.querySelector(".unit-bar"), inner = bar.querySelector(".unit-bar-inner");
+  const topbarEl = app.querySelector(".topbar");
+  const setUnit = (id) => {
+    const u = UNITS.find((x) => x.id === id);
+    inner.style.setProperty("--u", u.color); inner.style.setProperty("--u-deep", u.deep); inner.style.setProperty("--u-ink", u.ink);
+    inner.classList.toggle("on-dark", u.dark);
+    inner.querySelector("small").innerHTML = `Юнит ${u.n} · <span lang="ba">${u.ba}</span>`;
+    inner.querySelector("b").textContent = u.topic;
+  };
+  const update = () => {
+    const top = app.scrollTop;
+    topbarEl.classList.toggle("scrolled", top > 4);
+    const card = app.querySelector(".expedition");
+    const show = card.offsetTop + card.offsetHeight - 70 < top;
+    bar.classList.toggle("show", show);
+    bar.setAttribute("aria-hidden", String(!show));
+    let current = "ufa";
+    app.querySelectorAll(".unit").forEach((el) => { if (el.offsetTop + app.querySelector(".path").offsetTop - 140 < top) current = el.dataset.unit; });
+    setUnit(current);
+  };
+  app.onscroll = update;
+  const sc = Number(params.get("scroll") || 0);
+  if (sc) { app.style.scrollBehavior = "auto"; app.scrollTop = sc; app.style.scrollBehavior = ""; }
+  // начальное состояние не анимируем — анимация только в ответ на прокрутку
+  inner.style.transition = "none";
+  update();
+  requestAnimationFrame(() => requestAnimationFrame(() => { inner.style.transition = ""; }));
+}
+
+/* ===================== логика урока ===================== */
+const fold = (s) => s.normalize("NFC").toLowerCase().replace(/[!?.,«»"]/g, "").trim()
+  .replace(/[әөүғҡңҙҫһ]/g, (c) => ({ ә: "а", ө: "о", ү: "у", ғ: "г", ҡ: "к", ң: "н", ҙ: "з", ҫ: "с", һ: "х" })[c]);
+const strip = (s) => s.normalize("NFC").toLowerCase().replace(/[!?.,«»"]/g, "").trim();
+function check() {
+  const ex = EXERCISES[S.step];
+  if (ex.type === "tiles") S.sheet = S.picked.map((i) => ex.bank[i]).join(" ") === ex.answer.join(" ") ? "ok" : "bad";
+  else if (ex.type === "choice") S.sheet = S.choice === ex.answer ? "ok" : "bad";
+  else if (ex.type === "input") S.sheet = strip(S.input) === strip(ex.answer) ? "ok" : fold(S.input) === fold(ex.answer) ? "almost" : "bad";
+  else S.sheet = "voted";
+  render();
+}
+function next() {
+  if (S.step < EXERCISES.length - 1) { Object.assign(S, { step: S.step + 1, picked: [], choice: null, input: "", vote: null, sheet: null }); render(); }
+  else go("result");
+}
+function go(screen, step) {
+  Object.assign(S, { screen, step: step ?? 0, picked: [], choice: null, input: "", vote: null, sheet: null, quit: false });
+  history.replaceState(null, "", `?screen=${screen}${screen === "lesson" ? `&step=${S.step}` : ""}${params.get("bare") === "1" ? "&bare=1" : ""}`);
+  app.scrollTop = 0;
+  render();
+}
+
+app.addEventListener("click", (e) => {
+  const t = e.target.closest("button, [data-close-quit]");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.go) return go(d.go, d.step ? Number(d.step) : 0);
+  if (S.sheet && !("next" in d) && !("quit" in d)) return;
+  if ("pick" in d) { S.picked.push(Number(d.pick)); return render(); }
+  if ("unpick" in d) { S.picked = S.picked.filter((x) => x !== Number(d.unpick)); return render(); }
+  if ("choice" in d) { S.choice = Number(d.choice); return render(); }
+  if ("vote" in d) { S.vote = d.vote; return render(); }
+  if ("letter" in d) {
+    const ta = document.getElementById("answer"); const s = ta.selectionStart ?? ta.value.length;
+    S.input = ta.value.slice(0, s) + d.letter + ta.value.slice(ta.selectionEnd ?? s); render();
+    const n = document.getElementById("answer"); n.focus(); n.setSelectionRange(s + 1, s + 1); return;
+  }
+  if ("check" in d) return check();
+  if ("next" in d) return next();
+  if ("quit" in d) { S.quit = true; return render(); }
+  if ("stay" in d || ("closeQuit" in d && e.target === t)) { S.quit = false; return render(); }
+});
+document.addEventListener("keydown", (e) => {
+  if (S.screen !== "lesson") return;
+  const ex = EXERCISES[S.step];
+  if (ex.type === "choice" && !S.sheet && /^[1-4]$/.test(e.key)) { S.choice = Number(e.key) - 1; render(); }
+  if (e.key === "Enter" && !e.shiftKey) {
+    if (S.sheet) { e.preventDefault(); next(); }
+    else if (app.querySelector("[data-check]:not([disabled])")) { e.preventDefault(); check(); }
+  }
+  if (e.key === "Escape" && S.quit) { S.quit = false; render(); }
+});
+render();
+</script>
+</body>
+</html>

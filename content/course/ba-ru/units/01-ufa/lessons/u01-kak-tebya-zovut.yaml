@@ -1,0 +1,184 @@
+# Урок «Как вас зовут?» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u01-kak-tebya-zovut
+unit: 01-ufa
+kind: lesson
+title_ru: Как вас зовут?
+new_words:
+  - исем
+  - Исемегеҙ кем?
+  - Минең исемем
+  - Хәлдәрегеҙ нисек?
+  - Танышыуыбыҙға бик шатмын.
+  - кем
+exercises:
+  - id: u01-kak-zovut-e01
+    type: choice_ba_ru
+    prompt:
+      ba: исем
+      ru: имя
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B8%D1%81%D0%B5%D0%BC
+        locator: статья «исем», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - имя
+      - школа
+      - друг
+      - день
+    correct: 0
+  - id: u01-kak-zovut-e02
+    type: tiles_ru_ba
+    prompt_ru: Как Вас зовут?
+    answer:
+      ba: Исемегеҙ кем?
+      ru: Как Вас зовут?
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Как Вас зовут?»
+      review: needs_native_review
+    distractors:
+      - ba: мин
+        ru: я
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BC%D0%B8%D0%BD
+          locator: статья «мин», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/9/9f/LL-Q13389_%28bak%29-Pastilahor-min.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-min.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-min.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: мин
+      - ba: һин
+        ru: ты
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%BB%D0%B8%D0%BD
+          locator: статья «һин», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/3/3c/LL-Q13389_%28bak%29-Pastilahor-hin.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-hin.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-hin.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: һин
+  - id: u01-kak-zovut-e03
+    type: tiles_ru_ba
+    prompt_ru: Меня зовут …
+    answer:
+      ba: Минең исемем
+      ru: Меня зовут …
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Меня зовут ______ .»
+      review: needs_native_review
+    distractors:
+      - ba: кем
+        ru: кто
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B5%D0%BC
+          locator: статья «кем», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: һин
+        ru: ты
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%BB%D0%B8%D0%BD
+          locator: статья «һин», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/3/3c/LL-Q13389_%28bak%29-Pastilahor-hin.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-hin.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-hin.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: һин
+  - id: u01-kak-zovut-e04
+    type: choice_ba_ru
+    prompt:
+      ba: Хәлдәрегеҙ нисек?
+      ru: Как у вас дела?
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Как у вас дела?»
+      review: needs_native_review
+    options_ru:
+      - Как у вас дела?
+      - Как Вас зовут?
+      - Доброе утро!
+    correct: 0
+  - id: u01-kak-zovut-e05
+    type: duel
+  - id: u01-kak-zovut-e06
+    type: tiles_ru_ba
+    prompt_ru: Очень приятно познакомиться.
+    answer:
+      ba: Танышыуыбыҙға бик шатмын.
+      ru: Очень приятно познакомиться.
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Основные», строка «Очень приятно познакомиться.»
+      review: needs_native_review
+    distractors:
+      - ba: рәхмәт
+        ru: спасибо
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%80%D3%99%D1%85%D0%BC%D3%99%D1%82
+          locator: статья «рәхмәт», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: юҡ
+        ru: нет
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8E%D2%A1
+          locator: статья «юҡ», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u01-kak-zovut-e07
+    type: free_ru_ba
+    prompt_ru: Хорошо, спасибо.
+    answers:
+      - ba: Рәхмәт, һәйбәт.
+        ru: Хорошо, спасибо.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Хорошо, спасибо.»
+        review: needs_native_review
+      - ba: Рәхмәт, яҡшы.
+        ru: Хорошо, спасибо.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Хорошо, спасибо.», вариант в скобках
+        review: needs_native_review
+  - id: u01-kak-zovut-e08
+    type: choice_ba_ru
+    prompt:
+      ba: кем
+      ru: кто
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B5%D0%BC
+        locator: статья «кем», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - кто
+      - как
+      - я
+    correct: 0

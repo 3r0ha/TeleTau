@@ -1,0 +1,12 @@
+{
+  "suite": "qr-card/build",
+  "version": 2,
+  "function": "buildQrCard",
+  "cases": [
+    { "id": "b001", "input": { "seat": "0123456789", "secret": "ABCDEFGHJKMNPQRSTVWXYZ0123", "baseUrl": "https://teletau.study" }, "expected": { "payload": "TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V", "link": "https://teletau.study/q#TT1.0123456789.ABCDEFGHJKMNPQRSTVWXYZ0123.6V" }, "note": "базовый случай" },
+    { "id": "b002", "input": { "seat": "0000000000", "secret": "00000000000000000000000000", "baseUrl": "https://teletau.study/" }, "expected": { "payload": "TT1.0000000000.00000000000000000000000000.00", "link": "https://teletau.study/q#TT1.0000000000.00000000000000000000000000.00" }, "note": "завершающий / базового адреса не удваивается" },
+    { "id": "b003", "input": { "seat": "ZZZZZZZZZZ", "secret": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "baseUrl": "http://localhost:3000" }, "expected": { "payload": "TT1.ZZZZZZZZZZ.ZZZZZZZZZZZZZZZZZZZZZZZZZZ.ZS", "link": "http://localhost:3000/q#TT1.ZZZZZZZZZZ.ZZZZZZZZZZZZZZZZZZZZZZZZZZ.ZS" }, "note": "локальный веб" },
+    { "id": "b004", "input": { "seat": "7M2QK9XD4T", "secret": "H3VN8RZ6P1CWEA0FJ5GKY2SB7Q", "baseUrl": "https://teletau.study" }, "expected": { "payload": "TT1.7M2QK9XD4T.H3VN8RZ6P1CWEA0FJ5GKY2SB7Q.GJ", "link": "https://teletau.study/q#TT1.7M2QK9XD4T.H3VN8RZ6P1CWEA0FJ5GKY2SB7Q.GJ" }, "note": "случайная карточка" },
+    { "id": "b005", "input": { "seat": "N4F8W2PCZ0", "secret": "1QX7T3MKD9VRA6H0BJ5GYE2S8C", "baseUrl": "https://school.example/teletau" }, "expected": { "payload": "TT1.N4F8W2PCZ0.1QX7T3MKD9VRA6H0BJ5GYE2S8C.F3", "link": "https://school.example/teletau/q#TT1.N4F8W2PCZ0.1QX7T3MKD9VRA6H0BJ5GYE2S8C.F3" }, "note": "базовый адрес с путём" }
+  ]
+}

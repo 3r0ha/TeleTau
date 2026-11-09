@@ -1,0 +1,25 @@
+{
+  "name": "@teletau/domain-rules",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Правила мотивации и дуэли v0 — чистые функции без ввода-вывода: мёд (xp), серия (streak), лига (league), дуэль v0 (duel-v0), повторение слов FSRS-6 и цель дня (srs), награды (achievements). Эталон для общих тест-векторов contracts/test-vectors/{xp,streak,consensus,srs,achievements}.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src test",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "vitest": "^5.0.5"
+  }
+}

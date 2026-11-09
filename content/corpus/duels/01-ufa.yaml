@@ -1,0 +1,257 @@
+# Дуэли «Помоги языку» юнита 01-ufa: русская фраза и два разных засвидетельствованных перевода (схема — content/schema/duels.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+unit: 01-ufa
+duels:
+  - id: u01-d-zdravstvuyte
+    ru: Здравствуйте!
+    kind: phrase
+    domain: greeting
+    variants:
+      - ba: Һаумыһығыҙ!
+        ru: Здравствуйте!
+        source:
+          ref: tatoeba
+          url: https://tatoeba.org/ru/sentences/show/2839364
+          locator: предложение №2839364 (CC BY 2.0 FR); русский перевод №483499 — связан косвенно, через перевод на другой язык
+        review: needs_native_review
+      - ba: Иҫәнмеһегеҙ!
+        raw: Иҫəнмеһегеҙ!
+        ru: Здравствуйте!
+        source:
+          ref: aigizk-bashkir-russian-corpora
+          url: https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&where=%22ba%22%3D'%D0%98%D2%AB%C9%99%D0%BD%D0%BC%D0%B5%D2%BB%D0%B5%D0%B3%D0%B5%D2%99!'%20AND%20%22ru%22%3D'%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!'
+          locator: "Datasets Viewer /filter, row_idx 451794; поле corpus: «tmx corpus»"
+        review: needs_native_review
+  - id: u01-d-kak-vas-zovut
+    ru: Как Вас зовут?
+    kind: sentence
+    domain: greeting
+    variants:
+      - ba: Исемегеҙ кем?
+        ru: Как Вас зовут?
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Как Вас зовут?»
+        review: needs_native_review
+      - ba: Исемегеҙ нисек?
+        ru: Как Вас зовут?
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Как Вас зовут?», вариант в скобках
+        review: needs_native_review
+  - id: u01-d-kak-dela
+    ru: Как дела?
+    kind: phrase
+    domain: greeting
+    variants:
+      - ba: эштәр нисек
+        ru: как дела
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B0%D0%BA%20%D0%B4%D0%B5%D0%BB%D0%B0
+          locator: статья «как дела», раздел «Перевод», строка «Башкирский»
+        review: needs_native_review
+      - ba: ни хәл
+        ru: как дела
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BA%D0%B0%D0%BA%20%D0%B4%D0%B5%D0%BB%D0%B0
+          locator: статья «как дела», раздел «Перевод», строка «Башкирский»
+        review: needs_native_review
+  - id: u01-d-do-svidaniya
+    ru: До свидания.
+    kind: phrase
+    domain: greeting
+    variants:
+      - ba: Күрешкәнгә тиклем.
+        ru: До свидания.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «До свидания.»
+        review: needs_native_review
+      - ba: Осрашҡанға тиклем.
+        ru: До свидания.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «До свидания.», вариант в скобках
+        review: needs_native_review
+  - id: u01-d-horosho-spasibo
+    ru: Хорошо, спасибо.
+    kind: phrase
+    domain: greeting
+    variants:
+      - ba: Рәхмәт, һәйбәт.
+        ru: Хорошо, спасибо.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Хорошо, спасибо.»
+        review: needs_native_review
+      - ba: Рәхмәт, яҡшы.
+        ru: Хорошо, спасибо.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Хорошо, спасибо.», вариант в скобках
+        review: needs_native_review
+  - id: u01-d-dobroy-nochi
+    ru: Доброй ночи.
+    kind: phrase
+    domain: greeting
+    variants:
+      - ba: Тыныс йоҡо.
+        ru: Доброй ночи.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Доброй ночи.»
+        review: needs_native_review
+      - ba: Хәйерле төн
+        ru: Доброй ночи.
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Основные», строка «Доброй ночи.», вариант в скобках
+        review: needs_native_review
+  - id: u01-d-do-svidaniya-vy
+    ru: До свидания!
+    ru_source:
+      ref: rujourn-bashkir-speech-etiquette
+      url: https://web.archive.org/web/20141022050344/http://rujourn.ru/page.php_id=52.html
+      locator: "абзац «При прощании башкиры произносят: Хуш! Хушыгыз! hаубулыгыз! (до свидания)»"
+    kind: phrase
+    domain: greeting
+    variants:
+      - ba: Хушығыҙ!
+        source:
+          ref: wikipedia-ba
+          url: https://ba.wikipedia.org/w/index.php?title=%D0%91%D0%B0%D1%88%D2%A1%D0%BE%D1%80%D1%82%D1%82%D0%B0%D1%80%D2%99%D1%8B%D2%A3_%D1%82%D0%B5%D0%BB%D0%BC%D3%99%D1%80_%D1%8D%D1%82%D0%B8%D0%BA%D0%B5%D1%82%D1%8B&oldid=1051009
+          locator: статья «Башҡорттарҙың телмәр этикеты», раздел «Хушлашыу»
+        review: needs_native_review
+      - ba: Һау булығыҙ!
+        source:
+          ref: wikipedia-ba
+          url: https://ba.wikipedia.org/w/index.php?title=%D0%91%D0%B0%D1%88%D2%A1%D0%BE%D1%80%D1%82%D1%82%D0%B0%D1%80%D2%99%D1%8B%D2%A3_%D1%82%D0%B5%D0%BB%D0%BC%D3%99%D1%80_%D1%8D%D1%82%D0%B8%D0%BA%D0%B5%D1%82%D1%8B&oldid=1051009
+          locator: статья «Башҡорттарҙың телмәр этикеты», раздел «Хушлашыу»
+        review: needs_native_review
+  - id: u01-d-privet
+    ru: Привет!
+    kind: word
+    domain: greeting
+    variants:
+      - ba: Сәләм!
+        raw: Сəлəм!
+        ru: Привет!
+        source:
+          ref: aigizk-bashkir-russian-corpora
+          url: https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&where=%22ba%22%3D'%D0%A1%C9%99%D0%BB%C9%99%D0%BC!'%20AND%20%22ru%22%3D'%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82!'
+          locator: "Datasets Viewer /filter, row_idx 451798; поле corpus: «tmx corpus»"
+        review: needs_native_review
+      - ba: һаумыһығыҙ
+        ru: привет
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82
+          locator: статья «привет», раздел «Перевод», строка «Башкирский»
+        review: needs_native_review
+  - id: u01-d-spasibo
+    ru: Спасибо.
+    kind: phrase
+    domain: politeness
+    variants:
+      - ba: Рәхмәт
+        ru: Спасибо.
+        source:
+          ref: aigizk-bashkir-russian-corpora
+          url: https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&where=%22ba%22%3D'%D0%A0%D3%99%D1%85%D0%BC%D3%99%D1%82'%20AND%20%22ru%22%3D'%D0%A1%D0%BF%D0%B0%D1%81%D0%B8%D0%B1%D0%BE.'
+          locator: "Datasets Viewer /filter, row_idx 469329; поле corpus: «tmx corpus»"
+        review: needs_native_review
+      - ba: Бик ҙур рәхмәт.
+        ru: Спасибо.
+        source:
+          ref: aigizk-bashkir-russian-corpora
+          url: https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&where=%22ba%22%3D'%D0%91%D0%B8%D0%BA%20%D2%99%D1%83%D1%80%20%D1%80%D3%99%D1%85%D0%BC%D3%99%D1%82.'%20AND%20%22ru%22%3D'%D0%A1%D0%BF%D0%B0%D1%81%D0%B8%D0%B1%D0%BE.'
+          locator: "Datasets Viewer /filter, row_idx 913932; поле corpus: «https://www.bashinform.ru/»"
+        review: needs_native_review
+  - id: u01-d-drug
+    ru: друг
+    kind: word
+    domain: school
+    variants:
+      - ba: дуҫ
+        ru: друг
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B4%D1%83%D2%AB
+          locator: статья «дуҫ», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: әшнә
+        ru: друг
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B4%D1%83%D2%AB
+          locator: статья «дуҫ», раздел «Башкирский», синоним к значению 1
+        review: needs_native_review
+  - id: u01-d-urok
+    ru: урок
+    kind: word
+    domain: school
+    variants:
+      - ba: дәрес
+        ru: урок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B4%D3%99%D1%80%D0%B5%D1%81
+          locator: статья «дәрес», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: һабаҡ
+        ru: урок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B4%D3%99%D1%80%D0%B5%D1%81
+          locator: статья «дәрес», раздел «Башкирский», синоним к значению 1
+        review: needs_native_review
+  - id: u01-d-uchitel
+    ru: учитель
+    kind: word
+    domain: school
+    variants:
+      - ba: уҡытыусы
+        ru: учитель
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%83%D2%A1%D1%8B%D1%82%D1%8B%D1%83%D1%81%D1%8B
+          locator: статья «уҡытыусы», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: мөғәллим
+        ru: учитель
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%83%D2%A1%D1%8B%D1%82%D1%8B%D1%83%D1%81%D1%8B
+          locator: статья «уҡытыусы», раздел «Башкирский», синоним к значению 1
+        review: needs_native_review
+  - id: u01-d-imya
+    ru: имя
+    kind: word
+    domain: greeting
+    variants:
+      - ba: исем
+        ru: имя
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D1%81%D0%B5%D0%BC
+          locator: статья «исем», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ат
+        ru: имя
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D1%81%D0%B5%D0%BC
+          locator: статья «исем», раздел «Башкирский», синоним к значению 1
+        review: needs_native_review

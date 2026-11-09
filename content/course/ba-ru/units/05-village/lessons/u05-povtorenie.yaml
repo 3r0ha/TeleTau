@@ -1,0 +1,186 @@
+# Урок «Повторение» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u05-povtorenie
+unit: 05-village
+kind: lesson
+title_ru: Повторение
+new_words:
+  - балыҡ
+  - тауыҡ
+  - йөҙөм
+  - Мин ит ашамайым.
+  - мин туйҙым
+exercises:
+  - id: u05-povtorenie-e01
+    type: choice_ba_ru
+    prompt:
+      ba: балыҡ
+      ru: рыба
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Еда», строка «рыба»
+      review: needs_native_review
+      audio: &a2
+        url: https://upload.wikimedia.org/wikipedia/commons/b/b3/Ba-%D0%B1%D0%B0%D0%BB%D1%8B%D2%A1.ogg
+        source:
+          ref: wikimedia-commons
+          url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B0%D0%BB%D1%8B%D2%A1.ogg
+          locator: File:Ba-балыҡ.ogg; запись — Borovi4ok
+        license: CC BY-SA 3.0
+    options_ru:
+      - рыба
+      - курица
+      - мясо
+    correct: 0
+  - id: u05-povtorenie-e02
+    type: free_ru_ba
+    prompt_ru: хлеб
+    answers:
+      - ba: икмәк
+        ru: хлеб
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D0%BA%D0%BC%D3%99%D0%BA
+          locator: статья «икмәк», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: &a3
+          url: https://upload.wikimedia.org/wikipedia/commons/c/c1/Ba-%D0%B8%D0%BA%D0%BC%D3%99%D0%BA.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B8%D0%BA%D0%BC%D3%99%D0%BA.ogg
+            locator: File:Ba-икмәк.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+  - id: u05-povtorenie-e03
+    type: choice_ba_ru
+    prompt:
+      ba: тауыҡ
+      ru: курица
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Еда», строка «курица»
+      review: needs_native_review
+    options_ru:
+      - курица
+      - рыба
+      - грибы
+    correct: 0
+  - id: u05-povtorenie-e04
+    type: tiles_ru_ba
+    prompt_ru: Я не ем мясо.
+    answer:
+      ba: Мин ит ашамайым.
+      ru: Я не ем мясо.
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/11065577
+        locator: предложение №11065577 (CC BY 2.0 FR); русский перевод №2205087 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    distractors:
+      - ba: бал
+        ru: мёд
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B0%D0%BB
+          locator: статья «бал», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: &a1
+          url: https://upload.wikimedia.org/wikipedia/commons/8/8d/Ba-%D0%B1%D0%B0%D0%BB.oga
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B0%D0%BB.oga
+            locator: File:Ba-бал.oga; запись — Borovi4ok
+          license: CC BY 3.0
+      - ba: һыу
+        ru: вода
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «…воды»
+        review: needs_native_review
+  - id: u05-povtorenie-e05
+    type: free_ru_ba
+    prompt_ru: мёд
+    answers:
+      - ba: бал
+        ru: мёд
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B0%D0%BB
+          locator: статья «бал», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+  - id: u05-povtorenie-p01
+    type: match_pairs
+    pairs:
+      - ba: балыҡ
+        ru: рыба
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «рыба»
+        review: needs_native_review
+        audio: *a2
+      - ba: тауыҡ
+        ru: курица
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «курица»
+        review: needs_native_review
+      - ba: йөҙөм
+        ru: виноград
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «виноград»
+        review: needs_native_review
+      - ba: икмәк
+        ru: хлеб
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D0%BA%D0%BC%D3%99%D0%BA
+          locator: статья «икмәк», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a3
+  - id: u05-povtorenie-e07
+    type: tiles_ru_ba
+    prompt_ru: Я наелся.
+    answer:
+      ba: мин туйҙым
+      ru: Я наелся.
+      source:
+        ref: wikivoyage-ru-bashkir-phrasebook
+        url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+        locator: раздел «Еда», строка «Я наелся.»
+      review: needs_native_review
+    distractors:
+      - ba: ит
+        ru: мясо
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D1%82
+          locator: статья «ит», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: бал
+        ru: мёд
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B0%D0%BB
+          locator: статья «бал», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+  - id: u05-povtorenie-e08
+    type: free_ru_ba
+    prompt_ru: вода
+    answers:
+      - ba: һыу
+        ru: вода
+        source:
+          ref: wikivoyage-ru-bashkir-phrasebook
+          url: https://ru.wikivoyage.org/w/index.php?title=%D0%91%D0%B0%D1%88%D0%BA%D0%B8%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D1%80%D0%B0%D0%B7%D0%B3%D0%BE%D0%B2%D0%BE%D1%80%D0%BD%D0%B8%D0%BA&oldid=761421
+          locator: раздел «Еда», строка «…воды»
+        review: needs_native_review

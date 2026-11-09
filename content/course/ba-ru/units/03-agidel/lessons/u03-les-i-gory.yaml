@@ -1,0 +1,208 @@
+# Урок «Лес и горы» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u03-les-i-gory
+unit: 03-agidel
+kind: lesson
+title_ru: Лес и горы
+new_words:
+  - урман
+  - тау
+  - ағас
+  - ҡарағай
+  - йүкә
+  - Аралаш урман
+exercises:
+  - id: u03-les-i-gory-e01
+    type: choice_ba_ru
+    prompt:
+      ba: урман
+      ru: лес
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%83%D1%80%D0%BC%D0%B0%D0%BD
+        locator: статья «урман», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - лес
+      - гора
+      - река
+    correct: 0
+  - id: u03-les-i-gory-e02
+    type: tiles_ru_ba
+    prompt_ru: Смешанный лес
+    answer:
+      ba: Аралаш урман
+      ru: смешанный лес
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%83%D1%80%D0%BC%D0%B0%D0%BD
+        locator: статья «урман», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: тау
+        ru: гора
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D0%B0%D1%83
+          locator: статья «тау», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/6/67/LL-Q13389_%28bak%29-Pastilahor-taw.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-taw.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-taw.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: тау
+      - ba: ағас
+        ru: дерево
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D2%93%D0%B0%D1%81
+          locator: статья «ағас», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: &a1
+          url: https://upload.wikimedia.org/wikipedia/commons/3/30/Ba-%D0%B0%D2%93%D0%B0%D1%81.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B0%D2%93%D0%B0%D1%81.ogg
+            locator: File:Ba-ағас.ogg; запись — Borovi4ok
+          license: CC BY 3.0
+  - id: u03-les-i-gory-e03
+    type: free_ru_ba
+    prompt_ru: гора
+    answers:
+      - ba: тау
+        ru: гора
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D0%B0%D1%83
+          locator: статья «тау», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/6/67/LL-Q13389_%28bak%29-Pastilahor-taw.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-taw.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-taw.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: тау
+  - id: u03-les-i-gory-e04
+    type: choice_ba_ru
+    prompt:
+      ba: ағас
+      ru: дерево
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B0%D2%93%D0%B0%D1%81
+        locator: статья «ағас», раздел «Башкирский», значение 1
+      review: needs_native_review
+      audio: *a1
+    options_ru:
+      - дерево
+      - трава
+      - цветок
+    correct: 0
+  - id: u03-les-i-gory-e05
+    type: tiles_ru_ba
+    prompt_ru: Берёзовый лист.
+    answer:
+      ba: Ҡайын япрағы.
+      ru: Берёзовый лист.
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%8F%D0%BF%D1%80%D0%B0%D2%A1
+        locator: статья «япраҡ», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: ҡарағай
+        ru: сосна
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80%D0%B0%D2%93%D0%B0%D0%B9
+          locator: статья «ҡарағай», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: &a2
+          url: https://upload.wikimedia.org/wikipedia/commons/c/c0/Ba-%D2%A1%D0%B0%D1%80%D0%B0%D2%93%D0%B0%D0%B9.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D2%A1%D0%B0%D1%80%D0%B0%D2%93%D0%B0%D0%B9.ogg
+            locator: File:Ba-ҡарағай.ogg; запись — Borovi4ok
+          license: CC BY-SA 4.0
+      - ba: үлән
+        ru: трава
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%AF%D0%BB%D3%99%D0%BD
+          locator: статья «үлән», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u03-les-i-gory-e06
+    type: choice_ba_ru
+    prompt:
+      ba: ҡарағай
+      ru: сосна
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D2%A1%D0%B0%D1%80%D0%B0%D2%93%D0%B0%D0%B9
+        locator: статья «ҡарағай», раздел «Башкирский», значение 1
+      review: needs_native_review
+      audio: *a2
+    options_ru:
+      - сосна
+      - берёза
+      - липа
+    correct: 0
+  - id: u03-les-i-gory-e07
+    type: free_ru_ba
+    prompt_ru: дерево
+    answers:
+      - ba: ағас
+        ru: дерево
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D2%93%D0%B0%D1%81
+          locator: статья «ағас», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+  - id: u03-les-i-gory-p01
+    type: match_pairs
+    pairs:
+      - ba: урман
+        ru: лес
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%83%D1%80%D0%BC%D0%B0%D0%BD
+          locator: статья «урман», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: тау
+        ru: гора
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%82%D0%B0%D1%83
+          locator: статья «тау», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/6/67/LL-Q13389_%28bak%29-Pastilahor-taw.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-taw.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-taw.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: тау
+      - ba: ағас
+        ru: дерево
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B0%D2%93%D0%B0%D1%81
+          locator: статья «ағас», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+      - ba: йүкә
+        ru: липа
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B9%D2%AF%D0%BA%D3%99
+          locator: статья «йүкә», раздел «Башкирский», значение 1
+        review: needs_native_review

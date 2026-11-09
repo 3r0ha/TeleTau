@@ -1,0 +1,32 @@
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+coverage/
+# iOS
+ios/*.xcodeproj/
+ios/**/.build/
+ios/**/.swiftpm/
+DerivedData/
+*.xcresult
+# Android
+**/.gradle/
+android/**/build/
+android/local.properties
+**/.kotlin/
+# Snapshots produced by tests are reviewed artifacts — keep the reference ones only
+artifacts/
+.DS_Store
+# Playwright (apps/web, apps/console): отчёты прогонов; снимки для владельца — apps/web/test/screens
+test-results/
+playwright-report/
+
+# Демо-мир M2 (pnpm demo:reset): карточка демо-ученика с секретом и world.json
+.demo/
+.web-build.lock/
+# Локальный бэкап .env стенда — содержит секреты
+.env.bak-localhost

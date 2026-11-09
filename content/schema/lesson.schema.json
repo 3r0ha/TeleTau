@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lesson.schema.json",
+  "title": "Урок — content/course/<course>/units/<unit>/lessons/<id>.yaml",
+  "description": "Урок или «Испытание места» с упражнениями в порядке показа. Ключи ответов уходят только на сервер (таблица exercises); клиент получает упражнения без ключей (POST /lessons/{lessonId}/runs). Проверка ответа — matchAnswer из @teletau/bashkir-text (векторы contracts/test-vectors/answer-check).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "unit", "kind", "title_ru", "exercises"],
+  "properties": {
+    "id": {
+      "description": "= id узла тропы в unit.yaml и имя файла без .yaml.",
+      "$ref": "common.schema.json#/$defs/Slug"
+    },
+    "unit": {
+      "$ref": "common.schema.json#/$defs/Slug"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["lesson", "place_test"]
+    },
+    "title_ru": {
+      "$ref": "common.schema.json#/$defs/RuText"
+    },
+    "new_words": {
+      "description": "Новые слова урока для экрана «Урок пройден!»: каждое — точная копия ba одной из строк упражнений этого урока (так у слова уже есть источник).",
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
+    },
+    "exercises": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/Exercise"
+      }
+    }
+  },
+  "$defs": {
+    "ExerciseId": {
+      "description": "Уникален в курсе и не переиспользуется: на него ссылаются попытки (attempts).",
+      "$ref": "common.schema.json#/$defs/Slug"
+    },
+    "Exercise": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["tiles_ru_ba", "choice_ba_ru", "free_ru_ba", "duel", "match_pairs"]
+        }
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/TilesRuBa"
+        },
+        {
+          "$ref": "#/$defs/ChoiceBaRu"
+        },
+        {
+          "$ref": "#/$defs/FreeRuBa"
+        },
+        {
+          "$ref": "#/$defs/Duel"
+        },
+        {
+          "$ref": "#/$defs/MatchPairs"
+        }
+      ]
+    },
+    "TilesRuBa": {
+      "description": "Собери перевод из плиток. Плитки ответа — слова answer.ba, разделённые пробелами, без пунктуации по краям слова; к ним подмешиваются distractors. Верно — та же последовательность плиток (регистр и пунктуация не важны).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "prompt_ru", "answer", "distractors"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ExerciseId"
+        },
+        "type": {
+          "const": "tiles_ru_ba"
+        },
+        "prompt_ru": {
+          "$ref": "common.schema.json#/$defs/RuText"
+        },
+        "answer": {
+          "$ref": "common.schema.json#/$defs/BaText"
+        },
+        "distractors": {
+          "description": "Лишние плитки — отдельные башкирские слова, каждое со своим источником.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "$ref": "common.schema.json#/$defs/BaText"
+          }
+        }
+      }
+    },
+    "ChoiceBaRu": {
+      "description": "Что значит это слово? Узнавание при первом знакомстве (docs/02 §3). Показывается башкирская строка prompt и 2–4 русских варианта; correct — индекс верного в options_ru.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "prompt", "options_ru", "correct"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ExerciseId"
+        },
+        "type": {
+          "const": "choice_ba_ru"
+        },
+        "prompt": {
+          "$ref": "common.schema.json#/$defs/BaText"
+        },
+        "options_ru": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "common.schema.json#/$defs/RuText"
+          }
+        },
+        "correct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
+      }
+    },
+    "FreeRuBa": {
+      "description": "Напиши по-башкирски (клавиатура + панель букв). answers — все принятые варианты, каждый со своим источником: ответ сверяется со всеми (correct / almost с буквой / typo / wrong).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "prompt_ru", "answers"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ExerciseId"
+        },
+        "type": {
+          "const": "free_ru_ba"
+        },
+        "prompt_ru": {
+          "$ref": "common.schema.json#/$defs/RuText"
+        },
+        "answers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "$ref": "common.schema.json#/$defs/BaText"
+          }
+        }
+      }
+    },
+    "Duel": {
+      "description": "Дуэль «Помоги языку» внутри урока. duel — id дуэли из content/corpus/duels/<unit>.yaml; без него сервер берёт из пула юнита дуэль, за которую ученик ещё не голосовал (ConsensusService.pickDuels). Ответ не оценивается — только «Голос учтён».",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ExerciseId"
+        },
+        "type": {
+          "const": "duel"
+        },
+        "duel": {
+          "$ref": "common.schema.json#/$defs/Slug"
+        }
+      }
+    },
+    "MatchPairs": {
+      "description": "Пары: соедини башкирские слова с переводами (docs/02 §3, match_pairs). pairs — 3–5 строк BaText, у каждой обязателен ru — перевод из того же источника; правые части перемешиваются на сервере, верно — все пары соединены правильно. Башкирские строки и переводы в упражнении не повторяются.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "pairs"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ExerciseId"
+        },
+        "type": {
+          "const": "match_pairs"
+        },
+        "pairs": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 5,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/BaText"
+              },
+              {
+                "required": ["ru"]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "id": "u01-privet",
+      "unit": "01-ufa",
+      "kind": "lesson",
+      "title_ru": "Привет!",
+      "new_words": ["<слово из упражнений>"],
+      "exercises": [
+        {
+          "id": "u01-privet-e01",
+          "type": "choice_ba_ru",
+          "prompt": {
+            "ba": "<строка из источника>",
+            "ru": "Привет",
+            "source": {
+              "ref": "tatoeba",
+              "url": "https://tatoeba.org/ru/sentences/show/0000000",
+              "locator": "предложение 0000000"
+            },
+            "review": "needs_native_review"
+          },
+          "options_ru": ["Привет!", "Спасибо", "Да"],
+          "correct": 0
+        },
+        {
+          "id": "u01-privet-e02",
+          "type": "tiles_ru_ba",
+          "prompt_ru": "Привет!",
+          "answer": {
+            "ba": "<строка из источника>",
+            "source": {
+              "ref": "tatoeba",
+              "url": "https://tatoeba.org/ru/sentences/show/0000001",
+              "locator": "предложение 0000001"
+            },
+            "review": "needs_native_review"
+          },
+          "distractors": [
+            {
+              "ba": "<слово из источника>",
+              "source": {
+                "ref": "wiktionary-ru",
+                "page": "—",
+                "url": "https://ru.wiktionary.org/wiki/слово",
+                "locator": "раздел «Башкирский»"
+              },
+              "review": "needs_native_review"
+            }
+          ]
+        },
+        {
+          "id": "u01-privet-e03",
+          "type": "free_ru_ba",
+          "prompt_ru": "Спасибо!",
+          "answers": [
+            {
+              "ba": "<строка из источника>",
+              "source": {
+                "ref": "phrasebook-print",
+                "page": 12,
+                "locator": "раздел «Вежливость», строка 3"
+              },
+              "review": "needs_native_review"
+            }
+          ]
+        },
+        {
+          "id": "u01-privet-e04",
+          "type": "duel"
+        }
+      ]
+    }
+  ]
+}

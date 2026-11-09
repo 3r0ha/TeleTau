@@ -1,0 +1,3258 @@
+/* Кабинет учителя: «Прогресс» класса и «Помогите языку». Эстетика прототипа v2
+ * (prototypes/trail-expedition: 17-class — карточки улья, 10/11 — дуэль). Компоненты — packages/ui (ui.css).
+ * Все цвета, радиусы, шрифты и длительности — только из дизайн-токенов (--tt-*). Позиции в полосах голосов — атрибуты SVG
+ * (строгая CSP не применяет атрибуты style). */
+
+/* ───────────── нижняя навигация кабинета: три раздела ───────────── */
+/* «Помогите языку» — самая длинная подпись: при крупном шрифте (200 %) она переносится, а не раздвигает экран. */
+.teacher-shell .tt-tabbar ul {
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+.teacher-shell .tt-tab {
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+/* ───────────── разделы класса: «Места» / «Прогресс» ───────────── */
+.class-tabs {
+  display: inline-flex;
+  gap: var(--tt-space-s150);
+  margin: 0;
+  padding: var(--tt-space-s100);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-bg-sunken);
+  list-style: none;
+}
+
+.class-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s200);
+  min-height: var(--tt-size-touch-min);
+  padding: 0 var(--tt-space-s500);
+  border: 2px solid transparent;
+  border-radius: var(--tt-radius-chip);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+  transition:
+    background-color var(--tt-duration-fast) ease-out,
+    color var(--tt-duration-fast) ease-out;
+}
+
+.class-tabs__tab svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.class-tabs__tab:hover {
+  color: var(--tt-color-text-primary);
+}
+
+/* Текущий раздел — как текущая вкладка нижней навигации ученика: медовая подложка и тёмная граница (контраст). */
+.class-tabs__tab[aria-current="page"] {
+  border-color: var(--tt-color-accent-text);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+@media (max-width: 599px) {
+  .class-tabs {
+    display: flex;
+  }
+
+  .class-tabs > li {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Три раздела на телефоне: значок над подписью (как нижняя навигация) — «Прогресс» не переносится посреди слова. */
+  .class-tabs__tab {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--tt-space-s050);
+    width: 100%;
+    padding: var(--tt-space-s150) var(--tt-space-s100);
+    font-size: var(--tt-font-size-footnote);
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  .class-tabs__tab svg {
+    flex: none;
+  }
+}
+
+/* ───────────── «Прогресс» ───────────── */
+.progress-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s400);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .progress-layout {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  }
+}
+
+.progress-layout__side {
+  gap: var(--tt-space-s400);
+}
+
+/* На ноутбуке сводка недели и уроки остаются на виду, пока учитель листает список учеников. */
+@media (min-width: 960px) {
+  .progress-layout__side {
+    position: sticky;
+    top: var(--tt-space-s400);
+  }
+}
+
+.progress-layout .tab-card {
+  margin-bottom: 0;
+}
+
+.week-card .tt-stiles {
+  margin-top: var(--tt-space-s200);
+}
+
+.lesson-done {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s350);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lesson-done__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s150);
+}
+
+.lesson-done__title {
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.lesson-done__item .tt-progress > span {
+  min-width: 5.5em;
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.pupils {
+  display: flex;
+  flex-direction: column;
+  margin: var(--tt-space-s200) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pupil {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s350);
+  padding: var(--tt-space-s300) 0;
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+.pupil:first-child {
+  border-top: 0;
+}
+
+.pupil__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+}
+
+.pupil__name {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-snug);
+}
+
+.pupil__meta {
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-callout);
+}
+
+.pupil__week {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.pupil[data-idle="true"] .pupil__meta {
+  color: var(--tt-color-text-secondary);
+}
+
+.pupil__streak {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  min-width: 56px;
+  justify-content: center;
+  padding: var(--tt-space-s150) var(--tt-space-s250);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-bg-sunken);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+}
+
+.pupil__streak svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pupil__streak[data-on="true"] {
+  background: var(--tt-color-streak-soft);
+  color: var(--tt-color-streak-text);
+}
+
+.pupil__streak[data-on="true"] svg {
+  color: var(--tt-color-streak-fill);
+}
+
+/* ───────────── «Помогите языку»: одна колонка по центру — дуэль, после голоса на её месте голоса ───────────── */
+.duels-page {
+  width: 100%;
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.duels-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s400);
+}
+
+/* «Отдать голос» и «Следующая пара» — всегда на виду внизу экрана (на телефоне там нижнее меню — кнопка в потоке). */
+@media (min-width: 600px) {
+  .duels-layout > .tt-btn {
+    position: sticky;
+    bottom: var(--tt-space-s400);
+    z-index: 1;
+  }
+}
+
+.teacher-duel.tt-card {
+  padding: var(--tt-space-s500);
+}
+
+.teacher-duel .task-title {
+  font-size: var(--tt-font-size-title3);
+}
+
+.duels-page .tt-lead {
+  max-width: 68ch;
+}
+
+/* Липкая шапка кабинета (60 px и граница): всё, к чему страница прокручивается сама (scrollIntoView, фокус, якорь),
+ * встаёт под ней с отступом, а не уходит под неё наполовину (снимок e2e/screens/m2-demo/22-teacher-duel-votes.png). */
+html:has(.teacher-shell) {
+  scroll-padding-top: calc(62px + var(--tt-space-s400));
+}
+
+/* Шапка «Помогите языку»: текст и сцена дуэли (две соты); на узком экране сцена меньше. */
+.duels-page__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s500);
+}
+
+.duels-page__art {
+  flex: none;
+  width: 128px;
+}
+
+@media (max-width: 599px) {
+  .duels-page__head {
+    align-items: flex-start;
+    gap: var(--tt-space-s300);
+  }
+
+  .duels-page__art {
+    width: 88px;
+  }
+}
+
+.votes__source.duel__source {
+  margin-bottom: 0;
+}
+
+/* После голоса — «Голоса по группам». */
+.votes.tt-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s400);
+  padding: var(--tt-space-s500);
+}
+
+.votes__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+/* Статус duel-v0 — плашкой со значком и словом (не только цветом). */
+.votes__status {
+  --st-bg: var(--tt-color-accent-soft);
+  --st-ink: var(--tt-color-accent-text);
+  --st-icon: var(--tt-color-accent-fill);
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s350);
+  padding: var(--tt-space-s350) var(--tt-space-s400);
+  border-radius: var(--tt-radius-panel);
+  background: var(--st-bg);
+}
+
+.votes__status[data-status="accepted"] {
+  --st-bg: var(--tt-color-success-soft);
+  --st-ink: var(--tt-color-success-text);
+  --st-icon: var(--tt-color-success-fill);
+}
+
+.votes__status[data-status="escalated"] {
+  --st-bg: var(--tt-color-info-soft);
+  --st-ink: var(--tt-color-info-text);
+  --st-icon: var(--tt-color-info-fill);
+}
+
+/* «Принят»: сцена вместо значка — пчела запечатывает соту; появляется «штампом» (токены rise и spring). */
+.votes__status-art {
+  flex: none;
+  width: 88px;
+  margin: calc(-1 * var(--tt-space-s250)) 0 calc(-1 * var(--tt-space-s250)) calc(-1 * var(--tt-space-s150));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .votes__status-art {
+    transform-origin: 50% 70%;
+    animation: votes-stamp var(--tt-duration-rise) var(--tt-easing-spring) both;
+  }
+}
+
+@keyframes votes-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.6) rotate(-8deg);
+  }
+}
+
+.votes__status-icon svg {
+  display: block;
+  width: 40px;
+  height: 40px;
+  color: var(--st-icon);
+}
+
+.votes__status-label {
+  color: var(--st-ink);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+.votes__status-text {
+  margin-top: var(--tt-space-s100);
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.votes__variants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s200);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.votes__variant {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s200) var(--tt-space-s300);
+  padding: var(--tt-space-s250) var(--tt-space-s300);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-button);
+}
+
+.votes__variant[data-main="true"] {
+  border-color: var(--tt-color-success-fill);
+}
+
+.votes__mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tt-radius-brand);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.votes__mark--a {
+  background: var(--tt-color-violet-fill);
+  color: var(--tt-color-violet-on);
+}
+
+.votes__mark--b {
+  background: var(--tt-color-accent-fill);
+  color: var(--tt-color-accent-on);
+}
+
+.votes__text {
+  flex: 1 1 8em;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.votes__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s150);
+}
+
+.votes__mine {
+  margin-top: calc(-1 * var(--tt-space-s200));
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.vgroups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s400);
+  margin: 0;
+  padding: var(--tt-space-s400) 0 0;
+  border-top: 2px solid var(--tt-color-border-subtle);
+  list-style: none;
+}
+
+.vgroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s150);
+}
+
+.vgroup__head {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s200);
+}
+
+.vgroup__icon svg {
+  display: block;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-text-tertiary);
+}
+
+.vgroup__name {
+  flex: 1;
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.vgroup__total {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  font-variant-numeric: tabular-nums;
+}
+
+.vgroup__bar {
+  display: block;
+  overflow: visible;
+}
+
+.vgroup__track {
+  fill: var(--tt-color-locked-fill);
+}
+
+/* Куски полосы разделены зазором 2 px цвета поверхности (обводка), края скруглены. */
+.vgroup__seg {
+  stroke: var(--tt-color-surface);
+  stroke-width: 2;
+}
+
+.vgroup__seg--a,
+.vgroup__swatch--a {
+  fill: var(--tt-color-violet-fill);
+  background: var(--tt-color-violet-fill);
+}
+
+.vgroup__seg--b,
+.vgroup__swatch--b {
+  fill: var(--tt-color-accent-fill);
+  background: var(--tt-color-accent-fill);
+}
+
+.vgroup__seg--both,
+.vgroup__swatch--both {
+  fill: var(--tt-color-info-fill);
+  background: var(--tt-color-info-fill);
+}
+
+/* «Не знаю» — нейтральный: это не мнение о переводе. */
+.vgroup__seg--skip,
+.vgroup__swatch--skip {
+  fill: var(--tt-color-border-strong);
+  background: var(--tt-color-border-strong);
+}
+
+.vgroup__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s100) var(--tt-space-s400);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.vgroup__counts--empty {
+  color: var(--tt-color-text-tertiary);
+}
+
+.vgroup__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+}
+
+.vgroup__count b {
+  color: var(--tt-color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.vgroup__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--tt-radius-small);
+}
+
+
+/* ───────────── «Прогресс»: строка ученика — ссылка на его карточку ───────────── */
+.pupil {
+  position: relative;
+}
+
+.pupil__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Ссылка — ник, а нажимается вся строка (растянутая ссылка); фокус — рамкой вокруг строки. */
+.pupil__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--tt-radius-panel);
+}
+
+.pupil__link:hover {
+  text-decoration: underline;
+}
+
+.pupil__link:focus-visible {
+  outline: none;
+}
+
+.pupil__link:focus-visible::after {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.pupil__go {
+  flex: none;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-text-tertiary);
+}
+
+/* ───────────── «Задания» класса (ADR 0021) ───────────── */
+.tasks-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s400);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .tasks-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.task.tt-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s350);
+  margin-bottom: 0;
+}
+
+.task__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--tt-space-s300);
+}
+
+.task__titles {
+  flex: 1;
+  min-width: 12ch;
+}
+
+.task__titles .tt-card__sub {
+  margin-bottom: 0;
+}
+
+.task__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tt-size-touch-min);
+  height: var(--tt-size-touch-min);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-info-soft);
+  color: var(--tt-color-info-text);
+}
+
+.task__icon svg {
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+}
+
+.task__icon--place_test {
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.task__icon--review {
+  background: var(--tt-color-violet-soft);
+  color: var(--tt-color-violet-text);
+}
+
+.task:not([data-active]) {
+  background: var(--tt-color-bg-sunken);
+}
+
+.task__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+}
+
+.task__group-title {
+  margin-bottom: var(--tt-space-s150);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.task__foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Места в группе — чипы со ссылкой на карточку ученика. Цвет группы дублирует подпись группы (WCAG 1.4.1). */
+.seat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s150);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  min-height: 36px;
+  padding: var(--tt-space-s100) var(--tt-space-s300);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-footnote);
+  text-decoration: none;
+}
+
+.seat-chip b {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+}
+
+.seat-chip:hover {
+  border-color: var(--tt-color-border-strong);
+}
+
+.seat-chip:focus-visible {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.seat-chip--done {
+  border-color: var(--tt-color-success-fill);
+  background: var(--tt-color-success-soft);
+  color: var(--tt-color-success-text);
+}
+
+.seat-chip--late {
+  border-color: var(--tt-color-accent-soft-border);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.seat-chip--overdue {
+  border-color: var(--tt-color-danger-fill);
+  background: var(--tt-color-danger-soft);
+  color: var(--tt-color-danger-text);
+}
+
+/* «Задание классу»: номера уроков в выборе. */
+.give-task__num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-bg-sunken);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+}
+
+/* ───────────── Карточка ученика ───────────── */
+.seat-card__head {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.seat-card__head > .tt-stack {
+  flex: 1;
+  min-width: 16ch;
+}
+
+.seat-card__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s400);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .seat-card__grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  }
+}
+
+.seat-card__side {
+  gap: var(--tt-space-s400);
+}
+
+.seat-card .tab-card {
+  margin-bottom: 0;
+}
+
+.seat-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat-rows__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s250) 0;
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+.seat-rows__item:first-child {
+  border-top: 0;
+}
+
+.seat-rows__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  min-width: 0;
+}
+
+.seat-rows__sub {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.seat-rows__value {
+  flex: none;
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───────────── Печать: «Прогресс» и карточка ученика (кнопка «Распечатать» или Ctrl+P) ─────────────
+ * Без шапки, навигации, кнопок и разделов — только отчёт; светлая тема (usePrintInLight); строки не рвутся между
+ * страницами; одна колонка. Цвета — токены. */
+.print-only {
+  display: none;
+}
+
+@media print {
+  .tt-topbar,
+  .tt-tabbar,
+  .tt-toasts,
+  .class-tabs,
+  .class-page__back,
+  .toolbar,
+  .no-print,
+  .page-head .tt-row {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .print-note {
+    color: var(--tt-color-text-secondary);
+    font-size: var(--tt-font-size-footnote);
+  }
+
+  body,
+  .tt-page,
+  .tt-main {
+    background: var(--tt-color-surface);
+  }
+
+  .tt-main {
+    padding: 0;
+  }
+
+  .progress-layout,
+  .seat-card__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .progress-layout__side {
+    position: static;
+  }
+
+  .tt-card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .pupils-card.tt-card {
+    break-inside: auto;
+  }
+
+  .pupil,
+  .seat-rows__item,
+  .lesson-done__item {
+    break-inside: avoid;
+  }
+
+  .pupil__link {
+    text-decoration: none;
+  }
+}
+
+/* ═════════════ Кабинет учителя: обзор класса, первые шаги, раскладка для компьютера ═════════════ */
+
+/* ───────────── заголовок класса: сота с номером, название, школа; действия раздела справа ───────────── */
+.class-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s400);
+}
+
+.class-head__titles {
+  flex: 1 1 18rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s100);
+}
+
+.class-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s050) var(--tt-space-s200);
+  color: var(--tt-color-text-secondary);
+}
+
+.class-head__meta > span + span::before {
+  content: "·";
+  margin-right: var(--tt-space-s200);
+  color: var(--tt-color-text-tertiary);
+}
+
+.class-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s300);
+}
+
+.class-head__actions .tt-chip {
+  margin-left: var(--tt-space-s100);
+}
+
+@media (max-width: 599px) {
+  .class-head > .tt-hex {
+    display: none;
+  }
+
+  .class-head__actions {
+    flex: 1 1 100%;
+  }
+
+  .class-head__actions > .tt-btn {
+    flex: 1 1 100%;
+  }
+}
+
+.class-page__alerts:empty {
+  display: none;
+}
+
+/* ───────────── заявки на вход: баннер под заголовком ───────────── */
+.requests-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s300) var(--tt-space-s400);
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-accent-soft-border);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-accent-soft);
+}
+
+.requests-banner__icon svg {
+  display: block;
+  width: var(--tt-size-icon-large);
+  height: var(--tt-size-icon-large);
+  color: var(--tt-color-accent-text);
+}
+
+.requests-banner__text {
+  flex: 1 1 14rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--tt-color-text-primary);
+}
+
+.requests-banner__text b {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.requests-banner__names {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+/* ───────────── «Сегодня», «Не занимались на неделе», «Задание» ───────────── */
+.today {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s400);
+  align-items: stretch;
+}
+
+@media (min-width: 720px) {
+  .today {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1080px) {
+  .today {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.today-card.tt-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s500);
+}
+
+.today-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s250);
+}
+
+.today-card__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--tt-radius-icon-button);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.today-card__icon svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.today-card__icon--idle {
+  background: var(--tt-color-danger-soft);
+  color: var(--tt-color-danger-text);
+}
+
+.today-card__icon--ok {
+  background: var(--tt-color-success-soft);
+  color: var(--tt-color-success-text);
+}
+
+.today-card__icon--task {
+  background: var(--tt-color-info-soft);
+  color: var(--tt-color-info-text);
+}
+
+.today-card__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.today-card__big {
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-tight);
+}
+
+.today-card__big b {
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-display);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+}
+
+.today-card__unit {
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.today-card__ok {
+  color: var(--tt-color-success-text);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.today-card__fill {
+  align-items: flex-start;
+}
+
+/* Ссылка «Прогресс класса →» — внизу карточки, на одной линии во всех трёх. */
+.today-card__more {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--tt-space-s150);
+  min-height: var(--tt-size-touch-min);
+  margin-top: auto;
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+}
+
+.today-card__more:hover {
+  text-decoration: underline;
+}
+
+.today-card__more svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.today-card__more:focus-visible {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+  border-radius: var(--tt-radius-small);
+}
+
+/* Аватары тех, кто сегодня прошёл урок, — ряд сот внахлёст. */
+.avatars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.avatars__item {
+  display: block;
+  border-radius: var(--tt-radius-small);
+}
+
+.avatars__item:focus-visible {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.avatars__more {
+  padding: 0 var(--tt-space-s200);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.seat-chip--more {
+  border-style: dashed;
+  color: var(--tt-color-text-secondary);
+}
+
+.today-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s350);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.today-task {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s150);
+}
+
+.today-task__title {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--tt-space-s050) var(--tt-space-s300);
+}
+
+.today-task__title b {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.today-task .tt-progress > span {
+  min-width: 4.5em;
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ───────────── первые шаги нового класса ───────────── */
+.setup.tt-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s500);
+  padding: var(--tt-space-s600);
+}
+
+@media (min-width: 900px) {
+  .setup.tt-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.setup__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s500);
+}
+
+.setup__art {
+  display: none;
+  width: 240px;
+  height: auto;
+}
+
+@media (min-width: 900px) {
+  .setup__art {
+    display: block;
+  }
+}
+
+/* Шаги: номер в соте, сделанный — галочка на зелёном, текущий — медовый с кольцом, следующий — воск. */
+.steps {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  gap: var(--tt-space-s400);
+  padding-bottom: var(--tt-space-s500);
+}
+
+.step:last-child {
+  padding-bottom: 0;
+}
+
+/* Линия тропы между шагами. */
+.step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 44px;
+  bottom: var(--tt-space-s100);
+  left: 19px;
+  width: 2px;
+  background: var(--tt-color-border-subtle);
+}
+
+.step[data-state="done"]:not(:last-child)::before {
+  background: var(--tt-color-success-fill);
+}
+
+.step__mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-bg-sunken);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.step__mark svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.step[data-state="done"] .step__mark {
+  border-color: var(--tt-color-success-lip);
+  background: var(--tt-color-success-fill);
+  color: var(--tt-color-text-on-fill);
+}
+
+.step[data-state="current"] .step__mark {
+  border-color: var(--tt-color-accent-lip);
+  background: var(--tt-color-accent-fill);
+  box-shadow: 0 0 0 4px var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-on);
+}
+
+.step__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s150);
+  padding-top: var(--tt-space-s150);
+}
+
+.step__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.step[data-state="todo"] .step__title {
+  color: var(--tt-color-text-secondary);
+}
+
+.step__text {
+  max-width: 62ch;
+  color: var(--tt-color-text-secondary);
+}
+
+.step__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  margin-top: var(--tt-space-s200);
+}
+
+.step__actions .tt-chip {
+  margin-left: var(--tt-space-s100);
+}
+
+@media (max-width: 599px) {
+  .setup.tt-card {
+    padding: var(--tt-space-s450);
+  }
+
+  .step__actions > .tt-btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* ───────────── раздел с заголовком и действиями справа («Места», «Ученики», «Сейчас») ───────────── */
+/* Действия раздела — по центру заголовка с подписью («Места», «Ученики»), а не по нижнему краю. */
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s300) var(--tt-space-s400);
+}
+
+.section-head > .tt-stack {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.section-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s250);
+}
+
+.section-head__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  white-space: nowrap;
+}
+
+.section-head__legend svg {
+  width: 16px;
+  height: 16px;
+  color: var(--tt-color-success-text);
+}
+
+@media (max-width: 599px) {
+  .section-head__actions {
+    flex: 1 1 100%;
+  }
+
+  .section-head__actions > .tt-btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* ───────────── плитка места: чем занят ученик ───────────── */
+.seat {
+  position: relative;
+}
+
+.seat__activity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.seat__dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-border-strong);
+}
+
+.seat[data-activity="today"] .seat__dot {
+  background: var(--tt-color-success-fill);
+}
+
+.seat[data-activity="today"] .seat__activity {
+  color: var(--tt-color-success-text);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.seat[data-activity="week"] .seat__dot {
+  background: var(--tt-color-accent-fill);
+}
+
+.seat[data-activity="idle"] .seat__dot {
+  background: var(--tt-color-danger-fill);
+}
+
+.seat[data-activity="idle"] .seat__activity {
+  color: var(--tt-color-danger-text);
+}
+
+.seat__consent {
+  flex: none;
+  align-self: flex-start;
+  color: var(--tt-color-success-text);
+}
+
+.seat__consent svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+/* ───────────── «Мои классы»: первый вход и карточки классов ───────────── */
+.first-class.tt-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s500);
+  padding: var(--tt-space-s600);
+  border-color: var(--tt-color-accent-soft-border);
+  background: var(--tt-color-surface);
+}
+
+@media (min-width: 900px) {
+  .first-class.tt-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: var(--tt-space-s800);
+  }
+}
+
+.first-class__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s600);
+}
+
+.first-class__hello {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--tt-space-s150);
+  padding: var(--tt-space-s100) var(--tt-space-s300);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-success-soft);
+  color: var(--tt-color-success-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.first-class__hello svg {
+  width: 16px;
+  height: 16px;
+}
+
+.first-class__steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s300);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: first-step;
+}
+
+@media (min-width: 720px) {
+  .first-class__steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.first-class__steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-bg);
+}
+
+.first-class__steps li[data-current] {
+  border-color: var(--tt-color-accent-fill);
+  background: var(--tt-color-accent-soft);
+}
+
+.first-class__steps b {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.first-class__steps b::before {
+  counter-increment: first-step;
+  content: counter(first-step) ". ";
+}
+
+.first-class__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--tt-radius-icon-button);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-accent-text);
+}
+
+.first-class__icon svg {
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+}
+
+.first-class__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s300);
+}
+
+@media (max-width: 599px) {
+  .first-class.tt-card {
+    padding: var(--tt-space-s450);
+  }
+
+  .first-class__actions > .tt-btn {
+    flex: 1 1 100%;
+  }
+}
+
+.first-class__art {
+  display: none;
+  width: 300px;
+  height: auto;
+}
+
+@media (min-width: 900px) {
+  .first-class__art {
+    display: block;
+  }
+}
+
+.class-card.tt-card {
+  min-height: 132px;
+  padding: var(--tt-space-s500);
+}
+
+.class-card .tt-title3 {
+  font-size: var(--tt-font-size-title2);
+}
+
+.class-card__stats {
+  margin-top: var(--tt-space-s150);
+  color: var(--tt-color-text-secondary);
+}
+
+.class-card__stats b {
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.class-card__next {
+  align-self: flex-start;
+  margin-top: var(--tt-space-s150);
+  padding: var(--tt-space-s050) var(--tt-space-s250);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+/* ───────────── «Прогресс»: неделя и уроки рядом, ниже — таблица учеников ───────────── */
+/* Каждая карточка — по своему содержимому: неделя не тянется на высоту списка мест. */
+.progress-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s400);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .progress-top {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  /* Неделя остаётся на виду, пока учитель листает места (под липкой шапкой кабинета). */
+  .progress-top .week-card {
+    position: sticky;
+    top: calc(62px + var(--tt-space-s400));
+  }
+}
+
+/* «Прохождение уроков» по местам тропы: заголовок места — кнопка «развернуть», внутри — уроки. */
+.places {
+  display: flex;
+  flex-direction: column;
+  margin: var(--tt-space-s300) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.place + .place {
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+.place__heading {
+  margin: 0;
+  font: inherit;
+}
+
+.place__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--tt-space-s400);
+  width: 100%;
+  padding: var(--tt-space-s300) var(--tt-space-s200);
+  border: 0;
+  border-radius: var(--tt-radius-tile);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.place__head {
+  cursor: pointer;
+  transition: background-color var(--tt-duration-fast) var(--tt-easing-out);
+}
+
+button.place__head:hover {
+  background: var(--tt-color-bg-sunken);
+}
+
+button.place__head:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.place__thumb {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: var(--tt-radius-small);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.place__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.place__thumb svg {
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+}
+
+.place__names {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s100);
+  min-width: 0;
+}
+
+.place__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s200);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.place__now {
+  font-size: var(--tt-font-size-caption);
+}
+
+.place__sub {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.place__bar {
+  margin-top: var(--tt-space-s100);
+}
+
+.place__bar .tt-progress__track {
+  height: 10px;
+}
+
+.place__share {
+  min-width: 3.2em;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.place:not([data-current]) .place__share {
+  color: var(--tt-color-text-secondary);
+}
+
+.place__caret {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-text-tertiary);
+  transition: transform var(--tt-duration-fast) var(--tt-easing-out);
+}
+
+.place[data-open] .place__caret {
+  transform: rotate(180deg);
+}
+
+.place__lessons {
+  padding: var(--tt-space-s100) var(--tt-space-s200) var(--tt-space-s500) calc(88px + var(--tt-space-s600));
+}
+
+/* .lesson-done задаёт display: flex — свёрнутое место прячем явно (атрибут hidden сам по себе проигрывает). */
+.place__lessons[hidden] {
+  display: none;
+}
+
+.place--plain .place__lessons {
+  padding: 0;
+}
+
+.lesson-done__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+}
+
+.lesson-done__icon {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-accent-text);
+}
+
+@media (max-width: 599px) {
+  .place__head {
+    gap: var(--tt-space-s300);
+    padding-inline: 0;
+  }
+
+  .place__share {
+    font-size: var(--tt-font-size-headline);
+  }
+
+  .place__thumb {
+    width: 56px;
+    height: 40px;
+  }
+
+  .place__lessons {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+@media print {
+  .place__lessons[hidden] {
+    display: flex !important;
+  }
+
+  .place__caret,
+  .place__now {
+    display: none;
+  }
+}
+
+.progress-top .tab-card,
+.pupils-card.tab-card {
+  margin-bottom: 0;
+}
+
+.pupils-card.tt-card {
+  padding: var(--tt-space-s500);
+}
+
+.pupils-card__count {
+  color: var(--tt-color-text-secondary);
+}
+
+.pupils-card__head {
+  margin-bottom: var(--tt-space-s300);
+}
+
+/* Переключатель порядка — сегменты, текущий — медовый. */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s100);
+  padding: var(--tt-space-s100);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-bg-sunken);
+}
+
+.segmented__item {
+  min-height: var(--tt-size-touch-min);
+  padding: 0 var(--tt-space-s400);
+  border: 2px solid transparent;
+  border-radius: var(--tt-radius-chip);
+  background: transparent;
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  cursor: pointer;
+}
+
+.segmented__item:hover {
+  color: var(--tt-color-text-primary);
+}
+
+.segmented__item[aria-pressed="true"] {
+  border-color: var(--tt-color-accent-text);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.segmented__item:focus-visible {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.pupils-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.pupils-table th {
+  padding: var(--tt-space-s200) var(--tt-space-s300);
+  border-bottom: 2px solid var(--tt-color-border-subtle);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.pupils-table td {
+  padding: var(--tt-space-s250) var(--tt-space-s300);
+  border-bottom: 2px solid var(--tt-color-border-subtle);
+  vertical-align: middle;
+}
+
+.pupils-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.pupils-table .pupils-table__num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pupils-table .pupils-table__sum {
+  display: none;
+}
+
+.pupil-row {
+  position: relative;
+}
+
+.pupil-row:hover td {
+  background: var(--tt-color-bg);
+}
+
+.pupil-row__who {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  min-width: 12rem;
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.pupil-row__last {
+  white-space: nowrap;
+}
+
+.pupil-row__dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: var(--tt-space-s150);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-border-strong);
+}
+
+.pupil-row[data-activity="today"] .pupil-row__dot {
+  background: var(--tt-color-success-fill);
+}
+
+.pupil-row[data-activity="today"] .pupil-row__last {
+  color: var(--tt-color-success-text);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.pupil-row[data-activity="week"] .pupil-row__dot {
+  background: var(--tt-color-accent-fill);
+}
+
+.pupil-row[data-activity="idle"] .pupil-row__dot,
+.pupil-row[data-activity="never"] .pupil-row__dot {
+  background: var(--tt-color-danger-fill);
+}
+
+.pupil-row[data-activity="idle"] .pupil-row__last,
+.pupil-row[data-activity="never"] .pupil-row__last {
+  color: var(--tt-color-danger-text);
+}
+
+.pupil-row__none {
+  color: var(--tt-color-text-tertiary);
+}
+
+.pupil-row .pupil__streak {
+  display: inline-flex;
+}
+
+/* Телефон: строка таблицы — карточка «ник и серия / что сделал»; подробные столбцы — на компьютере и на печати. */
+@media screen and (max-width: 899px) {
+  .pupils-table,
+  .pupils-table tbody {
+    display: block;
+  }
+
+  .pupils-table thead {
+    display: none;
+  }
+
+  .pupils-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "who streak"
+      "sum sum";
+    gap: var(--tt-space-s150) var(--tt-space-s300);
+    padding: var(--tt-space-s300) 0;
+    border-top: 2px solid var(--tt-color-border-subtle);
+  }
+
+  .pupils-table tbody tr:first-child {
+    border-top: 0;
+  }
+
+  .pupils-table td {
+    display: none;
+    padding: 0;
+    border: 0;
+  }
+
+  .pupils-table td.pupil-row__who {
+    display: flex;
+    grid-area: who;
+    min-width: 0;
+  }
+
+  .pupils-table td.pupils-table__sum {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-s050);
+    grid-area: sum;
+    padding-left: calc(40px + var(--tt-space-s300));
+  }
+
+  .pupils-table td:last-child {
+    display: block;
+    grid-area: streak;
+    align-self: center;
+  }
+
+  .pupil-row:hover td {
+    background: none;
+  }
+}
+
+@media print {
+  .progress-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .pupil-row {
+    break-inside: avoid;
+  }
+
+  .pupils-table th,
+  .pupils-table td {
+    padding: var(--tt-space-s150) var(--tt-space-s200);
+  }
+
+  .pupil-row__who {
+    min-width: 0;
+  }
+
+  .class-head__actions,
+  .segmented {
+    display: none !important;
+  }
+}
+
+/* ───────────── «Задания»: карточка на всю ширину, группы учеников рядом ───────────── */
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s400);
+}
+
+.task.tt-card {
+  padding: var(--tt-space-s500);
+}
+
+.task__head {
+  align-items: center;
+}
+
+.task__cancel {
+  margin-left: auto;
+}
+
+.task__progress {
+  max-width: 640px;
+}
+
+@media (min-width: 900px) {
+  .task__groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: var(--tt-space-s400);
+    align-items: start;
+  }
+}
+
+.task__group {
+  padding: var(--tt-space-s300) var(--tt-space-s400) var(--tt-space-s400);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-bg);
+}
+
+.task:not([data-active]) .task__group {
+  background: var(--tt-color-surface);
+}
+
+/* ───────────── вход, условия, заявка, проверка: форма и путь учителя рядом ───────────── */
+.onboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s800);
+  width: 100%;
+  max-width: 1000px;
+  margin-inline: auto;
+}
+
+.onboard__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s400);
+}
+
+.journey {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .onboard {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+    align-items: start;
+  }
+
+  .journey {
+    position: sticky;
+    top: var(--tt-space-s600);
+    display: flex;
+    flex-direction: column;
+    gap: var(--tt-space-s500);
+    padding: var(--tt-space-s600);
+    border: 2px solid var(--tt-color-accent-soft-border);
+    border-radius: var(--tt-radius-card);
+    background: var(--tt-color-accent-soft);
+  }
+}
+
+.journey__art {
+  align-self: center;
+  width: 200px;
+  height: auto;
+}
+
+.journey__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title2);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+.journey__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journey__step {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+}
+
+.journey__mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-icon-button);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.journey__mark svg {
+  width: 18px;
+  height: 18px;
+}
+
+.journey__step[data-state="done"] .journey__mark {
+  border-color: var(--tt-color-success-lip);
+  background: var(--tt-color-success-fill);
+  color: var(--tt-color-text-on-fill);
+}
+
+.journey__step[data-state="current"] .journey__mark {
+  border-color: var(--tt-color-accent-lip);
+  background: var(--tt-color-accent-fill);
+  color: var(--tt-color-accent-on);
+}
+
+.journey__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.journey__body b {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.journey__body span {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.journey__step[data-state="todo"] .journey__body b {
+  color: var(--tt-color-text-secondary);
+}
+
+.journey__step--goal {
+  margin-top: var(--tt-space-s100);
+  padding-top: var(--tt-space-s300);
+  border-top: 2px dashed var(--tt-color-accent-soft-border);
+}
+
+/* На компьютере форма — в карточке слева, сверху без лишнего отступа. */
+@media (min-width: 960px) {
+  .auth .onboard .auth__card {
+    max-width: none;
+  }
+}
+
+/* ───────────── ожидание проверки ───────────── */
+.wait.tt-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s600);
+}
+
+.wait__head {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s400);
+}
+
+.wait__art {
+  flex: none;
+  width: 96px;
+  height: auto;
+}
+
+@media (max-width: 599px) {
+  .wait__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wait__art {
+    width: 80px;
+  }
+}
+
+/* ───────────── код класса на доске: читается с последней парты ───────────── */
+@media (min-width: 900px) {
+  .tt-dialog--board .tt-dialog__title {
+    font-size: clamp(var(--tt-font-size-title2), 3vw, var(--tt-font-size-display));
+  }
+
+  .board__qr {
+    font-size: var(--tt-font-size-body);
+  }
+
+  .board__qr figcaption {
+    max-width: 16rem;
+  }
+}
+
+.board__actions .tt-chip {
+  margin-left: var(--tt-space-s100);
+}
+
+/* ───────────── доводка после второго прохода ───────────── */
+/* Число учеников под названием класса на телефоне — своей строкой, без точки в начале. */
+@media (max-width: 599px) {
+  .class-head__meta > .class-head__count {
+    flex-basis: 100%;
+  }
+
+  .class-head__meta > .class-head__count::before {
+    content: none;
+  }
+
+  /* Короткие действия («Скачать отчёт», «Распечатать») — рядом; длинные («Показать код класса») — каждая на свою строку. */
+  .class-head__actions > .tt-btn {
+    flex: 1 1 auto;
+  }
+
+  .segmented {
+    display: flex;
+    width: 100%;
+  }
+
+  .segmented__item {
+    flex: 1 1 0;
+    padding: 0 var(--tt-space-s200);
+  }
+}
+
+/* «Сегодня»: аватары — соты внахлёст в один ряд. */
+.avatars {
+  gap: var(--tt-space-s100) 0;
+}
+
+.avatars > li + li {
+  margin-left: calc(-1 * var(--tt-space-s150));
+}
+
+/* Новый класс без учеников: свободные места — плотной сеткой. */
+.seat-grid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(min(168px, 100%), 1fr));
+  gap: var(--tt-space-s200);
+}
+
+@media (max-width: 599px) {
+  .seat-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.seat-grid--compact .seat {
+  min-height: 64px;
+  padding: var(--tt-space-s200) var(--tt-space-s300);
+  gap: var(--tt-space-s250);
+}
+
+.seat-grid--compact .seat__name {
+  font-size: var(--tt-font-size-footnote);
+}
+
+/* Завершённое задание с тремя группами: «Сделали» — во всю ширину, остальные — рядом под ней. */
+@media (min-width: 900px) {
+  .task__groups--many > .task__group:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Таблица шире карточки (крупный шрифт, узкое окно) — прокручивается сама, страница — нет. */
+.pupils-scroll {
+  overflow-x: auto;
+}
+
+.pupils-table th.pupils-table__num {
+  white-space: normal;
+}
+
+/* Лист места: «Прогресс» ученика — справа от ника. */
+.seat-head {
+  flex-wrap: wrap;
+}
+
+.seat-head > .tt-stack {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+/* Карточка ученика на компьютере: шесть итогов в один ряд. */
+@media (min-width: 1080px) {
+  .seat-card .tt-stiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* «Новый класс»: как класс будет выглядеть в кабинете. */
+.class-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border: 2px dashed var(--tt-color-accent-soft-border);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-accent-soft);
+}
+
+.class-preview__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.class-preview__body b {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+}
+
+.class-preview__body span {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+/* Крупный шрифт на узком экране: длинные слова («Государственный») переносятся, а не уводят страницу вбок. */
+.class-card__body,
+.class-head__titles,
+.today-card,
+.step__body,
+.first-class__steps li,
+.journey__body,
+.requests-banner__text {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 599px) {
+  .class-card.tt-card {
+    padding: var(--tt-space-s400);
+  }
+}
+
+@media (max-width: 599px) {
+  .section-head__legend {
+    white-space: normal;
+  }
+}
+
+/* Сколько учеников — второй строкой под школой и программой на любой ширине (без «·» в начале переноса). */
+.class-head__meta > .class-head__count {
+  flex-basis: 100%;
+  color: var(--tt-color-text-primary);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.class-head__meta > .class-head__count::before {
+  content: none;
+}
+
+/* ───────────── свободные места — одной строкой номеров ───────────── */
+.free-seats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s300) var(--tt-space-s400);
+  padding: var(--tt-space-s400);
+  border: 2px dashed var(--tt-color-border-default);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-bg);
+}
+
+.free-seats__title {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  overflow-wrap: anywhere;
+}
+
+.free-seats__title b {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.free-seats__list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s150);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat-mini {
+  min-width: var(--tt-size-touch-min);
+  min-height: var(--tt-size-touch-min);
+  padding: 0 var(--tt-space-s150);
+  border: 2px dashed var(--tt-color-border-strong);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.seat-mini:hover {
+  border-style: solid;
+  color: var(--tt-color-text-primary);
+}
+
+.seat-mini:focus-visible {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.seat-mini[data-alert] {
+  border-color: var(--tt-color-danger-fill);
+  background: var(--tt-color-danger-soft);
+  color: var(--tt-color-danger-text);
+}
+
+.free-seats__toggle {
+  align-self: flex-start;
+}
+
+/* ───────────── «Мои классы»: классы с живой сводкой (ClassBoard.tsx) ───────────── */
+.teacher-home .page-head {
+  align-items: center;
+}
+
+.class-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr));
+  gap: var(--tt-space-s500);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.class-board[data-solo] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.class-board > li {
+  display: flex;
+  min-width: 0;
+}
+
+/* Карточка класса — колонка: заголовок, заявки, сводка. Раскладка сводки — по ширине самой карточки. */
+.klass.tt-card {
+  container: klass / inline-size;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--tt-space-s400);
+  min-width: 0;
+  padding: var(--tt-space-s500);
+}
+
+.klass[data-solo].tt-card {
+  padding: var(--tt-space-s600);
+}
+
+/* Сота, название и «Открыть класс» — всегда в одну строку (на телефоне кнопка — стрелка, переносится текст). */
+.klass__head {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300) var(--tt-space-s400);
+}
+
+.klass__titles {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s100);
+  overflow-wrap: anywhere;
+}
+
+.klass__title {
+  margin: 0;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title2);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+}
+
+.klass[data-solo] .klass__title {
+  font-size: var(--tt-font-size-title1);
+}
+
+.klass__link {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--tt-radius-small);
+}
+
+.klass__link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.klass__link:focus-visible {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.klass__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s050) var(--tt-space-s200);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.klass__meta > span + span::before {
+  content: "·";
+  margin-right: var(--tt-space-s200);
+  color: var(--tt-color-text-tertiary);
+}
+
+/* Узкая карточка (телефон): школа и программа — строками, без точки в начале перенесённой строки. */
+@container klass (max-width: 420px) {
+  .klass__meta {
+    flex-direction: column;
+  }
+
+  .klass__meta > span + span::before {
+    content: none;
+  }
+}
+
+/* Совсем узко (320 px, крупный шрифт) — без соты: место названию класса. */
+@container klass (max-width: 300px) {
+  .klass__head > .tt-hex {
+    display: none;
+  }
+}
+
+/* «Открыть класс»: в узкой карточке — квадратная кнопка со стрелкой, в широкой — с текстом. */
+.klass__open.tt-btn {
+  flex: none;
+  width: var(--tt-size-touch-min);
+  padding: 0;
+}
+
+.klass__open-text {
+  display: none;
+}
+
+.klass__open-icon {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+@container klass (min-width: 760px) {
+  .klass__open.tt-btn {
+    width: auto;
+    padding: 0 var(--tt-space-s400);
+  }
+
+  .klass__open-text {
+    display: inline;
+  }
+}
+
+/* Класс без учеников: три шага к первому уроку — по центру свободного места карточки. */
+.klass__setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s400);
+  margin-block: auto;
+  padding: var(--tt-space-s500) var(--tt-space-s400);
+  border: 2px dashed var(--tt-color-border-default);
+  border-radius: var(--tt-radius-panel);
+}
+
+.klass__setup-art {
+  flex: none;
+  height: auto;
+}
+
+.klass__setup-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tt-space-s500);
+}
+
+.klass__steps .step {
+  padding-bottom: var(--tt-space-s300);
+}
+
+.klass__steps .step:last-child {
+  padding-bottom: 0;
+}
+
+.klass__steps .step__body {
+  padding-top: var(--tt-space-s200);
+}
+
+@container klass (min-width: 760px) {
+  .klass__setup {
+    flex-direction: row;
+    justify-content: center;
+    gap: var(--tt-space-s1000);
+  }
+}
+
+/* Сводка класса: узкая карточка — блоки строками, широкая (один класс) — три блока в ряд. */
+.pulse-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s300);
+}
+
+.pulse {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon title big"
+    "body body body";
+  align-items: center;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-bg-sunken);
+}
+
+.pulse__icon {
+  grid-area: icon;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--tt-radius-icon-button);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.pulse__icon svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.pulse__icon--task {
+  background: var(--tt-color-info-soft);
+  color: var(--tt-color-info-text);
+}
+
+.pulse__icon--idle {
+  background: var(--tt-color-success-soft);
+  color: var(--tt-color-success-text);
+}
+
+.pulse[data-tone="attention"] .pulse__icon--idle {
+  background: var(--tt-color-danger-soft);
+  color: var(--tt-color-danger-text);
+}
+
+.pulse__title {
+  grid-area: title;
+  margin: 0;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+}
+
+.pulse__big {
+  grid-area: big;
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-extrabold);
+  line-height: var(--tt-line-height-tight);
+  white-space: nowrap;
+}
+
+.pulse__big b {
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-title2);
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+}
+
+.pulse[data-tone="attention"] .pulse__big b {
+  color: var(--tt-color-danger-text);
+}
+
+.pulse__unit {
+  display: none;
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.pulse__body {
+  grid-area: body;
+  min-width: 0;
+}
+
+.pulse__empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s200) var(--tt-space-s300);
+}
+
+.pulse__link {
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+}
+
+.pulse__link:hover {
+  text-decoration: underline;
+}
+
+.pulse__link:focus-visible {
+  outline: 3px solid var(--tt-color-focus);
+  outline-offset: 2px;
+  border-radius: var(--tt-radius-small);
+}
+
+.pulse .seat-chip {
+  background: var(--tt-color-surface);
+}
+
+.pulse__more {
+  display: none;
+  grid-area: more;
+}
+
+.pulse .seat-chip--overdue {
+  background: var(--tt-color-danger-soft);
+}
+
+@container klass (min-width: 760px) {
+  .pulse-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--tt-space-s400);
+  }
+
+  .pulse {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "icon title"
+      "big big"
+      "body body"
+      "more more";
+    align-items: center;
+    padding: var(--tt-space-s500);
+  }
+
+  .pulse__more {
+    display: inline-flex;
+    align-self: end;
+    justify-self: start;
+  }
+
+  .pulse__big {
+    font-size: var(--tt-font-size-title3);
+  }
+
+  .pulse__big b {
+    font-size: var(--tt-font-size-display);
+  }
+
+  .pulse__unit {
+    display: inline;
+  }
+
+  .pulse__title {
+    font-size: var(--tt-font-size-body);
+  }
+}
+
+@media (max-width: 599px) {
+  .klass.tt-card {
+    padding: var(--tt-space-s400);
+  }
+}
+
+/* «Помогите языку» на главной: сцена дуэли, одна строка, кнопка. */
+.duels-teaser.tt-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s400) var(--tt-space-s500);
+  padding: var(--tt-space-s400) var(--tt-space-s600);
+}
+
+.duels-teaser__art {
+  flex: none;
+}
+
+.duels-teaser__text {
+  flex: 1 1 14rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s100);
+}
+
+@media (max-width: 599px) {
+  .duels-teaser__art {
+    width: 72px;
+    height: auto;
+  }
+
+  .duels-teaser__go {
+    flex: 1 1 100%;
+  }
+}
+
+/* ═════════════ Кабинет учителя: листы, сводка, доска ═════════════ */
+
+/* ───────────── листы кабинета: низ с главной кнопкой закреплён ───────────── */
+/* Длинная форма в листе («Новый класс», «Задание классу») прокручивается, а низ с главной кнопкой остаётся у края
+ * листа: на ноутбуке 1280×720 и на телефоне кнопка всегда на виду. Нижний отступ листа берёт на себя сам низ. */
+.tt-dialog:not(.tt-dialog--board) .tt-dialog__panel:has(.sheet-foot) {
+  padding-bottom: 0;
+}
+
+.sheet-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  margin-inline: calc(-1 * var(--tt-space-s450));
+  padding: var(--tt-space-s400) var(--tt-space-s450) calc(var(--tt-space-s600) + env(safe-area-inset-bottom));
+  border-top: 2px solid var(--tt-color-border-subtle);
+  background: var(--tt-color-bg);
+}
+
+.sheet-form > .sheet-foot {
+  margin-top: calc(-1 * var(--tt-space-s300));
+}
+
+/* «Задание классу» на компьютере: короткие варианты — в ряд, лист короче. */
+@media (min-width: 640px) {
+  .give-task__row > .tt-choices {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .give-task__dues > .tt-choices {
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+}
+
+/* Новое задание — подсветка карточки, к которой прокрутилась страница. */
+.task[data-fresh].tt-card {
+  border-color: var(--tt-color-accent-fill);
+  box-shadow: 0 0 0 3px var(--tt-color-accent-soft);
+}
+
+/* ───────────── «Не занимались на неделе»: до четырёх ников, дальше — «Ещё N» ───────────── */
+.seat-chips--compact {
+  gap: var(--tt-space-s100) var(--tt-space-s150);
+}
+
+.seat-chips--compact .seat-chip {
+  min-height: 30px;
+  padding: 0 var(--tt-space-s250);
+}
+
+/* В узкой карточке класса ссылки внизу блока нет — «ещё N» остаётся чипом; в широкой — ссылкой внизу, как у соседей. */
+@container klass (min-width: 760px) {
+  .pulse .seat-chips > li:has(> .seat-chip--more) {
+    display: none;
+  }
+}
+
+/* Одно задание — крупное «сделали N из M», как «Занимались сегодня»; полоса — без повтора числа. */
+.pulse__big-label,
+.today-card__unit--task {
+  font-family: var(--tt-font-family-text);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+/* ───────────── заявки на вход: решённые остаются в списке с итогом ───────────── */
+.request[data-decided] {
+  background: var(--tt-color-bg-sunken);
+}
+
+.request__done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.request__done[data-tone="approved"] {
+  color: var(--tt-color-success-text);
+}
+
+.request__done svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+/* ───────────── код класса на доске: на ноутбуке 1280×720 всё на одном экране ───────────── */
+@media (min-width: 900px) and (max-height: 760px) {
+  .tt-dialog--board .tt-dialog__panel {
+    padding-block: var(--tt-space-s400);
+  }
+
+  .tt-dialog--board .board {
+    gap: var(--tt-space-s300);
+  }
+
+  .tt-dialog--board .board__code {
+    font-size: min(15vw, 22vh);
+  }
+
+  .tt-dialog--board .board__how,
+  .tt-dialog--board .board__actions {
+    margin-top: 0;
+  }
+
+  .tt-dialog--board .site-qr {
+    width: clamp(7rem, 19vh, 14rem);
+  }
+}
+
+/* ───────────── телефон: «Распечатать» не показываем — печатают с компьютера, отчёт скачивается и с телефона ───────────── */
+@media (max-width: 599px) {
+  .class-head__actions > .print-action {
+    display: none;
+  }
+}
+
+/* ───────────── «Помогите языку»: метка раздела в карточке не повторяет заголовок страницы ───────────── */
+.teacher-duel .duel > .tt-chip:first-child {
+  display: none;
+}
+
+/* «Карточки готовы»: PDF скачан — итог в самом листе. */
+.issue-saved {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s200);
+  color: var(--tt-color-success-text);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.issue-saved svg {
+  flex: none;
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+}
+
+/* Доска на телефоне длиннее экрана: «Новый код» и «Заявки на вход» — у нижнего края, без прокрутки к ним. */
+@media (max-width: 599px) {
+  .tt-dialog--board .board__actions {
+    position: sticky;
+    bottom: calc(-1 * var(--tt-space-s600));
+    margin-inline: calc(-1 * var(--tt-space-s450));
+    padding: var(--tt-space-s300) var(--tt-space-s450) var(--tt-space-s600);
+    align-self: stretch;
+    background: var(--tt-color-accent-fill);
+  }
+}
+
+/* ───────────── «Что в уроке»: слова, фразы и задания урока (LessonPreview.tsx) ───────────── */
+/* В листе «Задание классу» — раскрывающаяся карточка под выбором урока; в «Прогрессе» — отдельный лист. */
+.peek {
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-surface);
+}
+
+.peek[data-open] {
+  border-color: var(--tt-color-border-default);
+}
+
+.peek__head {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  width: 100%;
+  min-height: var(--tt-size-touch-min);
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border: 0;
+  border-radius: var(--tt-radius-card);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--tt-duration-fast) var(--tt-easing-out);
+}
+
+.peek__head:hover {
+  background: var(--tt-color-bg-sunken);
+}
+
+.peek__head:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.peek__head-title {
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.peek__head-sum {
+  flex: 1;
+  min-width: 0;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.peek__caret {
+  flex: none;
+  margin-left: auto;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-text-tertiary);
+  transition: transform var(--tt-duration-fast) var(--tt-easing-out);
+}
+
+.peek[data-open] .peek__caret {
+  transform: rotate(180deg);
+}
+
+.peek__panel {
+  padding: var(--tt-space-s100) var(--tt-space-s400) var(--tt-space-s400);
+}
+
+.peek__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s500);
+}
+
+.peek__label {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  margin: 0 0 var(--tt-space-s200);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.peek__count {
+  color: var(--tt-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Слова короткие — в две колонки уже на телефоне, на компьютере — в три; фразы — шире. */
+.peek__words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  gap: var(--tt-space-s200);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.peek__word {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s250);
+  min-height: 60px;
+  padding: var(--tt-space-s200) var(--tt-space-s200) var(--tt-space-s200) var(--tt-space-s300);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-tile);
+  background: var(--tt-color-bg);
+}
+
+.peek__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  min-width: 0;
+}
+
+.peek__text b {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+.peek__text span {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-callout);
+}
+
+.peek__tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s200);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.peek__task {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s150);
+  min-height: 36px;
+  padding: 0 var(--tt-space-s300);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-bg-sunken);
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.peek__times {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--tt-space-s100);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.peek__failed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tt-space-s300);
+}
+
+.peek__words[data-kind="phrases"] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+}
+
+/* «Прохождение уроков»: у урока — «Что в уроке» справа от названия. */
+.lesson-done__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s100) var(--tt-space-s200);
+}
+
+.lesson-done__peek {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s100);
+  min-height: 36px;
+  padding: 0 var(--tt-space-s250);
+  border: 0;
+  border-radius: var(--tt-radius-chip);
+  background: transparent;
+  color: var(--tt-color-accent-text);
+  font: inherit;
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-extrabold);
+  cursor: pointer;
+  transition: background-color var(--tt-duration-fast) var(--tt-easing-out);
+}
+
+.lesson-done__peek:hover {
+  background: var(--tt-color-accent-soft);
+}
+
+.lesson-done__peek:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.lesson-done__peek svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}

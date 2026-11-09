@@ -1,0 +1,11 @@
+{
+  "suite": "class-code/generate",
+  "version": 1,
+  "function": "classCodeFromRandomBytes",
+  "cases": [
+    { "id": "g001", "input": "000102030405", "expected": { "code": "012345", "display": "012-345" }, "note": "6 байт: символ = байт & 31" },
+    { "id": "g002", "input": "ffffffffffff", "expected": { "code": "ZZZZZZ", "display": "ZZZ-ZZZ" }, "note": "старшие биты отбрасываются" },
+    { "id": "g003", "input": "5a3c9e17b2d4", "expected": { "code": "TWYQJM", "display": "TWY-QJM" }, "note": "произвольные байты" },
+    { "id": "g004", "input": "202122232425", "expected": { "code": "012345", "display": "012-345" }, "note": "байты 32…37 дают те же символы, что 0…5" }
+  ]
+}

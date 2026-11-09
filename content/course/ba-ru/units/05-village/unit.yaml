@@ -1,0 +1,37 @@
+# Юнит 5 «Башкирская деревня · Еда» — открыт: узлы доступны по порядку после предыдущих юнитов (схема — content/schema/unit.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: 05-village
+order: 5
+status: open
+place:
+  slug: village
+  title_ru: Башкирская деревня
+topic_ru: Еда
+nodes:
+  - id: u05-zavtrak
+    kind: lesson
+    icon: star
+  - id: u05-myod-i-chay
+    kind: lesson
+    icon: chat-circle-text
+  - id: u05-help-1
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 2
+  - id: u05-na-kukhne
+    kind: lesson
+    icon: book-open
+  - id: u05-povtorenie
+    kind: lesson
+    icon: barbell
+  - id: u05-help-2
+    kind: help_language
+    title_ru: Помоги языку
+    duels: 2
+  - id: u05-v-magazine
+    kind: lesson
+    icon: star
+  - id: u05-ispytanie
+    kind: place_test

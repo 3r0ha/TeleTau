@@ -1,0 +1,12 @@
+{
+  "suite": "srs/status",
+  "version": 1,
+  "function": "srsStatus",
+  "description": "srsStatus({ dueOn, today }) — статус слова в словаре: review («пора повторить»), если сегодня по Уфе не раньше срока, иначе learned («выучено»). Даты — ГГГГ-ММ-ДД по Уфе. Правила — README.md этого каталога.",
+  "cases": [
+    { "id": "s001", "input": { "dueOn": "2026-11-05", "today": "2026-11-04" }, "expected": "learned", "note": "срок завтра — выучено" },
+    { "id": "s002", "input": { "dueOn": "2026-11-05", "today": "2026-11-05" }, "expected": "review", "note": "срок сегодня — пора повторить" },
+    { "id": "s003", "input": { "dueOn": "2026-11-05", "today": "2026-12-01" }, "expected": "review", "note": "срок прошёл — пора повторить" },
+    { "id": "s004", "input": { "dueOn": "2027-01-01", "today": "2026-12-31" }, "expected": "learned", "note": "через границу года — сравнение дат, а не строк дня и месяца" }
+  ]
+}

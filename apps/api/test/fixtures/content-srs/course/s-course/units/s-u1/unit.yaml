@@ -1,0 +1,14 @@
+id: s-u1
+order: 1
+status: open
+place:
+  slug: ufa
+  title_ru: Место повторения
+topic_ru: Синтетика повторения
+nodes:
+  - id: s-l1
+    kind: lesson
+    icon: star
+  - id: s-l2
+    kind: lesson
+    icon: book-open

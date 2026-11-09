@@ -1,0 +1,11 @@
+id: j-u3
+order: 3
+status: open
+place:
+  slug: agidel
+  title_ru: Место три
+topic_ru: Синтетика три
+nodes:
+  - id: j-l3
+    kind: lesson
+    icon: star

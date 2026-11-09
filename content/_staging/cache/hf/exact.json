@@ -1,0 +1,271 @@
+{
+ "filter:Привет": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%27",
+  "total": 0,
+  "rows": []
+ },
+ "filter:Привет!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%21%27",
+  "total": 2,
+  "rows": [
+   {
+    "row_idx": 808545,
+    "ru": "Привет!",
+    "ba": "Сәләм!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 451798,
+    "ru": "Привет!",
+    "ba": "Сəлəм!",
+    "corpus": "tmx corpus"
+   }
+  ]
+ },
+ "filter:Здравствуй!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%21%27",
+  "total": 0,
+  "rows": []
+ },
+ "filter:Здравствуйте!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%27",
+  "total": 2,
+  "rows": [
+   {
+    "row_idx": 268586,
+    "ru": "Здравствуйте!",
+    "ba": "Һаумыһығыҙ!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 451794,
+    "ru": "Здравствуйте!",
+    "ba": "Иҫəнмеһегеҙ!",
+    "corpus": "tmx corpus"
+   }
+  ]
+ },
+ "filter:Спасибо!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%A1%D0%BF%D0%B0%D1%81%D0%B8%D0%B1%D0%BE%21%27",
+  "total": 2,
+  "rows": [
+   {
+    "row_idx": 219993,
+    "ru": "Спасибо!",
+    "ba": "Рәхмәт.",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 1023969,
+    "ru": "Спасибо!",
+    "ba": "– Рәхмәт һиңә!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:Спасибо.": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%A1%D0%BF%D0%B0%D1%81%D0%B8%D0%B1%D0%BE.%27",
+  "total": 3,
+  "rows": [
+   {
+    "row_idx": 365372,
+    "ru": "Спасибо.",
+    "ba": "Эйе, рәхмәт.",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 913932,
+    "ru": "Спасибо.",
+    "ba": "Бик ҙур рәхмәт.",
+    "corpus": "https://www.bashinform.ru/"
+   },
+   {
+    "row_idx": 469329,
+    "ru": "Спасибо.",
+    "ba": "Рәхмәт",
+    "corpus": "tmx corpus"
+   }
+  ]
+ },
+ "filter:Спасибо": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%A1%D0%BF%D0%B0%D1%81%D0%B8%D0%B1%D0%BE%27",
+  "total": 0,
+  "rows": []
+ },
+ "filter:Большое спасибо!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%91%D0%BE%D0%BB%D1%8C%D1%88%D0%BE%D0%B5+%D1%81%D0%BF%D0%B0%D1%81%D0%B8%D0%B1%D0%BE%21%27",
+  "total": 1,
+  "rows": [
+   {
+    "row_idx": 965122,
+    "ru": "Большое спасибо!",
+    "ba": "Ҙур рәхмәт!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:Пожалуйста.": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9F%D0%BE%D0%B6%D0%B0%D0%BB%D1%83%D0%B9%D1%81%D1%82%D0%B0.%27",
+  "total": 1,
+  "rows": [
+   {
+    "row_idx": 969142,
+    "ru": "Пожалуйста.",
+    "ba": "— Ярай, пожалуйста.",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:Пожалуйста!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9F%D0%BE%D0%B6%D0%B0%D0%BB%D1%83%D0%B9%D1%81%D1%82%D0%B0%21%27",
+  "total": 2,
+  "rows": [
+   {
+    "row_idx": 1159,
+    "ru": "Пожалуйста!",
+    "ba": "Зинһар!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 914908,
+    "ru": "Пожалуйста!",
+    "ba": "Йә инде!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:До свидания!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%94%D0%BE+%D1%81%D0%B2%D0%B8%D0%B4%D0%B0%D0%BD%D0%B8%D1%8F%21%27",
+  "total": 1,
+  "rows": [
+   {
+    "row_idx": 994360,
+    "ru": "До свидания!",
+    "ba": "Иҫән бул!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:До свидания.": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%94%D0%BE+%D1%81%D0%B2%D0%B8%D0%B4%D0%B0%D0%BD%D0%B8%D1%8F.%27",
+  "total": 1,
+  "rows": [
+   {
+    "row_idx": 700079,
+    "ru": "До свидания.",
+    "ba": "Осрашҡанға тиклем, миссис Сноу.",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:Пока!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9F%D0%BE%D0%BA%D0%B0%21%27",
+  "total": 0,
+  "rows": []
+ },
+ "filter:Пока.": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9F%D0%BE%D0%BA%D0%B0.%27",
+  "total": 2,
+  "rows": [
+   {
+    "row_idx": 118014,
+    "ru": "Пока.",
+    "ba": "Әлегә.",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 708427,
+    "ru": "Пока.",
+    "ba": "Хуш әлегә!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:Доброе утро!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%94%D0%BE%D0%B1%D1%80%D0%BE%D0%B5+%D1%83%D1%82%D1%80%D0%BE%21%27",
+  "total": 2,
+  "rows": [
+   {
+    "row_idx": 961934,
+    "ru": "Доброе утро!",
+    "ba": "Хәйерле иртә!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 451805,
+    "ru": "Доброе утро!",
+    "ba": "Хəйерле иртə!",
+    "corpus": "tmx corpus"
+   }
+  ]
+ },
+ "filter:Добрый день!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%94%D0%BE%D0%B1%D1%80%D1%8B%D0%B9+%D0%B4%D0%B5%D0%BD%D1%8C%21%27",
+  "total": 2,
+  "rows": [
+   {
+    "row_idx": 451806,
+    "ru": "Добрый день!",
+    "ba": "Хəйерле көн!",
+    "corpus": "tmx corpus"
+   },
+   {
+    "row_idx": 468728,
+    "ru": "Добрый день!",
+    "ba": "Хәйерле көн!",
+    "corpus": "tmx corpus"
+   }
+  ]
+ },
+ "filter:Добрый вечер!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%94%D0%BE%D0%B1%D1%80%D1%8B%D0%B9+%D0%B2%D0%B5%D1%87%D0%B5%D1%80%21%27",
+  "total": 3,
+  "rows": [
+   {
+    "row_idx": 344751,
+    "ru": "Добрый вечер!",
+    "ba": "Хәйерле кис! – тигән.",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 988418,
+    "ru": "Добрый вечер!",
+    "ba": "Хәйерле кис!",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   },
+   {
+    "row_idx": 451807,
+    "ru": "Добрый вечер!",
+    "ba": "Хəйерле кис!",
+    "corpus": "tmx corpus"
+   }
+  ]
+ },
+ "filter:Спокойной ночи!": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%A1%D0%BF%D0%BE%D0%BA%D0%BE%D0%B9%D0%BD%D0%BE%D0%B9+%D0%BD%D0%BE%D1%87%D0%B8%21%27",
+  "total": 0,
+  "rows": []
+ },
+ "filter:Как твои дела?": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9A%D0%B0%D0%BA+%D1%82%D0%B2%D0%BE%D0%B8+%D0%B4%D0%B5%D0%BB%D0%B0%3F%27",
+  "total": 1,
+  "rows": [
+   {
+    "row_idx": 275680,
+    "ru": "Как твои дела?",
+    "ba": "Хәлдәрең нисек?",
+    "corpus": "https://t.me/bashkort_translate_bot"
+   }
+  ]
+ },
+ "filter:Как ваши дела?": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9A%D0%B0%D0%BA+%D0%B2%D0%B0%D1%88%D0%B8+%D0%B4%D0%B5%D0%BB%D0%B0%3F%27",
+  "total": 0,
+  "rows": []
+ },
+ "filter:Как тебя зовут?": {
+  "url": "https://datasets-server.huggingface.co/filter?dataset=AigizK%2Fbashkir-russian-parallel-corpora&config=default&split=train&length=100&offset=0&where=%22ru%22%3D%27%D0%9A%D0%B0%D0%BA+%D1%82%D0%B5%D0%B1%D1%8F+%D0%B7%D0%BE%D0%B2%D1%83%D1%82%3F%27",
+  "total": 0,
+  "rows": []
+ }
+}

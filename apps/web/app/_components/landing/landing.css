@@ -1,0 +1,829 @@
+/* Стартовая страница — лендинг (app/page.tsx). Все цвета, отступы, радиусы, шрифты и длительности — только из
+ * дизайн-токенов (--tt-*). Раскладка: телефон — одна колонка по центру; с 880 px разделы в ряд, через один зеркально;
+ * с 1024 px герой — картинка слева, заголовок и кнопки справа. */
+
+.lp {
+  display: block;
+  /* Картинки, вынесенные за край композиции, не дают горизонтальной прокрутки на узком экране. */
+  overflow-x: clip;
+  background: var(--tt-color-bg);
+}
+
+.lp-wrap {
+  width: 100%;
+  max-width: calc(var(--tt-size-column-wide) + 2 * var(--tt-space-s400));
+  margin-inline: auto;
+  padding-inline: var(--tt-space-s400);
+}
+
+/* ───────────── шапка ───────────── */
+.lp-head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 2px solid transparent;
+  background: var(--tt-color-bg);
+  transition: border-color var(--tt-duration-base) var(--tt-easing-out);
+}
+
+.lp-head[data-scrolled="true"] {
+  border-bottom-color: var(--tt-color-border-subtle);
+}
+
+.lp-head__in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-s200);
+  min-height: 72px;
+  transition: min-height var(--tt-duration-base) var(--tt-easing-out);
+}
+
+.lp-head[data-scrolled="true"] .lp-head__in {
+  min-height: 58px;
+}
+
+.lp-head__end {
+  display: flex;
+  flex-wrap: wrap;
+  margin-inline-start: auto;
+  align-items: center;
+  gap: var(--tt-space-s100);
+}
+
+/* Кнопка «Войти» в шапке — без нижнего отступа под «губу»: шапка тонкая, кнопка по центру. */
+.lp-head .tt-btn {
+  margin-block: 0 var(--tt-size-lip);
+  translate: 0 calc(var(--tt-size-lip) / 2);
+}
+
+.lp-signin {
+  position: relative;
+}
+
+.lp-signin__menu {
+  position: absolute;
+  top: calc(100% + var(--tt-space-s200));
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  min-width: 13.5rem;
+  padding: var(--tt-space-s200);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-border-default);
+}
+
+.lp-signin__menu[hidden] {
+  display: none;
+}
+
+.lp-signin__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  min-height: var(--tt-size-touch-min);
+  padding: var(--tt-space-s100) var(--tt-space-s300);
+  border-radius: var(--tt-radius-tile);
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+}
+
+.lp-signin__item:hover {
+  background: var(--tt-color-accent-soft);
+}
+
+.lp-signin__item svg {
+  flex: none;
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+  color: var(--tt-color-accent-lip);
+}
+
+/* ───────────── герой ───────────── */
+.lp-hero {
+  padding-block: var(--tt-space-s200) var(--tt-space-s1200);
+}
+
+.lp-hero__in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--tt-space-s800);
+}
+
+.lp-hero__art {
+  position: relative;
+  width: 100%;
+  max-width: 44rem;
+}
+
+.lp-hero__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: 66% 50%;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-sheet);
+  background: var(--tt-color-accent-soft);
+  box-shadow: 0 var(--tt-space-s200) 0 var(--tt-color-border-default);
+}
+
+/* Реплика пчелы, цвета одинаковые в обеих темах. Картинка всегда 4:3 с одной точкой кадрирования: голова пчелы около (76 %, 44 %), реплика слева сверху, хвост к пчеле. */
+.lp-hero__hello {
+  position: absolute;
+  top: 17%;
+  right: 35%;
+  padding: var(--tt-space-s150) var(--tt-space-s400);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-highlight);
+  color: var(--tt-color-text-on-fill);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+  white-space: nowrap;
+}
+
+.lp-hero__hello::after {
+  content: "";
+  position: absolute;
+  right: var(--tt-space-s400);
+  bottom: calc(var(--tt-space-s300) * -1 + 1px);
+  width: var(--tt-space-s400);
+  height: var(--tt-space-s300);
+  background: inherit;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.lp-hero__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s600);
+  width: 100%;
+  max-width: 30rem;
+  text-align: center;
+}
+
+.lp-hero__title {
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-title1);
+  line-height: var(--tt-line-height-snug);
+  text-wrap: balance;
+}
+
+.lp-hero__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s200);
+  width: 100%;
+  max-width: 22rem;
+}
+
+.lp-hero__who {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s250);
+  margin-bottom: var(--tt-space-s200);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-black);
+}
+
+/* ───────────── полоса мест ───────────── */
+.lp-places {
+  padding-block: var(--tt-space-s600) var(--tt-space-s500);
+  border-block: 2px solid var(--tt-color-border-subtle);
+  background: var(--tt-color-bg-sunken);
+}
+
+.lp-places__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--tt-space-s500) var(--tt-space-s200);
+  margin-block: 0;
+  list-style: none;
+}
+
+.lp-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.lp-place__name {
+  margin-top: var(--tt-space-s200);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+.lp-place__topic {
+  margin-top: var(--tt-space-s050);
+  overflow-wrap: anywhere;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: var(--tt-line-height-snug);
+}
+
+.lp-cell {
+  --cell-soft: var(--tt-color-accent-soft);
+  --cell-edge: var(--tt-color-accent-fill);
+  --cell-lip: var(--tt-color-accent-lip);
+  position: relative;
+  display: block;
+  width: 76px;
+}
+
+.lp-cell--green {
+  --cell-soft: var(--tt-color-success-soft);
+  --cell-edge: var(--tt-color-success-fill);
+  --cell-lip: var(--tt-color-success-lip);
+}
+
+.lp-cell--water {
+  --cell-soft: var(--tt-color-info-soft);
+  --cell-edge: var(--tt-color-info-fill);
+  --cell-lip: var(--tt-color-info-lip);
+}
+
+.lp-cell--violet {
+  --cell-soft: var(--tt-color-violet-soft);
+  --cell-edge: var(--tt-color-violet-bright);
+  --cell-lip: var(--tt-color-violet-lip);
+}
+
+.lp-cell svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.lp-cell__face {
+  fill: var(--cell-soft);
+  stroke: var(--cell-edge);
+  stroke-width: 3;
+}
+
+.lp-cell__lip {
+  fill: var(--cell-lip);
+}
+
+.lp-cell__art {
+  position: absolute;
+  inset: 8% 14% 20%;
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+}
+
+/* ───────────── разделы о продукте ───────────── */
+.lp-row {
+  padding-block: var(--tt-space-s1200);
+}
+
+.lp-row__in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s800);
+}
+
+.lp-row__art {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.lp-row__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s400);
+  max-width: 30rem;
+  text-align: center;
+}
+
+.lp-h2 {
+  color: var(--tt-color-accent-text);
+  font-size: var(--tt-font-size-title1);
+  line-height: var(--tt-line-height-snug);
+  text-wrap: balance;
+}
+
+.lp-lead {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-body-large);
+  line-height: var(--tt-line-height-body);
+  text-wrap: pretty;
+}
+
+.lp-row__cta {
+  margin-top: var(--tt-space-s200);
+}
+
+/* Композиция картинки: большая сота-подложка, главная картинка по центру, мелкие — у краёв. */
+.lp-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 26rem;
+  aspect-ratio: 1;
+}
+
+.lp-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 96%;
+  height: auto;
+  translate: -50% -50%;
+}
+
+.lp-stage path {
+  fill: var(--tt-color-accent-soft);
+}
+
+.lp-stage--green path {
+  fill: var(--tt-color-success-soft);
+}
+
+.lp-stage--water path {
+  fill: var(--tt-color-info-soft);
+}
+
+.lp-stage--violet path {
+  fill: var(--tt-color-violet-soft);
+}
+
+.lp-art__main {
+  position: relative;
+  width: 78%;
+  height: auto;
+}
+
+.lp-art__main--duel {
+  width: 74%;
+  translate: -8% -4%;
+}
+
+.lp-art__main--school {
+  width: 92%;
+}
+
+.lp-art__main--anywhere {
+  width: 66%;
+  translate: -14% 0;
+}
+
+/* Телефон сбоку от главной картинки раздела. */
+.lp-art--anywhere .lp-phone--side {
+  position: absolute;
+  right: var(--tt-space-s300);
+  bottom: 4%;
+  width: min(40%, 10rem);
+  padding: var(--tt-space-s400) var(--tt-space-s150) var(--tt-space-s150);
+  rotate: 6deg;
+}
+
+.lp-float {
+  position: absolute;
+  height: auto;
+}
+
+.lp-float--accepted {
+  right: 0;
+  bottom: 6%;
+  width: 40%;
+}
+
+/* Телефон с настоящим снимком экрана: тёмная рамка (text.onFill) в обеих темах, динамик сверху. */
+.lp-art--phone {
+  aspect-ratio: auto;
+  padding-block: var(--tt-space-s200);
+}
+
+.lp-phone {
+  position: relative;
+  width: 13rem;
+  padding: var(--tt-space-s500) var(--tt-space-s200) var(--tt-space-s200);
+  border: 2px solid var(--tt-color-border-strong);
+  border-radius: var(--tt-radius-sheet);
+  background: var(--tt-color-text-on-fill);
+  box-shadow: 0 var(--tt-space-s200) 0 var(--tt-color-border-default);
+}
+
+.lp-phone::before {
+  content: "";
+  position: absolute;
+  top: var(--tt-space-s200);
+  left: 50%;
+  width: 22%;
+  height: var(--tt-space-s150);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-border-strong);
+  translate: -50% 0;
+}
+
+.lp-phone__screen {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--tt-radius-tile);
+}
+
+.lp-float--spruce {
+  bottom: 14%;
+  left: 2%;
+  width: 28%;
+}
+
+.lp-float--boat {
+  right: -8%;
+  bottom: 12%;
+  width: 30%;
+}
+
+.lp-float--clover {
+  top: 12%;
+  left: 4%;
+  width: 21%;
+}
+
+.lp-float--linden {
+  top: 40%;
+  right: -4%;
+  width: 22%;
+}
+
+.lp-float--fireweed {
+  bottom: 12%;
+  left: 8%;
+  width: 20%;
+}
+
+/* ───────────── для школ ───────────── */
+.lp-band {
+  padding-block: var(--tt-space-s1200);
+  border-block: 2px solid var(--tt-color-border-subtle);
+  background: var(--tt-color-bg-sunken);
+}
+
+.lp-checks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tt-space-s300);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.lp-checks li {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-body-large);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.lp-checks svg {
+  flex: none;
+  width: var(--tt-size-icon-large);
+  height: var(--tt-size-icon-large);
+  padding: var(--tt-space-s150);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-success-fill);
+  color: var(--tt-color-text-on-fill);
+}
+
+/* Кнопка скачивания: тёмная на светлой теме и светлая на тёмной, с «губой». */
+.lp-store {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  min-height: var(--tt-size-button);
+  margin: var(--tt-space-s200) 0 var(--tt-size-lip);
+  padding: 0 var(--tt-space-s600) 0 var(--tt-space-s500);
+  border-radius: var(--tt-radius-button);
+  background: var(--tt-color-text-primary);
+  color: var(--tt-color-bg);
+  box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-border-strong);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-button);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+  transition:
+    transform var(--tt-duration-press) var(--tt-easing-out),
+    box-shadow var(--tt-duration-press) var(--tt-easing-out);
+}
+
+.lp-store svg {
+  flex: none;
+  width: var(--tt-size-icon-large);
+  height: var(--tt-size-icon-large);
+  color: var(--tt-color-success-fill);
+}
+
+.lp-store:active {
+  transform: translateY(var(--tt-size-lip));
+  box-shadow: none;
+}
+
+/* ───────────── финальный призыв ───────────── */
+.lp-final {
+  padding-block: var(--tt-space-s1200);
+  border-top: 2px solid var(--tt-color-accent-soft-border);
+  background: var(--tt-color-accent-soft);
+}
+
+/* В тёмной теме медовая подложка на всю ширину выглядит грязной — полоса на цвете карточек. */
+:root[data-theme="dark"] .lp-final {
+  border-top-color: var(--tt-color-border-subtle);
+  background: var(--tt-color-surface);
+}
+
+:root[data-theme="dark"] .lp-foot {
+  border-top-color: var(--tt-color-border-subtle);
+}
+
+.lp-final__in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s400);
+}
+
+.lp-final__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s600);
+  text-align: center;
+}
+
+.lp-final__title {
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-title1);
+  line-height: var(--tt-line-height-snug);
+  text-wrap: balance;
+}
+
+.lp-final__btn {
+  min-width: min(100%, 16rem);
+}
+
+.lp-final__bee {
+  flex: none;
+  width: 8.5rem;
+  height: auto;
+}
+
+.lp-final__bee--cheer {
+  display: none;
+}
+
+/* ───────────── подвал ───────────── */
+.lp-foot {
+  padding-block: var(--tt-space-s1200) calc(var(--tt-space-s1000) + env(safe-area-inset-bottom));
+  border-top: 2px solid var(--tt-color-accent-soft-border);
+  background: var(--tt-color-text-on-fill);
+  color: var(--tt-color-highlight);
+}
+
+/* Две колонки, пока слово «Конфиденциальность» помещается целиком; уже — одна колонка, без переносов в словах.
+ * min(…, 100%): при крупном шрифте браузера колонка не шире экрана (без горизонтальной прокрутки). */
+.lp-foot__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10.5rem, 100%), 1fr));
+  gap: var(--tt-space-s800) var(--tt-space-s600);
+}
+
+.lp-foot__title {
+  margin-bottom: var(--tt-space-s200);
+  color: var(--tt-color-accent-fill);
+  font-size: var(--tt-font-size-body-large);
+}
+
+.lp-foot ul {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lp-foot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tt-size-touch-min);
+  color: var(--tt-color-highlight);
+  font-weight: var(--tt-font-weight-semibold);
+  text-decoration: none;
+  /* Слово переносится, только если не помещается в экран целиком (крупный шрифт браузера на 320 px). */
+  overflow-wrap: anywhere;
+}
+
+.lp-foot a:hover {
+  text-decoration: underline;
+}
+
+.lp-foot__brand {
+  margin-top: var(--tt-space-s1000);
+}
+
+.lp-foot .tt-brand {
+  color: var(--tt-color-highlight);
+}
+
+/* ───────────── движение ───────────── */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal="wait"] {
+    opacity: 0;
+    transform: translateY(var(--tt-space-s800));
+  }
+
+  [data-reveal="in"] {
+    transition:
+      opacity var(--tt-duration-rise) var(--tt-easing-out),
+      transform var(--tt-duration-rise) var(--tt-easing-out);
+  }
+
+  .lp-hero__hello {
+    animation: lp-pop var(--tt-duration-slow) var(--tt-easing-spring) var(--tt-duration-slow) both;
+  }
+
+  .lp-final__bee--fly {
+    animation: lp-hover var(--tt-duration-float) var(--tt-easing-in-out) infinite alternate;
+  }
+}
+
+@keyframes lp-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes lp-hover {
+  to {
+    transform: translateY(calc(var(--tt-space-s300) * -1));
+  }
+}
+
+/* ───────────── планшет и компьютер ───────────── */
+@media (min-width: 600px) {
+  .lp-wrap {
+    max-width: calc(var(--tt-size-column-wide) + 2 * var(--tt-space-s800));
+    padding-inline: var(--tt-space-s800);
+  }
+
+  .lp-head .tt-brand {
+    font-size: var(--tt-font-size-title2);
+  }
+
+  .lp-head .tt-brand img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .lp-head__end {
+    gap: var(--tt-space-s200);
+  }
+
+  .lp-hero__hello {
+    font-size: var(--tt-font-size-title3);
+  }
+
+  .lp-cell {
+    width: 88px;
+  }
+
+  .lp-place__name {
+    font-size: var(--tt-font-size-headline);
+  }
+
+  .lp-place__topic {
+    font-size: var(--tt-font-size-footnote);
+  }
+
+  .lp-phone {
+    width: 15rem;
+  }
+
+  .lp-foot__cols {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+}
+
+@media (min-width: 880px) {
+  .lp-places__list {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .lp-row,
+  .lp-band {
+    padding-block: calc(var(--tt-space-s1600) * 1.25);
+  }
+
+  .lp-row__in {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: var(--tt-space-s1600);
+  }
+
+  .lp-row--flip .lp-row__in {
+    flex-direction: row-reverse;
+  }
+
+  .lp-row__art,
+  .lp-row__text {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .lp-row__text {
+    align-items: flex-start;
+    gap: var(--tt-space-s500);
+    text-align: left;
+  }
+
+  .lp-h2 {
+    font-size: var(--tt-font-size-display);
+    line-height: var(--tt-line-height-tight);
+  }
+
+  .lp-lead {
+    font-size: var(--tt-font-size-headline);
+  }
+
+  .lp-art {
+    max-width: 30rem;
+  }
+
+  .lp-final {
+    padding-block: var(--tt-space-s1600);
+  }
+
+  .lp-final__in {
+    flex-direction: row;
+    gap: var(--tt-space-s1200);
+  }
+
+  .lp-final__title {
+    font-size: var(--tt-font-size-display);
+  }
+
+  .lp-final__bee {
+    width: 11rem;
+  }
+
+  .lp-final__bee--cheer {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lp-hero {
+    display: grid;
+    align-items: center;
+    /* Первый экран: герой и полоса мест (Duolingo-ритм) — полоса видна внизу экрана. */
+    min-height: calc(100dvh - 72px - 11rem);
+    padding-block: var(--tt-space-s800) var(--tt-space-s1200);
+  }
+
+  .lp-hero__in {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--tt-space-s1600);
+  }
+
+  .lp-hero__title {
+    font-size: calc(var(--tt-font-size-title1) * 1.3);
+    line-height: var(--tt-line-height-tight);
+  }
+
+  .lp-hero__actions {
+    gap: var(--tt-space-s300);
+  }
+}

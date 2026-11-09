@@ -1,0 +1,30 @@
+{
+  "suite": "class-code/parse",
+  "version": 1,
+  "function": "parseClassCode",
+  "cases": [
+    { "id": "c001", "input": "K7Q4MZ", "expected": { "ok": true, "code": "K7Q4MZ", "display": "K7Q-4MZ" }, "note": "канонический код" },
+    { "id": "c002", "input": "k7q4mz", "expected": { "ok": true, "code": "K7Q4MZ", "display": "K7Q-4MZ" }, "note": "нижний регистр" },
+    { "id": "c003", "input": "K7Q-4MZ", "expected": { "ok": true, "code": "K7Q4MZ", "display": "K7Q-4MZ" }, "note": "как показан на экране — с дефисом" },
+    { "id": "c004", "input": "  k7q 4mz\n", "expected": { "ok": true, "code": "K7Q4MZ", "display": "K7Q-4MZ" }, "note": "пробелы и перевод строки" },
+    { "id": "c005", "input": "K7Q–4MZ", "expected": { "ok": true, "code": "K7Q4MZ", "display": "K7Q-4MZ" }, "note": "короткое тире вместо дефиса (автозамена)" },
+    { "id": "c006", "input": "K7Q 4MZ", "expected": { "ok": true, "code": "K7Q4MZ", "display": "K7Q-4MZ" }, "note": "неразрывный пробел" },
+    { "id": "c007", "input": "ABOCDE", "expected": { "ok": true, "code": "AB0CDE", "display": "AB0-CDE" }, "note": "O → 0" },
+    { "id": "c008", "input": "iLl123", "expected": { "ok": true, "code": "111123", "display": "111-123" }, "note": "I, L, l → 1" },
+    { "id": "c009", "input": "КМ7Х4Н", "expected": { "ok": true, "code": "KM7X4H", "display": "KM7-X4H" }, "note": "кириллица КМХН в русской раскладке" },
+    { "id": "c010", "input": "авсерт", "expected": { "ok": true, "code": "ABCEPT", "display": "ABC-EPT" }, "note": "кириллические строчные а в с е р т" },
+    { "id": "c011", "input": "озухмн", "expected": { "ok": true, "code": "03YXMH", "display": "03Y-XMH" }, "note": "кириллические о → 0, з → 3, у → Y, х м н" },
+    { "id": "c012", "input": "000000", "expected": { "ok": true, "code": "000000", "display": "000-000" }, "note": "все нули" },
+    { "id": "c013", "input": "zzzzzz", "expected": { "ok": true, "code": "ZZZZZZ", "display": "ZZZ-ZZZ" }, "note": "все Z" },
+    { "id": "e001", "input": "", "expected": { "ok": false, "error": "empty" }, "note": "пусто" },
+    { "id": "e002", "input": " - — ", "expected": { "ok": false, "error": "empty" }, "note": "только пробелы и тире" },
+    { "id": "e003", "input": "K7Q4M", "expected": { "ok": false, "error": "invalid_length" }, "note": "5 символов" },
+    { "id": "e004", "input": "K7Q4MZ1", "expected": { "ok": false, "error": "invalid_length" }, "note": "7 символов" },
+    { "id": "e005", "input": "K7Q4MU", "expected": { "ok": false, "error": "invalid_character" }, "note": "U не входит в алфавит" },
+    { "id": "e006", "input": "K7Q4M!", "expected": { "ok": false, "error": "invalid_character" }, "note": "знак препинания" },
+    { "id": "e007", "input": "K7Q4MҠ", "expected": { "ok": false, "error": "invalid_character" }, "note": "башкирская Ҡ не превращается в K" },
+    { "id": "e008", "input": "K7Q.4MZ", "expected": { "ok": false, "error": "invalid_character" }, "note": "точка не удаляется" },
+    { "id": "e009", "input": "K7!", "expected": { "ok": false, "error": "invalid_character" }, "note": "недопустимый символ важнее неверной длины" },
+    { "id": "e010", "input": "ЖЖЖЖЖЖ", "expected": { "ok": false, "error": "invalid_character" }, "note": "кириллица без латинского двойника" }
+  ]
+}

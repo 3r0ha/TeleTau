@@ -1,0 +1,15 @@
+id: j-l3
+unit: j-u3
+kind: lesson
+title_ru: Урок три
+new_words:
+  - ғарыҙ
+exercises:
+  - id: j-l3-free
+    type: free_ru_ba
+    prompt_ru: Синтетика Ж
+    answers:
+      - ba: ғарыҙ
+        ru: Значение Ж
+        source: { ref: synthetic, url: https://example.org/synthetic/2, locator: "строка 2" }
+        review: needs_native_review

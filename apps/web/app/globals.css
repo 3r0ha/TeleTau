@@ -1,0 +1,655 @@
+/* Стили экранов веба. Компоненты — packages/ui/src/ui.css (@teletau/ui, подключается в layout.tsx).
+ * Все цвета, размеры, радиусы, шрифты и длительности — только из дизайн-токенов (--tt-*). Хардкод запрещён
+ * (scripts/check-hardcoded-colors.mjs, scripts/check-hardcoded-tokens.mjs). */
+
+.screen-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--tt-space-s400);
+  padding-bottom: var(--tt-space-s1000);
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--tt-space-s400);
+}
+
+/* ───────────── плитки путей на «Что дальше?» (/welcome) ───────────── */
+/* Стартовая страница — лендинг: стили в _components/landing/landing.css. */
+/* Плитки равного веса с «губой» — как вывески мест на тропе: «Учиться» и «Я учитель». */
+.start__ways {
+  display: grid;
+  /* minmax(0, …): при крупном шрифте браузера плитка не шире колонки — длинные слова переносятся. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s300);
+}
+
+.start-way {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  min-height: 84px;
+  padding: var(--tt-space-s200) var(--tt-space-s400) var(--tt-space-s200) var(--tt-space-s200);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-border-default);
+  color: var(--tt-color-text-primary);
+  text-decoration: none;
+  transition:
+    transform var(--tt-duration-press) var(--tt-easing-out),
+    box-shadow var(--tt-duration-press) var(--tt-easing-out);
+}
+
+.start-way:hover {
+  border-color: var(--tt-color-accent-soft-border);
+  background: var(--tt-color-accent-soft);
+}
+
+.start-way:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.start-way:active {
+  transform: translateY(var(--tt-size-lip));
+  box-shadow: none;
+}
+
+.start-way__art {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.start-way__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s050);
+  overflow-wrap: anywhere;
+}
+
+.start-way__title {
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title3);
+  font-weight: var(--tt-font-weight-black);
+  line-height: 1.15;
+}
+
+.start-way__text {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  line-height: 1.3;
+}
+
+.start-way__caret {
+  flex: none;
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+  color: var(--tt-color-accent-lip);
+}
+
+/* ───────────── вход и регистрация ───────────── */
+.auth .screen-body {
+  justify-content: flex-start;
+}
+
+.auth__card {
+  width: 100%;
+}
+
+@media (max-width: 599px) {
+  .auth__card.tt-card {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+}
+
+@media (min-width: 600px) {
+  .auth .screen-body {
+    padding-top: var(--tt-space-s1000);
+  }
+}
+
+.auth__links {
+  justify-content: center;
+}
+
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s200);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* При крупном шрифте «Читать» переносится на следующую строку, а название документа — по словам. */
+.doc-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s300) var(--tt-space-s300) var(--tt-space-s300) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-bg);
+}
+
+.doc-list li > svg {
+  flex: none;
+  width: var(--tt-size-icon);
+  height: var(--tt-size-icon);
+  color: var(--tt-color-accent-lip);
+}
+
+.doc-list__text {
+  flex: 1 1 6em;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
+}
+
+.doc-list__text small {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tt-space-s300);
+  min-height: var(--tt-size-touch-min);
+  cursor: pointer;
+}
+
+.check input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--tt-color-accent-lip);
+  cursor: pointer;
+}
+
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  max-height: 46dvh;
+  overflow-y: auto;
+  margin: 0 calc(-1 * var(--tt-space-s100));
+  padding: var(--tt-space-s100) var(--tt-space-s100) var(--tt-space-s200);
+}
+
+.facts dl,
+.facts-list {
+  display: grid;
+  gap: var(--tt-space-s300);
+  margin: 0;
+  text-align: left;
+}
+
+.facts dl > div,
+.facts-list > div {
+  display: grid;
+  gap: var(--tt-space-s050);
+}
+
+.facts dt,
+.facts-list dt {
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-label);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.facts dd,
+.facts-list dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--tt-color-text-primary);
+  /* Адрес почты — одно длинное «слово»: при крупном шрифте переносится, а не уводит страницу вбок. */
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  width: 100%;
+}
+
+/* ───────────── сканер QR ───────────── */
+.scan__frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  width: 100%;
+  overflow: hidden;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-bg-sunken);
+}
+
+.scan__frame[data-live="true"] {
+  border-color: var(--tt-color-text-primary);
+  background: var(--tt-color-text-primary);
+}
+
+.scan__video {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan__corners {
+  grid-area: 1 / 1;
+  width: 64%;
+  aspect-ratio: 1;
+  border-radius: var(--tt-radius-panel);
+  box-shadow: 0 0 0 4px var(--tt-color-accent-fill);
+  pointer-events: none;
+}
+
+.scan__idle {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s400);
+}
+
+.scan__qr {
+  width: 96px;
+  height: 96px;
+  color: var(--tt-color-border-default);
+}
+
+/* Подсказка — под рамкой, а не поверх неё: рамка видна целиком. */
+.scan__hint {
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-footnote);
+  text-align: center;
+}
+
+.scan__live-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s200);
+}
+
+@media (min-width: 600px) {
+  .scan__frame {
+    max-width: 400px;
+    margin-inline: auto;
+  }
+}
+
+/* ───────────── ученик в классе ───────────── */
+.joined__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s300);
+  text-align: center;
+}
+
+.joined__art {
+  width: 180px;
+  margin-bottom: var(--tt-space-s200);
+}
+
+.joined__card {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s400);
+  width: 100%;
+  margin-top: var(--tt-space-s300);
+  text-align: left;
+}
+
+.joined__card .tt-stack {
+  align-items: flex-start;
+}
+
+.joined__note {
+  max-width: 360px;
+}
+
+.joined__go {
+  margin-top: var(--tt-space-s200);
+}
+
+/* ───────────── кабинет учителя ───────────── */
+.class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: var(--tt-space-s400);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.class-card {
+  display: flex !important;
+  align-items: center;
+  gap: var(--tt-space-s400);
+}
+
+.class-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s100);
+}
+
+.class-card__chips {
+  margin-top: var(--tt-space-s150);
+  gap: var(--tt-space-s150);
+}
+
+.class-card__go {
+  flex: none;
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+  color: var(--tt-color-text-tertiary);
+}
+
+.profile {
+  max-width: 640px;
+}
+
+.profile__actions {
+  align-items: flex-start;
+}
+
+@media (max-width: 599px) {
+  .profile__actions {
+    align-items: stretch;
+  }
+}
+
+/* ───────────── страница класса ───────────── */
+.class-page__back {
+  align-self: flex-start;
+  margin-left: calc(-1 * var(--tt-space-s350));
+}
+
+.class-page__back svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s300);
+}
+
+.toolbar .tt-chip {
+  margin-left: var(--tt-space-s100);
+}
+
+@media (max-width: 599px) {
+  .toolbar > .tt-btn {
+    flex: 1 1 100%;
+  }
+}
+
+.seat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr));
+  gap: var(--tt-space-s300);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s350);
+  width: 100%;
+  min-height: 84px;
+  padding: var(--tt-space-s300) var(--tt-space-s400) var(--tt-space-s300) var(--tt-space-s300);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-border-subtle);
+  color: var(--tt-color-text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--tt-duration-press) ease-out,
+    box-shadow var(--tt-duration-press) ease-out,
+    border-color var(--tt-duration-base) ease-out;
+}
+
+.seat:hover {
+  border-color: var(--tt-color-border-default);
+}
+
+.seat:active {
+  transform: translateY(var(--tt-size-lip-small));
+  box-shadow: none;
+}
+
+.seat[data-empty="true"] {
+  background: var(--tt-color-bg);
+}
+
+.seat[data-fresh="true"] {
+  border-color: var(--tt-color-accent-fill);
+  background: var(--tt-color-accent-soft);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-accent-fill);
+}
+
+.seat__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s150);
+}
+
+.seat__name {
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.seat[data-empty="true"] .seat__name {
+  color: var(--tt-color-text-secondary);
+  font-weight: var(--tt-font-weight-regular);
+}
+
+.seat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s150);
+}
+
+.seat-head {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s400);
+}
+
+.requests {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s250);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.request {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  padding: var(--tt-space-s300) var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.request__body {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.request__actions {
+  display: flex;
+  gap: var(--tt-space-s200);
+}
+
+/* ───────────── код класса на доску ───────────── */
+.tt-dialog--board .tt-dialog__head {
+  justify-content: center;
+  text-align: center;
+}
+
+.tt-dialog--board .tt-dialog__title {
+  font-size: var(--tt-font-size-title2);
+}
+
+.tt-dialog--board .tt-icon-btn {
+  color: var(--tt-color-accent-on);
+}
+
+.tt-dialog--board .tt-icon-btn:hover {
+  background: var(--tt-color-accent-soft);
+}
+
+.board {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s400);
+  text-align: center;
+}
+
+.board__code {
+  font-family: var(--tt-font-family-display);
+  /* Нижняя граница — не шире экрана телефона даже при крупном шрифте браузера. */
+  font-size: clamp(min(var(--tt-font-size-display), 13vw), 15vw, calc(var(--tt-font-size-board) * 2));
+  font-weight: var(--tt-font-weight-black);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.board__code--expired {
+  text-decoration: line-through;
+  text-decoration-thickness: 6px;
+}
+
+/* Таймер и шаги читаются с задней парты: на доске (широкий экран) — крупнее (docs/05 §8 п. 9). */
+.board__timer {
+  font-family: var(--tt-font-family-display);
+  font-size: clamp(var(--tt-font-size-title3), 3.2vw, var(--tt-font-size-display));
+  font-weight: var(--tt-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Как войти: шаги и QR сайта рядом на доске, друг под другом на телефоне. */
+.board__how {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s400);
+  max-width: 100%;
+  margin-top: var(--tt-space-s400);
+}
+
+.board__steps {
+  display: grid;
+  gap: var(--tt-space-s200);
+  min-width: 0;
+  margin: 0;
+  /* Отступ слева — под номера пунктов: растёт вместе с размером шрифта шагов. */
+  padding: var(--tt-space-s400) var(--tt-space-s600) var(--tt-space-s400) calc(var(--tt-space-s600) + 1.4em);
+  border-radius: var(--tt-radius-card);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-primary);
+  font-size: var(--tt-font-size-body-large);
+  text-align: left;
+}
+
+/* Адрес сайта на доске — крупнее шагов: его переписывают с доски. */
+.board__site {
+  font-family: var(--tt-font-family-display);
+  font-size: 1.25em;
+  font-weight: var(--tt-font-weight-black);
+}
+
+.board__qr {
+  display: grid;
+  justify-items: center;
+  gap: var(--tt-space-s200);
+  margin: 0;
+  font-size: var(--tt-font-size-footnote);
+  font-weight: var(--tt-font-weight-semibold);
+}
+
+.board__qr figcaption {
+  max-width: 14rem;
+}
+
+/* QR сайта: тёмные модули text.onFill на highlight — в обеих темах (камеры не читают «негатив»), contrast-pairs.json. */
+.site-qr {
+  display: block;
+  width: clamp(8rem, 18vw, 14rem);
+  height: auto;
+  border-radius: var(--tt-radius-small);
+}
+
+.site-qr__bg {
+  fill: var(--tt-color-highlight);
+}
+
+.site-qr__dark {
+  fill: var(--tt-color-text-on-fill);
+}
+
+.board__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--tt-space-s300);
+  margin-top: var(--tt-space-s400);
+}
+
+@media (min-width: 900px) {
+  .board__steps {
+    font-size: clamp(var(--tt-font-size-title3), 2.2vw, var(--tt-font-size-title1));
+  }
+}
+
+/* Страница юридического документа (/legal/<вид>/<версия>) */
+.legal p {
+  margin: 0;
+  max-width: 68ch;
+}

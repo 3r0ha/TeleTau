@@ -1,0 +1,21 @@
+/* Telegram Mini App (app/miniapp): экраны ученика — learn.css и globals.css; здесь только вход через сканер Telegram.
+ * Цвета, радиусы, шрифты — только из дизайн-токенов (--tt-*). */
+
+.tg-login {
+  align-items: stretch;
+  text-align: center;
+}
+
+.tg-login__art {
+  align-self: center;
+  margin-top: var(--tt-space-s400);
+}
+
+.tg-login__head {
+  align-items: center;
+}
+
+.tg-login__note {
+  text-align: center;
+}
+

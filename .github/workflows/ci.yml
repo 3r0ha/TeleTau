@@ -1,0 +1,94 @@
+# CI «ТелеТау». Локальный эквивалент — scripts/verify.sh.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node:
+    name: TS — линт, типы, тесты, контракт, сборка, доступность, интеграция, e2e
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm codegen:check
+      - run: pnpm --filter @teletau/bashkir-text vectors:fuzz:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm contracts:check
+      - run: pnpm build
+      # Локально браузер берётся из кеша Playwright; в CI его нужно скачать (версия — из @playwright/test 1.64.1).
+      - name: Браузер Playwright (Chromium)
+        run: pnpm --filter @teletau/web exec playwright install --with-deps chromium
+      - name: Доступность (axe) и потоки экранов на моках API
+        run: |
+          pnpm --filter @teletau/web test:a11y
+          pnpm --filter @teletau/console test:a11y
+      - name: Интеграционные тесты (docker compose)
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait
+          pnpm db:migrate
+          pnpm --filter @teletau/api test:integration
+      - name: Сквозные тесты (Playwright, настоящий стек)
+        run: pnpm e2e
+      - name: Отчёт сквозных тестов при падении
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: e2e/test-results/
+          if-no-files-found: ignore
+
+  ios:
+    name: iOS — векторы, рендер экрана, сборка
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - run: swift test --package-path ios/Packages/TeleTauCore
+      - run: brew install xcodegen
+      - name: Сборка приложения под SDK симулятора
+        working-directory: ios
+        run: |
+          xcodegen generate
+          xcodebuild build -project TeleTau.xcodeproj -target TeleTau -sdk iphonesimulator \
+            -configuration Debug ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO
+
+  android:
+    name: Android — векторы и сборка
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v5
+      - working-directory: android
+        run: ./gradlew :core:bashkirtext:test :app:assembleDebug :core:designsystem:verifyRoborazziDebug
+
+  secrets:
+    name: Поиск секретов
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,206 @@
+# Урок «Повторение» (схема — content/schema/lesson.schema.json).
+# Башкирский текст — только посимвольные копии из источников content/sources.yaml (source.ref, url, locator);
+# двойники источника — в raw, в ba — normalize из @teletau/bashkir-text. Проверка: node scripts/check-content.mjs.
+# Вердикт носителя ставится в review (needs_native_review → native_approved / native_rejected) — строка в docs/native-review-queue.md.
+id: u02-povtorenie
+unit: 02-shulgantash
+kind: lesson
+title_ru: Повторение
+new_words:
+  - бесәй
+  - Бесәйем бар.
+  - эт
+  - ултырғыс
+exercises:
+  - id: u02-povtorenie-e01
+    type: choice_ba_ru
+    prompt:
+      ba: бесәй
+      ru: кошка
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B5%D1%81%D3%99%D0%B9
+        locator: статья «бесәй», раздел «Башкирский», значение 1
+      review: needs_native_review
+      audio: &a1
+        url: https://upload.wikimedia.org/wikipedia/commons/9/9c/Ba-%D0%B1%D0%B5%D1%81%D3%99%D0%B9.ogg
+        source:
+          ref: wikimedia-commons
+          url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B5%D1%81%D3%99%D0%B9.ogg
+          locator: File:Ba-бесәй.ogg; запись — Borovi4ok
+        license: CC BY 3.0
+    options_ru:
+      - кошка
+      - собака
+      - мальчик
+    correct: 0
+  - id: u02-povtorenie-e02
+    type: tiles_ru_ba
+    prompt_ru: У меня есть кошка.
+    answer:
+      ba: Бесәйем бар.
+      ru: У меня есть кошка.
+      source:
+        ref: tatoeba
+        url: https://tatoeba.org/ru/sentences/show/9642632
+        locator: предложение №9642632 (CC BY 2.0 FR); русский перевод №3640188 — связан косвенно, через перевод на другой язык
+      review: needs_native_review
+    distractors:
+      - ba: эт
+        ru: собака
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8D%D1%82
+          locator: статья «эт», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/6/6f/LL-Q13389_%28bak%29-Pastilahor-et.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-et.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-et.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: эт
+      - ba: өй
+        ru: дом
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%A9%D0%B9
+          locator: статья «өй», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-povtorenie-e03
+    type: free_ru_ba
+    prompt_ru: собака
+    answers:
+      - ba: эт
+        ru: собака
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8D%D1%82
+          locator: статья «эт», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/6/6f/LL-Q13389_%28bak%29-Pastilahor-et.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-et.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-et.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: эт
+  - id: u02-povtorenie-e04
+    type: choice_ba_ru
+    prompt:
+      ba: ултырғыс
+      ru: стул
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D1%83%D0%BB%D1%82%D1%8B%D1%80%D2%93%D1%8B%D1%81
+        locator: статья «ултырғыс», раздел «Башкирский», значение 1
+      review: needs_native_review
+    options_ru:
+      - стул
+      - стол
+      - окно
+    correct: 0
+  - id: u02-povtorenie-e05
+    type: free_ru_ba
+    prompt_ru: семья
+    answers:
+      - ba: ғаилә
+        ru: семья
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%93%D0%B0%D0%B8%D0%BB%D3%99
+          locator: статья «ғаилә», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-povtorenie-e06
+    type: tiles_ru_ba
+    prompt_ru: Вынеси из дома воды.
+    answer:
+      ba: Өйҙән һыу сығар әле.
+      ru: Вынеси из дома воды.
+      source:
+        ref: wiktionary-ru
+        url: https://ru.wiktionary.org/wiki/%D3%A9%D0%B9
+        locator: статья «өй», раздел «Башкирский», пример к значению 1
+      review: needs_native_review
+    distractors:
+      - ba: бала
+        ru: ребёнок
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B0%D0%BB%D0%B0
+          locator: статья «бала», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/8/8a/Ba-%D0%B1%D0%B0%D0%BB%D0%B0.ogg
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B1%D0%B0%D0%BB%D0%B0.ogg
+            locator: File:Ba-бала.ogg; запись — Borovi4ok
+          license: CC BY-SA 3.0
+      - ba: ишек
+        ru: дверь
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B8%D1%88%D0%B5%D0%BA
+          locator: статья «ишек», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/c/c4/Ba-%D0%B8%D1%88%D0%B5%D0%BA.oga
+          source:
+            ref: wikimedia-commons
+            url: https://commons.wikimedia.org/wiki/File:Ba-%D0%B8%D1%88%D0%B5%D0%BA.oga
+            locator: File:Ba-ишек.oga; запись — Borovi4ok
+          license: CC BY 3.0
+  - id: u02-povtorenie-p01
+    type: match_pairs
+    pairs:
+      - ba: бесәй
+        ru: кошка
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D0%B1%D0%B5%D1%81%D3%99%D0%B9
+          locator: статья «бесәй», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio: *a1
+      - ba: эт
+        ru: собака
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%8D%D1%82
+          locator: статья «эт», раздел «Башкирский», значение 1
+        review: needs_native_review
+        audio:
+          url: https://upload.wikimedia.org/wikipedia/commons/6/6f/LL-Q13389_%28bak%29-Pastilahor-et.wav
+          source:
+            ref: lingua-libre-bak
+            url: https://commons.wikimedia.org/wiki/File:LL-Q13389_(bak)-Pastilahor-et.wav
+            locator: File:LL-Q13389 (bak)-Pastilahor-et.wav; запись — Pastilahor
+          license: CC BY 4.0
+          word_ba: эт
+      - ba: ултырғыс
+        ru: стул
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D1%83%D0%BB%D1%82%D1%8B%D1%80%D2%93%D1%8B%D1%81
+          locator: статья «ултырғыс», раздел «Башкирский», значение 1
+        review: needs_native_review
+      - ba: ҡусты
+        ru: младший брат
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D2%A1%D1%83%D1%81%D1%82%D1%8B
+          locator: статья «ҡусты», раздел «Башкирский», значение 1
+        review: needs_native_review
+  - id: u02-povtorenie-e08
+    type: free_ru_ba
+    prompt_ru: дом
+    answers:
+      - ba: өй
+        ru: дом
+        source:
+          ref: wiktionary-ru
+          url: https://ru.wiktionary.org/wiki/%D3%A9%D0%B9
+          locator: статья «өй», раздел «Башкирский», значение 1
+        review: needs_native_review

@@ -1,0 +1,321 @@
+{
+  "color": {
+    "$type": "color",
+    "palette": {
+      "$description": "Тёмная тема «Графит»: нейтральный графитово-синий фон и светлый серо-голубой текст; яркие заливки остаются яркими (на них — тёмный графитовый текст), подложки — приглушённые оттенки акцентов.",
+      "graphite": {
+        "sunken": {
+          "$value": "#0D171B"
+        },
+        "bg": {
+          "$value": "#131F24"
+        },
+        "surface": {
+          "$value": "#1C2B32"
+        },
+        "line": {
+          "$value": "#2A3A42"
+        },
+        "lineStrong": {
+          "$value": "#37464F"
+        },
+        "control": {
+          "$value": "#6D818B"
+        },
+        "locked": {
+          "$value": "#2E3D45"
+        },
+        "lockedLip": {
+          "$value": "#222F36"
+        },
+        "lockedInk": {
+          "$value": "#7F929C"
+        },
+        "ink": {
+          "$value": "#131F24"
+        },
+        "black": {
+          "$value": "#000000"
+        }
+      },
+      "frost": {
+        "primary": {
+          "$value": "#F1F7FB"
+        },
+        "secondary": {
+          "$value": "#C6D3DA"
+        },
+        "tertiary": {
+          "$value": "#95A8B2"
+        },
+        "white": {
+          "$value": "#FFFFFF"
+        }
+      },
+      "honey": {
+        "400": {
+          "$value": "#FFB703"
+        },
+        "600": {
+          "$value": "#B87400"
+        },
+        "ink": {
+          "$value": "#FFC94D"
+        },
+        "soft": {
+          "$value": "#2F2A14"
+        },
+        "softBorder": {
+          "$value": "#5E4E1A"
+        },
+        "zone": {
+          "$value": "#23251F"
+        }
+      },
+      "urman": {
+        "400": {
+          "$value": "#43C35E"
+        },
+        "600": {
+          "$value": "#26843A"
+        },
+        "ink": {
+          "$value": "#74DB8B"
+        },
+        "soft": {
+          "$value": "#183A2B"
+        },
+        "zone": {
+          "$value": "#15292A"
+        }
+      },
+      "agidel": {
+        "400": {
+          "$value": "#1CA7F2"
+        },
+        "600": {
+          "$value": "#0A73AD"
+        },
+        "ink": {
+          "$value": "#6CC8FF"
+        },
+        "soft": {
+          "$value": "#133A4E"
+        },
+        "zone": {
+          "$value": "#132A35"
+        }
+      },
+      "marjan": {
+        "400": {
+          "$value": "#FF6464"
+        },
+        "600": {
+          "$value": "#C93636"
+        },
+        "ink": {
+          "$value": "#FF8F86"
+        },
+        "soft": {
+          "$value": "#44242A"
+        }
+      },
+      "violet": {
+        "400": {
+          "$value": "#A673FF"
+        },
+        "600": {
+          "$value": "#7B3CE6"
+        },
+        "800": {
+          "$value": "#5420B0"
+        },
+        "ink": {
+          "$value": "#C7A6FF"
+        },
+        "soft": {
+          "$value": "#2E2753"
+        }
+      },
+      "fire": {
+        "400": {
+          "$value": "#FF7A2F"
+        },
+        "600": {
+          "$value": "#C2500F"
+        },
+        "ink": {
+          "$value": "#FFA36B"
+        },
+        "soft": {
+          "$value": "#40271A"
+        }
+      }
+    },
+    "bg": {
+      "$value": "{color.palette.graphite.bg}",
+      "$description": "Фон экрана"
+    },
+    "bgSunken": {
+      "$value": "{color.palette.graphite.sunken}"
+    },
+    "surface": {
+      "$value": "{color.palette.graphite.surface}",
+      "$description": "Карточки, листы, поля ввода"
+    },
+    "text": {
+      "primary": {
+        "$value": "{color.palette.frost.primary}"
+      },
+      "secondary": {
+        "$value": "{color.palette.frost.secondary}"
+      },
+      "tertiary": {
+        "$value": "{color.palette.frost.tertiary}"
+      },
+      "onFill": {
+        "$value": "{color.palette.graphite.ink}",
+        "$description": "Тёмный графит на ярких заливках: заливки остаются яркими"
+      }
+    },
+    "accent": {
+      "fill": {
+        "$value": "{color.palette.honey.400}"
+      },
+      "lip": {
+        "$value": "{color.palette.honey.600}"
+      },
+      "text": {
+        "$value": "{color.palette.honey.ink}"
+      },
+      "on": {
+        "$value": "{color.palette.graphite.ink}",
+        "$description": "Текст на медовой заливке"
+      },
+      "soft": {
+        "$value": "{color.palette.honey.soft}"
+      },
+      "softBorder": {
+        "$value": "{color.palette.honey.softBorder}"
+      }
+    },
+    "success": {
+      "fill": {
+        "$value": "{color.palette.urman.400}"
+      },
+      "lip": {
+        "$value": "{color.palette.urman.600}"
+      },
+      "text": {
+        "$value": "{color.palette.urman.ink}"
+      },
+      "soft": {
+        "$value": "{color.palette.urman.soft}"
+      }
+    },
+    "info": {
+      "fill": {
+        "$value": "{color.palette.agidel.400}"
+      },
+      "lip": {
+        "$value": "{color.palette.agidel.600}"
+      },
+      "text": {
+        "$value": "{color.palette.agidel.ink}"
+      },
+      "soft": {
+        "$value": "{color.palette.agidel.soft}"
+      }
+    },
+    "danger": {
+      "fill": {
+        "$value": "{color.palette.marjan.400}"
+      },
+      "lip": {
+        "$value": "{color.palette.marjan.600}"
+      },
+      "text": {
+        "$value": "{color.palette.marjan.ink}"
+      },
+      "soft": {
+        "$value": "{color.palette.marjan.soft}"
+      }
+    },
+    "violet": {
+      "fill": {
+        "$value": "{color.palette.violet.600}"
+      },
+      "lip": {
+        "$value": "{color.palette.violet.800}"
+      },
+      "text": {
+        "$value": "{color.palette.violet.ink}"
+      },
+      "soft": {
+        "$value": "{color.palette.violet.soft}"
+      },
+      "bright": {
+        "$value": "{color.palette.violet.400}"
+      },
+      "on": {
+        "$value": "{color.palette.frost.white}"
+      }
+    },
+    "streak": {
+      "fill": {
+        "$value": "{color.palette.fire.400}"
+      },
+      "lip": {
+        "$value": "{color.palette.fire.600}"
+      },
+      "text": {
+        "$value": "{color.palette.fire.ink}"
+      },
+      "soft": {
+        "$value": "{color.palette.fire.soft}"
+      }
+    },
+    "locked": {
+      "fill": {
+        "$value": "{color.palette.graphite.locked}"
+      },
+      "lip": {
+        "$value": "{color.palette.graphite.lockedLip}"
+      },
+      "text": {
+        "$value": "{color.palette.graphite.lockedInk}"
+      }
+    },
+    "border": {
+      "subtle": {
+        "$value": "{color.palette.graphite.line}"
+      },
+      "default": {
+        "$value": "{color.palette.graphite.lineStrong}"
+      },
+      "strong": {
+        "$value": "{color.palette.graphite.control}"
+      }
+    },
+    "focus": {
+      "$value": "{color.palette.agidel.ink}"
+    },
+    "scrim": {
+      "$value": "{color.palette.graphite.black}"
+    },
+    "highlight": {
+      "$value": "{color.palette.frost.white}"
+    },
+    "zone": {
+      "honey": {
+        "$value": "{color.palette.honey.zone}"
+      },
+      "green": {
+        "$value": "{color.palette.urman.zone}"
+      },
+      "water": {
+        "$value": "{color.palette.agidel.zone}"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+id: j-u2
+order: 2
+status: open
+place:
+  slug: shulgantash
+  title_ru: Место два
+topic_ru: Синтетика два
+nodes:
+  - id: j-l2
+    kind: lesson
+    icon: star
+  - id: j-t2
+    kind: place_test

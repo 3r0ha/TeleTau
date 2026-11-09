@@ -1,0 +1,28 @@
+{
+  "name": "@teletau/bashkir-text",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Нормализация, свёртка и сравнение башкирского текста. Эталонная реализация для общих тест-векторов.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src test scripts",
+    "test": "vitest run",
+    "vectors:fuzz": "tsc -p tsconfig.build.json && node scripts/vectors-fuzz.mjs",
+    "vectors:fuzz:check": "tsc -p tsconfig.build.json && node scripts/vectors-fuzz.mjs --check"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "vitest": "^5.0.5",
+    "fast-check": "^4.0.0"
+  }
+}

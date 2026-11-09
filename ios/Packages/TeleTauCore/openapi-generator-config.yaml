@@ -1,0 +1,41 @@
+# swift-openapi-generator: клиент iOS из packages/contracts/openapi.yaml (CLAUDE.md, правило 1; ADR 0002).
+# Перегенерация: bash ios/scripts/generate-api.sh  (проверка актуальности: --check).
+# В клиент входят только операции, которые вызывает приложение ученика; новая операция — добавить её сюда.
+generate:
+  - types
+  - client
+accessModifier: public
+namingStrategy: idiomatic
+filter:
+  operations:
+    # Вход ученика и сессия
+    - loginWithQrCard
+    - requestClassCodeLogin
+    - getClassCodeLoginStatus
+    - refreshSession
+    - logout
+    - getMe
+    - updateMe
+    - suggestNicknames
+    # «Учусь сам» (ADR 0022): аккаунт без ПДн, личная карточка входа, вступление в класс
+    - createSelfLearner
+    - loginWithLoginCard
+    - getMyLoginCard
+    - issueMyLoginCard
+    - requestClassJoin
+    - getClassJoinStatus
+    # Тропа, урок, мотивация
+    - getCourse
+    - startLessonRun
+    - startReviewRun
+    # «Перепрыгнуть место»: испытание для перехода к закрытому месту
+    - startJumpRun
+    - submitLessonAttempt
+    - completeLessonRun
+    - getMyProgress
+    - getCurrentLeague
+    - markLeagueResultSeen
+    - getClassHive
+    - listMyCorpusCells
+    - listMyWords
+    - listMyAchievements

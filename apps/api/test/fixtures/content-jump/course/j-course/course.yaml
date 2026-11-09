@@ -1,0 +1,10 @@
+# Синтетический курс для тестов испытания для перехода (apps/api/test/integration/jump.test.ts; не учебный контент).
+# Строки — сочетания букв, как в test/fixtures/content (CLAUDE.md, правило 6).
+id: j-course
+version: 1
+title_ru: Синтетический курс для перехода
+direction: ru-ba
+units:
+  - j-u1
+  - j-u2
+  - j-u3

@@ -1,0 +1,60 @@
+# Синтетический урок: все виды упражнений и строка, отклонённая носителем (не импортируется).
+id: t-l1
+unit: t-u1
+kind: lesson
+title_ru: Урок один
+new_words:
+  - Пиҡол тумә!
+  - һөлөк
+  - строки нет в уроке
+exercises:
+  - id: t-l1-tiles
+    type: tiles_ru_ba
+    prompt_ru: Синтетика А
+    answer:
+      ba: Пиҡол тумә!
+      ru: Синтетика А
+      source: { ref: synthetic, url: https://example.org/synthetic/1, locator: "строка 1" }
+      review: needs_native_review
+    distractors:
+      - ba: ғарыҙ
+        source: { ref: synthetic, url: https://example.org/synthetic/2, locator: "строка 2" }
+        review: native_approved
+      - ba: отклонено
+        source: { ref: synthetic, page: 7, locator: "строка 3" }
+        review: native_rejected
+  - id: t-l1-choice
+    type: choice_ba_ru
+    prompt:
+      ba: һөлөк
+      ru: Значение Б
+      source: { ref: synthetic, url: https://example.org/synthetic/4, locator: "строка 4" }
+      review: needs_native_review
+    options_ru: [Значение Б, Значение В, Значение Г]
+    correct: 0
+  - id: t-l1-free-short
+    type: free_ru_ba
+    prompt_ru: Синтетика Д
+    answers:
+      - ba: ҡаҙым
+        source: { ref: synthetic, url: https://example.org/synthetic/5, locator: "строка 5" }
+        review: needs_native_review
+  - id: t-l1-free-long
+    type: free_ru_ba
+    prompt_ru: Синтетика Е
+    answers:
+      - ba: сәлдерәм
+        source: { ref: synthetic, url: https://example.org/synthetic/6, locator: "строка 6" }
+        review: needs_native_review
+      - ba: сәлдерәмә
+        source: { ref: synthetic, url: https://example.org/synthetic/7, locator: "строка 7" }
+        review: native_rejected
+  - id: t-l1-duel
+    type: duel
+  - id: t-l1-rejected
+    type: free_ru_ba
+    prompt_ru: Синтетика Ж
+    answers:
+      - ba: ыҙыҡ
+        source: { ref: synthetic, url: https://example.org/synthetic/8, locator: "строка 8" }
+        review: native_rejected
