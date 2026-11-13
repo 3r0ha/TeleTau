@@ -2511,6 +2511,120 @@ paths:
         default:
           $ref: "#/components/responses/Unexpected"
 
+  /api/v1/telegram/bot/chats/{chatId}/daily-duel:
+    post:
+      tags: [telegram]
+      operationId: issueTelegramDailyDuel
+      summary: Ежедневное задание для чата — дуэль (служебная, для бота)
+      description: |
+        Только для бота (`X-Service-Token`): команда `/daily` или кнопка «Задание дня». Выдаёт связанному аккаунту
+        дуэль «Помоги языку» (ADR 0019, ADR 0024) — одну в сутки по Уфе. Диалог — FSM в БД: активный диалог один
+        на аккаунт, повторный вызов возвращает тот же диалог и тот же порядок сторон (перезапуск бота ничего не
+        теряет). `state = issued` — выданная дуэль; `done` — голос на эти сутки по Уфе уже учтён (новой дуэли не
+        будет); `empty` — свежих дуэлей для аккаунта нет. Ответивший или отменённый диалог повторной выдачей не
+        возвращается. Чат не привязан — 404 `chat_not_linked`.
+      security:
+        - serviceToken: []
+      x-access: { roles: [service] }
+      parameters:
+        - $ref: "#/components/parameters/TelegramChatId"
+      responses:
+        "200":
+          description: Дуэль (или состояние «на сегодня всё»)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramDailyDuel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/telegram/bot/chats/{chatId}/daily-duel/cancel:
+    post:
+      tags: [telegram]
+      operationId: cancelTelegramDailyDuel
+      summary: Отменить активное задание чата (служебная, для бота)
+      description: |
+        Только для бота (`X-Service-Token`): команда `/cancel` или кнопка «Отменить». Закрывает активный диалог
+        (`cancelled`) — голоса не было, новая дуэль доступна сразу. Нечего отменять (и повтор) — `cancelled: false`.
+        Чат не привязан — 404 `chat_not_linked`.
+      security:
+        - serviceToken: []
+      x-access: { roles: [service] }
+      parameters:
+        - $ref: "#/components/parameters/TelegramChatId"
+      responses:
+        "200":
+          description: Был ли активный диалог
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramDailyCancel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/telegram/bot/dialogs/{dialogId}/answer:
+    post:
+      tags: [telegram]
+      operationId: answerTelegramDailyDuel
+      summary: Ответ на ежедневное задание — голос (служебная, для бота)
+      description: |
+        Только для бота (`X-Service-Token`): нажатие кнопки выбора. Голос пишется в журнал `judgments` (только
+        вставка, правило 9) с контекстом `telegram` и группой голосующего, состояние исходника пересчитывается по
+        duel-v0, мёд — как в вебе (pending 3, при решении — final). `choice` — относительно порядка сторон из выдачи
+        (`a`/`b`), `both` — «Оба подходят», `skip` — «Не знаю» (без мёда). Время от выдачи до ответа API считает
+        сам. Ответ — только «учтён» и статус исходника: распределение голосов не показывается (защита от
+        конформизма, docs/03 §4a). Повтор той же кнопки — тот же ответ (`replay: true`), новой записи нет; другой
+        выбор по отвеченному диалогу — 409 `already_voted`; диалог отменён — 409 `dialog_closed`; нет диалога — 404
+        `dialog_not_found`.
+      security:
+        - serviceToken: []
+      x-access: { roles: [service] }
+      parameters:
+        - $ref: "#/components/parameters/TelegramDialogId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelegramDailyAnswerRequest"
+      responses:
+        "200":
+          description: Голос учтён (или уже был учтён)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramDailyAnswer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
   # ───────────────────────────── ministry: кабинет министерства (ADR 0023) ─────────────────────────────
   /api/v1/ministry/summary:
     get:
@@ -2605,6 +2719,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FundDictionary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/fund/escalated:
+    get:
+      tags: [fund]
+      operationId: listEscalatedItems
+      summary: Спорные случаи — для передачи экспертам
+      description: |
+        Исходники без консенсуса по duel-v0 (`status = escalated`, ADR 0019): оба варианта с голосами по группам и
+        временем последнего голоса. Отдельный список по ТЗ хакатона (§4.4, §5) — задел для передачи экспертам
+        (УФИЦ РАН); в хакатоне решение эксперта не реализуется. Голосующие не раскрываются — только числа по группам.
+        Свежие споры сверху.
+      x-access: { roles: [fund] }
+      responses:
+        "200":
+          description: Спорные исходники
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FundEscalated"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -2743,6 +2882,14 @@ components:
       description: Идентификатор личного чата с ботом (`chat.id` = `user.id` Telegram) — десятичной строкой
       schema:
         $ref: "#/components/schemas/TelegramChatIdValue"
+    TelegramDialogId:
+      name: dialogId
+      in: path
+      required: true
+      description: Идентификатор диалога ежедневного задания (FSM, ADR 0024) — из выдачи `daily-duel`
+      schema:
+        type: string
+        format: uuid
 
   headers:
     RetryAfter:
@@ -2869,7 +3016,8 @@ components:
         (409 — такое же задание уже активно).
         Значения Telegram (ADR 0020): `init_data_invalid` (422 — подпись `initData` не сошлась или строка не разобрана),
         `init_data_expired` (422 — `initData` старше суток), `telegram_unavailable` (503 — бот не настроен),
-        `chat_not_linked` (404 — чат не привязан).
+        `chat_not_linked` (404 — чат не привязан). Ежедневное задание бота (ADR 0024): `dialog_not_found`
+        (404 — диалога нет), `dialog_closed` (409 — диалог отменён или закрыт).
         Значения самостоятельного обучения (ADR 0022): `login_card_unavailable` (403 — личная карточка аккаунту
         не положена), `email_in_use` (409 — адрес уже у другого аккаунта), `email_already_set` (409),
         `already_in_class` (409 — ученик уже в классе). Список открыт: неизвестный `code`
@@ -5976,6 +6124,65 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TelegramReminderTarget"
+    TelegramDuelSide:
+      type: object
+      description: Вариант дуэли в порядке показа этому диалогу (A, B) — `choice` ответа относительно него
+      required: [variantId, text]
+      properties:
+        variantId:
+          type: string
+          format: uuid
+        text:
+          type: string
+          description: Башкирский вариант (`lang="ba"`)
+    TelegramDailyDuel:
+      type: object
+      description: |
+        Ежедневное задание (FSM в БД, ADR 0024). `state = issued` — диалог выдан: `dialogId` и стороны в порядке
+        показа; повторная выдача в эти же сутки возвращает тот же диалог. `done` — голос на эти сутки по Уфе уже
+        учтён; `empty` — свежих дуэлей для аккаунта нет. При `state ≠ issued` полей диалога нет.
+      required: [state]
+      properties:
+        state:
+          type: string
+          description: "issued — дуэль выдана; done — на сегодня всё; empty — нерешённых дуэлей нет"
+          enum: [issued, done, empty]
+        dialogId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+        sourceRu:
+          type: string
+          description: Исходник на русском
+        a:
+          $ref: "#/components/schemas/TelegramDuelSide"
+        b:
+          $ref: "#/components/schemas/TelegramDuelSide"
+    TelegramDailyAnswerRequest:
+      type: object
+      additionalProperties: false
+      required: [choice]
+      properties:
+        choice:
+          $ref: "#/components/schemas/DuelChoice"
+    TelegramDailyAnswer:
+      type: object
+      description: Голос учтён (replay — уже был учтён той же кнопкой, новой записи нет). Распределение голосов не отдаётся
+      required: [replay, status]
+      properties:
+        replay:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/ItemStatus"
+    TelegramDailyCancel:
+      type: object
+      required: [cancelled]
+      properties:
+        cancelled:
+          type: boolean
+          description: Был ли активный диалог (false — нечего было отменять или повтор)
 
     # ── ministry: кабинет министерства (ADR 0023) ──
     Suppression:
@@ -6279,6 +6486,70 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FundPair"
+    EscalatedVariant:
+      type: object
+      description: Вариант спорного исходника с голосами групп за него
+      required: [variantId, text, votes]
+      properties:
+        variantId:
+          type: string
+          format: uuid
+        text:
+          type: string
+          description: Башкирский вариант (`lang="ba"`)
+        review:
+          $ref: "#/components/schemas/ReviewStatus"
+        origin:
+          $ref: "#/components/schemas/VariantOrigin"
+        votes:
+          type: object
+          description: Голоса групп за этот вариант (без «Не знаю»)
+          required: [child, adult, teacher]
+          properties:
+            child:
+              $ref: "#/components/schemas/FundGroupVotes"
+            adult:
+              $ref: "#/components/schemas/FundGroupVotes"
+            teacher:
+              $ref: "#/components/schemas/FundGroupVotes"
+    EscalatedItem:
+      type: object
+      description: |
+        Спорный исходник — нет консенсуса по duel-v0 (ADR 0019). Кандидат на решение эксперта (УФИЦ РАН, ТЗ §4.4):
+        в хакатоне список только формируется, решение эксперта — задел на развитие.
+      required: [itemId, sourceRu, kind, variants, lastVoteAt]
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        sourceRu:
+          type: string
+          description: Русский исходник
+        kind:
+          $ref: "#/components/schemas/SourceKind"
+        variants:
+          type: array
+          description: Два варианта — по числу голосов каждой группы видно, где раскол
+          minItems: 2
+          maxItems: 2
+          items:
+            $ref: "#/components/schemas/EscalatedVariant"
+        lastVoteAt:
+          type: string
+          format: date-time
+          description: Последний голос по исходнику
+    FundEscalated:
+      type: object
+      required: [generatedAt, items]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          description: Свежие споры сверху
+          items:
+            $ref: "#/components/schemas/EscalatedItem"
 
   securitySchemes:
     bearerAuth:

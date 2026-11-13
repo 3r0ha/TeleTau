@@ -70,6 +70,9 @@ const TITLES: Record<string, string> = {
   init_data_expired: "Запуск из Telegram устарел — откройте приложение кнопкой в боте ещё раз",
   telegram_unavailable: "Telegram-бот пока не подключён",
   chat_not_linked: "Чат Telegram не привязан",
+  // Ежедневное задание бота (ADR 0024)
+  dialog_not_found: "Задание не найдено",
+  dialog_closed: "Задание уже закрыто",
   // Самостоятельное обучение (ADR 0022)
   login_card_unavailable: "Карточка входа для этого аккаунта не нужна",
   email_in_use: "Эта почта уже занята другим аккаунтом",

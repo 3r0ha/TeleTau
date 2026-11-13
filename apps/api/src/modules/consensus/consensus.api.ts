@@ -31,7 +31,7 @@ export interface VoteInput {
   /** variantId в порядке показа: A, B; choice — относительно них. */
   shown: readonly [string, string];
   choice: DuelChoice;
-  context: "lesson" | "corpus";
+  context: "lesson" | "corpus" | "telegram";
   /** Забег урока (context = lesson). */
   runId?: string;
   latencyMs?: number;
@@ -53,6 +53,16 @@ export interface ConsensusApi {
   pickDuels(voter: Voter, unitId: string, n: number): Promise<DuelCard[]>;
   /** Дуэль по внешнему id (ссылка duel в уроке); уже голосовал, нет такой или вариант отклонён носителем — undefined. */
   duelByRef(voter: Voter, externalId: string): Promise<DuelCard | undefined>;
+  /**
+   * Одна свежая дуэль курса вне урока для любого голосующего — ежедневное задание бота (ADR 0024): исходники, за
+   * которые участник ещё не голосовал, сначала в статусе voting, случайный выбор. Нет — undefined.
+   */
+  pickDailyDuel(voter: Voter): Promise<DuelCard | undefined>;
+  /**
+   * Дуэль по сохранённому показу диалога бота (ADR 0024): itemId и стороны в порядке выдачи. Исходника нет или
+   * вариант отклонён носителем — undefined (диалог закрывают и выдают свежую дуэль).
+   */
+  duelForDialog(itemId: string, shown: readonly [string, string]): Promise<DuelCard | undefined>;
   /**
    * Голос в журнал judgments (только вставка) с voter_group (child / teacher / adult — из voter) и rules_version,
    * пересчёт item_state по duel-v0 из всего журнала исходника (принятое решение закреплено), мёд за голос (pending 3) и при решении — pending → final

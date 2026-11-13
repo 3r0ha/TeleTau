@@ -30,3 +30,5 @@ playwright-report/
 .web-build.lock/
 # Локальный бэкап .env стенда — содержит секреты
 .env.bak-localhost
+# Серверный override портов docker-compose (docs/deploy.md §4) — не для репозитория
+docker-compose.override.yml

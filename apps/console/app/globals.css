@@ -562,6 +562,25 @@ code.table__sub {
   font-size: var(--tt-font-size-footnote);
 }
 
+/* Спорные случаи Фонда: два варианта одного исходника в одной ячейке, голоса — под каждым. */
+.duel-variants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s300);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.duel-variants li + li {
+  padding-top: var(--tt-space-s300);
+  border-top: 1px dashed var(--tt-color-border-subtle);
+}
+
+.duel-variants .votes {
+  margin-top: var(--tt-space-s150);
+}
+
 @media (max-width: 720px) {
   .table td.table__num {
     display: flex;

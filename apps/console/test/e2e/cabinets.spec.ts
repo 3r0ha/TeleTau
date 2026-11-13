@@ -1,6 +1,6 @@
-// Консоль: кабинет министерства «Республика» и «Словарь для Фонда» (ADR 0023) — axe, сортировка, переход к школам
-// района, скрытые малые группы, скачивание CSV и JSON, доступ по ролям. API и BFF сессии — сетевые моки по контракту.
-// Пары словаря — из демо-контента (content/corpus/duels/01-ufa.yaml, needs_native_review).
+// Консоль: кабинет министерства «Республика» и «Словарь для Фонда» + «Спорные случаи» (ADR 0023, ТЗ хакатона §4.4/§5) —
+// axe, сортировка, переход к школам района, скрытые малые группы, скачивание CSV и JSON, доступ по ролям. API и BFF
+// сессии — сетевые моки по контракту. Пары словаря — из демо-контента (content/corpus/duels/01-ufa.yaml, needs_native_review).
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -128,6 +128,26 @@ const dictionary: Schema<"FundDictionary"> = {
   ],
 };
 
+const escVariant = (n: number, text: string, v: Schema<"EscalatedVariant">["votes"]): Schema<"EscalatedVariant"> => ({
+  variantId: uuid(0x900 + n),
+  text,
+  review: "needs_native_review",
+  origin: "import",
+  votes: v,
+});
+const escalated: Schema<"FundEscalated"> = {
+  generatedAt: "2026-11-05T09:20:00Z",
+  items: [
+    {
+      itemId: uuid(0xa01),
+      sourceRu: "До свидания!",
+      kind: "phrase",
+      variants: [escVariant(1, "Һау булыгыҙ!", votes([7, 1, 12], [2, 0, 2], [0, 0, 0])), escVariant(2, "Күргәнсә!", votes([5, 0, 12], [0, 1, 2], [1, 0, 1]))],
+      lastVoteAt: "2026-11-05T08:12:00Z",
+    },
+  ],
+};
+
 const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, headers: { ...CORS, "content-type": "application/json" }, body: JSON.stringify(body) });
 const problem = (route: Route, status: number, code: string) =>
   route.fulfill({ status, headers: { ...CORS, "content-type": "application/problem+json" }, body: JSON.stringify({ type: "about:blank", title: "Ошибка", status, code } satisfies Problem) });
@@ -154,6 +174,7 @@ async function mock(page: Page, account: Schema<"Me">, opts: { empty?: boolean }
     if (path === `/ministry/districts/${districts[0]!.districtId}`) return json(route, 200, ufa);
     if (path === `/ministry/districts/${districts[3]!.districtId}`) return json(route, 200, tinyDistrict);
     if (path === "/fund/dictionary") return json(route, 200, opts.empty ? { generatedAt: dictionary.generatedAt, items: [] } : dictionary);
+    if (path === "/fund/escalated") return json(route, 200, opts.empty ? { generatedAt: escalated.generatedAt, items: [] } : escalated);
     return problem(route, 404, "not_found");
   });
   return { requests };
@@ -265,14 +286,16 @@ test("словарь для Фонда: пары с голосами по гру
   await axe(page, "словарь");
   await shot(page, "08-fund");
 
-  const [csv] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать таблицу (CSV)" }).click()]);
+  // Скачивание — из раздела словаря (ниже на странице есть ещё «Спорные случаи»).
+  const dict = page.getByRole("region", { name: "Словарь для Фонда" });
+  const [csv] = await Promise.all([page.waitForEvent("download"), dict.getByRole("button", { name: "Скачать таблицу (CSV)" }).click()]);
   expect(csv.suggestedFilename()).toBe("teletau-slovar-fond-2026-11-05.csv");
   const text = readFileSync((await csv.path())!, "utf8");
   expect(text.startsWith("\uFEFFРусский исходник;Башкирский вариант;")).toBe(true);
   expect(text).toContain("Здравствуйте!;Һаумыһығыҙ!;словосочетание;да;предварительно;ждёт проверки носителем;14;2;23;3;0;3;1;0;1;04.11.2026;голосование;duel-v0;из источника;");
   expect(text.trim().split("\r\n")).toHaveLength(1 + dictionary.items.length);
 
-  const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать данные (JSON)" }).click()]);
+  const [file] = await Promise.all([page.waitForEvent("download"), dict.getByRole("button", { name: "Скачать данные (JSON)" }).click()]);
   expect(file.suggestedFilename()).toBe("teletau-slovar-fond-2026-11-05.json");
   const body = JSON.parse(readFileSync((await file.path())!, "utf8")) as Schema<"FundDictionary"> & { note: string };
   expect(body.items).toEqual(dictionary.items);
@@ -280,6 +303,40 @@ test("словарь для Фонда: пары с голосами по гру
   expect(body.note).toMatch(/preliminary/);
   expect(body.note).toMatch(/экспертами/);
   expect(body.note).not.toMatch(/ADR|duel-v0|M4|Consensus Engine/);
+});
+
+test("спорные случаи: два варианта с голосами групп и датой последнего голоса, скачать CSV и JSON; axe", async ({ page }) => {
+  await mock(page, fund);
+  await page.goto("/fund");
+  const disputes = page.getByRole("region", { name: "Спорные случаи" });
+  await disputes.getByRole("heading", { name: "Спорные случаи" }).waitFor();
+  const row = disputes.getByRole("row", { name: /До свидания!/ });
+  await expect(row).toContainText("Һау булыгыҙ!");
+  await expect(row).toContainText("Күргәнсә!");
+  await expect(row).toContainText("вариант 1");
+  await expect(row).toContainText("вариант 2");
+  await expect(row).toContainText("Дети 7 из 12");
+  await expect(row).toContainText("Взрослые 2 из 2");
+  await expect(row).toContainText("Учителя 1 из 1");
+  await expect(row).toContainText("05.11.2026");
+  await axe(page, "спорные случаи");
+  await shot(page, "09-fund-escalated");
+
+  const [csv] = await Promise.all([page.waitForEvent("download"), disputes.getByRole("button", { name: "Скачать таблицу (CSV)" }).click()]);
+  expect(csv.suggestedFilename()).toBe("teletau-spory-fond-2026-11-05.csv");
+  const text = readFileSync((await csv.path())!, "utf8");
+  expect(text.startsWith("\uFEFFРусский исходник;Башкирский вариант;")).toBe(true);
+  expect(text).toContain("До свидания!;Һау булыгыҙ!;словосочетание;ждёт проверки носителем;из источника;7;1;12;2;0;2;0;0;0;05.11.2026;");
+  expect(text).toContain("До свидания!;Күргәнсә!;словосочетание;ждёт проверки носителем;из источника;5;0;12;0;1;2;1;0;1;05.11.2026;");
+  expect(text.trim().split("\r\n")).toHaveLength(1 + escalated.items[0]!.variants.length);
+
+  const [file] = await Promise.all([page.waitForEvent("download"), disputes.getByRole("button", { name: "Скачать данные (JSON)" }).click()]);
+  expect(file.suggestedFilename()).toBe("teletau-spory-fond-2026-11-05.json");
+  const body = JSON.parse(readFileSync((await file.path())!, "utf8")) as Schema<"FundEscalated"> & { note: string };
+  expect(body.items).toEqual(escalated.items);
+  expect(body.note).toMatch(/разошлись/);
+  expect(body.note).toMatch(/носителям/);
+  expect(body.note).not.toMatch(/ADR|duel-v0|эскалаци/i);
 });
 
 test("шапка: без выбора — светлая, даже в тёмной системе; значок темы переключает светлую и тёмную и запоминает выбор", async ({ page }) => {
@@ -303,10 +360,11 @@ test("шапка: без выбора — светлая, даже в тёмно
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
-test("словарь пуст — понятное пустое состояние без кнопок скачивания", async ({ page }) => {
+test("словарь и споры пусты — понятные пустые состояния без кнопок скачивания", async ({ page }) => {
   await mock(page, fund, { empty: true });
   await page.goto("/fund");
   await expect(page.getByRole("heading", { name: "Принятых пар пока нет" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Спорных случаев нет" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Скачать таблицу (CSV)" })).toHaveCount(0);
   await axe(page, "пустой словарь");
 });

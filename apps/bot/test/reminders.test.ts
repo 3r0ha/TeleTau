@@ -24,6 +24,7 @@ describe("отбор и отправка напоминаний", () => {
     expect(message.text).not.toMatch(/101|102/);
     expect(message.buttons).toEqual([
       [{ label: "Учиться", action: { kind: "openMiniApp", url: ctx.miniAppUrl } }],
+      [{ label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } }],
       [{ label: "Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }],
     ]);
     expect(sent[1]![1]).toEqual(message);
@@ -68,7 +69,10 @@ describe("отбор и отправка напоминаний", () => {
     api.due = ["1"];
     const sent: Outgoing[] = [];
     await sendDueReminders({ api, ctx: { miniAppUrl: undefined }, sleep: noSleep, send: async (_id, m) => void sent.push(m) });
-    expect(sent[0]?.buttons).toEqual([[{ label: "Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }]]);
+    expect(sent[0]?.buttons).toEqual([
+      [{ label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } }],
+      [{ label: "Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }],
+    ]);
     expect(sent[0]?.text).toBe(TEXT.reminder);
   });
 });

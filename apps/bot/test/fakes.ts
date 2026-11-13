@@ -1,17 +1,57 @@
 // Подделки для тестов бота без сети: API «ТелеТау» в памяти и Telegram Bot API через transformer grammY.
 import type { Bot } from "grammy";
 import type { UserFromGetMe } from "grammy/types";
-import { ApiUnavailableError, type ChatLink, type TeleTauApi, type Reminders } from "../src/core/ports.js";
+import { ApiUnavailableError, type ChatLink, type DailyDuel, type DuelAnswer, type DuelChoice, type TeleTauApi, type Reminders } from "../src/core/ports.js";
 
-/** API в памяти: привязки чатов, очередь «кому напомнить», журнал вызовов. */
+/** Исходник пула ежедневки: русский исходник и два башкирских варианта (тексты — синтетические, правило 6). */
+export interface FakeDuelItem {
+  sourceRu: string;
+  a: string;
+  b: string;
+}
+
+interface FakeDialog {
+  chatId: string;
+  item: number;
+  status: "issued" | "answered" | "cancelled";
+  choice?: string;
+  /** Сутки ответа (done — на эти сутки). */
+  answeredOn?: number;
+}
+
+/** API в памяти: привязки чатов, очередь «кому напомнить», мини-FSM ежедневки (как telegram_dialogs в API) и журнал вызовов. */
 export class FakeApi implements TeleTauApi {
   readonly links = new Map<string, Reminders>();
   readonly calls: string[] = [];
   due: string[] = [];
   down = false;
+  /** Пул дуэлей ежедневки; три синтетических исходника по умолчанию. */
+  pool: FakeDuelItem[] = [
+    { sourceRu: "Синтетическая фраза 1", a: "синтез1 икс", b: "синтез1 игрек" },
+    { sourceRu: "Синтетическая фраза 2", a: "синтез2 икс", b: "синтез2 игрек" },
+    { sourceRu: "Синтетическая фраза 3", a: "синтез3 икс", b: "синтез3 игрек" },
+  ];
+  /** Текущие «сутки по Уфе»: продвигаются nextDay() — на новые сутки выдаётся новая дуэль. */
+  day = 1;
+  /** Исходники, за которые аккаунт уже голосовал (кнопкой бота или «из веба» — externalVote). */
+  readonly votedItems = new Set<number>();
+  /** Диалоги в памяти: ключ — dialogId (UUID-подобный, как выдаёт API). */
+  readonly dialogs = new Map<string, FakeDialog>();
+  private seq = 0;
 
   link(chatId: string, reminders: Partial<Reminders> = {}): this {
     this.links.set(chatId, { enabled: false, hour: 18, ...reminders });
+    return this;
+  }
+
+  /** Сутки сменились: ответ вчера — не «done» сегодня. */
+  nextDay(): number {
+    return (this.day += 1);
+  }
+
+  /** «Голос из веба» по номеру исходника: из пула исключён, ответ кнопкой по выданному диалогу — voted. */
+  externalVote(item: number): this {
+    this.votedItems.add(item);
     return this;
   }
 
@@ -49,6 +89,64 @@ export class FakeApi implements TeleTauApi {
     const due = this.due;
     this.due = [];
     return due;
+  }
+
+  async dailyDuel(chatId: string): Promise<DailyDuel | null> {
+    this.check(`daily ${chatId}`);
+    if (!this.links.has(chatId)) return null;
+    // Активный диалог возвращается тем же (выдача идемпотентна), ответ в эти сутки — done, пул исчерпан — empty.
+    for (const [id, d] of this.dialogs) if (d.chatId === chatId && d.status === "issued") return this.issuedOf(id, d);
+    for (const d of this.dialogs.values()) if (d.chatId === chatId && d.status === "answered" && d.answeredOn === this.day) return { state: "done" };
+    const item = this.pool.findIndex((_, i) => !this.votedItems.has(i));
+    if (item === -1) return { state: "empty" };
+    this.seq += 1;
+    const id = `00000000-0000-4000-8000-${String(this.seq).padStart(12, "0")}`;
+    const d: FakeDialog = { chatId, item, status: "issued" };
+    this.dialogs.set(id, d);
+    return this.issuedOf(id, d);
+  }
+
+  async answerDuel(dialogId: string, choice: DuelChoice): Promise<DuelAnswer | null> {
+    this.check(`answer ${dialogId} ${choice}`);
+    const d = this.dialogs.get(dialogId);
+    if (!d) return null;
+    if (d.status === "cancelled") return { kind: "closed" };
+    if (d.status === "answered") return d.choice === choice ? { kind: "ok", replay: true } : { kind: "voted" };
+    if (this.votedItems.has(d.item)) {
+      // За исходник уже голосовали другим путём (веб): диалог закрывается — кнопка больше не отвечает.
+      d.status = "cancelled";
+      return { kind: "voted" };
+    }
+    d.status = "answered";
+    d.choice = choice;
+    d.answeredOn = this.day;
+    this.votedItems.add(d.item);
+    return { kind: "ok", replay: false };
+  }
+
+  async cancelDaily(chatId: string) {
+    this.check(`cancel ${chatId}`);
+    if (!this.links.has(chatId)) return null;
+    let cancelled = false;
+    for (const d of this.dialogs.values()) {
+      if (d.chatId === chatId && d.status === "issued") {
+        d.status = "cancelled";
+        cancelled = true;
+      }
+    }
+    return { cancelled };
+  }
+
+  private issuedOf(id: string, d: FakeDialog): DailyDuel {
+    const item = this.pool[d.item]!;
+    return {
+      state: "issued",
+      dialogId: id,
+      itemId: `00000000-0000-4000-8000-${String(d.item + 1).padStart(12, "0")}`,
+      sourceRu: item.sourceRu,
+      a: { variantId: `00000000-0000-4000-8000-${String(d.item + 101).padStart(12, "0")}`, text: item.a },
+      b: { variantId: `00000000-0000-4000-8000-${String(d.item + 201).padStart(12, "0")}`, text: item.b },
+    };
   }
 }
 

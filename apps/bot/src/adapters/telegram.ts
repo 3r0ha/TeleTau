@@ -1,6 +1,7 @@
 // Адаптер Telegram (grammY, long polling — публичный адрес не нужен). Чистые преобразования «ядро ⇄ Telegram» и тонкий
 // транспорт. Из обновлений Telegram берётся только технический chat id личного чата; имя, ник, фото и язык из `from`
-// не читаются (CLAUDE.md, правило 13). Групповые чаты бот не обслуживает: напоминания и привязка — только личные.
+// не читаются (CLAUDE.md, правило 13). Групповые чаты бот не обслуживает: привязка, напоминания и задание дня —
+// только личные.
 import { Bot, GrammyError } from "grammy";
 import type { BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, UserFromGetMe } from "grammy/types";
 import type { Button, Incoming, Outgoing } from "../core/messages.js";
@@ -34,6 +35,8 @@ export function fromTelegram(chatId: number, text: string): Incoming {
 /** Меню команд бота (setMyCommands). */
 export const COMMANDS: BotCommand[] = [
   { command: "start", description: "Начать" },
+  { command: "daily", description: "Задание дня" },
+  { command: "cancel", description: "Отменить задание" },
   { command: "remind", description: "Напоминания о серии" },
   { command: "remind_off", description: "Выключить напоминания" },
   { command: "unlink", description: "Отвязать этот чат" },

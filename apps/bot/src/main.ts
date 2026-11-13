@@ -17,7 +17,7 @@ if (!token) {
   if (!config.TELEGRAM_MINIAPP_URL) console.warn("bot: TELEGRAM_MINIAPP_URL не задан — кнопки «Учиться» не будет");
   else if (!miniAppUrl) console.warn("bot: TELEGRAM_MINIAPP_URL не https:// — Telegram открывает Mini App только по HTTPS, кнопки «Учиться» не будет");
   const api = config.BOT_SERVICE_TOKEN ? createTeleTauApi({ baseUrl: config.BOT_API_URL, serviceToken: config.BOT_SERVICE_TOKEN }) : null;
-  if (!api) console.warn("bot: BOT_SERVICE_TOKEN не задан — напоминания о серии выключены");
+  if (!api) console.warn("bot: BOT_SERVICE_TOKEN не задан — напоминания о серии и задание дня выключены");
 
   const ctx: BotContext = { miniAppUrl, api };
   const bot = createTelegramBot(token, ctx);

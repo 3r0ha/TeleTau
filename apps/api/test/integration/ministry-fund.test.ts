@@ -262,4 +262,59 @@ describe("словарь для Фонда (ADR 0023)", () => {
 
     for (const who of ["admin", "moderator", "ministry"] as const) expectStatus(await api.get("/fund/dictionary", { token: staff[who].accessToken }), 403);
   });
+
+  it("спорные случаи (ТЗ §4.4/§5): голоса групп по вариантам, без личных данных; в словарь не попадают; доступ — только у роли fund", async () => {
+    dir ??= mkdtempSync(join(tmpdir(), "teletau-fund-"));
+    mkdirSync(join(dir, "duels"), { recursive: true });
+    writeFileSync(join(dir, "sources.yaml"), `sources:\n  - id: synthetic-fund\n    title: "Синтетический источник Фонда"\n    url: https://example.org/fund\n    license: CC0\n    accessed: "2026-11-05"\n`);
+    const v = (text: string) => `\n      - ba: ${text}\n        source:\n          ref: synthetic-fund\n          url: https://example.org/fund/${encodeURIComponent(text)}\n          locator: строка «${text}»\n        review: needs_native_review`;
+    const ESC_UNIT = `it-esc-${RUN}`;
+    writeFileSync(join(dir, "duels", `${ESC_UNIT}.yaml`), `unit: ${ESC_UNIT}\nduels:\n  - id: ${ESC_UNIT}-d01\n    ru: "Синтетика спорная для Фонда"\n    kind: phrase\n    variants:${v("Спор икс")}${v("Спор игрек")}\n`);
+    await importDuels(pool, { dir: join(dir, "duels"), sourcesFile: join(dir, "sources.yaml") });
+    const item = (await api.app.get(CorpusService).duelPool(ESC_UNIT))[0]!;
+    const x = item.variants.find((w) => w.text.endsWith("икс"))!;
+    const y = item.variants.find((w) => w.text.endsWith("игрек"))!;
+
+    // Взрослый за «икс», учитель за «игрек»: duel-v0 не решает — спор ждёт эксперта (как в m2-duel).
+    const adult = await api.loginAdult(email("fund-esc-adult"));
+    await api.acceptRequiredConsents(adult.accessToken);
+    const teacher = await api.verifiedTeacher("fund-esc-teacher", staff.moderator.accessToken, 3);
+    const vote = (token: string, choice: string) =>
+      api.post<Schema<"CorpusItemVotes">>("/corpus/judgments", { token, body: { judgmentId: uuidv7(), itemId: item.itemId, shown: [x.id, y.id], choice } });
+    expectStatus(await vote(adult.accessToken, "a"), 201);
+    const t = await vote(teacher.accessToken, "b");
+    expectStatus(t, 201);
+    expect(t.body.status).toBe("escalated");
+
+    const res = await api.get<Schema<"FundEscalated">>("/fund/escalated", { token: staff.fund.accessToken });
+    expectStatus(res, 200);
+    const row = res.body.items.find((e) => e.itemId === item.itemId)!;
+    expect(row).toMatchObject({ sourceRu: "Синтетика спорная для Фонда", kind: "phrase", lastVoteAt: expect.any(String) });
+    expect(row.variants).toHaveLength(2);
+    const byId = new Map(row.variants.map((w) => [w.variantId, w]));
+    // total — все содержательные голоса группы (за любой вариант), votesFor — за этот вариант.
+    expect(byId.get(x.id)).toMatchObject({
+      text: x.text,
+      review: "needs_native_review",
+      origin: "import",
+      votes: { child: { votesFor: 0, both: 0, total: 0 }, adult: { votesFor: 1, both: 0, total: 1 }, teacher: { votesFor: 0, both: 0, total: 1 } },
+    });
+    expect(byId.get(y.id)).toMatchObject({ text: y.text, votes: { adult: { votesFor: 0, both: 0, total: 1 }, teacher: { votesFor: 1, both: 0, total: 1 } } });
+
+    // Спор и словарь не пересекаются: спорные — не «принятые», принятые — не спорные.
+    const dictionary = await api.get<Schema<"FundDictionary">>("/fund/dictionary", { token: staff.fund.accessToken });
+    expectStatus(dictionary, 200);
+    expect(dictionary.body.items.map((p) => p.itemId)).not.toContain(item.itemId);
+    const accepted = dictionary.body.items.find((p) => p.sourceRu === "Синтетика для Фонда");
+    expect(accepted).toBeDefined();
+    expect(res.body.items.map((e) => e.itemId)).not.toContain(accepted!.itemId);
+
+    // Ни аккаунтов, ни ПДн голосовавших — только тексты и числа.
+    const text = JSON.stringify(res.body);
+    expect(text).not.toContain(adult.account.id);
+    expect(text).not.toContain(teacher.account.id);
+    expect(text).not.toMatch(/nickname|email|accountId/i);
+
+    for (const who of ["admin", "moderator", "ministry"] as const) expectStatus(await api.get("/fund/escalated", { token: staff[who].accessToken }), 403);
+  });
 });

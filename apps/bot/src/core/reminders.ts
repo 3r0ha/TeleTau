@@ -37,7 +37,7 @@ export async function sendDueReminders(
     if (e instanceof ApiUnavailableError) return { ...run, apiUnavailable: true };
     throw e;
   }
-  const message = reminderMessage(deps.ctx);
+  const message = reminderMessage({ ...deps.ctx, api: deps.api });
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   for (const [i, chatId] of chats.entries()) {
     if (i > 0) await sleep(SEND_GAP_MS);

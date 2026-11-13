@@ -10,7 +10,7 @@ import { tstz } from "../../db/columns.js";
 export const voterGroup = pgEnum("consensus_voter_group", ["child", "teacher", "adult", "expert"]);
 export const judgmentType = pgEnum("consensus_judgment_type", ["pairwise", "expert_decision"]);
 export const duelChoice = pgEnum("consensus_duel_choice", ["a", "b", "both", "skip"]);
-export const judgmentContext = pgEnum("consensus_judgment_context", ["lesson", "corpus"]);
+export const judgmentContext = pgEnum("consensus_judgment_context", ["lesson", "corpus", "telegram"]);
 export const itemStatus = pgEnum("consensus_item_status", ["voting", "accepted", "escalated"]);
 export const decidedBy = pgEnum("consensus_decided_by", ["rule", "expert"]);
 

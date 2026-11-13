@@ -99,6 +99,13 @@
       "when": 1793993380529,
       "tag": "0013_jump",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794558104161,
+      "tag": "0014_tz_daily_duel",
+      "breakpoints": true
     }
   ]
 }

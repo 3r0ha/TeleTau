@@ -66,6 +66,26 @@ export class ConsensusService implements ConsensusApi {
     return (await this.notVotedBy(voter.accountId, [item])).length > 0 ? this.card(item) : undefined;
   }
 
+  async pickDailyDuel(voter: Voter): Promise<DuelCard | undefined> {
+    const fresh = await this.notVotedBy(voter.accountId, await this.corpus.allDuels());
+    if (fresh.length === 0) return undefined;
+    // Свежая дуэль вне урока (ежедневное задание бота, ADR 0024): сначала исходники в voting, внутри — случайно.
+    const states = await this.states(this.db, fresh.map((i) => i.itemId));
+    const rank = (i: DuelItem) => ((states.get(i.itemId)?.status ?? "voting") === "voting" ? 0 : 1);
+    const [pick] = shuffle(fresh).sort((x, y) => rank(x) - rank(y));
+    return pick ? this.card(pick) : undefined;
+  }
+
+  async duelForDialog(itemId: string, shown: readonly [string, string]): Promise<DuelCard | undefined> {
+    const item = (await this.corpus.items([itemId], { withRejected: true })).get(itemId);
+    if (!item) return undefined;
+    // Стороны — в порядке выдачи диалога (не каноническом и не случайном заново): choice ответа относительно него.
+    const a = item.variants.find((v) => v.id === shown[0]);
+    const b = item.variants.find((v) => v.id === shown[1]);
+    if (!a || !b || !playable(a) || !playable(b)) return undefined;
+    return { itemId: item.itemId, sourceRu: item.sourceRu, a: { variantId: a.id, text: a.text }, b: { variantId: b.id, text: b.text }, review: reviewOf(item), sources: item.sources };
+  }
+
   async recordVote(tx: Db, vote: VoteInput): Promise<VoteReceipt> {
     const group = voterGroupOf(vote.voter);
     if (!group) throw forbidden();
@@ -304,6 +324,40 @@ export class ConsensusService implements ConsensusApi {
       this.fundDictionary(),
     ]);
     return { votes: votes?.n ?? 0, pairsAccepted: dictionary.items.length };
+  }
+
+  /**
+   * Спорные исходники (status = escalated, отдельный список по ТЗ хакатона §4.4/§5) с голосами групп по вариантам —
+   * для передачи экспертам (УФИЦ РАН); решение эксперта — задел после хакатона. Свежие споры сверху.
+   */
+  async fundEscalated(now: Date = new Date()): Promise<Schema<"FundEscalated">> {
+    const rows = await this.db.select().from(itemState).where(eq(itemState.status, "escalated")).orderBy(desc(itemState.updatedAt));
+    const items = await this.corpus.items(
+      rows.map((s) => s.sourceItemId),
+      { withRejected: true },
+    );
+    const out: Schema<"EscalatedItem">[] = [];
+    for (const state of rows) {
+      const item = items.get(state.sourceItemId);
+      // Оба варианта должны быть видимы; отклонённый носителем спор уже не спор.
+      const shown = item?.variants.filter(playable) ?? [];
+      if (!item || shown.length !== 2) continue;
+      const byGroup = (state.votesByGroup ?? {}) as Partial<VotesByGroup>;
+      const votes = (g: StoredGroupTally | undefined, variantId: string): Schema<"FundGroupVotes"> => ({
+        votesFor: g?.variants[variantId] ?? 0,
+        both: g?.both ?? 0,
+        total: Math.max(0, (g?.total ?? 0) - (g?.skip ?? 0)),
+      });
+      const variants: Schema<"EscalatedVariant">[] = shown.map((v) => ({
+        variantId: v.id,
+        text: v.text,
+        review: v.review as Schema<"ReviewStatus">,
+        origin: v.origin,
+        votes: { child: votes(byGroup.child, v.id), adult: votes(byGroup.adult, v.id), teacher: votes(byGroup.teacher, v.id) },
+      }));
+      out.push({ itemId: item.itemId, sourceRu: item.sourceRu, kind: item.kind, variants, lastVoteAt: state.updatedAt.toISOString() });
+    }
+    return { generatedAt: now.toISOString(), items: out };
   }
 
   // ── внутреннее ──

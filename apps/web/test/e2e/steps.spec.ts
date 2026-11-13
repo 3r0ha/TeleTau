@@ -96,6 +96,9 @@ test.describe("M1-14/M1-15: заявка учителя", () => {
 
 test.describe("M1-15: у каждой страницы свой заголовок вкладки", () => {
   test("заголовки различаются и описывают страницу", async ({ page }) => {
+    // Инвентаризация заголовков: 11 полных загрузок страниц подряд. В одиночку ~10 с, под нагрузкой
+    // параллельных воркеров (4 браузера с axe) — кратно дольше; 30 с общего бюджета тесту мало.
+    test.setTimeout(90_000);
     const titles = new Map<string, string>();
     const open = async (path: string, account: Parameters<typeof mockBackend>[1]) => {
       const ctx = await page.context().newPage();

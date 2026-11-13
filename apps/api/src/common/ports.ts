@@ -41,6 +41,11 @@ export interface AccountsPort {
   /** Цель дня, выбранная учеником (1–3 соты), или undefined — по умолчанию (progress, ADR 0022). */
   dailyGoalTarget(db: Db, accountId: string): Promise<number | undefined>;
   /**
+   * Тип и роли аккаунта по id — группа голосующего (child / teacher / adult) для голоса в боте по привязке чата
+   * (ADR 0024): как снимок в access-токене, только без сессии. `db` — читать в транзакции вызывающего. Нет — undefined.
+   */
+  voterView(db: Db, accountId: string): Promise<Pick<Principal, "kind" | "roles"> | undefined>;
+  /**
    * Для кабинета министерства (ADR 0023): действующие аккаунты «Учусь сам» (ADR 0022) — идентификаторы только для
    * подсчётов, в ответы API они не попадают — и число подтверждённых учителей (роль teacher).
    */

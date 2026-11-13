@@ -4,6 +4,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { hmacHex } from "../../common/crypto.js";
+import type { Principal } from "../../common/auth.js";
 import type { AccountsPort, AdultProfileView } from "../../common/ports.js";
 import { APP_CONFIG, type AppConfig } from "../../config/config.js";
 import { pgErrorCode, type Db } from "../../db/database.js";
@@ -212,6 +213,11 @@ export class AccountsService implements AccountsPort {
   async dailyGoalTarget(db: Db, accountId: string): Promise<number | undefined> {
     const [row] = await db.select({ dailyGoal: accounts.dailyGoal }).from(accounts).where(eq(accounts.id, accountId));
     return row?.dailyGoal ?? undefined;
+  }
+
+  async voterView(db: Db, accountId: string): Promise<Pick<Principal, "kind" | "roles"> | undefined> {
+    const [row] = await db.select({ kind: accounts.kind, roles: accounts.roles }).from(accounts).where(eq(accounts.id, accountId));
+    return row ?? undefined;
   }
 
   async republicAccounts(): Promise<{ selfLearnerIds: string[]; teachersVerified: number }> {

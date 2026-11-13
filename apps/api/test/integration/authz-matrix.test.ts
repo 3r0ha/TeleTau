@@ -212,6 +212,12 @@ const MATRIX: Record<OperationId, Row> = {
     wrongRole: { as: "ministry", status: 403, note: "министерство видит только агрегаты, не словарь" },
     foreign: NA_NO_POLICY,
   },
+  listEscalatedItems: {
+    req: () => ({ path: "/fund/escalated" }),
+    anonymous: 401,
+    wrongRole: { as: "moderator", status: 403, note: "спорные случаи — только Фонд (ТЗ §4.4/§5)" },
+    foreign: NA_NO_POLICY,
+  },
 
   // ── Тропа, уроки, мотивация, дуэли. Отказы 401/403 — до обработчика (x-access) или от политики ресурса;
   // чужой забег урока (политика self) неотличим от несуществующего — 404 (настоящий забег ученика A, fixture.runA). ──
@@ -340,6 +346,24 @@ const MATRIX: Record<OperationId, Row> = {
     req: () => ({ path: "/telegram/bot/reminders/claim" }),
     anonymous: 401,
     wrongRole: { as: "teacher", status: 403 },
+    foreign: NA_SERVICE,
+  },
+  issueTelegramDailyDuel: {
+    req: () => ({ path: "/telegram/bot/chats/279058397/daily-duel" }),
+    anonymous: 401,
+    wrongRole: { as: "student", status: 403, note: "ежедневка бота — служебная операция, не операция ученика" },
+    foreign: NA_SERVICE,
+  },
+  cancelTelegramDailyDuel: {
+    req: () => ({ path: "/telegram/bot/chats/279058397/daily-duel/cancel" }),
+    anonymous: 401,
+    wrongRole: { as: "adult", status: 403 },
+    foreign: NA_SERVICE,
+  },
+  answerTelegramDailyDuel: {
+    req: () => ({ path: `/telegram/bot/dialogs/${randomUUID()}/answer`, body: { choice: "a" } }),
+    anonymous: 401,
+    wrongRole: { as: "moderator", status: 403 },
     foreign: NA_SERVICE,
   },
 

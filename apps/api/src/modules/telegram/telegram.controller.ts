@@ -38,6 +38,27 @@ export class TelegramController {
     return this.telegram.setReminders(chatId, body);
   }
 
+  @Post("telegram/bot/chats/:chatId/daily-duel")
+  @HttpCode(200)
+  @Operation("issueTelegramDailyDuel")
+  dailyDuel(@Param("chatId") chatId: string): Promise<Schema<"TelegramDailyDuel">> {
+    return this.telegram.dailyDuel(chatId);
+  }
+
+  @Post("telegram/bot/chats/:chatId/daily-duel/cancel")
+  @HttpCode(200)
+  @Operation("cancelTelegramDailyDuel")
+  cancelDaily(@Param("chatId") chatId: string): Promise<Schema<"TelegramDailyCancel">> {
+    return this.telegram.cancelDaily(chatId);
+  }
+
+  @Post("telegram/bot/dialogs/:dialogId/answer")
+  @HttpCode(200)
+  @Operation("answerTelegramDailyDuel")
+  answer(@Param("dialogId") dialogId: string, @Body() body: Schema<"TelegramDailyAnswerRequest">): Promise<Schema<"TelegramDailyAnswer">> {
+    return this.telegram.answerDialog(dialogId, body);
+  }
+
   @Post("telegram/bot/reminders/claim")
   @HttpCode(200)
   @Operation("claimTelegramReminders")

@@ -4,16 +4,22 @@
 process.env["NEST_LOG_LEVEL"] = "verbose,debug,log,warn,error,fatal";
 
 import { randomUUID } from "node:crypto";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { Schema } from "@teletau/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Principal } from "../../src/common/auth.js";
+import { ACCOUNTS_PORT } from "../../src/common/ports.js";
 import type { Db } from "../../src/db/database.js";
 import { DB } from "../../src/infra/tokens.js";
+import { ConsensusService } from "../../src/modules/consensus/index.js";
+import { importDuels } from "../../src/modules/corpus/duels-import.js";
 import { ProgressService } from "../../src/modules/progress/index.js";
 import { TelegramService } from "../../src/modules/telegram/index.js";
 import { signInitData } from "../../src/modules/telegram/init-data.js";
 import { scanPdf } from "../support/pdf-qr.js";
-import { bootApi, email, expectStatus, newDevice, testConfig, type AuthSession, type TestApi } from "./harness.js";
+import { bootApi, email, expectStatus, newDevice, RUN, testConfig, type AuthSession, type TestApi } from "./harness.js";
 
 type Problem = Schema<"Problem">;
 
@@ -144,7 +150,7 @@ describe("POST /telegram/link — привязка чата по подписи 
 
   it("бот не настроен (нет TELEGRAM_BOT_TOKEN) — 503 telegram_unavailable", async () => {
     const config = { ...testConfig(), TELEGRAM_BOT_TOKEN: undefined };
-    const svc = new TelegramService(db, config, api.app.get(ProgressService));
+    const svc = new TelegramService(db, config, api.app.get(ProgressService), api.app.get(ConsensusService), api.app.get(ACCOUNTS_PORT));
     const principal: Principal = { accountId: adult.account.id, kind: "adult", roles: [], sessionId: "", deviceId: "" };
     await expect(svc.link(principal, { initData: initData(newChat()) })).rejects.toMatchObject({ status: 503, code: "telegram_unavailable" });
   });
@@ -287,5 +293,210 @@ describe("напоминания о серии: кому и когда (подм
     expect(all).not.toMatch(/Айгуль|Тестова|aigul_it_profile|userpic|AAE-it-query|auth_date=|tgWebAppData/);
     expect(all).not.toContain(SERVICE_TOKEN);
     expect(all).not.toContain(BOT_TOKEN);
+  });
+});
+
+describe("ежедневное задание бота (ADR 0024): FSM-диалог, голос, одна дуэль в сутки по Уфе", () => {
+  const UNIT = `tg-${RUN}`;
+  const telegram = () => api.app.get(TelegramService);
+  const principalOf = (s: AuthSession): Principal => ({ accountId: s.account.id, kind: s.account.kind, roles: s.account.roles, sessionId: "", deviceId: "" });
+
+  // Синтетические дуэли в своей директории (как m2-duel.test.ts): три исходника, голоса — только этого прогона.
+  const SOURCES = `sources:
+  - id: synthetic-tg
+    title: "Синтетический источник Telegram-теста"
+    url: https://example.org/tg
+    license: CC0
+    accessed: "2026-11-04"
+`;
+  const duel = (n: number) => `  - id: ${UNIT}-d0${n}
+    ru: "Синтетическая фраза ${n}"
+    kind: phrase
+    variants:
+      - ba: синтез${n} икс
+        source:
+          ref: synthetic-tg
+          url: https://example.org/tg/${n}x
+          locator: строка «икс ${n}»
+        review: needs_native_review
+      - ba: синтез${n} игрек
+        source:
+          ref: synthetic-tg
+          url: https://example.org/tg/${n}y
+          locator: строка «игрек ${n}»
+        review: needs_native_review
+`;
+
+  /** Чат ученика и выданный ему диалог (ответ и replay — в следующем тесте). */
+  let chat: number;
+  let dialog: Schema<"TelegramDailyDuel">;
+
+  const issue = (chatId: number) => api.post<Schema<"TelegramDailyDuel">>(`/telegram/bot/chats/${chatId}/daily-duel`, { headers: service });
+  const answer = (dialogId: string, choice: string) =>
+    api.post<Schema<"TelegramDailyAnswer">>(`/telegram/bot/dialogs/${dialogId}/answer`, { headers: service, body: { choice } });
+  const judgmentIdOf = async (dialogId: string) =>
+    (await pool.query<{ judgment_id: string }>("SELECT judgment_id FROM telegram_dialogs WHERE dialog_id = $1", [dialogId])).rows[0]!.judgment_id;
+  const dialogStatus = async (dialogId: string) =>
+    (await pool.query<{ status: string }>("SELECT status::text AS status FROM telegram_dialogs WHERE dialog_id = $1", [dialogId])).rows[0]?.status;
+
+  beforeAll(async () => {
+    const dir = mkdtempSync(join(tmpdir(), "tg-daily-"));
+    writeFileSync(join(dir, "sources.yaml"), SOURCES);
+    mkdirSync(join(dir, "duels"));
+    writeFileSync(join(dir, "duels", "duels.yaml"), `unit: ${UNIT}\nduels:\n${duel(1)}${duel(2)}${duel(3)}`);
+    await importDuels(pool, { dir: join(dir, "duels"), sourcesFile: join(dir, "sources.yaml") });
+    chat = newChat();
+    expectStatus(await api.post("/telegram/link", { token: student.accessToken, body: { initData: initData(chat) } }), 200);
+    dialog = (await issue(chat)).body;
+  });
+
+  it("выдача: dialogId, исходник и стороны A/B; повтор — тот же диалог и тот же порядок сторон; аккаунта в ответе нет", async () => {
+    expect(dialog.state).toBe("issued");
+    expect(dialog.dialogId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(dialog.sourceRu).toMatch(/^Синтетическая фраза \d$/);
+    expect(dialog.a).toBeDefined();
+    expect(dialog.b).toBeDefined();
+    expect(dialog.a!.text).not.toBe(dialog.b!.text);
+    expect(JSON.stringify(dialog)).not.toContain(student.account.id);
+    expect((await dialogStatus(dialog.dialogId!))).toBe("issued");
+
+    const again = await issue(chat);
+    expectStatus(again, 200);
+    expect(again.body).toEqual(dialog);
+  });
+
+  it("ответ: голос ребёнка в журнале с контекстом telegram, мёд pending 3; та же кнопка — replay, другой выбор — 409 already_voted", async () => {
+    const judgmentId = await judgmentIdOf(dialog.dialogId!);
+    const answered = await answer(dialog.dialogId!, "a");
+    expectStatus(answered, 200);
+    expect(answered.body.replay).toBe(false);
+    expect(["voting", "accepted", "escalated"]).toContain(answered.body.status);
+
+    const [row] = (
+      await pool.query<{ context: string; choice: string; vg: string; variant_a_id: string; variant_b_id: string; latency_ms: number }>(
+        "SELECT context::text AS context, choice::text AS choice, voter_group::text AS vg, variant_a_id, variant_b_id, latency_ms FROM judgments WHERE id = $1",
+        [judgmentId],
+      )
+    ).rows;
+    // Порядок показа — из строки диалога: choice «a» — это вариант A выдачи; группа — из типа аккаунта (ребёнок).
+    expect(row).toMatchObject({ context: "telegram", choice: "a", vg: "child", variant_a_id: dialog.a!.variantId, variant_b_id: dialog.b!.variantId });
+    expect(row!.latency_ms).toBeGreaterThanOrEqual(0);
+    // Мёд — как в вебе: pending 3 (мёд «созревает» — ADR 0019).
+    const honey = (await pool.query<{ status: string; amount: number }>("SELECT status::text AS status, amount FROM xp_ledger WHERE reason = 'vote' AND ref_id = $1", [judgmentId])).rows;
+    expect(honey).toEqual([{ status: "pending", amount: 3 }]);
+    expect((await dialogStatus(dialog.dialogId!))).toBe("answered");
+
+    // Повторное нажатие той же кнопки — тот же ответ, помеченный replay (новой записи в журнале нет).
+    const replay = await answer(dialog.dialogId!, "a");
+    expectStatus(replay, 200);
+    expect(replay.body).toEqual({ replay: true, status: answered.body.status });
+    // Другой выбор по отвеченному диалогу — второй голос за исходник запрещён.
+    const other = await api.post<Schema<"Problem">>(`/telegram/bot/dialogs/${dialog.dialogId}/answer`, { headers: service, body: { choice: "b" } });
+    expect([other.status, other.body.code]).toEqual([409, "already_voted"]);
+    // Ответ в эти же сутки по Уфе уже учтён — новая дуэль не выдаётся.
+    const done = await issue(chat);
+    expectStatus(done, 200);
+    expect(done.body).toEqual({ state: "done" });
+  });
+
+  it("отмена: активный диалог закрывается без голоса; повтор — false; ответ по закрытому — 409 dialog_closed; затем — свежая дуэль", async () => {
+    const adultChat = newChat();
+    expectStatus(await api.post("/telegram/link", { token: adult.accessToken, body: { initData: initData(adultChat) } }), 200);
+    const issued = (await issue(adultChat)).body;
+    expect(issued.state).toBe("issued");
+    expect((await api.post<Schema<"TelegramDailyCancel">>(`/telegram/bot/chats/${adultChat}/daily-duel/cancel`, { headers: service })).body).toEqual({ cancelled: true });
+    expect((await api.post<Schema<"TelegramDailyCancel">>(`/telegram/bot/chats/${adultChat}/daily-duel/cancel`, { headers: service })).body).toEqual({ cancelled: false });
+    expect(await dialogStatus(issued.dialogId!)).toBe("cancelled");
+
+    const closed = await api.post<Schema<"Problem">>(`/telegram/bot/dialogs/${issued.dialogId}/answer`, { headers: service, body: { choice: "both" } });
+    expect([closed.status, closed.body.code]).toEqual([409, "dialog_closed"]);
+    expect((await pool.query<{ n: number }>("SELECT count(*)::int AS n FROM judgments WHERE id = $1", [await judgmentIdOf(issued.dialogId!)])).rows[0]).toEqual({ n: 0 });
+
+    // Кнопки старого диалога больше не отвечают: следующая выдача — другой диалог (взрослый голосует — группа adult).
+    const reissued = await issue(adultChat);
+    expectStatus(reissued, 200);
+    expect(reissued.body.state).toBe("issued");
+    expect(reissued.body.dialogId).not.toBe(issued.dialogId);
+    const voted = await answer(reissued.body.dialogId!, "b");
+    expectStatus(voted, 200);
+    const [row] = (await pool.query<{ vg: string }>("SELECT voter_group::text AS vg FROM judgments WHERE id = $1", [await judgmentIdOf(reissued.body.dialogId!)])).rows;
+    expect(row).toEqual({ vg: "adult" });
+  });
+
+  it("чужой dialogId — 404 dialog_not_found; мусорный — 422; непривязанный чат — 404 chat_not_linked; тело — 422", async () => {
+    const missing = await api.post<Schema<"Problem">>(`/telegram/bot/dialogs/${randomUUID()}/answer`, { headers: service, body: { choice: "a" } });
+    expect([missing.status, missing.body.code]).toEqual([404, "dialog_not_found"]);
+    expect((await api.post("/telegram/bot/dialogs/not-a-uuid/answer", { headers: service, body: { choice: "a" } })).status).toBe(422);
+    const unlinked = await api.post<Schema<"Problem">>(`/telegram/bot/chats/${newChat()}/daily-duel`, { headers: service });
+    expect([unlinked.status, unlinked.body.code]).toEqual([404, "chat_not_linked"]);
+    expect((await api.post(`/telegram/bot/dialogs/${randomUUID()}/answer`, { headers: service, body: { choice: "a", extra: 1 } })).status).toBe(422);
+    expect((await api.post(`/telegram/bot/dialogs/${randomUUID()}/answer`, { headers: service, body: { choice: "x" } })).status).toBe(422);
+  });
+
+  it("одна дуэль в сутки по Уфе: после ответа — done; в следующие сутки — новая; «Не знаю» — без мёда; пул исчерпан — empty", async () => {
+    const fresh = await api.loginAdult(email("tg-daily"));
+    const freshChat = newChat();
+    await telegram().link(principalOf(fresh), { initData: initData(freshChat) });
+    const day = (n: number) => new Date(`2026-11-1${n}T10:00:00Z`); // 15:00 по Уфе, три следующих суток
+
+    // База у файлов прогона общая: к этому моменту в корпусе уже реальный дуэли (achievements.test.ts) и синтетика
+    // других файлов. Выкачиваем пул этой учётной записи ответами «Не знаю» — исходник выбывает из пула голосующего
+    // при любом choice, а «Не знаю» мёда не приносит. Дни слива — сентябрь/октябрь: до сценария ниже не пересекаются
+    // ни с окном 48 часов, ни с сутками по Уфе.
+    let drained: Schema<"TelegramDailyDuel"> | undefined;
+    for (let i = 0; i < 400; i++) {
+      const at = new Date(Date.UTC(2026, 8, 1 + i));
+      drained = await telegram().dailyDuel(String(freshChat), at);
+      if (drained.state !== "issued") break;
+      await telegram().answerDialog(drained.dialogId!, { choice: "skip" }, at);
+    }
+    expect(drained?.state).toBe("empty");
+
+    // Свой пул ровно на трое суток: три свежие синтетические дуэли, которых эта учётная запись ещё не видела.
+    const dir = mkdtempSync(join(tmpdir(), "tg-daily-pool"));
+    writeFileSync(join(dir, "sources.yaml"), SOURCES);
+    mkdirSync(join(dir, "duels"));
+    writeFileSync(join(dir, "duels", "duels.yaml"), `unit: ${UNIT}-pool\nduels:\n${duel(4)}${duel(5)}${duel(6)}`);
+    await importDuels(pool, { dir: join(dir, "duels"), sourcesFile: join(dir, "sources.yaml") });
+
+    const d1 = await telegram().dailyDuel(String(freshChat), day(0));
+    expect(d1.state).toBe("issued");
+    expect((await telegram().answerDialog(d1.dialogId!, { choice: "a" }, day(0))).replay).toBe(false);
+    expect(await telegram().dailyDuel(String(freshChat), day(0))).toEqual({ state: "done" });
+
+    const d2 = await telegram().dailyDuel(String(freshChat), day(1));
+    expect(d2.state).toBe("issued");
+    expect(d2.dialogId).not.toBe(d1.dialogId);
+    await telegram().answerDialog(d2.dialogId!, { choice: "b" }, day(1));
+    const d3 = await telegram().dailyDuel(String(freshChat), day(2));
+    expect(d3.state).toBe("issued");
+    await telegram().answerDialog(d3.dialogId!, { choice: "skip" }, day(2));
+
+    expect(await telegram().dailyDuel(String(freshChat), day(3))).toEqual({ state: "empty" });
+    // Мёд — за два содержательных голоса («Не знаю» — без мёда).
+    expect((await pool.query<{ n: number }>("SELECT count(*)::int AS n FROM xp_ledger WHERE account_id = $1 AND reason = 'vote'", [fresh.account.id])).rows[0]).toEqual({ n: 2 });
+  });
+
+  it("повторная привязка чата к другому аккаунту закрывает выданный диалог; отвязка удаляет диалоги чата", async () => {
+    const holder = await api.loginAdult(email("tg-holder"));
+    const shared = newChat();
+    await telegram().link(principalOf(holder), { initData: initData(shared) });
+    const issued = await telegram().dailyDuel(String(shared), new Date("2026-11-10T10:00:00Z"));
+    expect(issued.state).toBe("issued");
+
+    // Чат переходит к ученику: диалог прежнего владельца закрыт — голос не уйдёт от прошлого аккаунта привязки.
+    expectStatus(await api.post("/telegram/link", { token: student.accessToken, body: { initData: initData(shared) } }), 200);
+    expect(await dialogStatus(issued.dialogId!)).toBe("cancelled");
+    const stale = await api.post<Schema<"Problem">>(`/telegram/bot/dialogs/${issued.dialogId}/answer`, { headers: service, body: { choice: "a" } });
+    expect([stale.status, stale.body.code]).toEqual([409, "dialog_closed"]);
+
+    // Ученик из этого же чата получает свою дуэлю.
+    const mine = await telegram().dailyDuel(String(shared), new Date("2026-11-12T10:00:00Z"));
+    expect(mine.state).toBe("issued");
+    // Отвязка: диалоги чата удалены — данных о чате не остаётся (как у привязки).
+    expect((await api.del(`/telegram/bot/chats/${shared}`, { headers: service })).status).toBe(204);
+    expect((await pool.query<{ n: number }>("SELECT count(*)::int AS n FROM telegram_dialogs WHERE chat_id = $1", [shared])).rows[0]).toEqual({ n: 0 });
+    const gone = await api.post<Schema<"Problem">>(`/telegram/bot/dialogs/${mine.dialogId}/answer`, { headers: service, body: { choice: "a" } });
+    expect([gone.status, gone.body.code]).toEqual([404, "dialog_not_found"]);
   });
 });

@@ -1494,6 +1494,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/telegram/bot/chats/{chatId}/daily-duel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ежедневное задание для чата — дуэль (служебная, для бота)
+         * @description Только для бота (`X-Service-Token`): команда `/daily` или кнопка «Задание дня». Выдаёт связанному аккаунту
+         *     дуэль «Помоги языку» (ADR 0019, ADR 0024) — одну в сутки по Уфе. Диалог — FSM в БД: активный диалог один
+         *     на аккаунт, повторный вызов возвращает тот же диалог и тот же порядок сторон (перезапуск бота ничего не
+         *     теряет). `state = issued` — выданная дуэль; `done` — голос на эти сутки по Уфе уже учтён (новой дуэли не
+         *     будет); `empty` — свежих дуэлей для аккаунта нет. Ответивший или отменённый диалог повторной выдачей не
+         *     возвращается. Чат не привязан — 404 `chat_not_linked`.
+         */
+        post: operations["issueTelegramDailyDuel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/telegram/bot/chats/{chatId}/daily-duel/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Отменить активное задание чата (служебная, для бота)
+         * @description Только для бота (`X-Service-Token`): команда `/cancel` или кнопка «Отменить». Закрывает активный диалог
+         *     (`cancelled`) — голоса не было, новая дуэль доступна сразу. Нечего отменять (и повтор) — `cancelled: false`.
+         *     Чат не привязан — 404 `chat_not_linked`.
+         */
+        post: operations["cancelTelegramDailyDuel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/telegram/bot/dialogs/{dialogId}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ответ на ежедневное задание — голос (служебная, для бота)
+         * @description Только для бота (`X-Service-Token`): нажатие кнопки выбора. Голос пишется в журнал `judgments` (только
+         *     вставка, правило 9) с контекстом `telegram` и группой голосующего, состояние исходника пересчитывается по
+         *     duel-v0, мёд — как в вебе (pending 3, при решении — final). `choice` — относительно порядка сторон из выдачи
+         *     (`a`/`b`), `both` — «Оба подходят», `skip` — «Не знаю» (без мёда). Время от выдачи до ответа API считает
+         *     сам. Ответ — только «учтён» и статус исходника: распределение голосов не показывается (защита от
+         *     конформизма, docs/03 §4a). Повтор той же кнопки — тот же ответ (`replay: true`), новой записи нет; другой
+         *     выбор по отвеченному диалогу — 409 `already_voted`; диалог отменён — 409 `dialog_closed`; нет диалога — 404
+         *     `dialog_not_found`.
+         */
+        post: operations["answerTelegramDailyDuel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ministry/summary": {
         parameters: {
             query?: never;
@@ -1581,6 +1655,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/fund/escalated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Спорные случаи — для передачи экспертам
+         * @description Исходники без консенсуса по duel-v0 (`status = escalated`, ADR 0019): оба варианта с голосами по группам и
+         *     временем последнего голоса. Отдельный список по ТЗ хакатона (§4.4, §5) — задел для передачи экспертам
+         *     (УФИЦ РАН); в хакатоне решение эксперта не реализуется. Голосующие не раскрываются — только числа по группам.
+         *     Свежие споры сверху.
+         */
+        get: operations["listEscalatedItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1623,7 +1720,8 @@ export interface components {
          *     (409 — такое же задание уже активно).
          *     Значения Telegram (ADR 0020): `init_data_invalid` (422 — подпись `initData` не сошлась или строка не разобрана),
          *     `init_data_expired` (422 — `initData` старше суток), `telegram_unavailable` (503 — бот не настроен),
-         *     `chat_not_linked` (404 — чат не привязан).
+         *     `chat_not_linked` (404 — чат не привязан). Ежедневное задание бота (ADR 0024): `dialog_not_found`
+         *     (404 — диалога нет), `dialog_closed` (409 — диалог отменён или закрыт).
          *     Значения самостоятельного обучения (ADR 0022): `login_card_unavailable` (403 — личная карточка аккаунту
          *     не положена), `email_in_use` (409 — адрес уже у другого аккаунта), `email_already_set` (409),
          *     `already_in_class` (409 — ученик уже в классе). Список открыт: неизвестный `code`
@@ -3502,6 +3600,45 @@ export interface components {
             day: string;
             items: components["schemas"]["TelegramReminderTarget"][];
         };
+        /** @description Вариант дуэли в порядке показа этому диалогу (A, B) — `choice` ответа относительно него */
+        TelegramDuelSide: {
+            /** Format: uuid */
+            variantId: string;
+            /** @description Башкирский вариант (`lang="ba"`) */
+            text: string;
+        };
+        /**
+         * @description Ежедневное задание (FSM в БД, ADR 0024). `state = issued` — диалог выдан: `dialogId` и стороны в порядке
+         *     показа; повторная выдача в эти же сутки возвращает тот же диалог. `done` — голос на эти сутки по Уфе уже
+         *     учтён; `empty` — свежих дуэлей для аккаунта нет. При `state ≠ issued` полей диалога нет.
+         */
+        TelegramDailyDuel: {
+            /**
+             * @description issued — дуэль выдана; done — на сегодня всё; empty — нерешённых дуэлей нет
+             * @enum {string}
+             */
+            state: "issued" | "done" | "empty";
+            /** Format: uuid */
+            dialogId?: string;
+            /** Format: uuid */
+            itemId?: string;
+            /** @description Исходник на русском */
+            sourceRu?: string;
+            a?: components["schemas"]["TelegramDuelSide"];
+            b?: components["schemas"]["TelegramDuelSide"];
+        };
+        TelegramDailyAnswerRequest: {
+            choice: components["schemas"]["DuelChoice"];
+        };
+        /** @description Голос учтён (replay — уже был учтён той же кнопкой, новой записи нет). Распределение голосов не отдаётся */
+        TelegramDailyAnswer: {
+            replay: boolean;
+            status: components["schemas"]["ItemStatus"];
+        };
+        TelegramDailyCancel: {
+            /** @description Был ли активный диалог (false — нечего было отменять или повтор) */
+            cancelled: boolean;
+        };
         /**
          * @description Почему числа скрыты: `small_group` — в группе меньше `smallGroupThreshold` учеников (их нельзя было бы связать
          *     с конкретным ребёнком); `complementary` — числа скрыты, чтобы скрытую малую группу нельзя было вычислить
@@ -3679,6 +3816,45 @@ export interface components {
             generatedAt: string;
             items: components["schemas"]["FundPair"][];
         };
+        /** @description Вариант спорного исходника с голосами групп за него */
+        EscalatedVariant: {
+            /** Format: uuid */
+            variantId: string;
+            /** @description Башкирский вариант (`lang="ba"`) */
+            text: string;
+            review?: components["schemas"]["ReviewStatus"];
+            origin?: components["schemas"]["VariantOrigin"];
+            /** @description Голоса групп за этот вариант (без «Не знаю») */
+            votes: {
+                child: components["schemas"]["FundGroupVotes"];
+                adult: components["schemas"]["FundGroupVotes"];
+                teacher: components["schemas"]["FundGroupVotes"];
+            };
+        };
+        /**
+         * @description Спорный исходник — нет консенсуса по duel-v0 (ADR 0019). Кандидат на решение эксперта (УФИЦ РАН, ТЗ §4.4):
+         *     в хакатоне список только формируется, решение эксперта — задел на развитие.
+         */
+        EscalatedItem: {
+            /** Format: uuid */
+            itemId: string;
+            /** @description Русский исходник */
+            sourceRu: string;
+            kind: components["schemas"]["SourceKind"];
+            /** @description Два варианта — по числу голосов каждой группы видно, где раскол */
+            variants: components["schemas"]["EscalatedVariant"][];
+            /**
+             * Format: date-time
+             * @description Последний голос по исходнику
+             */
+            lastVoteAt: string;
+        };
+        FundEscalated: {
+            /** Format: date-time */
+            generatedAt: string;
+            /** @description Свежие споры сверху */
+            items: components["schemas"]["EscalatedItem"][];
+        };
     };
     responses: {
         /** @description Тело запроса не разобрано (не JSON, неверный тип содержимого) */
@@ -3811,6 +3987,8 @@ export interface components {
         AssignmentId: string;
         /** @description Идентификатор личного чата с ботом (`chat.id` = `user.id` Telegram) — десятичной строкой */
         TelegramChatId: components["schemas"]["TelegramChatIdValue"];
+        /** @description Идентификатор диалога ежедневного задания (FSM, ADR 0024) — из выдачи `daily-duel` */
+        TelegramDialogId: string;
     };
     requestBodies: never;
     headers: {
@@ -5857,6 +6035,96 @@ export interface operations {
             default: components["responses"]["Unexpected"];
         };
     };
+    issueTelegramDailyDuel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Идентификатор личного чата с ботом (`chat.id` = `user.id` Telegram) — десятичной строкой */
+                chatId: components["parameters"]["TelegramChatId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Дуэль (или состояние «на сегодня всё») */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramDailyDuel"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    cancelTelegramDailyDuel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Идентификатор личного чата с ботом (`chat.id` = `user.id` Telegram) — десятичной строкой */
+                chatId: components["parameters"]["TelegramChatId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Был ли активный диалог */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramDailyCancel"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    answerTelegramDailyDuel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Идентификатор диалога ежедневного задания (FSM, ADR 0024) — из выдачи `daily-duel` */
+                dialogId: components["parameters"]["TelegramDialogId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramDailyAnswerRequest"];
+            };
+        };
+        responses: {
+            /** @description Голос учтён (или уже был учтён) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramDailyAnswer"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
     getRepublicSummary: {
         parameters: {
             query?: never;
@@ -5947,6 +6215,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FundDictionary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    listEscalatedItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Спорные исходники */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundEscalated"];
                 };
             };
             401: components["responses"]["Unauthorized"];

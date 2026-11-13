@@ -15,12 +15,16 @@ const labels = (o: Outgoing | undefined) => (o?.buttons ?? []).flat().map((b) =>
 const ctxWith = (api: FakeApi | null, miniAppUrl: string | undefined = URL_APP): BotContext => ({ api, miniAppUrl });
 
 describe("ядро: /start и /help", () => {
-  it("/start приветствует и даёт кнопку «Учиться» → Mini App и кнопку напоминаний", async () => {
+  it("/start приветствует и даёт кнопку «Учиться» → Mini App, напоминания и задание дня", async () => {
     const [out] = await handle(cmd("start"), ctxWith(new FakeApi()));
     expect(out?.text).toMatch(/Привет/);
     expect(out?.buttons?.[0]?.[0]).toEqual({ label: "Учиться", action: { kind: "openMiniApp", url: URL_APP } });
-    expect(out?.buttons?.[1]?.[0]?.action).toEqual({ kind: "callback", data: CALLBACK.menu });
+    expect(out?.buttons?.[1]).toEqual([
+      { label: "Напоминания", action: { kind: "callback", data: CALLBACK.menu } },
+      { label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } },
+    ]);
     expect(out?.text).toContain("/remind");
+    expect(out?.text).toContain("/daily");
   });
 
   it("без https-адреса Mini App и без API — приветствие без кнопок, но не ошибка", async () => {
@@ -30,7 +34,7 @@ describe("ядро: /start и /help", () => {
 
   it("/help перечисляет команды, незнакомый текст — подсказка", async () => {
     const [help] = await handle(cmd("help"), ctxWith(null));
-    for (const c of ["/start", "/remind", "/remind_off", "/unlink", "/help"]) expect(help?.text).toContain(c);
+    for (const c of ["/start", "/daily", "/cancel", "/remind", "/remind_off", "/unlink", "/help"]) expect(help?.text).toContain(c);
     const [fallback] = await handle({ chatId: "1", kind: "text", text: "сәләм" }, ctxWith(null));
     expect(fallback?.text).toMatch(/\/help/);
   });
@@ -121,6 +125,120 @@ describe("ядро: напоминания о серии по согласию",
   });
 });
 
+describe("ядро: ежедневное задание «Помоги языку» (ADR 0024)", () => {
+  /** Первая кнопка выбора (сторона A) выданной дуэли. */
+  const firstChoice = (o: Outgoing | undefined) => {
+    const b = o?.buttons?.[0]?.[0];
+    return b?.action.kind === "callback" ? b.action.data : "";
+  };
+
+  it("непривязанный чат: «открой Учиться и войди» с кнопкой «Учиться»", async () => {
+    const api = new FakeApi();
+    const [out] = await handle(cmd("daily"), ctxWith(api));
+    expect(out?.text).toBe(TEXT.notLinkedDaily);
+    expect(labels(out)).toEqual(["Учиться"]);
+    expect(api.calls).toEqual(["daily 42"]);
+  });
+
+  it("выдача: исходник, стороны с номерами и кнопки ≤ 64 байт; повтор — то же задание (идемпотентность FSM)", async () => {
+    const api = new FakeApi().link("42");
+    const [out] = await handle(cmd("daily"), ctxWith(api));
+    expect(out?.text).toBe(`${TEXT.duelHeader}\n\n${TEXT.duelAsk}\n\n«Синтетическая фраза 1»\n\n1. синтез1 икс\n2. синтез1 игрек`);
+    expect(labels(out)).toEqual(["1. синтез1 икс", "2. синтез1 игрек", TEXT.duelBoth, TEXT.duelSkip, TEXT.duelCancel]);
+    for (const b of (out?.buttons ?? []).flat()) {
+      const data = b.action.kind === "callback" ? b.action.data : "";
+      expect(data.length, data).toBeLessThanOrEqual(64);
+    }
+    const again = await handle(cmd("daily"), ctxWith(api));
+    expect(again).toEqual([out]);
+    expect(api.calls).toEqual(["daily 42", "daily 42"]);
+  });
+
+  it("ответ кнопкой: «учтён»; та же кнопка — тот же ответ (replay); другой выбор — «уже учтён»; до следующих суток — done", async () => {
+    const api = new FakeApi().link("42");
+    const [duel] = await handle(cmd("daily"), ctxWith(api));
+    const data = firstChoice(duel);
+    expect(data).toMatch(/^dd:[0-9a-f-]{36}:a$/);
+
+    const [voted] = await handle(tap(data), ctxWith(api));
+    expect(voted?.text).toBe(TEXT.duelVoted);
+    const [replay] = await handle(tap(data), ctxWith(api));
+    expect(replay).toEqual(voted);
+    // Распределение голосов не показывается — только «учтён» (защита от конформизма, docs/03 §4a).
+    const [other] = await handle(tap(`${data.slice(0, -1)}b`), ctxWith(api));
+    expect(other?.text).toBe(TEXT.duelVotedAlready);
+
+    const [done] = await handle(cmd("daily"), ctxWith(api));
+    expect(done?.text).toBe(TEXT.dailyDone);
+    // Новые сутки — новая дуэля: done считается по суткам ответа, не по дню выдачи.
+    api.nextDay();
+    const [next] = await handle(cmd("daily"), ctxWith(api));
+    expect(next?.text).toContain("Синтетическая фраза 2");
+    expect(api.calls).toEqual(["daily 42", `answer ${data.slice(3, -2)} a`, `answer ${data.slice(3, -2)} a`, `answer ${data.slice(3, -2)} b`, "daily 42", "daily 42"]);
+  });
+
+  it("/cancel закрывает задание: голоса не было; кнопки старого — «закрыто»; повтор — «нечего»; /daily — новая дуэля", async () => {
+    const api = new FakeApi().link("42");
+    const [duel] = await handle(cmd("daily"), ctxWith(api));
+    const data = firstChoice(duel);
+    expect((await handle(cmd("cancel"), ctxWith(api)))[0]?.text).toBe(TEXT.dailyCancelled);
+    expect((await handle(tap(data), ctxWith(api)))[0]?.text).toBe(TEXT.duelClosed);
+    expect((await handle(cmd("cancel"), ctxWith(api)))[0]?.text).toBe(TEXT.dailyNothingToCancel);
+    const [fresh] = await handle(cmd("daily"), ctxWith(api));
+    expect(firstChoice(fresh)).not.toBe(data);
+    // Отмена — не ответ: кнопки закрытого диалога голоса не оставляют, исходник не считается голосованным.
+    expect(api.votedItems.size).toBe(0);
+  });
+
+  it("за исходник уже голосовали из веба: устаревшая кнопка — «уже учтён», /daily — другая дуэля", async () => {
+    const api = new FakeApi().link("42");
+    const [duel] = await handle(cmd("daily"), ctxWith(api));
+    api.externalVote(0); // голос из веба по исходнику выданной дуэли
+    expect((await handle(tap(firstChoice(duel)), ctxWith(api)))[0]?.text).toBe(TEXT.duelVotedAlready);
+    const [fresh] = await handle(cmd("daily"), ctxWith(api));
+    expect(fresh?.text).toContain("Синтетическая фраза 2");
+  });
+
+  it("пул нерешённых дуэлей исчерпан — empty", async () => {
+    const api = new FakeApi().link("42");
+    api.externalVote(0).externalVote(1).externalVote(2);
+    expect((await handle(cmd("daily"), ctxWith(api)))[0]?.text).toBe(TEXT.dailyEmpty);
+  });
+
+  it("API недоступно — «попробуй позже»; бот без секрета сервиса — «пока недоступно»", async () => {
+    const api = new FakeApi().link("42");
+    api.down = true;
+    expect(await handle(cmd("daily"), ctxWith(api))).toEqual([{ text: TEXT.unavailable }]);
+    expect(await handle(tap("dd:00000000-0000-4000-8000-000000000001:a"), ctxWith(api))).toEqual([{ text: TEXT.unavailable }]);
+    expect(await handle(cmd("cancel"), ctxWith(api))).toEqual([{ text: TEXT.unavailable }]);
+    expect(await handle(cmd("daily"), ctxWith(null))).toEqual([{ text: TEXT.dailyDisabled }]);
+    expect(await handle(cmd("cancel"), ctxWith(null))).toEqual([{ text: TEXT.dailyDisabled }]);
+  });
+
+  it("чужие данные кнопки дуэли (не uuid, не тот выбор) — игнор без вызова API", async () => {
+    const api = new FakeApi().link("42");
+    for (const data of ["dd:", "dd:abc:a", "dd:00000000-0000-4000-8000-000000000001:x", "dd:00000000-0000-4000-8000-000000000001", "dd:000000000000400080000000000000001:a", "xx:00000000-0000-4000-8000-000000000001:a"])
+      expect(await handle(tap(data), ctxWith(api))).toEqual([]);
+    expect(api.calls).toEqual([]);
+  });
+
+  it("в ответах ежедневки нет ПДн Telegram и chat id (правило 13)", async () => {
+    const api = new FakeApi().link("424242");
+    const [duel] = await handle(cmd("daily", "424242"), ctxWith(api));
+    const outs = [
+      duel!,
+      ...(await handle(tap(firstChoice(duel)), ctxWith(api))),
+      ...(await handle(cmd("cancel", "424242"), ctxWith(api))),
+      ...(await handle(cmd("daily", "424242"), ctxWith(api))),
+    ];
+    for (const o of outs) {
+      const all = [o.text, ...labels(o)].join(" ");
+      expect(all).not.toContain("424242");
+      for (const pii of USER_PII) expect(all).not.toContain(pii);
+    }
+  });
+});
+
 describe("адаптер Telegram: преобразования", () => {
   it("кнопки Mini App — web_app, остальные — callback_data", () => {
     const msg = toTelegram({ text: "x", buttons: [[{ label: "Открыть", action: { kind: "openMiniApp", url: "https://a.b/" } }, { label: "Вкл", action: { kind: "callback", data: "rem:on" } }]] });
@@ -147,7 +265,15 @@ describe("адаптер Telegram: настоящий grammY, подменённ
     expect(calls.map((c) => c.method)).toEqual(["sendMessage"]);
     const p = calls[0]!.payload;
     expect(p["chat_id"]).toBe(4242);
-    expect(p["reply_markup"]).toMatchObject({ inline_keyboard: [[{ text: "Учиться", web_app: { url: URL_APP } }], [{ text: "Напоминания", callback_data: CALLBACK.menu }]] });
+    expect(p["reply_markup"]).toMatchObject({
+      inline_keyboard: [
+        [{ text: "Учиться", web_app: { url: URL_APP } }],
+        [
+          { text: "Напоминания", callback_data: CALLBACK.menu },
+          { text: "Задание дня", callback_data: CALLBACK.daily },
+        ],
+      ],
+    });
     for (const pii of USER_PII) expect(JSON.stringify(p)).not.toContain(pii);
   });
 
@@ -164,6 +290,22 @@ describe("адаптер Telegram: настоящий grammY, подменённ
     expect(api.links.get("4242")?.enabled).toBe(true);
     expect(calls.map((c) => c.method)).toEqual(["answerCallbackQuery", "editMessageText"]);
     expect(calls[1]!.payload).toMatchObject({ chat_id: 4242, message_id: 10, text: TEXT.remindersOn(18) });
+  });
+
+  it("задание дня: /daily → дуэль с кнопками; ответ кнопкой — правка сообщения, из ответа не утекает ничего личного", async () => {
+    const { bot, api, calls } = setup(new FakeApi().link("4242"));
+    await bot.handleUpdate(textUpdate("/daily") as never);
+    expect(calls.map((c) => c.method)).toEqual(["sendMessage"]);
+    const keyboard = calls[0]!.payload["reply_markup"] as { inline_keyboard: { text: string; callback_data: string }[][] };
+    expect(keyboard.inline_keyboard.length).toBe(4); // A, B, «Оба/Не знаю», «Отменить»
+    const data = keyboard.inline_keyboard[0]![0]!.callback_data;
+    calls.length = 0;
+    await bot.handleUpdate(callbackUpdate(data) as never);
+    expect(calls.map((c) => c.method)).toEqual(["answerCallbackQuery", "editMessageText"]);
+    expect(calls[1]!.payload).toMatchObject({ chat_id: 4242, message_id: 10, text: TEXT.duelVoted });
+    expect(calls[1]!.payload["reply_markup"]).toBeUndefined();
+    for (const pii of USER_PII) expect(JSON.stringify(calls)).not.toContain(pii);
+    expect(api.calls).toEqual(["daily 4242", `answer ${data.slice(3, -2)} a`]);
   });
 
   it("повторное нажатие того же часа («message is not modified») — без нового сообщения", async () => {

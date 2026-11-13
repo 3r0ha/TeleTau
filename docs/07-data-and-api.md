@@ -65,7 +65,7 @@ admin
 
 ### 1.1a. Обучение, мотивация и дуэль (фактические таблицы M2)
 
-Миграция `apps/api/drizzle/0006_m2.sql`, схемы — `apps/api/src/modules/<m>/<m>.schema.ts`. Ссылки между модулями — `uuid` и `text` без внешних ключей. Ниже — план M2b–M4 (§1.2–1.4); то, что из него уже есть, — здесь.
+Миграции `apps/api/drizzle/0006…0014` (`0006_m2` — обучение и корпус, `0007_telegram`, `0008_m2b_srs`, `0009_assignments`, `0010_self_learners`, `0011_staff_roles`, `0012_attempt_hints`, `0013_jump`, `0014_tz_daily_duel`), схемы — `apps/api/src/modules/<m>/<m>.schema.ts`. Ссылки между модулями — `uuid` и `text` без внешних ключей. Ниже — план M2b–M4 (§1.2–1.4); то, что из него уже есть, — здесь.
 
 ```
 content       (импорт content:import из content/course, версия — content_versions)
@@ -100,11 +100,19 @@ corpus        (импорт corpus:import из content/corpus/duels)
 consensus
   judgments            id (judgmentId или attemptId), created_at, source_item_id, variant_a_id, variant_b_id (порядок
                        показа), judge_account_id, voter_group(child|teacher|adult|expert), type(pairwise), choice(a|b|both|
-                       skip), context(lesson|corpus), run_id, latency_ms, weight_snapshot, rules_version(duel-v0)
+                       skip), context(lesson|corpus|telegram), run_id, latency_ms, weight_snapshot, rules_version(duel-v0)
                        -- только вставка: триггеры на UPDATE/DELETE/TRUNCATE и отзыв прав у teletau_app
   item_state           source_item_id, status(voting|accepted|escalated), accepted_variant_ids, main_variant_id,
                        children_prefer_variant_id, votes_by_group jsonb, scores jsonb, decided_by, decided_at, rules_version
                        -- пересчитывается из judgments (правило 9); решение v0 закреплено до M4 (ADR 0019)
+telegram      (модуль ADR 0020/0024; миграции 0007_telegram, 0014_tz_daily_duel)
+  telegram_links       chat_id (PK = user.id Telegram), account_id, reminders_enabled, reminder_hour (8–20 по Уфе),
+                       last_reminded_on, linked_at   -- только привязка чата: ни имени, ни ника, ни фото (правило 13)
+  telegram_dialogs     dialog_id (PK), chat_id, account_id, item_id, variant_a_id, variant_b_id, judgment_id (голоса;
+                       генерирует API), day (сутки Уфы выдачи), status(issued|answered|cancelled), choice(a|b|both|skip),
+                       item_status (снимок статуса на момент ответа), answered_at, cancelled_at   -- FSM ежедневного
+                       задания (ADR 0024): активный issued — один на аккаунт, выдача идемпотентна, replay — по
+                       judgment_id; учтённая дуэль — одна в сутки по Уфе (по answered_at)
 ```
 
 Сбросить мир с голосами можно только пересозданием базы: `pnpm demo:reset` (dev) и `e2e/run.mjs` (своя база `<имя>_e2e`).
@@ -221,6 +229,9 @@ feature_flags(key, rules jsonb)
 | Награды (M2) | `GET /me/achievements` (12 наград: название, что сделать, значок, день получения или прогресс «3 из 7»; пересчитываются из истории, отдельной таблицы нет) · новые — в `newAchievements` итога `POST /lesson-runs/{runId}/complete`. Векторы — `contracts/test-vectors/achievements` |
 | Corpus (M2) | `GET /corpus/duels` (взрослый: пары, где голосование идёт, без своих голосов) · `POST /corpus/judgments` (голос взрослого или учителя вне урока; дети голосуют только в уроке) · `GET /corpus/items/{id}/votes` (голоса по группам и статус — после своего голоса) · `GET /corpus/my-cells` («Мой вклад»: созрело / ждёт); позже — `GET /corpus/tasks`, `POST /corpus/variants`, `POST /corpus/reports` |
 | Competition (M2) | `GET /leagues/current` (тир, группа, зоны, конец недели по Уфе, итог прошлой недели) · `POST /leagues/result-seen` · `GET /classes/{id}/hive` (квест недели и участие — только агрегаты); позже — `GET /ratings/schools`, `GET /ratings/districts`, урок-битвы |
+| Telegram (M2) | `POST /telegram/link` (привязка чата из Mini App: проверка подписи initData токеном бота; вошедший ученик или взрослый). Служебные операции бота — роль `service` (заголовок `X-Service-Token`, ADR 0020/0024): `GET /telegram/bot/chats/{chatId}` · `PUT /telegram/bot/chats/{chatId}/reminders` · `DELETE /telegram/bot/chats/{chatId}` (отвязка) · `POST /telegram/bot/chats/{chatId}/daily-duel` (выдать задание дня — идемпотентно) · `POST /telegram/bot/dialogs/{dialogId}/answer` (replay той же кнопки — тот же ответ; другой выбор — 409 `already_voted`) · `POST /telegram/bot/chats/{chatId}/daily-duel/cancel` · `POST /telegram/bot/reminders/claim` (пачка «кому напомнить») |
+| Ministry (M2) | `GET /ministry/summary` · `GET /ministry/districts` · `GET /ministry/districts/{districtId}` (агрегаты республики; школы < 5 учеников скрыты сервером — ADR 0023) |
+| Fund (M2) | `GET /fund/dictionary` (принятые пары с голосами по группам — ADR 0023) · `GET /fund/escalated` (спорные случаи: `item_state.status = escalated`, голоса по группам — ТЗ §4.4/§5) |
 | Teacher | `GET /classes/{id}/heatmap` · `POST /classes/{id}/assignments` · `GET /classes/{id}/insights` (AI-сводка) · `GET /classes/{id}/report.xlsx` |
 | Parent | `POST /guardianships` · `GET /children/{id}/progress` · `PATCH /children/{id}/limits` |
 | Expert | `GET /expert/queue` · `POST /expert/decisions` · `GET /expert/items/{id}` (с историей и сводкой спора) · `POST /expert/gold` |
