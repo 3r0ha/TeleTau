@@ -1678,6 +1678,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/phrase-of-day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Фраза дня — принятая пара корпуса
+         * @description Пара дня для лендинга и Telegram-бота (ТЗ §3.6/§3.8): один исходник и его основной принятый вариант.
+         *     Выбор детерминирован: из принятых пар (`item_state.status = accepted`, основной вариант, без
+         *     `native_rejected`) индекс — устойчивый хеш учебных суток по Уфе (Asia/Yekaterinburg, UTC+5), поэтому
+         *     в течение суток все клиенты показывают одну и ту же пару, в полночь по Уфе она меняется. Персональных
+         *     данных нет — только тексты пары и источники. Принятых пар ещё нет — поле `pair` отсутствует, блок
+         *     не показывают.
+         */
+        get: operations["getPhraseOfDay"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3816,6 +3841,24 @@ export interface components {
             /** Format: date-time */
             generatedAt: string;
             items: components["schemas"]["FundPair"][];
+        };
+        /** @description Фраза дня — принятая пара корпуса для публичной витрины без регистрации (ТЗ §3.6) */
+        PhraseOfDay: {
+            /**
+             * Format: date
+             * @description Учебные сутки по Уфе (Asia/Yekaterinburg), по которым выбрана пара
+             */
+            date: string;
+            /** @description Основной принятый вариант исходника; отсутствует, если принятых пар ещё нет */
+            pair?: {
+                /** @description Русский исходник */
+                sourceRu: string;
+                kind: components["schemas"]["SourceKind"];
+                /** @description Башкирский вариант в канонической форме `@teletau/bashkir-text` */
+                textBa: string;
+                /** @description Источники варианта (у `import` — всегда) */
+                sources: components["schemas"]["SourceCitation"][];
+            };
         };
         /** @description Вариант спорного исходника с голосами групп за него */
         EscalatedVariant: {
@@ -6243,6 +6286,28 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    getPhraseOfDay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Пара дня (или только дата, если корпус пуст) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhraseOfDay"];
+                };
+            };
+            503: components["responses"]["ServiceUnavailable"];
             default: components["responses"]["Unexpected"];
         };
     };

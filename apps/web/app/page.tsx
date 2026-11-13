@@ -3,7 +3,10 @@ import Link from "next/link";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { AndroidLogo, ChalkboardTeacher, Check } from "@phosphor-icons/react/ssr";
+import createClient from "openapi-fetch";
 import { Brand, ButtonLink, hexPath, illustrations } from "@teletau/ui";
+import type { paths, Schema } from "@teletau/contracts";
+import { API_BASE_URL } from "@teletau/session/config";
 import { androidApkUrl } from "./_components/landing/apk";
 import { HeroActions, StartButton } from "./_components/landing/HeroActions";
 import { landingImages as img } from "./_components/landing/images";
@@ -30,6 +33,18 @@ const CELL = { w: 96, h: 84, lip: 6 };
 const CELL_FACE = hexPath(CELL.w, CELL.h, 12, 0, 0);
 const CELL_LIP = hexPath(CELL.w, CELL.h, 12, 0, CELL.lip);
 const STAGE = hexPath(400, 346, 44);
+
+/** Фраза дня (ТЗ §3.6) — публичная витрина без регистрации. API недоступен или пар ещё нет — блока нет. */
+async function loadPhrase(): Promise<Schema<"PhraseOfDay">["pair"] | null> {
+  try {
+    // Таймаут (docs/06 §6.8): лендинг не ждёт молчащего API, без блока — не страшно.
+    const api = createClient<paths>({ baseUrl: API_BASE_URL, fetch: (r) => fetch(r, { cache: "no-store", signal: AbortSignal.timeout(10_000) }) });
+    const { data } = await api.GET("/api/v1/public/phrase-of-day");
+    return data?.pair ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /** Картинка в размере показа: ширина — из CSS, высота — по пропорции файла. */
 function Pic({ src, alt = "", className }: { src: StaticImageData; alt?: string; className?: string }) {
@@ -90,6 +105,7 @@ export default async function StartPage() {
   await connection();
   const apk = androidApkUrl(process.env.ANDROID_APK_URL);
   const hero = illustrations.heroLanding;
+  const phrase = await loadPhrase();
 
   return (
     <>
@@ -121,6 +137,21 @@ export default async function StartPage() {
             </div>
           </div>
         </section>
+
+        {phrase && (
+          <section className="lp-phrase" aria-labelledby="lp-phrase-title">
+            <div className="lp-wrap lp-phrase__in">
+              <h2 id="lp-phrase-title" className="lp-phrase__title">
+                Фраза дня
+              </h2>
+              <p className="lp-phrase__ba" lang="ba">
+                {phrase.textBa}
+              </p>
+              <p className="lp-phrase__ru">{phrase.sourceRu}</p>
+              <p className="lp-phrase__note">Принятая пара словаря ТелеТау: за перевод проголосовали ученики и взрослые</p>
+            </div>
+          </section>
+        )}
 
         <section className="lp-places" aria-labelledby="lp-places-title">
           <h2 id="lp-places-title" className="tt-visually-hidden">

@@ -2,7 +2,7 @@
 // (CLAUDE.md, правило 1). Секрет сервиса — в X-Service-Token, у каждого запроса таймаут. 404 `chat_not_linked` — null
 // (чат не привязан); сеть, 5xx, таймаут и отвергнутый секрет (401/403) — ApiUnavailableError: ядро ответит «попробуй позже».
 import createClient from "openapi-fetch";
-import type { paths } from "@teletau/contracts";
+import type { paths, Schema } from "@teletau/contracts";
 import { ApiUnavailableError, type ChatLink, type DailyDuel, type TeleTauApi } from "../core/ports.js";
 
 export const API_TIMEOUT_MS = 10_000;
@@ -81,6 +81,10 @@ export function createTeleTauApi(o: ApiOptions): TeleTauApi {
     },
     async cancelDaily(chatId) {
       return settle<{ cancelled: boolean }>(await client.POST("/api/v1/telegram/bot/chats/{chatId}/daily-duel/cancel", { params: { path: { chatId } } }), true);
+    },
+    async phraseOfDay() {
+      // Публичная операция (x-access: anonymous) — привязка чата не нужна; ответ без pair — принятых пар ещё нет.
+      return settle<Schema<"PhraseOfDay">>(await client.GET("/api/v1/public/phrase-of-day"), false)?.pair ?? null;
     },
   };
 }

@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
-import { DUEL_RULES_VERSION } from "@teletau/domain-rules";
+import { DUEL_RULES_VERSION, ufaDate } from "@teletau/domain-rules";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { Principal } from "../../common/auth.js";
 import { decodeCursor, encodeCursor, KeysetCursor } from "../../common/cursor.js";
@@ -28,6 +28,13 @@ function shuffle<T>(list: T[]): T[] {
     [list[i], list[j]] = [list[j]!, list[i]!];
   }
   return list;
+}
+
+/** FNV-1a 32 бит — устойчивый хеш даты YYYY-MM-DD (ASCII), одинаковый на любом сервере и клиенте. */
+function fnv1a(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return h >>> 0;
 }
 
 /**
@@ -324,6 +331,20 @@ export class ConsensusService implements ConsensusApi {
       this.fundDictionary(),
     ]);
     return { votes: votes?.n ?? 0, pairsAccepted: dictionary.items.length };
+  }
+
+  /**
+   * Фраза дня (ТЗ §3.6) — публичная витрина без регистрации: основной принятый вариант исходника.
+   * Выбор детерминирован: пары сортируются по variantId (не по моменту решения — он меняется при пересчёте),
+   * индекс — FNV-1a учебных суток по Уфе. В течение суток все клиенты показывают одну и ту же пару.
+   */
+  async phraseOfDay(now: Date = new Date()): Promise<Schema<"PhraseOfDay">> {
+    const date = ufaDate(now);
+    const dictionary = await this.fundDictionary(now);
+    const pairs = dictionary.items.filter((row) => row.main).sort((a, b) => a.variantId.localeCompare(b.variantId));
+    if (pairs.length === 0) return { date };
+    const pair = pairs[fnv1a(date) % pairs.length]!;
+    return { date, pair: { sourceRu: pair.sourceRu, kind: pair.kind, textBa: pair.textBa, sources: pair.sources } };
   }
 
   /**

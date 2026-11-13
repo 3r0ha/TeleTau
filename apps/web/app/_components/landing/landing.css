@@ -201,6 +201,47 @@
   font-weight: var(--tt-font-weight-black);
 }
 
+/* ───────────── фраза дня ───────────── */
+.lp-phrase {
+  padding-block: var(--tt-space-s600);
+  border-block: 2px solid var(--tt-color-accent-soft-border);
+  background: var(--tt-color-accent-soft);
+  text-align: center;
+}
+
+.lp-phrase__title {
+  margin: 0;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-black);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tt-color-text-secondary);
+}
+
+.lp-phrase__ba {
+  margin-block: var(--tt-space-s250) 0;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-title1);
+  font-weight: var(--tt-font-weight-black);
+  line-height: var(--tt-line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+.lp-phrase__ru {
+  margin-block: var(--tt-space-s150) 0;
+  font-size: var(--tt-font-size-headline);
+  line-height: var(--tt-line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+.lp-phrase__note {
+  margin-block: var(--tt-space-s300) 0;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: var(--tt-line-height-snug);
+}
+
 /* ───────────── полоса мест ───────────── */
 .lp-places {
   padding-block: var(--tt-space-s600) var(--tt-space-s500);

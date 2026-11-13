@@ -38,7 +38,7 @@ pnpm dev              # веб :3000, API :4000, консоль :3100, бот
 | `apps/api` | NestJS: identity, org, learning, consensus, corpus, progress, telegram, ministry, assignments |
 | `apps/web` | Веб ученика и учителя (Next.js), Mini App, BFF, лендинг |
 | `apps/console` | Консоль сотрудников: модерация заявок, министерство, словарь Фонда |
-| `apps/bot` | Telegram-бот (grammY): вход, напоминания, ежедневная дуэль «Помоги языку» (ADR 0024) |
+| `apps/bot` | Telegram-бот (grammY): вход, напоминания, ежедневная дуэль «Помоги языку» (ADR 0024), фраза дня |
 | `ios/`, `android/` | Нативные клиенты ученика |
 | `packages/contracts` | OpenAPI-контракт (contract-first), генерация типов и JSON |
 | `packages/*` | дизайн-токены, UI, сессия, башкирский текст (нормализация), FSRS, доменные правила |

@@ -31,8 +31,12 @@ services:
       timeout: 3s
       retries: 20
 
+  # ClickHouse — аналитика из дорожной карты (docs/06 §«analytics-ingest»), в коде пока не используется:
+  # запускается только с профилем `docker compose --profile analytics up`. По умолчанию не поднимается —
+  # на 8 ГБ машин его фоновые задачи отбирали CPU у Postgres (интеграционные тесты ловили таймауты пула).
   clickhouse:
     image: clickhouse/clickhouse-server:26.8
+    profiles: ["analytics"]
     environment:
       CLICKHOUSE_DB: teletau
       CLICKHOUSE_USER: teletau

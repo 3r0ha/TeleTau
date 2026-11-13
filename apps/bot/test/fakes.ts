@@ -1,7 +1,7 @@
 // Подделки для тестов бота без сети: API «ТелеТау» в памяти и Telegram Bot API через transformer grammY.
 import type { Bot } from "grammy";
 import type { UserFromGetMe } from "grammy/types";
-import { ApiUnavailableError, type ChatLink, type DailyDuel, type DuelAnswer, type DuelChoice, type TeleTauApi, type Reminders } from "../src/core/ports.js";
+import { ApiUnavailableError, type ChatLink, type DailyDuel, type DuelAnswer, type DuelChoice, type TeleTauApi, type Reminders, type PhraseOfDayPair } from "../src/core/ports.js";
 
 /** Исходник пула ежедневки: русский исходник и два башкирских варианта (тексты — синтетические, правило 6). */
 export interface FakeDuelItem {
@@ -33,6 +33,8 @@ export class FakeApi implements TeleTauApi {
   ];
   /** Текущие «сутки по Уфе»: продвигаются nextDay() — на новые сутки выдаётся новая дуэль. */
   day = 1;
+  /** Пара фразы дня (ТЗ §3.6); null — принятых пар в словаре нет. */
+  phrase: PhraseOfDayPair | null = { sourceRu: "Здравствуйте!", kind: "phrase", textBa: "Һаумыһығыҙ!", sources: [] };
   /** Исходники, за которые аккаунт уже голосовал (кнопкой бота или «из веба» — externalVote). */
   readonly votedItems = new Set<number>();
   /** Диалоги в памяти: ключ — dialogId (UUID-подобный, как выдаёт API). */
@@ -135,6 +137,11 @@ export class FakeApi implements TeleTauApi {
       }
     }
     return { cancelled };
+  }
+
+  async phraseOfDay() {
+    this.check("phrase");
+    return this.phrase;
   }
 
   private issuedOf(id: string, d: FakeDialog): DailyDuel {

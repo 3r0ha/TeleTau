@@ -66,6 +66,8 @@ tags:
     description: |
       Привязка чата Telegram по подписи `initData` Mini App и служебные операции бота: настройки и выдача напоминаний
       о серии (модуль telegram, ADR 0020). Хранится только `chat_id` и id аккаунта — ничего из профиля Telegram.
+  - name: public
+    description: Публичная витрина без регистрации — фраза дня из принятых пар корпуса (ТЗ §3.6; модуль consensus)
 paths:
   /api/v1/health:
     get:
@@ -2748,6 +2750,33 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  # ───────────────────────────── public: витрина без регистрации (ТЗ §3.6) ─────────────────────────────
+  /api/v1/public/phrase-of-day:
+    get:
+      tags: [public]
+      operationId: getPhraseOfDay
+      summary: Фраза дня — принятая пара корпуса
+      description: |
+        Пара дня для лендинга и Telegram-бота (ТЗ §3.6/§3.8): один исходник и его основной принятый вариант.
+        Выбор детерминирован: из принятых пар (`item_state.status = accepted`, основной вариант, без
+        `native_rejected`) индекс — устойчивый хеш учебных суток по Уфе (Asia/Yekaterinburg, UTC+5), поэтому
+        в течение суток все клиенты показывают одну и ту же пару, в полночь по Уфе она меняется. Персональных
+        данных нет — только тексты пары и источники. Принятых пар ещё нет — поле `pair` отсутствует, блок
+        не показывают.
+      security: []
+      x-access: { roles: [anonymous] }
+      responses:
+        "200":
+          description: Пара дня (или только дата, если корпус пуст)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhraseOfDay"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
         default:
           $ref: "#/components/responses/Unexpected"
 
@@ -6487,6 +6516,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/FundPair"
+    PhraseOfDay:
+      type: object
+      description: Фраза дня — принятая пара корпуса для публичной витрины без регистрации (ТЗ §3.6)
+      required: [date]
+      properties:
+        date:
+          type: string
+          format: date
+          description: Учебные сутки по Уфе (Asia/Yekaterinburg), по которым выбрана пара
+        pair:
+          description: Основной принятый вариант исходника; отсутствует, если принятых пар ещё нет
+          type: object
+          required: [sourceRu, kind, textBa, sources]
+          properties:
+            sourceRu:
+              type: string
+              description: Русский исходник
+            kind:
+              $ref: "#/components/schemas/SourceKind"
+            textBa:
+              type: string
+              description: Башкирский вариант в канонической форме `@teletau/bashkir-text`
+            sources:
+              type: array
+              description: Источники варианта (у `import` — всегда)
+              items:
+                $ref: "#/components/schemas/SourceCitation"
     EscalatedVariant:
       type: object
       description: Вариант спорного исходника с голосами групп за него

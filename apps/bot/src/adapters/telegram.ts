@@ -37,6 +37,7 @@ export const COMMANDS: BotCommand[] = [
   { command: "start", description: "Начать" },
   { command: "daily", description: "Задание дня" },
   { command: "cancel", description: "Отменить задание" },
+  { command: "phrase", description: "Фраза дня" },
   { command: "remind", description: "Напоминания о серии" },
   { command: "remind_off", description: "Выключить напоминания" },
   { command: "unlink", description: "Отвязать этот чат" },

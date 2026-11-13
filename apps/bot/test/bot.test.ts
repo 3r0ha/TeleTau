@@ -239,6 +239,28 @@ describe("ядро: ежедневное задание «Помоги язык�
   });
 });
 
+describe("ядро: фраза дня (ТЗ §3.6)", () => {
+  it("/phrase показывает пару дня без привязки чата, с кнопкой «Учиться»", async () => {
+    const api = new FakeApi();
+    const [out] = await handle(cmd("phrase", "777"), ctxWith(api));
+    expect(out?.text).toBe("Фраза дня\n\n«Һаумыһығыҙ!»\n— «Здравствуйте!»");
+    expect(labels(out)).toEqual(["Учиться"]);
+    expect(api.calls).toEqual(["phrase"]);
+  });
+
+  it("принятых пар нет — «загляни позже»; API недоступно — «попробуй позже»; без секрета — «пока недоступна»", async () => {
+    const empty = new FakeApi();
+    empty.phrase = null;
+    expect((await handle(cmd("phrase"), ctxWith(empty)))[0]?.text).toContain("Принятых пар");
+
+    const down = new FakeApi();
+    down.down = true;
+    expect((await handle(cmd("phrase"), ctxWith(down)))[0]?.text).toBe(TEXT.unavailable);
+
+    expect((await handle(cmd("phrase"), ctxWith(null)))[0]?.text).toBe(TEXT.phraseDisabled);
+  });
+});
+
 describe("адаптер Telegram: преобразования", () => {
   it("кнопки Mini App — web_app, остальные — callback_data", () => {
     const msg = toTelegram({ text: "x", buttons: [[{ label: "Открыть", action: { kind: "openMiniApp", url: "https://a.b/" } }, { label: "Вкл", action: { kind: "callback", data: "rem:on" } }]] });

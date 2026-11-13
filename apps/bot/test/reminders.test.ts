@@ -145,8 +145,16 @@ describe("клиент API (openapi-fetch по контракту, подмен�
     expect(await recorded[2]!.json()).toEqual({ enabled: true, hour: 19 });
   });
 
-  it("404 chat_not_linked — null; 5xx, сеть и отвергнутый секрет — ApiUnavailableError (с одним предупреждением)", async () => {
-    expect(await client(() => respond(404, { type: "about:blank", title: "Чат Telegram не привязан", status: 404, code: "chat_not_linked" })).chat("5")).toBeNull();
+  it("фраза дня: публичный путь из контракта, ответ без pair — null", async () => {
+    recorded.length = 0;
+    const api = client(() => respond(200, { date: "2026-11-13", pair: { sourceRu: "Здравствуйте!", kind: "phrase", textBa: "Һаумыһығыҙ!", sources: [] } }));
+    expect(await api.phraseOfDay()).toMatchObject({ sourceRu: "Здравствуйте!", textBa: "Һаумыһығыҙ!" });
+    expect(recorded.map((r) => `${r.method} ${new URL(r.url).pathname}`)).toEqual(["GET /api/v1/public/phrase-of-day"]);
+    const noPair = client(() => respond(200, { date: "2026-11-13" }));
+    expect(await noPair.phraseOfDay()).toBeNull();
+  });
+
+  it("404 chat_not_linked — null; 5xx, сеть и отвергнутый секрет — ApiUnavailableError (с одним предупреждением)", async () => {    expect(await client(() => respond(404, { type: "about:blank", title: "Чат Telegram не привязан", status: 404, code: "chat_not_linked" })).chat("5")).toBeNull();
     await expect(client(() => respond(503, { status: 503 })).claimReminders()).rejects.toBeInstanceOf(ApiUnavailableError);
     await expect(
       client(() => {

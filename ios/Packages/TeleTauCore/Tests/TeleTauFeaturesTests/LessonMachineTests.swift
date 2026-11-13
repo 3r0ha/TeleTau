@@ -178,6 +178,9 @@ struct LessonMachineTests {
         #expect(Format.weekdayShort("2026-11-05") == "Чт")
         #expect(Format.seat(7) == "№07")
         #expect(ChildText.describe(.problem(.init(status: 404, code: "class_code_not_found"))) == "Код не подходит. Проверь буквы или попроси новый код.")
+        // Блокировка аккаунта не маскируется под «войди снова» (M2-UX5, как в словаре веба).
+        #expect(ChildText.describe(.signedOut(reason: "account_blocked")) == "Аккаунт заблокирован. Обратитесь к администрации.")
+        #expect(ChildText.describe(.signedOut(reason: "session_revoked")) == "Вход завершён. Войди снова по карточке.")
         #expect(ChildText.describe(.problem(.init(status: 418))) == "Что-то сломалось. Попробуй ещё раз.")
         #expect(ChildText.describe(.offline) == "Нет связи. Проверь интернет.")
         #expect(AssignmentText.due("2026-11-05", today: "2026-11-05") == "сегодня последний день")

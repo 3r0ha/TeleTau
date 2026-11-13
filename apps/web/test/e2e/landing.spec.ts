@@ -61,6 +61,15 @@ test.describe("стартовая страница", () => {
     await expect(page.getByRole("heading", { name: "Покажи карточку камере" })).toBeVisible();
   });
 
+  test("фраза дня: API молчит — блока нет, лендинг цел (пара показывается в e2e с настоящим API)", async ({ page }) => {
+    await mockBackend(page);
+    await page.goto("/");
+    // Моки не перехватывают серверный фетч Next: страница живёт без блока, а не падает.
+    await expect(page.getByRole("region", { name: "Фраза дня" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Места тропы" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(TITLE);
+  });
+
   test("«Войти» в шапке: по карточке или по почте; Esc закрывает и возвращает фокус", async ({ page }) => {
     await mockBackend(page);
     await page.goto("/");

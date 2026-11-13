@@ -9,10 +9,19 @@ import ru.teletau.feature.student.learn.achievementLabel
 import ru.teletau.feature.student.learn.badgeTone
 import ru.teletau.feature.student.common.plural
 import ru.teletau.feature.student.common.resolveAudioUrl
+import ru.teletau.feature.student.common.sessionEndedText
 import ru.teletau.feature.student.common.ufaToday
 
 /** Подписи и адреса: срок задания (как dueForStudent веба), адрес записи, русское множественное, сутки по Уфе. */
 class FormatTest {
+    @Test
+    fun sessionEnd_reasons_notMasked() {
+        // Блокировка аккаунта не маскируется под «войди снова» (M2-UX5, как в словаре веба).
+        assertEquals("Аккаунт заблокирован. Обратитесь к администрации.", sessionEndedText("account_blocked"))
+        assertEquals("Вход завершён. Войди снова по карточке.", sessionEndedText("session_revoked"))
+        assertEquals("Вход завершён. Войди снова.", sessionEndedText("неизвестный-код"))
+    }
+
     @Test
     fun audioUrl_absoluteAsIs_relativeFromWebBase() {
         assertEquals("https://upload.wikimedia.org/a.ogg", resolveAudioUrl("https://upload.wikimedia.org/a.ogg", null))

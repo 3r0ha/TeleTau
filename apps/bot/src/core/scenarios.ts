@@ -32,11 +32,13 @@ export const TEXT = {
   startNoApp: `Уроки — в приложении и на сайте «${BRAND}».`,
   startRemind: "Напоминания о серии — /remind",
   startDaily: "Задание дня — /daily",
+  startPhrase: "Фраза дня — /phrase",
   help: [
     "Команды:",
     "/start — начать",
     "/daily — задание дня",
     "/cancel — отменить задание",
+    "/phrase — фраза дня",
     "/remind — напоминания о серии",
     "/remind_off — выключить напоминания",
     "/unlink — отвязать этот чат",
@@ -68,6 +70,9 @@ export const TEXT = {
   duelClosed: "Задание уже закрыто. Новое — /daily.",
   dailyCancelled: "Задание отменено. Новое — /daily.",
   dailyNothingToCancel: "Отменять нечего.",
+  // ── фраза дня (ТЗ §3.6) ──
+  phraseDisabled: "Фраза дня пока недоступна.",
+  phraseEmpty: "Принятых пар в словаре ещё нет. Загляни позже!",
 } as const;
 
 const clock = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
@@ -96,7 +101,7 @@ export function reminderMessage(ctx: Pick<BotContext, "miniAppUrl" | "api">): Ou
 
 function start(ctx: BotContext): Outgoing {
   const lines: string[] = [TEXT.start, ctx.miniAppUrl ? TEXT.startLearn : TEXT.startNoApp];
-  if (ctx.api) lines.push("", TEXT.startRemind, TEXT.startDaily);
+  if (ctx.api) lines.push("", TEXT.startRemind, TEXT.startDaily, TEXT.startPhrase);
   const buttons = [
     ...learnRow(ctx),
     ...(ctx.api
@@ -184,6 +189,15 @@ async function cancelDaily(chatId: string, ctx: BotContext): Promise<Outgoing> {
   return { text: result.cancelled ? TEXT.dailyCancelled : TEXT.dailyNothingToCancel };
 }
 
+/** /phrase: пара дня из словаря — публичная витрина (ТЗ §3.6), привязка чата не нужна. */
+async function phrase(ctx: BotContext): Promise<Outgoing> {
+  const api = ctx.api;
+  if (!api) return { text: TEXT.phraseDisabled };
+  const pair = await api.phraseOfDay();
+  if (!pair) return { text: TEXT.phraseEmpty };
+  return { text: `Фраза дня\n\n«${pair.textBa}»\n— «${pair.sourceRu}»`, buttons: learnRow(ctx) };
+}
+
 async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
   if (message.kind === "callback") {
     const action = parseCallback(message.data);
@@ -204,6 +218,8 @@ async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
         return [await daily(message.chatId, ctx)];
       case "cancel":
         return [await cancelDaily(message.chatId, ctx)];
+      case "phrase":
+        return [await phrase(ctx)];
       case "remind":
       case "reminders":
         return [await reminders(message.chatId, "menu", ctx)];
@@ -221,9 +237,9 @@ async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
 }
 
 /**
- * Сценарии бота: /start, /help, напоминания о серии (/remind, /remind_on, /remind_off, кнопки), /unlink и
- * ежедневное задание (ADR 0024): /daily, /cancel, кнопки дуэли. Ответы не содержат данных пользователя;
- * API недоступно — вежливое «попробуй позже», а не ошибка.
+ * Сценарии бота: /start, /help, напоминания о серии (/remind, /remind_on, /remind_off, кнопки), /unlink,
+ * ежедневное задание (ADR 0024): /daily, /cancel, кнопки дуэли — и фраза дня /phrase (ТЗ §3.6). Ответы
+ * не содержат данных пользователя; API недоступно — вежливое «попробуй позже», а не ошибка.
  */
 export async function handle(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
   try {

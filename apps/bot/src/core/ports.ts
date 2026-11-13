@@ -7,6 +7,8 @@ export type Reminders = Schema<"TelegramReminders">;
 export type DailyDuel = Schema<"TelegramDailyDuel">;
 export type DuelSide = Schema<"TelegramDuelSide">;
 export type DuelChoice = Schema<"DuelChoice">;
+/** Пара фразы дня (ТЗ §3.6): публичная принятая пара корпуса — без привязки чата. */
+export type PhraseOfDayPair = NonNullable<Schema<"PhraseOfDay">["pair"]>;
 /** Выданный диалог: при state = issued контракт гарантирует поля диалога. */
 export type IssuedDailyDuel = DailyDuel & { state: "issued"; dialogId: string; itemId: string; sourceRu: string; a: DuelSide; b: DuelSide };
 
@@ -35,4 +37,6 @@ export interface TeleTauApi {
   answerDuel(dialogId: string, choice: DuelChoice): Promise<DuelAnswer | null>;
   /** Отмена активного диалога чата; null — чат не привязан. */
   cancelDaily(chatId: string): Promise<{ cancelled: boolean } | null>;
+  /** Фраза дня (ТЗ §3.6) — публичная витрина, привязка чата не нужна; null — принятых пар ещё нет. */
+  phraseOfDay(): Promise<PhraseOfDayPair | null>;
 }
