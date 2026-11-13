@@ -1,7 +1,7 @@
 // Типы экранов ученика — только из контракта (CLAUDE.md, правило 1): packages/contracts/openapi.yaml, операции
 // getCourse, startLessonRun, submitLessonAttempt, completeLessonRun, getMyProgress, getCurrentLeague,
-// markLeagueResultSeen, getClassHive, listMyCorpusCells, startReviewRun, listMyWords, listMyAchievements. Здесь —
-// короткие имена и выборки по полю `type`.
+// markLeagueResultSeen, getClassHive, listMyCorpusCells, startReviewRun, listMyWords, listMyAchievements,
+// getPublicLeaderboard. Здесь — короткие имена и выборки по полю `type`.
 import type { Schema } from "@teletau/contracts";
 
 export type Course = Schema<"Course">;
@@ -39,6 +39,9 @@ export type LeagueTier = Schema<"LeagueTier">;
 
 export type MyProgress = Schema<"MyProgress">;
 export type LeagueStanding = Schema<"LeagueStanding">;
+export type PublicLeaderboard = Schema<"PublicLeaderboard">;
+export type PublicLeaderboardSchool = Schema<"PublicLeaderboardSchool">;
+export type PublicLeaderboardClass = Schema<"PublicLeaderboardClass">;
 export type ClassHive = Schema<"ClassHive">;
 export type MyCellsPage = Schema<"MyCellsPage">;
 export type DailyGoal = Schema<"DailyGoal">;

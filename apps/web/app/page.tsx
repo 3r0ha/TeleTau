@@ -7,6 +7,7 @@ import createClient from "openapi-fetch";
 import { Brand, ButtonLink, hexPath, illustrations } from "@teletau/ui";
 import type { paths, Schema } from "@teletau/contracts";
 import { API_BASE_URL } from "@teletau/session/config";
+import { plural } from "./_components/learn/format";
 import { androidApkUrl } from "./_components/landing/apk";
 import { HeroActions, StartButton } from "./_components/landing/HeroActions";
 import { landingImages as img } from "./_components/landing/images";
@@ -72,11 +73,14 @@ async function loadLeaderboard(period: BoardPeriod): Promise<Schema<"PublicLeade
 /** Число с разрядами по-русски: 1234 → «1 234». */
 const fmt = (n: number) => n.toLocaleString("ru-RU");
 
-/** Родительный падеж после «не меньше»: 5 → «учеников», 21 → «ученика». */
-const genitiveStudents = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? "ученика" : "учеников");
+/** Уроков по-русски: 1 урок, 2 урока, 5 уроков (plural из learn/format — чистая функция, безопасна на сервере). */
+const lessonsRu = (n: number) => plural(n, ["урок", "урока", "уроков"]);
 
-/** Строка доски почёта: место, группа (школа или класс) и три счётчика — без имён и ников (правило 13). */
-type BoardRow = { rank: number; name: string; sub: string; lessons: number; activeStudents: number; wordsLearned: number };
+/** Учеников по-русски после «не меньше»: 5 → «учеников», 21 → «ученика». */
+const studentsRu = (n: number) => plural(n, ["ученика", "учеников", "учеников"]);
+
+/** Строка доски почёта: место, группа (школа или класс) и уроки за период — без имён и ников (правило 13). */
+type BoardRow = { rank: number; name: string; sub: string; lessons: number };
 
 /** Школа на доске: название крупно, район — подписью. */
 const schoolRow = (s: Schema<"PublicLeaderboardSchool">): BoardRow => ({
@@ -84,8 +88,6 @@ const schoolRow = (s: Schema<"PublicLeaderboardSchool">): BoardRow => ({
   name: s.school,
   sub: s.district,
   lessons: s.lessons,
-  activeStudents: s.activeStudents,
-  wordsLearned: s.wordsLearned,
 });
 
 /** Класс на доске: литера крупно, школа и район — подписью. */
@@ -94,8 +96,6 @@ const classRow = (c: Schema<"PublicLeaderboardClass">): BoardRow => ({
   name: c.classLabel,
   sub: `${c.school} · ${c.district}`,
   lessons: c.lessons,
-  activeStudents: c.activeStudents,
-  wordsLearned: c.wordsLearned,
 });
 
 /** Картинка в размере показа: ширина — из CSS, высота — по пропорции файла. */
@@ -121,47 +121,26 @@ function Stage({ tone }: { tone: Tone }) {
   );
 }
 
-/** Группа доски почёта («Школы» или «Классы») — компактная таблица: место, группа, уроки, ученики, слова. */
-function BoardTable({ title, nameHeader, rows }: { title: string; nameHeader: string; rows: BoardRow[] }) {
+/** Группа доски («Школы» или «Классы») — компактный топ-3: строка на место, из счётчиков — только уроки. */
+function BoardTop({ title, rows }: { title: string; rows: BoardRow[] }) {
   return (
-    <div className="lp-board__group">
-      <h3 className="lp-board__group-title">{title}</h3>
+    <div className="lp-board__top">
+      <h3 className="lp-board__top-title">{title}</h3>
       <div className="lp-board__sheet">
-        <table className="lp-board__table">
-          <thead>
-            <tr>
-              <th className="lp-board__th" scope="col">
-                №
-              </th>
-              <th className="lp-board__th lp-board__th--name" scope="col">
-                {nameHeader}
-              </th>
-              <th className="lp-board__th lp-board__th--num" scope="col">
-                Уроки
-              </th>
-              <th className="lp-board__th lp-board__th--num" scope="col">
-                Ученики
-              </th>
-              <th className="lp-board__th lp-board__th--num" scope="col">
-                Слова
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.rank}>
-                <td className="lp-board__rank">{r.rank}</td>
-                <td className="lp-board__name">
-                  <b className="lp-board__who">{r.name}</b>
-                  <span className="lp-board__sub">{r.sub}</span>
-                </td>
-                <td className="lp-board__num">{fmt(r.lessons)}</td>
-                <td className="lp-board__num">{fmt(r.activeStudents)}</td>
-                <td className="lp-board__num">{fmt(r.wordsLearned)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ol className="lp-board__rows">
+          {rows.map((r) => (
+            <li key={r.rank} className="lp-board__row">
+              <span className="lp-board__rank">{r.rank}</span>
+              <span className="lp-board__name">
+                <b className="lp-board__who">{r.name}</b>
+                <span className="lp-board__sub">{r.sub}</span>
+              </span>
+              <span className="lp-board__metric">
+                {fmt(r.lessons)} {lessonsRu(r.lessons)}
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   );
@@ -270,10 +249,9 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
           <section className="lp-board" aria-labelledby="lp-board-title" data-reveal="">
             <div className="lp-wrap lp-board__in">
               <div className="lp-board__head">
-                <h2 id="lp-board-title" className="lp-h2">
+                <h2 id="lp-board-title" className="lp-board__title">
                   Доска почёта
                 </h2>
-                <p className="lp-lead">Самые активные школы и классы. Места — целым группам: ни имён, ни ников.</p>
                 {/* Период — обычные ссылки на ту же страницу: серверный компонент, без состояния. */}
                 <nav className="lp-board__periods" aria-label="Период доски почёта">
                   {BOARD_PERIODS.map((p) => (
@@ -282,15 +260,19 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                     </Link>
                   ))}
                 </nav>
-                {/* T00:00 — местная полночь: дата без сдвига на часовой пояс сервера. */}
-                <p className="lp-board__since">с {new Date(`${board.periodStart}T00:00:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })} · время по Уфе</p>
               </div>
-              <div className="lp-board__groups">
-                {board.schools.length > 0 && <BoardTable title="Школы" nameHeader="Школа" rows={board.schools.map(schoolRow)} />}
-                {board.classes.length > 0 && <BoardTable title="Классы" nameHeader="Класс" rows={board.classes.map(classRow)} />}
+              {/* На витрине — только призёры; полная доска живёт в приложении, экран /board. */}
+              <div className="lp-board__tops">
+                {board.schools.length > 0 && <BoardTop title="Школы" rows={board.schools.slice(0, 3).map(schoolRow)} />}
+                {board.classes.length > 0 && <BoardTop title="Классы" rows={board.classes.slice(0, 3).map(classRow)} />}
               </div>
-              <p className="lp-board__note">
-                В доску попадают школы и классы, где за период занималось не меньше {board.smallGroupThreshold} {genitiveStudents(board.smallGroupThreshold)}.
+              <p className="lp-board__all">
+                <Link className="lp-board__all-link" href="/board">
+                  Вся доска — в приложении
+                </Link>
+                <span className="lp-board__all-note">
+                  в доску попадают группы от {board.smallGroupThreshold} {studentsRu(board.smallGroupThreshold)}
+                </span>
               </p>
             </div>
           </section>

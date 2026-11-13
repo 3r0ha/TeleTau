@@ -238,6 +238,16 @@ const SHOTS: Shot[] = [
     },
   },
   { name: "16-league", go: async (p) => (await p.goto("/league"), await p.getByRole("heading", { name: "Лига Донника" }).waitFor()) },
+  // Доска почёта (ТЗ §4.5): публичный топ школ и классов — данные от мока, как у демо-API; заголовок и секции «Школы»/«Классы» стабильны.
+  {
+    name: "16b-board",
+    go: async (p) => {
+      await p.goto("/board");
+      await p.getByRole("heading", { name: "Доска почёта", level: 1 }).waitFor();
+      await p.getByRole("region", { name: "Школы" }).waitFor();
+      await p.getByRole("region", { name: "Классы" }).waitFor();
+    },
+  },
   { name: "17-class", go: async (p) => (await p.goto("/hive"), await p.getByRole("heading", { name: /Улей 5/ }).waitFor()) },
   { name: "18-profile", go: async (p) => (await p.goto("/me"), await p.getByRole("heading", { name: "Мой вклад в словарь" }).waitFor()) },
   {

@@ -299,17 +299,17 @@
 }
 
 /* ───────────── доска почёта ───────────── */
-/* Витрина без регистрации (ТЗ §4.5): топ школ и классов за период. Фон — как у фразы дня: соседняя полоса
-   мест затемнена, обычный фон не даёт полосам слиться. Группа — карточка-«лист» с рамкой и «губой», как телефон. */
+/* Компактная витрина без регистрации (ТЗ §4.5): топ-3 школ и классов за период — по строке на место, из
+   счётчиков только уроки. Полная доска — экран /board в приложении; лендинг показывает призёров. */
 .lp-board {
-  padding-block: var(--tt-space-s800) var(--tt-space-s1200);
+  padding-block: var(--tt-space-s600) var(--tt-space-s800);
 }
 
 .lp-board__in {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--tt-space-s600);
+  gap: var(--tt-space-s500);
   text-align: center;
 }
 
@@ -317,7 +317,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--tt-space-s400);
+  gap: var(--tt-space-s300);
+}
+
+/* Заголовок — кэлаут в духе фразы дня: это узкая полоса-выдержка, а не большая секция с lp-h2. */
+.lp-board__title {
+  margin: 0;
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-black);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tt-color-text-secondary);
 }
 
 /* Переключатель периода — ссылки-«чипы»: активный медовый, остальные — карточки. */
@@ -357,31 +368,32 @@
   color: var(--tt-color-accent-text);
 }
 
-.lp-board__since {
-  margin: 0;
-  color: var(--tt-color-text-secondary);
-  font-size: var(--tt-font-size-caption);
-  line-height: var(--tt-line-height-snug);
-}
-
-.lp-board__groups {
+.lp-board__tops {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--tt-space-s600);
+  gap: var(--tt-space-s500);
   width: 100%;
 }
 
-.lp-board__group-title {
-  margin: 0 0 var(--tt-space-s300);
+/* Две группы призёров рядом на широком экране, столбиком — на телефоне (брейкпоинт как у мест тропы). */
+@media (min-width: 880px) {
+  .lp-board__tops {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--tt-space-s800);
+  }
+}
+
+.lp-board__top-title {
+  margin: 0 0 var(--tt-space-s200);
   font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-callout);
+  font-size: var(--tt-font-size-caption);
   font-weight: var(--tt-font-weight-black);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--tt-color-text-secondary);
 }
 
-/* «Лист» таблицы: рамка со скруглением, ячейки не вылезают за угол. */
+/* «Лист» строк: рамка со скруглением, строки не вылезают за угол. */
 .lp-board__sheet {
   border: 2px solid var(--tt-color-border-default);
   border-radius: var(--tt-radius-sheet);
@@ -390,59 +402,45 @@
   overflow: clip;
 }
 
-.lp-board__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-}
-
-.lp-board__th {
-  padding: var(--tt-space-s200) var(--tt-space-s200) var(--tt-space-s150);
-  border-bottom: 2px solid var(--tt-color-border-subtle);
-  background: var(--tt-color-bg-sunken);
-  color: var(--tt-color-text-secondary);
-  font-size: var(--tt-font-size-caption);
-  font-weight: var(--tt-font-weight-semibold);
-  letter-spacing: 0.04em;
-  text-align: center;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.lp-board__th--name {
+.lp-board__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   text-align: start;
 }
 
-.lp-board__th--num {
-  text-align: end;
+.lp-board__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--tt-space-s300);
+  padding: var(--tt-space-s200) var(--tt-space-s400);
 }
 
+.lp-board__row + .lp-board__row {
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+/* Место призёра — медовое: на витрине только топ-3, каждое место — призовое. */
 .lp-board__rank {
-  padding: var(--tt-space-s300) var(--tt-space-s200);
-  color: var(--tt-color-text-secondary);
+  color: var(--tt-color-accent-text);
   font-family: var(--tt-font-family-display);
   font-weight: var(--tt-font-weight-black);
-  text-align: center;
-}
-
-/* Первые три места — медовый номер места. */
-.lp-board__table tbody tr:nth-child(-n + 3) .lp-board__rank {
-  color: var(--tt-color-accent-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .lp-board__name {
-  padding: var(--tt-space-s300) var(--tt-space-s200);
+  display: grid;
+  min-width: 0;
 }
 
 .lp-board__who {
-  display: block;
   color: var(--tt-color-text-primary);
   font-weight: var(--tt-font-weight-extrabold);
   overflow-wrap: anywhere;
 }
 
 .lp-board__sub {
-  display: block;
   margin-top: var(--tt-space-s050);
   color: var(--tt-color-text-secondary);
   font-size: var(--tt-font-size-caption);
@@ -450,28 +448,32 @@
   overflow-wrap: anywhere;
 }
 
-.lp-board__num {
-  padding: var(--tt-space-s300) var(--tt-space-s200);
+.lp-board__metric {
   color: var(--tt-color-text-primary);
-  text-align: end;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.lp-board__note {
+/* Мелкая строка под группами: ссылка в приложение и порог малых групп — одним рядом. */
+.lp-board__all {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: var(--tt-space-s300);
   margin: 0;
-  max-width: 30rem;
   color: var(--tt-color-text-secondary);
   font-size: var(--tt-font-size-caption);
   line-height: var(--tt-line-height-snug);
 }
 
-/* На узком экране таблица компактнее: пять колонок должны помещаться без прокрутки. */
-@media (max-width: 30em) {
-  .lp-board__th,
-  .lp-board__rank,
-  .lp-board__num {
-    padding-inline: var(--tt-space-s100);
-  }
+.lp-board__all-link {
+  color: var(--tt-color-highlight);
+  font-weight: var(--tt-font-weight-semibold);
+  text-decoration: none;
+}
+
+.lp-board__all-link:hover {
+  text-decoration: underline;
 }
 
 /* ───────────── полоса мест ───────────── */

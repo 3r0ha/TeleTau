@@ -1341,6 +1341,142 @@
   text-align: center;
 }
 
+/* «Доска почёта школ» из «Лиги»: на телефоне это единственный вход к доске (в нижней навигации её нет). */
+.league__board-link {
+  display: flex;
+  justify-content: center;
+  margin: var(--tt-space-s100) 0 var(--tt-space-s400);
+}
+
+/* ───────────── доска почёта (ТЗ §4.5) ───────────── */
+/* Публичный топ-10 школ и классов за период: шапка с датой, сегменты периода и две компактные таблицы —
+   как у лиги (tt-board), но строка — группа с подписью и три счётчика, место — по урокам. */
+.board__head {
+  padding: var(--tt-space-s150) 0 var(--tt-space-s200);
+  text-align: center;
+}
+
+.board__periods {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--tt-space-s200);
+  margin-bottom: var(--tt-space-s350);
+}
+
+.board__period {
+  min-height: var(--tt-size-touch-min);
+  padding-inline: var(--tt-space-s400);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
+.board__period:hover {
+  background: var(--tt-color-accent-soft);
+}
+
+.board__period[aria-pressed="true"] {
+  border-color: var(--tt-color-accent-fill);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.board__period:focus-visible {
+  outline: var(--tt-size-focus-ring) solid var(--tt-color-focus);
+  outline-offset: 2px;
+}
+
+.board__group {
+  margin-bottom: var(--tt-space-s400);
+}
+
+.board__group-title {
+  margin: 0 0 var(--tt-space-s200);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-black);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* «Лист» строк, как tt-board у лиги: рамка со скруглением, строки не вылезают за угол. */
+.board__sheet {
+  overflow: clip;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.board__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.board__th {
+  padding: var(--tt-space-s200) var(--tt-space-s300) var(--tt-space-s150);
+  border-bottom: 2px solid var(--tt-color-border-subtle);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-align: start;
+  text-transform: uppercase;
+}
+
+.board__th--num,
+.board__td--num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.board__td {
+  padding: var(--tt-space-s250) var(--tt-space-s300);
+  border-top: 2px solid var(--tt-color-border-subtle);
+  vertical-align: middle;
+}
+
+.board__row:first-child .board__td {
+  border-top: 0;
+}
+
+.board__td--rank {
+  width: 32px;
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-black);
+  text-align: center;
+}
+
+.board__who {
+  font-weight: var(--tt-font-weight-extrabold);
+  overflow-wrap: anywhere;
+}
+
+.board__sub {
+  display: block;
+  margin-top: var(--tt-space-s050);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: var(--tt-line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+.board__note {
+  margin: 0 0 var(--tt-space-s450);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-label);
+  text-align: center;
+}
+
 /* ───────────── профиль (prototype 18-profile) ───────────── */
 .profile__head {
   display: flex;

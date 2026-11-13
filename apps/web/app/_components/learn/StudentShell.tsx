@@ -34,7 +34,7 @@ export function studentClass(me: Me | null) {
 
 /**
  * Каркас вкладки ученика (shell.css). Телефон: верхняя панель (по желанию), колонка и нижняя навигация на 4 вкладки.
- * Компьютер и планшет: слева — боковая навигация на 5 разделов (со «Словарём»), в центре — содержимое вкладки,
+ * Компьютер и планшет: слева — боковая навигация на 6 разделов (с «Доской» и «Словарём»), в центре — содержимое вкладки,
  * с 1024 px справа — колонка карточек (StudentRail). Telegram Mini App — всегда как телефон: он открывается в окне
  * клиента Telegram, а не на весь экран.
  */
@@ -60,7 +60,7 @@ export function StudentShell({
         <StudentSideNav
           current={tab}
           home={paths.learn}
-          hrefs={{ path: paths.learn, league: paths.league, hive: paths.hive, words: paths.words, me: paths.me }}
+          hrefs={{ path: paths.learn, league: paths.league, board: paths.board, hive: paths.hive, words: paths.words, me: paths.me }}
         />
       )}
       <div className="tt-shell__body">
@@ -72,7 +72,8 @@ export function StudentShell({
         </div>
         {phone ? null : <StudentRail tab={tab} {...rail} />}
       </div>
-      <StudentTabBar current={tab === "words" ? "me" : tab} hrefs={{ path: paths.learn, league: paths.league, hive: paths.hive, me: paths.me }} />
+      {/* «Доска» — раздел бокового меню; на телефоне вход с «Лиги», поэтому в нижней навигации подсвечена она. */}
+      <StudentTabBar current={tab === "words" ? "me" : tab === "board" ? "league" : tab} hrefs={{ path: paths.learn, league: paths.league, hive: paths.hive, me: paths.me }} />
     </div>
   );
 }

@@ -13,6 +13,8 @@ export const learnApi = {
   complete: (runId: string) => unwrap(api.POST("/api/v1/lesson-runs/{runId}/complete", { params: { path: { runId } } })),
   league: () => unwrap(api.GET("/api/v1/leagues/current")),
   leagueResultSeen: (weekStart: string) => unwrap(api.POST("/api/v1/leagues/result-seen", { body: { weekStart } })),
+  // Доска почёта (ТЗ §4.5): публичный топ школ и классов за период — агрегаты без имён и ников.
+  leaderboard: (period: "day" | "week" | "month" | "year") => unwrap(api.GET("/api/v1/public/leaderboard", { params: { query: { period } } })),
   hive: (classId: string) => unwrap(api.GET("/api/v1/classes/{id}/hive", { params: { path: { id: classId } } })),
   myCells: () => unwrap(api.GET("/api/v1/corpus/my-cells", { params: { query: { limit: 1 } } })),
   startReview: (runId: string) => unwrap(api.POST("/api/v1/reviews/runs", { body: { runId } })),

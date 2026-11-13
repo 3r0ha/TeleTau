@@ -1,5 +1,6 @@
 // Раскладка ученика на компьютере и телефоне (@teletau/ui/shell.css, StudentShell, StudentRail) и стартовая страница:
-// на 1280 px — боковая навигация на 5 разделов и правая колонка карточек, на 390 px — как прототип: нижние вкладки.
+// на 1280 px — боковая навигация на 6 разделов («Доска» — как «Словарь», только в ней) и правая колонка карточек,
+// на 390 px — как прототип: нижние вкладки на 4 раздела.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { childMe, mockBackend } from "./mock-api";
@@ -19,7 +20,7 @@ async function expectAccessible(page: Page, label: string) {
 test.describe("компьютер, 1280 px", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
-  test("слева — 5 разделов с логотипом, нижних вкладок нет; справа — цель дня, серия, лига и квест улья", async ({ page }) => {
+  test("слева — 6 разделов с логотипом, нижних вкладок нет; справа — цель дня, серия, лига и квест улья", async ({ page }) => {
     const learn = learnWorld();
     learn.course.review = { due: 5 };
     await mockBackend(page, { account: childMe(), learn });
@@ -28,7 +29,7 @@ test.describe("компьютер, 1280 px", () => {
 
     const nav = page.getByRole("navigation", { name: "Разделы" });
     await expect(nav).toHaveCount(1);
-    await expect(nav.getByRole("link")).toHaveText(["ТелеТау", "Путь", "Лига", "Класс", "Словарь", "Профиль"]);
+    await expect(nav.getByRole("link")).toHaveText(["ТелеТау", "Путь", "Лига", "Доска", "Класс", "Словарь", "Профиль"]);
     await expect(nav.getByRole("link", { name: "Путь" })).toHaveAttribute("aria-current", "page");
     await expect(page.locator(".tt-tabbar")).toBeHidden();
     // Шапка тропы со счётчиками — в правой колонке.

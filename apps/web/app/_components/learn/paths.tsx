@@ -18,6 +18,8 @@ export interface StudentPaths {
   /** Тропа (вкладка «Путь»). */
   learn: string;
   league: string;
+  /** «Доска почёта» школ и классов (ТЗ §4.5): раздел бокового меню, на телефоне — вход с «Лиги». */
+  board: string;
   hive: string;
   me: string;
   /** «Мой словарь» (вход из профиля). */
@@ -59,6 +61,7 @@ export function useStudentPaths(): LearnerPaths {
       prefix,
       learn: `${prefix}/learn`,
       league: `${prefix}/league`,
+      board: `${prefix}/board`,
       hive: `${prefix}/hive`,
       me: `${prefix}/me`,
       words: `${prefix}/me/words`,

@@ -426,6 +426,9 @@ export async function mockBackend(page: Page, init: Partial<World> = {}): Promis
     if (key === "GET /teacher/verification") return w.verification ? json(route, 200, w.verification) : problem(route, 404, "not_found");
     if (key === "GET /classes") return json(route, 200, { items: w.classes });
 
+    // ───── Доска почёта (ТЗ §4.5): публичный топ школ и классов — экран «Доска» приложения ученика ─────
+    if (key === "GET /public/leaderboard") return json(route, 200, demoLeaderboard(url.searchParams.get("period")));
+
     // ───── Тропа, урок, мотивация (операции контракта: getCourse … listMyCorpusCells) ─────
     const L = w.learn;
     if (key === "GET /course") return json(route, 200, L.course);
@@ -610,6 +613,75 @@ function extraSchools(n: number): Schema<"School">[] {
     shortNameRu: `Школа № ${101 + i}`,
     isDemo: false,
   }));
+}
+
+/** Топ школ доски (неделя): короткое название, район, уроки, активные ученики, выученные слова — как демо-республика. */
+const BOARD_SCHOOLS: [string, string, number, number, number][] = [
+  ["Школа № 7", "Уфа", 236, 28, 4120],
+  ["Гимназия № 3", "Уфа", 214, 25, 3860],
+  ["Башкирская гимназия", "Стерлитамак", 191, 23, 3510],
+  ["Лицей № 1", "Стерлитамак", 168, 21, 2980],
+  ["Старосубхангуловская СОШ", "Бурзянский район", 143, 17, 2240],
+  ["Аскаровская СОШ № 2", "Абзелиловский район", 121, 15, 2010],
+  ["Белорецкая школа № 5", "Белорецкий район", 104, 12, 1730],
+  ["Школа № 21", "Уфа", 88, 11, 1520],
+  ["Аскаровская СОШ № 1", "Абзелиловский район", 71, 9, 1180],
+  ["Школа № 5", "Стерлитамак", 54, 7, 890],
+];
+
+/** Топ классов доски (неделя): литера, школа, район, уроки, активные ученики, выученные слова. */
+const BOARD_CLASSES: [string, string, string, number, number, number][] = [
+  ["5 «Б»", "Школа № 7", "Уфа", 64, 24, 980],
+  ["6 «А»", "Гимназия № 3", "Уфа", 58, 22, 910],
+  ["5 «Ә»", "Башкирская гимназия", "Стерлитамак", 52, 21, 860],
+  ["7 «Б»", "Лицей № 1", "Стерлитамак", 47, 19, 790],
+  ["6 «Б»", "Старосубхангуловская СОШ", "Бурзянский район", 41, 16, 640],
+  ["5 «А»", "Аскаровская СОШ № 2", "Абзелиловский район", 36, 14, 570],
+  ["6 «В»", "Белорецкая школа № 5", "Белорецкий район", 31, 12, 510],
+  ["7 «А»", "Школа № 21", "Уфа", 26, 10, 440],
+  ["5 «Д»", "Аскаровская СОШ № 1", "Абзелиловский район", 21, 8, 360],
+  ["4 «Б»", "Школа № 5", "Стерлитамак", 16, 6, 290],
+];
+
+/** Доска почёта (ТЗ §4.5) — как демо-API: топ-10 школ и классов за период; невалидный период — неделя. */
+function demoLeaderboard(periodRaw: string | null): Schema<"PublicLeaderboard"> {
+  const period = (["day", "week", "month", "year"] as const).find((p) => p === periodRaw) ?? "week";
+  // Счётчики растут с периодом (уроки недели — база); ученики и слова от периода не зависят.
+  const lessonsScale = { day: 0.2, week: 1, month: 4, year: 26 }[period];
+  const round = (n: number) => Math.max(1, Math.round(n * lessonsScale));
+  const now = new Date();
+  const start =
+    period === "day"
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      : period === "week"
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7))
+        : period === "month"
+          ? new Date(now.getFullYear(), now.getMonth(), 1)
+          : new Date(now.getFullYear(), 0, 1);
+  const periodStart = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+  return {
+    asOf: now.toISOString(),
+    period,
+    periodStart,
+    smallGroupThreshold: 5,
+    schools: BOARD_SCHOOLS.map(([school, district, lessons, activeStudents, wordsLearned], i) => ({
+      rank: i + 1,
+      school,
+      district,
+      lessons: round(lessons),
+      activeStudents,
+      wordsLearned,
+    })),
+    classes: BOARD_CLASSES.map(([classLabel, school, district, lessons, activeStudents, wordsLearned], i) => ({
+      rank: i + 1,
+      classLabel,
+      school,
+      district,
+      lessons: round(lessons),
+      activeStudents,
+      wordsLearned,
+    })),
+  };
 }
 
 /** Фото карточки: PNG с QR-кодом — как его загружает ученик через «Загрузить фото карточки». */

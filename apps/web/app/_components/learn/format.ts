@@ -49,3 +49,9 @@ export function weekdayShort(date: string): string {
   const d = new Date(`${date}T12:00:00Z`);
   return WEEKDAYS[d.getUTCDay()] ?? "";
 }
+
+/** «9 ноября» («с 9 ноября») — начало периода доски почёта, дата YYYY-MM-DD по Уфе; год — у периода «год». */
+export function boardSince(periodStart: string, withYear = false): string {
+  const d = new Date(`${periodStart}T12:00:00Z`);
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "UTC", ...(withYear ? { year: "numeric" } : {}) });
+}

@@ -149,6 +149,7 @@ describe("Mini App: системная «Назад»", () => {
     prefix: "/miniapp",
     learn: "/miniapp/learn",
     league: "/miniapp/league",
+    board: "/miniapp/board",
     hive: "/miniapp/hive",
     me: "/miniapp/me",
     words: "/miniapp/me/words",
@@ -167,6 +168,7 @@ describe("Mini App: системная «Назад»", () => {
     expect(backAction("/miniapp/student/nickname", paths, false)).toBe("none");
     expect(backAction("/miniapp/student/class", paths, false)).toBe("none");
     expect(backAction("/miniapp/league", paths, false)).toBe("trail");
+    expect(backAction("/miniapp/board", paths, false)).toBe("trail");
     expect(backAction("/miniapp/me/", paths, false)).toBe("trail");
     expect(backAction("/miniapp/student/code", paths, false)).toBe("history");
     expect(backAction("/miniapp/me/words", paths, false)).toBe("history");

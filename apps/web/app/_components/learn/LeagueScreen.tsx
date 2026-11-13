@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment } from "react";
-import { ButtonLink, EmptyState, GlintBadge, Illustration, LEAGUE_TIERS, LeagueBoard, LeagueRow, LeagueZone, leagueBadges } from "@teletau/ui";
+import { ArrowRight } from "@phosphor-icons/react/ssr";
+import { ButtonLink, EmptyState, GlintBadge, Illustration, LEAGUE_TIERS, LeagueBoard, LeagueRow, LeagueZone, TextLink, leagueBadges } from "@teletau/ui";
 import { useResource } from "@teletau/session/react";
 import { LoadError, LoadingBlock } from "../screens";
 import { learnApi } from "./api";
@@ -93,6 +94,13 @@ function LeagueView({ league }: { league: LeagueStanding }) {
           Пройди урок, чтобы попасть в таблицу.
         </EmptyState>
       )}
+      {/* Доска почёта школ и классов — отдельный раздел; на телефоне это основной вход к ней (в нижних вкладках её нет). */}
+      <p className="league__board-link">
+        <TextLink href={paths.board}>
+          Доска почёта школ
+          <ArrowRight weight="bold" aria-hidden />
+        </TextLink>
+      </p>
     </>
   );
 }
