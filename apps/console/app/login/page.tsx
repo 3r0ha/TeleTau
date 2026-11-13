@@ -13,13 +13,10 @@ const flag = (raw: string | undefined) => {
 /**
  * Вход сотрудника: e-mail → одноразовый код → TOTP (ADR 0015 §4). Демо-подсказка — только в демо-режиме сервера;
  * AUTH_DEMO_STAFF_WITHOUT_TOTP (вместе с AUTH_DEMO_STAFF) убирает шаг TOTP — «почта → код», удобно проверяющим.
+ * NODE_ENV здесь не проверяем: `next start` всегда работает в production, а реальная защита от включения демо-флагов
+ * в проде — в API (loadConfig запрещает их в production).
  */
 export default async function LoginPage() {
   await connection();
-  return (
-    <StaffLogin
-      demoCode={process.env.AUTH_DEMO_OTP?.trim() || null}
-      totpDisabled={process.env.NODE_ENV !== "production" && flag(process.env.AUTH_DEMO_STAFF) && flag(process.env.AUTH_DEMO_STAFF_WITHOUT_TOTP)}
-    />
-  );
+  return <StaffLogin demoCode={process.env.AUTH_DEMO_OTP?.trim() || null} totpDisabled={flag(process.env.AUTH_DEMO_STAFF) && flag(process.env.AUTH_DEMO_STAFF_WITHOUT_TOTP)} />;
 }
