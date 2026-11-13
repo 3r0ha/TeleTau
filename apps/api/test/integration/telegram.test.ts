@@ -340,13 +340,28 @@ describe("ежедневное задание бота (ADR 0024): FSM-диал�
     (await pool.query<{ status: string }>("SELECT status::text AS status FROM telegram_dialogs WHERE dialog_id = $1", [dialogId])).rows[0]?.status;
 
   beforeAll(async () => {
+    chat = newChat();
+    expectStatus(await api.post("/telegram/link", { token: student.accessToken, body: { initData: initData(chat) } }), 200);
+
+    // База у файлов прогона общая: к этому моменту в корпусе уже реальный дуэли (achievements.test.ts) и синтетика
+    // других файлов. Выкачиваем пул ЭТОГО аккаунта ответами «Не знаю» ДО импорта своей синтетики — иначе в выдачу
+    // попадает реальная фраза. «Не знаю» мёда не приносит, а исходник выбывает из пула голосующего при любом choice.
+    // Дни слива — январь 2025 и далее: они старше «сейчас» и сценариев ниже больше чем на 48 часов, а аккаунт у слива
+    // свой — с последним тестом блока (его слив — сентябрь 2026) пул не пересекается.
+    let drained: Schema<"TelegramDailyDuel"> | undefined;
+    for (let i = 0; i < 400; i++) {
+      const at = new Date(Date.UTC(2025, 0, 1 + i));
+      drained = await telegram().dailyDuel(String(chat), at);
+      if (drained.state !== "issued") break;
+      await telegram().answerDialog(drained.dialogId!, { choice: "skip" }, at);
+    }
+    expect(drained?.state).toBe("empty");
+
     const dir = mkdtempSync(join(tmpdir(), "tg-daily-"));
     writeFileSync(join(dir, "sources.yaml"), SOURCES);
     mkdirSync(join(dir, "duels"));
     writeFileSync(join(dir, "duels", "duels.yaml"), `unit: ${UNIT}\nduels:\n${duel(1)}${duel(2)}${duel(3)}`);
     await importDuels(pool, { dir: join(dir, "duels"), sourcesFile: join(dir, "sources.yaml") });
-    chat = newChat();
-    expectStatus(await api.post("/telegram/link", { token: student.accessToken, body: { initData: initData(chat) } }), 200);
     dialog = (await issue(chat)).body;
   });
 

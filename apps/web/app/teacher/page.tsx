@@ -105,6 +105,9 @@ function FirstClass({ me, onCreate }: { me: Me; onCreate: () => void }) {
             <b>Покажите код на доске</b>
           </li>
         </ol>
+        <p className="tt-muted">
+          Уже вели классы в ТелеТау? Проверьте адрес почты, с которым вы вошли.
+        </p>
         <div className="first-class__actions">
           <Button icon={<Plus weight="bold" />} onClick={onCreate}>
             Создать класс

@@ -122,6 +122,8 @@ export class OtpService {
     // Одноразовость: из параллельных запросов с верным кодом дальше проходит только удаливший вызов.
     if ((await this.kv(() => this.valkey.del(key))) !== 1) throw unauthorized("otp_expired");
     const account = existing ?? (await this.accounts.findOrCreateAdult(email));
+    // Заблокированный аккаунт: причина — прямо, а не «Сессия завершена» по кругу (M2-UX5). Удалённый — как было.
+    if (account.status === "blocked") throw unauthorized("account_blocked");
     if (account.status !== "active") throw unauthorized("session_revoked");
     if (account.kind === "staff") {
       await this.audit.record(this.db, { action: "staff.login", actor: { accountId: account.id, kind: "staff", roles: account.roles }, meta });

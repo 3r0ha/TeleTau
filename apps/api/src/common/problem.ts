@@ -28,6 +28,7 @@ const TITLES: Record<string, string> = {
   refresh_invalid: "Сессия недействительна — войдите снова",
   refresh_reused: "Сессия отозвана из соображений безопасности — войдите снова",
   session_revoked: "Сессия завершена — войдите снова",
+  account_blocked: "Аккаунт заблокирован — обратитесь к администрации",
   nickname_not_allowed: "Ник есть только у учеников",
   teacher_not_verified: "Учитель ещё не подтверждён",
   school_not_allowed: "Можно выбрать только школу из одобренной заявки",

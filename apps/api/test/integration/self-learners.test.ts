@@ -254,6 +254,25 @@ describe("adults: e-mail is optional, the teacher application only by choice (AD
     expect([taken.status, taken.body.code]).toEqual([409, "email_in_use"]);
   });
 
+  it("a blocked adult sees account_blocked — not a «Сессия завершена» loop (M2-UX5)", async () => {
+    const address = email("self-blocked");
+    const adult = await api.loginAdult(address);
+    expectStatus(await api.get("/me", { token: adult.accessToken }), 200);
+
+    // Блокировка (администратор/консоль — статус в БД): все пути называют причину, а не «войдите снова» по кругу.
+    await pool.query("UPDATE accounts SET status = 'blocked' WHERE id = $1", [adult.account.id]);
+
+    const me = await api.get<Problem>("/me", { token: adult.accessToken });
+    expect([me.status, me.body.code]).toEqual([401, "account_blocked"]);
+
+    const refreshed = await api.post<Problem>("/auth/refresh", { body: { refreshToken: adult.refreshToken, deviceInstallId: adult.device.installId } });
+    expect([refreshed.status, refreshed.body.code]).toEqual([401, "account_blocked"]);
+
+    const ch = await api.post<Schema<"OtpChallenge">>("/auth/otp/request", { body: { email: address }, ip: randomIp() });
+    const again = await api.post<Problem>("/auth/otp/verify", { body: { challengeId: ch.body.challengeId, code: DEMO_CODE, device: newDevice() }, ip: randomIp() });
+    expect([again.status, again.body.code]).toEqual([401, "account_blocked"]);
+  });
+
   it("a child attaches e-mail as well (owner decision, ADR 0022 §10): address is not stored, card revoked, e-mail opens the same account", async () => {
     const kid = await signup("age_15_17");
     const issued = await api.post<Card>("/me/login-card", { token: kid.accessToken });

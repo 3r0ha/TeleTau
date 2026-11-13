@@ -1,6 +1,6 @@
 // Кабинет министерства и словарь для Фонда (ADR 0023) против настоящего стека и демо-мира (apps/api/src/demo/region.ts):
 // министерство входит в консоль → «Республика» крупными числами → район → школы, малые группы «< 5» → чужие разделы
-// закрыты; Фонд → принятые пары демо-мира с голосами по группам → «Скачать CSV». Ни ников, ни номеров мест.
+// закрыты; Фонд → принятые пары демо-мира с голосами по группам → «Скачать таблицу (CSV)». Ни ников, ни номеров мест.
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { stack } from "../support/env.js";
@@ -56,7 +56,7 @@ test("Фонд: принятые пары демо-мира, «Предвари�
   await expect(rows.first()).toContainText("ждёт проверки носителем");
   await expectAccessible(page, "консоль: словарь для Фонда");
 
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать CSV" }).click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Скачать таблицу (CSV)" }).click()]);
   const csv = readFileSync((await download.path())!, "utf8");
   // BOM — для Excel; trim() его срезал бы, поэтому проверка — по исходному тексту.
   expect(csv.startsWith("\uFEFFРусский исходник;Башкирский вариант;")).toBe(true);

@@ -111,6 +111,12 @@ export class SessionsService {
     }
     if (valkeyDown) throw unavailable();
     if (row.expiresAt <= now || row.familyExpiresAt <= now) throw unauthorized("refresh_invalid");
+    if (account!.status === "blocked") {
+      await this.revokeFamilyRows(this.db, row.familyId, "account_blocked");
+      await this.blockFamilies([row.familyId]);
+      // Заблокированный аккаунт не «заходит по кругу» со «Сессия завершена»: причина названа прямо (M2-UX5).
+      throw unauthorized("account_blocked");
+    }
     if (account!.status !== "active") {
       await this.revokeFamilyRows(this.db, row.familyId, "account_blocked");
       await this.blockFamilies([row.familyId]);

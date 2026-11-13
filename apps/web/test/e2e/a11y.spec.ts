@@ -92,7 +92,16 @@ const SCREENS: Screen[] = [
   { name: "заявка учителя: профиль", world: { account: adultMe({ teacherStatus: "none", roles: [], classes: [] }) }, open: async (p) => (await p.goto("/teacher/apply"), heading(p, "Расскажите о себе")) },
   { name: "заявка на проверке", world: { account: adultMe({ teacherStatus: "pending", roles: [], classes: [] }) }, open: async (p) => (await p.goto("/teacher/pending"), heading(p, "Заявка на проверке")) },
   { name: "мои классы", world: { account: teacher }, open: async (p) => (await p.goto("/teacher"), heading(p, "Мои классы")) },
-  { name: "мои классы: пусто", world: { account: teacher, classes: [] }, open: async (p) => (await p.goto("/teacher"), heading(p, "Первый урок")) },
+  {
+    name: "мои классы: пусто",
+    world: { account: teacher, classes: [] },
+    open: async (p) => {
+      await p.goto("/teacher");
+      await heading(p, "Первый урок");
+      // Опечатка в адресе почты молча создавала пустой аккаунт — пустой онбординг советует проверить адрес (M2-UX4).
+      await p.getByText("Проверьте адрес почты").waitFor();
+    },
+  },
   { name: "страница класса", world: { account: teacher }, open: async (p) => (await p.goto(`/teacher/classes/${CLASS_ID}`), heading(p, "Места")) },
   {
     name: "код класса на доску",

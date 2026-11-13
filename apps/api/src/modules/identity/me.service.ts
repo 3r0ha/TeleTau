@@ -24,6 +24,8 @@ export class MeService {
 
   async me(accountId: string): Promise<Me> {
     const account = await this.accounts.get(accountId);
+    // Заблокированный аккаунт узнаёт причину, а не беззвучный «Сессия завершена» (M2-UX5); удалённый — как было.
+    if (account?.status === "blocked") throw unauthorized("account_blocked");
     if (!account || account.status !== "active") throw unauthorized("session_revoked");
     const [classes, teacherStatus, pendingConsents, profile, loginCard, emailLogin] = await Promise.all([
       this.classes.myClasses({ accountId, roles: account.roles }),

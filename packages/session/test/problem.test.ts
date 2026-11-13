@@ -8,6 +8,10 @@ describe("describeProblem: понятный текст по Problem Details", ()
     expect(describeProblem(new ApiProblem(429, { code: "rate_limited" }), "child")).toMatch(/Подожди/);
   });
 
+  it("заблокированный аккаунт — причина названа, а не «Сессия завершена» (M2-UX5)", () => {
+    expect(describeProblem(new ApiProblem(401, { code: "account_blocked" }), "adult")).toMatch(/Аккаунт заблокирован/);
+  });
+
   it("неизвестный code обрабатывается по статусу (контракт: список открыт)", () => {
     expect(describeProblem(new ApiProblem(403, { code: "something_new" }))).toBe("Нет доступа.");
     expect(describeProblem(new ApiProblem(500, {}))).toMatch(/Что-то пошло не так/);

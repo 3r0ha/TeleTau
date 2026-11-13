@@ -9,6 +9,41 @@
 **AI:** GigaChat
 **Цель:** релиз 1.0 — полноценный продукт, не MVP
 
+## Демо-стенд
+
+Живой стенд — **https://teletau.study** (веб, Mini App — `/miniapp`, консоль — `console.`, API — `api.`, бот — [@TeleTauBot](https://t.me/TeleTauBot)).
+
+| Кто | Как войти |
+|---|---|
+| Учитель | `teletau.study/teacher/login` → `teacher@demo.teletau.local` → код **0000** |
+| Ученик | QR-карточка демо-ученика или код класса **000-000** |
+| Министерство / Фонд | `console.teletau.study/login` → `ministry@` / `fund@demo.teletau.local` → код 0000 + TOTP (`apps/api/data/README.md`) |
+
+Сценарий показа и демо-мир — [`docs/demo/M2.md`](docs/demo/M2.md); развёртывание стенда — [`docs/deploy.md`](docs/deploy.md).
+
+## Быстрый старт (локально)
+
+```sh
+pnpm install          # Node ≥ 24, pnpm ≥ 9
+pnpm demo:reset       # база с нуля: Docker (Postgres, Valkey, ClickHouse, MinIO) + миграции + демо-мир
+pnpm dev              # веб :3000, API :4000, консоль :3100, бот
+```
+
+Полная самопроверка (CI-паритет: типы, линтеры, тесты, контракты, сборки, iOS/Android, e2e) — `bash scripts/verify.sh`.
+
+## Состав
+
+| Каталог | Что там |
+|---|---|
+| `apps/api` | NestJS: identity, org, learning, consensus, corpus, progress, telegram, ministry, assignments |
+| `apps/web` | Веб ученика и учителя (Next.js), Mini App, BFF, лендинг |
+| `apps/console` | Консоль сотрудников: модерация заявок, министерство, словарь Фонда |
+| `apps/bot` | Telegram-бот (grammY): вход, напоминания, ежедневная дуэль «Помоги языку» (ADR 0024) |
+| `ios/`, `android/` | Нативные клиенты ученика |
+| `packages/contracts` | OpenAPI-контракт (contract-first), генерация типов и JSON |
+| `packages/*` | дизайн-токены, UI, сессия, башкирский текст (нормализация), FSRS, доменные правила |
+| `content/` | Курс и корпус дуэлей (открытые источники, YAML + импорт) |
+
 ## Документы
 
 | № | Документ | О чём |

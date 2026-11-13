@@ -1701,7 +1701,8 @@ export interface components {
          *     Значения: `unauthenticated`, `token_expired`, `forbidden`, `not_found`, `validation_failed`, `bad_request`,
          *     `rate_limited`, `card_invalid`, `card_revoked`, `consent_revoked`, `class_archived`, `payload_invalid`,
          *     `class_code_not_found`, `otp_invalid`, `otp_expired`, `otp_attempts_exceeded`, `totp_required`, `totp_invalid`,
-         *     `email_login_unavailable`, `refresh_invalid`, `refresh_reused`, `session_revoked`, `nickname_not_allowed`,
+         *     `email_login_unavailable`, `refresh_invalid`, `refresh_reused`, `session_revoked`, `account_blocked`
+         *     (401 — аккаунт заблокирован, вход невозможен до разблокировки), `nickname_not_allowed`,
          *     `teacher_not_verified`, `school_not_allowed`, `class_exists`, `seat_limit_exceeded`, `print_job_expired`,
          *     `print_job_replaced` (410 — карточки задания печати уже заменены новым выпуском),
          *     `join_request_closed`, `consent_required`, `verification_pending`, `already_verified`, `already_decided`,
