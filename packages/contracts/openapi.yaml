@@ -2780,6 +2780,87 @@ paths:
         default:
           $ref: "#/components/responses/Unexpected"
 
+  /api/v1/public/dictionary:
+    get:
+      tags: [public]
+      operationId: getPublicDictionary
+      summary: Публичный словарь — выгрузка принятых пар без регистрации
+      description: |
+        Выгрузка словаря (ТЗ §5): принятые пары «русский исходник — башкирский вариант» с источниками — анонимно,
+        без ключей и квот. Персональных данных нет: только тексты пар, их виды, источники и статусы проверки
+        (правило 13). `status=confirmed` — все принятые пары, `status=expert_review` — только проверенные
+        носителем языка. `format=csv` — те же строки таблицей для Excel: разделитель точка с запятой, UTF-8
+        с BOM, столбцы `fragmentId;langPair;translation;textBa;status;confirmed;sources` (источники — названия
+        через запятую). Выгрузка для Фонда с голосами по группам — отдельная операция `getFundDictionary`.
+      security: []
+      x-access: { roles: [anonymous] }
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Какие строки отдавать — все принятые или только проверенные носителем
+          schema:
+            type: string
+            enum: [confirmed, expert_review]
+            default: confirmed
+        - name: format
+          in: query
+          required: false
+          description: JSON (по умолчанию) или CSV для Excel
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        "200":
+          description: Принятые пары словаря — JSON или CSV
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicDictionary"
+            text/csv:
+              schema:
+                type: string
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
+  /api/v1/public/leaderboard:
+    get:
+      tags: [public]
+      operationId: getPublicLeaderboard
+      summary: Доска почёта — активные школы и классы
+      description: |
+        Доска почёта (ТЗ §4.5): самые активные школы и классы за период. Только школы и классы — ни ников, ни
+        имён, ни идентификаторов учеников (правило 13); публичного рейтинга отдельных детей нет и не будет
+        (docs/02 §6). Школы и классы с активными учениками меньше `smallGroupThreshold` в доску не попадают
+        (ADR 0023). Периоды по Уфе (Asia/Yekaterinburg): `day` — учебные сутки, `week` — неделя пн–вс
+        (по умолчанию), `month` — календарный месяц, `year` — календарный год. Пустые списки — данные ещё
+        не накоплены, блок на витрине не показывают.
+      security: []
+      x-access: { roles: [anonymous] }
+      parameters:
+        - name: period
+          in: query
+          required: false
+          description: Период доски — учебные сутки, неделя, месяц или год по Уфе
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: week
+      responses:
+        "200":
+          description: Топ школ и классов по активности за период
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicLeaderboard"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
 components:
   parameters:
     DistrictId:
@@ -6543,6 +6624,148 @@ components:
               description: Источники варианта (у `import` — всегда)
               items:
                 $ref: "#/components/schemas/SourceCitation"
+    PublicDictionary:
+      type: object
+      description: |
+        Публичный словарь (ТЗ §5): принятые пары для всех без регистрации. Персональных данных нет — только
+        тексты, источники и статусы (правило 13). Голосующие не раскрываются.
+      required: [generatedAt, langPair, items]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+          description: Момент выгрузки
+        langPair:
+          type: string
+          enum: [ba-ru]
+          description: Языковая пара; в MVP — только «башкирский ← русский»
+        items:
+          type: array
+          description: Принятые пары сверху вниз по времени решения
+          items:
+            $ref: "#/components/schemas/PublicDictionaryEntry"
+    PublicDictionaryEntry:
+      type: object
+      description: Строка словаря — принятый башкирский вариант русского исходника (ТЗ §5)
+      required: [fragmentId, textBa, langPair, translation, sources, confirmed, status]
+      properties:
+        fragmentId:
+          type: string
+          format: uuid
+          description: Идентификатор фрагмента — принятого башкирского варианта
+        textBa:
+          type: string
+          description: Башкирский текст в канонической форме `@teletau/bashkir-text`
+        langPair:
+          type: string
+          enum: [ba-ru]
+          description: Языковая пара фрагмента
+        translation:
+          type: string
+          description: Русский исходник
+        sources:
+          type: array
+          description: Источники фрагмента (у вариантов из источников — всегда)
+          items:
+            $ref: "#/components/schemas/SourceCitation"
+        confirmed:
+          type: boolean
+          description: "`true` — подтверждено и входит в выпуски датасета; `false` — предварительное решение голосования (duel-v0, ADR 0019), может уточниться"
+        status:
+          type: string
+          enum: [confirmed, expert_review]
+          description: "`confirmed` — принято голосованием, `expert_review` — проверено носителем языка"
+    PublicLeaderboard:
+      type: object
+      description: |
+        Доска почёта (ТЗ §4.5): топ школ и классов за период. Только агрегаты школ и классов — ни ников, ни имён
+        (правило 13). Место — по пройденным урокам; при равенстве выше тот, у кого больше выученных слов.
+      required: [asOf, period, periodStart, smallGroupThreshold, schools, classes]
+      properties:
+        asOf:
+          type: string
+          format: date-time
+          description: Момент расчёта
+        period:
+          type: string
+          enum: [day, week, month, year]
+          description: Период доски
+        periodStart:
+          type: string
+          format: date
+          description: Начало периода по Уфе (Asia/Yekaterinburg) — сутки, понедельник, 1-е число, 1 января
+        smallGroupThreshold:
+          type: integer
+          minimum: 1
+          description: Группы с меньшим числом активных учеников в доску не попадают
+          examples: [5]
+        schools:
+          type: array
+          description: Топ школ (до 10)
+          items:
+            $ref: "#/components/schemas/PublicLeaderboardSchool"
+        classes:
+          type: array
+          description: Топ классов (до 10)
+          items:
+            $ref: "#/components/schemas/PublicLeaderboardClass"
+    PublicLeaderboardSchool:
+      type: object
+      description: Школа в доске почёта
+      required: [rank, school, district, lessons, activeStudents, wordsLearned]
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Место
+        school:
+          type: string
+          description: Короткое название школы
+        district:
+          type: string
+          description: Район или городской округ
+        lessons:
+          type: integer
+          minimum: 0
+          description: Уроков и повторений пройдено за период
+        activeStudents:
+          type: integer
+          minimum: 1
+          description: Учеников занималось за период — не меньше порога малой группы
+        wordsLearned:
+          type: integer
+          minimum: 0
+          description: Словарный запас — слов выучено учениками всего (не за период)
+    PublicLeaderboardClass:
+      type: object
+      description: Класс в доске почёта
+      required: [rank, school, district, classLabel, lessons, activeStudents, wordsLearned]
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Место
+        school:
+          type: string
+          description: Короткое название школы
+        district:
+          type: string
+          description: Район или городской округ
+        classLabel:
+          type: string
+          description: Класс, например «5 «Б»»
+        lessons:
+          type: integer
+          minimum: 0
+          description: Уроков и повторений пройдено за период
+        activeStudents:
+          type: integer
+          minimum: 1
+          description: Учеников занималось за период — не меньше порога малой группы
+        wordsLearned:
+          type: integer
+          minimum: 0
+          description: Словарный запас — слов выучено учениками всего (не за период)
     EscalatedVariant:
       type: object
       description: Вариант спорного исходника с голосами групп за него

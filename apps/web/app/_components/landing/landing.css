@@ -298,6 +298,182 @@
   }
 }
 
+/* ───────────── доска почёта ───────────── */
+/* Витрина без регистрации (ТЗ §4.5): топ школ и классов за период. Фон — как у фразы дня: соседняя полоса
+   мест затемнена, обычный фон не даёт полосам слиться. Группа — карточка-«лист» с рамкой и «губой», как телефон. */
+.lp-board {
+  padding-block: var(--tt-space-s800) var(--tt-space-s1200);
+}
+
+.lp-board__in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s600);
+  text-align: center;
+}
+
+.lp-board__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s400);
+}
+
+/* Переключатель периода — ссылки-«чипы»: активный медовый, остальные — карточки. */
+.lp-board__periods {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--tt-space-s200);
+}
+
+.lp-board__period {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tt-size-touch-min);
+  padding-inline: var(--tt-space-s500);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-primary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-extrabold);
+  text-decoration: none;
+  transition:
+    background var(--tt-duration-base) var(--tt-easing-out),
+    border-color var(--tt-duration-base) var(--tt-easing-out);
+}
+
+.lp-board__period:hover {
+  background: var(--tt-color-accent-soft);
+}
+
+.lp-board__period[aria-current="page"] {
+  border-color: var(--tt-color-accent-fill);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+.lp-board__since {
+  margin: 0;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: var(--tt-line-height-snug);
+}
+
+.lp-board__groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tt-space-s600);
+  width: 100%;
+}
+
+.lp-board__group-title {
+  margin: 0 0 var(--tt-space-s300);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-black);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tt-color-text-secondary);
+}
+
+/* «Лист» таблицы: рамка со скруглением, ячейки не вылезают за угол. */
+.lp-board__sheet {
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-sheet);
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-space-s200) 0 var(--tt-color-border-subtle);
+  overflow: clip;
+}
+
+.lp-board__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-board__th {
+  padding: var(--tt-space-s200) var(--tt-space-s200) var(--tt-space-s150);
+  border-bottom: 2px solid var(--tt-color-border-subtle);
+  background: var(--tt-color-bg-sunken);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lp-board__th--name {
+  text-align: start;
+}
+
+.lp-board__th--num {
+  text-align: end;
+}
+
+.lp-board__rank {
+  padding: var(--tt-space-s300) var(--tt-space-s200);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-weight: var(--tt-font-weight-black);
+  text-align: center;
+}
+
+/* Первые три места — медовый номер места. */
+.lp-board__table tbody tr:nth-child(-n + 3) .lp-board__rank {
+  color: var(--tt-color-accent-text);
+}
+
+.lp-board__name {
+  padding: var(--tt-space-s300) var(--tt-space-s200);
+}
+
+.lp-board__who {
+  display: block;
+  color: var(--tt-color-text-primary);
+  font-weight: var(--tt-font-weight-extrabold);
+  overflow-wrap: anywhere;
+}
+
+.lp-board__sub {
+  display: block;
+  margin-top: var(--tt-space-s050);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: var(--tt-line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+.lp-board__num {
+  padding: var(--tt-space-s300) var(--tt-space-s200);
+  color: var(--tt-color-text-primary);
+  text-align: end;
+  white-space: nowrap;
+}
+
+.lp-board__note {
+  margin: 0;
+  max-width: 30rem;
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: var(--tt-line-height-snug);
+}
+
+/* На узком экране таблица компактнее: пять колонок должны помещаться без прокрутки. */
+@media (max-width: 30em) {
+  .lp-board__th,
+  .lp-board__rank,
+  .lp-board__num {
+    padding-inline: var(--tt-space-s100);
+  }
+}
+
 /* ───────────── полоса мест ───────────── */
 .lp-places {
   padding-block: var(--tt-space-s600) var(--tt-space-s500);
@@ -839,8 +1015,15 @@
   }
 
   .lp-row,
-  .lp-band {
+  .lp-band,
+  .lp-board {
     padding-block: calc(var(--tt-space-s1600) * 1.25);
+  }
+
+  /* Школы и классы — рядом, по листу на группу. */
+  .lp-board__groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tt-space-s800);
   }
 
   .lp-row__in {

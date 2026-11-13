@@ -10,7 +10,7 @@ import { DB } from "../../infra/tokens.js";
 import { CompetitionService } from "../competition/index.js";
 import { ContentService } from "../content/index.js";
 import { ClassesService, ClassPolicy } from "../org/index.js";
-import type { AchievementFacts, LearnerTotals, LessonCompletionInput, LessonCompletionResult, ProgressApi, VoteSettlement } from "./progress.api.js";
+import type { AchievementFacts, LearnerTotals, LessonCompletionInput, LessonCompletionResult, PeriodTotals, ProgressApi, VoteSettlement } from "./progress.api.js";
 import { activityDays, lessonProgress, lessonSkips, progressCounters, streaks, xpLedger } from "./progress.schema.js";
 
 type CounterDelta = Partial<Record<"lessonsCompleted" | "wordsLearned" | "votesTotal" | "votesMatured", number>>;
@@ -204,6 +204,28 @@ export class ProgressService implements ProgressApi {
       .where(and(sql`${activityDays.accountId} = ANY(${sql.param([...accountIds])}::uuid[])`, gte(activityDays.day, from), lte(activityDays.day, to)))
       .groupBy(sql`1`);
     return new Map(rows.map((r) => [r.weekStart, { lessons: r.lessons, active: r.active }]));
+  }
+
+  /** Публичная доска почёта (ТЗ §4.5): уроки за период (activity_days от суток `from`) и словарный запас — счётчик слов всего. */
+  async periodTotals(accountIds: readonly string[], from: string): Promise<Map<string, PeriodTotals>> {
+    const out = new Map<string, PeriodTotals>();
+    if (accountIds.length === 0) return out;
+    const ids = sql.param([...accountIds]);
+    const [days, counters] = await Promise.all([
+      this.db
+        .select({ accountId: activityDays.accountId, lessons: sql<number>`coalesce(sum(${activityDays.lessons}), 0)::int` })
+        .from(activityDays)
+        .where(and(sql`${activityDays.accountId} = ANY(${ids}::uuid[])`, gte(activityDays.day, from)))
+        .groupBy(activityDays.accountId),
+      this.db
+        .select({ accountId: progressCounters.accountId, words: progressCounters.wordsLearned })
+        .from(progressCounters)
+        .where(sql`${progressCounters.accountId} = ANY(${ids}::uuid[])`),
+    ]);
+    const of = (id: string) => out.get(id) ?? out.set(id, { lessons: 0, words: 0 }).get(id)!;
+    for (const d of days) of(d.accountId).lessons = d.lessons;
+    for (const c of counters) of(c.accountId).words = c.words;
+    return out;
   }
 
   async achievementFacts(db: Db, accountId: string): Promise<AchievementFacts> {

@@ -46,6 +46,58 @@ async function loadPhrase(): Promise<Schema<"PhraseOfDay">["pair"] | null> {
   }
 }
 
+/** Периоды доски почёта (ТЗ §4.5): учебные сутки, неделя (по умолчанию), месяц, год — по Уфе. */
+type BoardPeriod = Schema<"PublicLeaderboard">["period"];
+
+const BOARD_PERIODS: { value: BoardPeriod; label: string }[] = [
+  { value: "day", label: "День" },
+  { value: "week", label: "Неделя" },
+  { value: "month", label: "Месяц" },
+  { value: "year", label: "Год" },
+];
+
+/** Доска почёта (ТЗ §4.5) — публичная витрина без регистрации. API молчит или данных нет — блока нет. */
+async function loadLeaderboard(period: BoardPeriod): Promise<Schema<"PublicLeaderboard"> | null> {
+  try {
+    // Таймаут (docs/06 §6.8): лендинг не ждёт молчащего API, без блока — не страшно.
+    const api = createClient<paths>({ baseUrl: API_BASE_URL, fetch: (r) => fetch(r, { cache: "no-store", signal: AbortSignal.timeout(10_000) }) });
+    const { data } = await api.GET("/api/v1/public/leaderboard", { params: { query: { period } } });
+    // Пустые списки — данных ещё нет (контракт getPublicLeaderboard): секцию не показываем.
+    return data && (data.schools.length > 0 || data.classes.length > 0) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Число с разрядами по-русски: 1234 → «1 234». */
+const fmt = (n: number) => n.toLocaleString("ru-RU");
+
+/** Родительный падеж после «не меньше»: 5 → «учеников», 21 → «ученика». */
+const genitiveStudents = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? "ученика" : "учеников");
+
+/** Строка доски почёта: место, группа (школа или класс) и три счётчика — без имён и ников (правило 13). */
+type BoardRow = { rank: number; name: string; sub: string; lessons: number; activeStudents: number; wordsLearned: number };
+
+/** Школа на доске: название крупно, район — подписью. */
+const schoolRow = (s: Schema<"PublicLeaderboardSchool">): BoardRow => ({
+  rank: s.rank,
+  name: s.school,
+  sub: s.district,
+  lessons: s.lessons,
+  activeStudents: s.activeStudents,
+  wordsLearned: s.wordsLearned,
+});
+
+/** Класс на доске: литера крупно, школа и район — подписью. */
+const classRow = (c: Schema<"PublicLeaderboardClass">): BoardRow => ({
+  rank: c.rank,
+  name: c.classLabel,
+  sub: `${c.school} · ${c.district}`,
+  lessons: c.lessons,
+  activeStudents: c.activeStudents,
+  wordsLearned: c.wordsLearned,
+});
+
 /** Картинка в размере показа: ширина — из CSS, высота — по пропорции файла. */
 function Pic({ src, alt = "", className }: { src: StaticImageData; alt?: string; className?: string }) {
   return <img className={className} src={src.src} width={src.width} height={src.height} alt={alt} loading="lazy" decoding="async" />;
@@ -66,6 +118,52 @@ function Stage({ tone }: { tone: Tone }) {
     <svg className={`lp-stage lp-stage--${tone}`} viewBox="0 0 400 346" aria-hidden focusable="false">
       <path d={STAGE} />
     </svg>
+  );
+}
+
+/** Группа доски почёта («Школы» или «Классы») — компактная таблица: место, группа, уроки, ученики, слова. */
+function BoardTable({ title, nameHeader, rows }: { title: string; nameHeader: string; rows: BoardRow[] }) {
+  return (
+    <div className="lp-board__group">
+      <h3 className="lp-board__group-title">{title}</h3>
+      <div className="lp-board__sheet">
+        <table className="lp-board__table">
+          <thead>
+            <tr>
+              <th className="lp-board__th" scope="col">
+                №
+              </th>
+              <th className="lp-board__th lp-board__th--name" scope="col">
+                {nameHeader}
+              </th>
+              <th className="lp-board__th lp-board__th--num" scope="col">
+                Уроки
+              </th>
+              <th className="lp-board__th lp-board__th--num" scope="col">
+                Ученики
+              </th>
+              <th className="lp-board__th lp-board__th--num" scope="col">
+                Слова
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.rank}>
+                <td className="lp-board__rank">{r.rank}</td>
+                <td className="lp-board__name">
+                  <b className="lp-board__who">{r.name}</b>
+                  <span className="lp-board__sub">{r.sub}</span>
+                </td>
+                <td className="lp-board__num">{fmt(r.lessons)}</td>
+                <td className="lp-board__num">{fmt(r.activeStudents)}</td>
+                <td className="lp-board__num">{fmt(r.wordsLearned)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -97,15 +195,20 @@ function AndroidButton({ href }: { href: string }) {
 }
 
 /**
- * Стартовая страница — лендинг: шапка с «Войти», герой с двумя кнопками, полоса мест тропы, четыре раздела о продукте
- * через один, раздел для школ, приложение, финальный призыв и подвал со ссылками. Кнопка Android — только если задан
+ * Стартовая страница — лендинг: шапка с «Войти», герой с двумя кнопками, фраза дня и доска почёта школ
+ * и классов (когда API отвечает), полоса мест тропы, четыре раздела о продукте через один, раздел для школ,
+ * приложение, финальный призыв и подвал со ссылками. Кнопка Android — только если задан
  * ANDROID_APK_URL (читается при каждом запросе).
  */
-export default async function StartPage() {
+export default async function StartPage({ searchParams }: { searchParams: Promise<{ period?: string | string[] }> }) {
   await connection();
   const apk = androidApkUrl(process.env.ANDROID_APK_URL);
   const hero = illustrations.heroLanding;
-  const phrase = await loadPhrase();
+  // Период доски из адреса; невалидное или потерянное значение — неделя (контракт getPublicLeaderboard).
+  const rawPeriod = (await searchParams).period;
+  const period = BOARD_PERIODS.find((p) => p.value === rawPeriod)?.value ?? "week";
+  // Фраза и доска грузятся вместе: молчащий API не удлиняет ответ витрины.
+  const [phrase, board] = await Promise.all([loadPhrase(), loadLeaderboard(period)]);
 
   return (
     <>
@@ -159,6 +262,36 @@ export default async function StartPage() {
               </div>
               <p className="lp-phrase__ru">«{phrase.sourceRu}»</p>
               <p className="lp-phrase__note">Принятая пара словаря ТелеТау: за перевод проголосовали ученики и взрослые</p>
+            </div>
+          </section>
+        )}
+
+        {board && (
+          <section className="lp-board" aria-labelledby="lp-board-title" data-reveal="">
+            <div className="lp-wrap lp-board__in">
+              <div className="lp-board__head">
+                <h2 id="lp-board-title" className="lp-h2">
+                  Доска почёта
+                </h2>
+                <p className="lp-lead">Самые активные школы и классы. Места — целым группам: ни имён, ни ников.</p>
+                {/* Период — обычные ссылки на ту же страницу: серверный компонент, без состояния. */}
+                <nav className="lp-board__periods" aria-label="Период доски почёта">
+                  {BOARD_PERIODS.map((p) => (
+                    <Link key={p.value} className="lp-board__period" href={`/?period=${p.value}`} aria-current={p.value === period ? "page" : undefined}>
+                      {p.label}
+                    </Link>
+                  ))}
+                </nav>
+                {/* T00:00 — местная полночь: дата без сдвига на часовой пояс сервера. */}
+                <p className="lp-board__since">с {new Date(`${board.periodStart}T00:00:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })} · время по Уфе</p>
+              </div>
+              <div className="lp-board__groups">
+                {board.schools.length > 0 && <BoardTable title="Школы" nameHeader="Школа" rows={board.schools.map(schoolRow)} />}
+                {board.classes.length > 0 && <BoardTable title="Классы" nameHeader="Класс" rows={board.classes.map(classRow)} />}
+              </div>
+              <p className="lp-board__note">
+                В доску попадают школы и классы, где за период занималось не меньше {board.smallGroupThreshold} {genitiveStudents(board.smallGroupThreshold)}.
+              </p>
             </div>
           </section>
         )}

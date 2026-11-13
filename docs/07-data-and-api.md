@@ -232,7 +232,7 @@ feature_flags(key, rules jsonb)
 | Telegram (M2) | `POST /telegram/link` (привязка чата из Mini App: проверка подписи initData токеном бота; вошедший ученик или взрослый). Служебные операции бота — роль `service` (заголовок `X-Service-Token`, ADR 0020/0024): `GET /telegram/bot/chats/{chatId}` · `PUT /telegram/bot/chats/{chatId}/reminders` · `DELETE /telegram/bot/chats/{chatId}` (отвязка) · `POST /telegram/bot/chats/{chatId}/daily-duel` (выдать задание дня — идемпотентно) · `POST /telegram/bot/dialogs/{dialogId}/answer` (replay той же кнопки — тот же ответ; другой выбор — 409 `already_voted`) · `POST /telegram/bot/chats/{chatId}/daily-duel/cancel` · `POST /telegram/bot/reminders/claim` (пачка «кому напомнить») |
 | Ministry (M2) | `GET /ministry/summary` · `GET /ministry/districts` · `GET /ministry/districts/{districtId}` (агрегаты республики; школы < 5 учеников скрыты сервером — ADR 0023) |
 | Fund (M2) | `GET /fund/dictionary` (принятые пары с голосами по группам — ADR 0023) · `GET /fund/escalated` (спорные случаи: `item_state.status = escalated`, голоса по группам — ТЗ §4.4/§5) |
-| Public (M2) | `GET /public/phrase-of-day` (фраза дня — ТЗ §3.6: аноним, без привязки; детерминированный выбор из принятых основных вариантов — FNV-1a учебных суток по Уфе, в полночь по Уфе пара меняется; лендинг и `/phrase` бота) |
+| Public (M2) | `GET /public/phrase-of-day` (фраза дня — ТЗ §3.6: аноним, без привязки; детерминированный выбор из принятых основных вариантов — FNV-1a учебных суток по Уфе, в полночь по Уфе пара меняется; лендинг и `/phrase` бота) · `GET /public/dictionary` (ТЗ §5: публичная выгрузка словаря — принятые пары анонимно, `format=json\|csv`, `status=confirmed\|expert_review`; CSV для Excel — «;» и BOM) · `GET /public/leaderboard` (ТЗ §4.5: доска почёта школ и классов за день/неделю/месяц/год по Уфе; только агрегаты, малые группы скрыты — ADR 0023) |
 | Teacher | `GET /classes/{id}/heatmap` · `POST /classes/{id}/assignments` · `GET /classes/{id}/insights` (AI-сводка) · `GET /classes/{id}/report.xlsx` |
 | Parent | `POST /guardianships` · `GET /children/{id}/progress` · `PATCH /children/{id}/limits` |
 | Expert | `GET /expert/queue` · `POST /expert/decisions` · `GET /expert/items/{id}` (с историей и сводкой спора) · `POST /expert/gold` |
@@ -257,6 +257,8 @@ feature_flags(key, rules jsonb)
 | GET | `/stats` | Открытая статистика корпуса |
 
 **Тарифы квот** (ограничения запросов, не обязательно платные): `open` (без ключа, 60 запр./мин, только поиск), `partner` (1 000 запр./мин), `foundation` (без жёсткого лимита, приоритет).
+
+> **MVP.** До портала партнёра выгрузка словаря доступна анонимно и без ключей: `GET /api/v1/public/dictionary` (ТЗ §5) — JSON или CSV, те же принятые пары, что у Фонда, но без голосов по группам. Языковая пара в MVP одна — `ba-ru` (башкирский ← русский): поле `langPair` в контракте готово к расширению, контент и корпус других пар — после пилота. Аудио-фрагменты с таймкодами (привязка примеров употребления к записям речи) — задел: в выгрузке их нет, схема источников (`SourceCitation`) позволяет добавить `locator` с таймкодом без ломающих изменений.
 
 ### Пример ответа `/entries/{id}`
 

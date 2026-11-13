@@ -28,6 +28,16 @@ export interface RosterSchool {
   studentIds: string[];
 }
 
+/** Действующий класс с занятыми местами (для доски почёта, ТЗ §4.5): метка — classTitle(grade, letter). */
+export interface RosterClass {
+  classId: string;
+  schoolId: string;
+  grade: number;
+  letter: string;
+  /** Ученики на местах класса (без повторов). */
+  studentIds: string[];
+}
+
 export interface Roster {
   districts: RosterDistrict[];
   /** Только подключённые школы — с хотя бы одним действующим классом. */
@@ -76,6 +86,26 @@ export class RosterService {
         .map((s) => ({ id: s.schoolId, districtId: s.districtId, shortNameRu: s.shortNameRu, isDemo: s.isDemo, classes: s.classes, studentIds: students.get(s.schoolId) ?? [] }))
         .sort((x, y) => x.shortNameRu.localeCompare(y.shortNameRu, "ru")),
     };
+  }
+
+  /**
+   * Действующие классы (classes.status = active) с учениками на занятых местах — для доски почёта (ТЗ §4.5).
+   * Как у roster(): наружу уходят только идентификаторы аккаунтов для подсчётов, лейблы классов — не ПДн.
+   */
+  async classRoster(): Promise<RosterClass[]> {
+    const rows = await this.db
+      .selectDistinct({ classId: classes.id, schoolId: classes.schoolId, grade: classes.grade, letter: classes.letter, accountId: classSeats.accountId })
+      .from(classes)
+      .innerJoin(classSeats, eq(classSeats.classId, classes.id))
+      .where(and(eq(classes.status, "active"), isNotNull(classSeats.accountId)));
+    const byClass = new Map<string, RosterClass>();
+    for (const r of rows) {
+      const cls = byClass.get(r.classId) ?? { classId: r.classId, schoolId: r.schoolId, grade: r.grade, letter: r.letter, studentIds: [] };
+      if (r.accountId && !cls.studentIds.includes(r.accountId)) cls.studentIds.push(r.accountId);
+      byClass.set(r.classId, cls);
+    }
+    // Порядок устойчивый: классы одной школы — по параллели и литере.
+    return [...byClass.values()].sort((x, y) => x.schoolId.localeCompare(y.schoolId) || x.grade - y.grade || x.letter.localeCompare(y.letter, "ru"));
   }
 
   /** Есть ли такой район в справочнике. */

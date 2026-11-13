@@ -21,6 +21,8 @@
 
 Сценарий показа и демо-мир — [`docs/demo/M2.md`](docs/demo/M2.md); развёртывание стенда — [`docs/deploy.md`](docs/deploy.md).
 
+Публичные данные без регистрации (ТЗ §5/§4.5): выгрузка словаря — `api.teletau.study/api/v1/public/dictionary` (JSON; `?format=csv` — для Excel; `?status=expert_review` — только пары, проверенные носителем), доска почёта школ и классов — на лендинге и `api.teletau.study/api/v1/public/leaderboard`. Языковая пара MVP — одна: башкирский ← русский (`ba-ru`).
+
 ## Быстрый старт (локально)
 
 ```sh

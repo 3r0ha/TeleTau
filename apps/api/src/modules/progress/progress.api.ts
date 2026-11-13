@@ -57,6 +57,12 @@ export interface LearnerTotals {
   wordsLearned: number;
 }
 
+/** Числа одного ученика для публичной доски почёта (ТЗ §4.5): уроки за период и словарный запас (не за период). */
+export interface PeriodTotals {
+  lessons: number;
+  words: number;
+}
+
 /** Что о наградах знает progress: даты — сутки по Уфе. */
 export interface AchievementFacts {
   /** Дни занятий (серия). */
@@ -97,6 +103,8 @@ export interface ProgressApi {
   learnerTotals(accountIds: readonly string[], week: { start: string; end: string }): Promise<Map<string, LearnerTotals>>;
   /** Кабинет министерства: уроки и занимавшиеся из набора по неделям (ключ — понедельник) в сутках `from`…`to`. */
   weeklyActivity(accountIds: readonly string[], from: string, to: string): Promise<Map<string, { lessons: number; active: number }>>;
+  /** Публичная доска почёта (ТЗ §4.5): уроки за период от суток `from` и словарный запас — по аккаунтам набора. */
+  periodTotals(accountIds: readonly string[], from: string): Promise<Map<string, PeriodTotals>>;
   /** История аккаунта для наград (learning, векторы contracts/test-vectors/achievements); `db` — транзакция вызывающего. */
   achievementFacts(db: Db, accountId: string): Promise<AchievementFacts>;
 

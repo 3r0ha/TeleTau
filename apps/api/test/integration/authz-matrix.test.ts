@@ -63,6 +63,8 @@ const device = () => ({ installId: randomUUID(), platform: "web" });
 const MATRIX: Record<OperationId, Row> = {
   getHealth: { req: () => ({ path: "/health" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
   getPhraseOfDay: { req: () => ({ path: "/public/phrase-of-day" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
+  getPublicDictionary: { req: () => ({ path: "/public/dictionary" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
+  getPublicLeaderboard: { req: () => ({ path: "/public/leaderboard" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
   loginWithQrCard: { req: () => ({ path: "/auth/qr" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
   requestClassCodeLogin: { req: () => ({ path: "/auth/class-code" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
   getClassCodeLoginStatus: {

@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
-import { DUEL_RULES_VERSION, ufaDate } from "@teletau/domain-rules";
+import { DUEL_RULES_VERSION, ufaDate, ufaWeek } from "@teletau/domain-rules";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { Principal } from "../../common/auth.js";
 import { decodeCursor, encodeCursor, KeysetCursor } from "../../common/cursor.js";
@@ -9,6 +9,7 @@ import { conflict, forbidden, invalidField, notFound, unprocessable } from "../.
 import type { Db } from "../../db/database.js";
 import { DB } from "../../infra/tokens.js";
 import { CorpusService, type DuelItem } from "../corpus/index.js";
+import { classTitle, RosterService } from "../org/index.js";
 import { ProgressService } from "../progress/index.js";
 import type { ConsensusApi, DuelCard, VoteInput, VoteReceipt, Voter } from "./consensus.api.js";
 import { itemState, judgments } from "./consensus.schema.js";
@@ -20,6 +21,12 @@ type JudgmentRow = typeof judgments.$inferSelect;
 const playable = (v: DuelItem["variants"][number]) => v.review !== "native_rejected";
 const reviewOf = (item: DuelItem): Schema<"ReviewStatus"> => (item.variants.every((v) => v.review === "native_approved") ? "native_approved" : "needs_native_review");
 const canonOf = (item: DuelItem): [string, string] => [item.variants[0].id, item.variants[1].id];
+
+/**
+ * Порог малых групп доски почёта (ТЗ §4.5): тот же, что SMALL_GROUP_THRESHOLD кабинета министерства
+ * (ministry/small-groups.ts, ADR 0023). Продублирован: импорт из ministry закольцевал бы модули (ministry → consensus).
+ */
+const LEADERBOARD_SMALL_GROUP = 5;
 
 /** Перемешивание Фишера — Йейтса (crypto: порядок дуэлей и сторон не предсказывается клиентом). */
 function shuffle<T>(list: T[]): T[] {
@@ -50,6 +57,8 @@ export class ConsensusService implements ConsensusApi {
     @Inject(DB) protected readonly db: Db,
     protected readonly corpus: CorpusService,
     protected readonly progress: ProgressService,
+    /** Состав школ и классов для доски почёта: org — глобальный модуль, RosterService доступен напрямую. */
+    protected readonly roster: RosterService,
   ) {}
 
   // ── публичный сервис для learning ──
@@ -345,6 +354,72 @@ export class ConsensusService implements ConsensusApi {
     if (pairs.length === 0) return { date };
     const pair = pairs[fnv1a(date) % pairs.length]!;
     return { date, pair: { sourceRu: pair.sourceRu, kind: pair.kind, textBa: pair.textBa, sources: pair.sources } };
+  }
+
+  /**
+   * Публичный словарь (ТЗ §5) — принятые пары без регистрации, поверх тех же строк, что для Фонда
+   * (fundDictionary: принятые + без отклонённых носителем), но без голосов групп. `status=expert_review`
+   * оставляет только проверенные носителем (native_approved). Персональных данных нет (правило 13):
+   * fragmentId — идентификатор варианта, не аккаунта. `confirmed=false` — предварительное решение duel-v0
+   * (ADR 0019): в выпуски датасета входят только подтверждённые.
+   */
+  async publicDictionary(status: Schema<"PublicDictionaryEntry">["status"] = "confirmed", now: Date = new Date()): Promise<Schema<"PublicDictionary">> {
+    const rows = (await this.fundDictionary(now)).items
+      .filter((row) => (status === "expert_review" ? row.review === "native_approved" : true))
+      .map(
+        (row): Schema<"PublicDictionaryEntry"> => ({
+          fragmentId: row.variantId,
+          textBa: row.textBa,
+          langPair: "ba-ru",
+          translation: row.sourceRu,
+          sources: row.sources,
+          confirmed: !row.preliminary,
+          status: row.review === "native_approved" ? "expert_review" : "confirmed",
+        }),
+      );
+    return { generatedAt: now.toISOString(), langPair: "ba-ru", items: rows };
+  }
+
+  /**
+   * Доска почёта (ТЗ §4.5): топ школ и классов по урокам за период, при равенстве — по выученным словам.
+   * Периоды по Уфе: day — сутки, week — неделя пн–вс, month — календарный месяц, year — календарный год.
+   * Правило 13: в ответе только школы и классы с числами — ни ников, ни имён, ни идентификаторов учеников;
+   * идентификаторы аккаунтов живут только внутри расчёта. Группы с активными учениками меньше порога
+   * малых групп (как в кабинете министерства, ADR 0023) в доску не попадают.
+   */
+  async publicLeaderboard(period: Schema<"PublicLeaderboard">["period"] = "week", now: Date = new Date()): Promise<Schema<"PublicLeaderboard">> {
+    const day = ufaDate(now);
+    const periodStart = period === "day" ? day : period === "week" ? ufaWeek(now).start : period === "month" ? `${day.slice(0, 7)}-01` : `${day.slice(0, 4)}-01-01`;
+    const [schools, classes] = await Promise.all([this.roster.roster(), this.roster.classRoster()]);
+    const districtOf = new Map(schools.districts.map((d) => [d.id, d.nameRu]));
+    const schoolOf = new Map(schools.schools.map((s) => [s.id, s]));
+    // Все ученики школ и классов: словарный запас — у всех, активность — за период.
+    const ids = [...new Set([...schools.schools.flatMap((s) => s.studentIds), ...classes.flatMap((c) => c.studentIds)])];
+    const totals = await this.progress.periodTotals(ids, periodStart);
+    const of = (id: string) => totals.get(id) ?? { lessons: 0, words: 0 };
+
+    const schoolRows = schools.schools
+      .map((school) => {
+        const rows = school.studentIds.map(of);
+        return { school: school.shortNameRu, district: districtOf.get(school.districtId) ?? "", lessons: rows.reduce((n, t) => n + t.lessons, 0), activeStudents: rows.filter((t) => t.lessons > 0).length, wordsLearned: rows.reduce((n, t) => n + t.words, 0) };
+      })
+      .filter((r) => r.activeStudents >= LEADERBOARD_SMALL_GROUP)
+      .sort((x, y) => y.lessons - x.lessons || y.wordsLearned - x.wordsLearned || x.school.localeCompare(y.school, "ru") || x.district.localeCompare(y.district, "ru"))
+      .slice(0, 10)
+      .map((r, i): Schema<"PublicLeaderboardSchool"> => ({ rank: i + 1, ...r }));
+
+    const classRows = classes
+      .map((cls) => {
+        const school = schoolOf.get(cls.schoolId);
+        const rows = cls.studentIds.map(of);
+        return { school: school?.shortNameRu ?? "", district: school ? districtOf.get(school.districtId) ?? "" : "", classLabel: classTitle(cls.grade, cls.letter), lessons: rows.reduce((n, t) => n + t.lessons, 0), activeStudents: rows.filter((t) => t.lessons > 0).length, wordsLearned: rows.reduce((n, t) => n + t.words, 0) };
+      })
+      .filter((r) => r.activeStudents >= LEADERBOARD_SMALL_GROUP)
+      .sort((x, y) => y.lessons - x.lessons || y.wordsLearned - x.wordsLearned || x.school.localeCompare(y.school, "ru") || x.classLabel.localeCompare(y.classLabel, "ru"))
+      .slice(0, 10)
+      .map((r, i): Schema<"PublicLeaderboardClass"> => ({ rank: i + 1, ...r }));
+
+    return { asOf: now.toISOString(), period, periodStart, smallGroupThreshold: LEADERBOARD_SMALL_GROUP, schools: schoolRows, classes: classRows };
   }
 
   /**

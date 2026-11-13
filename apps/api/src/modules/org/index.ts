@@ -7,6 +7,6 @@ export type { PrintJobCard } from "./print-jobs.js";
 export { ClassPolicy, type ClassRow } from "./class-policy.js";
 export { DirectoryService, type SchoolRef } from "./directory.service.js";
 export { JoinGrants } from "./join-grants.js";
-// Состав республики для кабинета министерства (ADR 0023): только подсчёты, без мест и ников.
-export { RosterService, type Roster, type RosterDistrict, type RosterSchool } from "./roster.service.js";
+// Состав республики для кабинета министерства (ADR 0023) и доски почёта (ТЗ §4.5): только подсчёты, без мест и ников.
+export { RosterService, type Roster, type RosterClass, type RosterDistrict, type RosterSchool } from "./roster.service.js";
 export { JoinService, POLL_INTERVAL_SECONDS, type JoinDevice, type JoinPoll } from "./join.service.js";

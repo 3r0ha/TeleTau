@@ -1703,6 +1703,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/dictionary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Публичный словарь — выгрузка принятых пар без регистрации
+         * @description Выгрузка словаря (ТЗ §5): принятые пары «русский исходник — башкирский вариант» с источниками — анонимно,
+         *     без ключей и квот. Персональных данных нет: только тексты пар, их виды, источники и статусы проверки
+         *     (правило 13). `status=confirmed` — все принятые пары, `status=expert_review` — только проверенные
+         *     носителем языка. `format=csv` — те же строки таблицей для Excel: разделитель точка с запятой, UTF-8
+         *     с BOM, столбцы `fragmentId;langPair;translation;textBa;status;confirmed;sources` (источники — названия
+         *     через запятую). Выгрузка для Фонда с голосами по группам — отдельная операция `getFundDictionary`.
+         */
+        get: operations["getPublicDictionary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Доска почёта — активные школы и классы
+         * @description Доска почёта (ТЗ §4.5): самые активные школы и классы за период. Только школы и классы — ни ников, ни
+         *     имён, ни идентификаторов учеников (правило 13); публичного рейтинга отдельных детей нет и не будет
+         *     (docs/02 §6). Школы и классы с активными учениками меньше `smallGroupThreshold` в доску не попадают
+         *     (ADR 0023). Периоды по Уфе (Asia/Yekaterinburg): `day` — учебные сутки, `week` — неделя пн–вс
+         *     (по умолчанию), `month` — календарный месяц, `year` — календарный год. Пустые списки — данные ещё
+         *     не накоплены, блок на витрине не показывают.
+         */
+        get: operations["getPublicLeaderboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3859,6 +3909,112 @@ export interface components {
                 /** @description Источники варианта (у `import` — всегда) */
                 sources: components["schemas"]["SourceCitation"][];
             };
+        };
+        /**
+         * @description Публичный словарь (ТЗ §5): принятые пары для всех без регистрации. Персональных данных нет — только
+         *     тексты, источники и статусы (правило 13). Голосующие не раскрываются.
+         */
+        PublicDictionary: {
+            /**
+             * Format: date-time
+             * @description Момент выгрузки
+             */
+            generatedAt: string;
+            /**
+             * @description Языковая пара; в MVP — только «башкирский ← русский»
+             * @enum {string}
+             */
+            langPair: "ba-ru";
+            /** @description Принятые пары сверху вниз по времени решения */
+            items: components["schemas"]["PublicDictionaryEntry"][];
+        };
+        /** @description Строка словаря — принятый башкирский вариант русского исходника (ТЗ §5) */
+        PublicDictionaryEntry: {
+            /**
+             * Format: uuid
+             * @description Идентификатор фрагмента — принятого башкирского варианта
+             */
+            fragmentId: string;
+            /** @description Башкирский текст в канонической форме `@teletau/bashkir-text` */
+            textBa: string;
+            /**
+             * @description Языковая пара фрагмента
+             * @enum {string}
+             */
+            langPair: "ba-ru";
+            /** @description Русский исходник */
+            translation: string;
+            /** @description Источники фрагмента (у вариантов из источников — всегда) */
+            sources: components["schemas"]["SourceCitation"][];
+            /** @description `true` — подтверждено и входит в выпуски датасета; `false` — предварительное решение голосования (duel-v0, ADR 0019), может уточниться */
+            confirmed: boolean;
+            /**
+             * @description `confirmed` — принято голосованием, `expert_review` — проверено носителем языка
+             * @enum {string}
+             */
+            status: "confirmed" | "expert_review";
+        };
+        /**
+         * @description Доска почёта (ТЗ §4.5): топ школ и классов за период. Только агрегаты школ и классов — ни ников, ни имён
+         *     (правило 13). Место — по пройденным урокам; при равенстве выше тот, у кого больше выученных слов.
+         */
+        PublicLeaderboard: {
+            /**
+             * Format: date-time
+             * @description Момент расчёта
+             */
+            asOf: string;
+            /**
+             * @description Период доски
+             * @enum {string}
+             */
+            period: "day" | "week" | "month" | "year";
+            /**
+             * Format: date
+             * @description Начало периода по Уфе (Asia/Yekaterinburg) — сутки, понедельник, 1-е число, 1 января
+             */
+            periodStart: string;
+            /**
+             * @description Группы с меньшим числом активных учеников в доску не попадают
+             * @example 5
+             */
+            smallGroupThreshold: number;
+            /** @description Топ школ (до 10) */
+            schools: components["schemas"]["PublicLeaderboardSchool"][];
+            /** @description Топ классов (до 10) */
+            classes: components["schemas"]["PublicLeaderboardClass"][];
+        };
+        /** @description Школа в доске почёта */
+        PublicLeaderboardSchool: {
+            /** @description Место */
+            rank: number;
+            /** @description Короткое название школы */
+            school: string;
+            /** @description Район или городской округ */
+            district: string;
+            /** @description Уроков и повторений пройдено за период */
+            lessons: number;
+            /** @description Учеников занималось за период — не меньше порога малой группы */
+            activeStudents: number;
+            /** @description Словарный запас — слов выучено учениками всего (не за период) */
+            wordsLearned: number;
+        };
+        /** @description Класс в доске почёта */
+        PublicLeaderboardClass: {
+            /** @description Место */
+            rank: number;
+            /** @description Короткое название школы */
+            school: string;
+            /** @description Район или городской округ */
+            district: string;
+            /** @description Класс, например «5 «Б»» */
+            classLabel: string;
+            /** @description Уроков и повторений пройдено за период */
+            lessons: number;
+            /** @description Учеников занималось за период — не меньше порога малой группы */
+            activeStudents: number;
+            /** @description Словарный запас — слов выучено учениками всего (не за период) */
+            wordsLearned: number;
         };
         /** @description Вариант спорного исходника с голосами групп за него */
         EscalatedVariant: {
@@ -6305,6 +6461,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PhraseOfDay"];
+                };
+            };
+            503: components["responses"]["ServiceUnavailable"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    getPublicDictionary: {
+        parameters: {
+            query?: {
+                /** @description Какие строки отдавать — все принятые или только проверенные носителем */
+                status?: "confirmed" | "expert_review";
+                /** @description JSON (по умолчанию) или CSV для Excel */
+                format?: "json" | "csv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Принятые пары словаря — JSON или CSV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicDictionary"];
+                    "text/csv": string;
+                };
+            };
+            503: components["responses"]["ServiceUnavailable"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    getPublicLeaderboard: {
+        parameters: {
+            query?: {
+                /** @description Период доски — учебные сутки, неделя, месяц или год по Уфе */
+                period?: "day" | "week" | "month" | "year";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Топ школ и классов по активности за период */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicLeaderboard"];
                 };
             };
             503: components["responses"]["ServiceUnavailable"];
