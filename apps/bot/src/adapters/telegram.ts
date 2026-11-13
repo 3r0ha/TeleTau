@@ -3,14 +3,15 @@
 // не читаются (CLAUDE.md, правило 13). Групповые чаты бот не обслуживает: привязка, напоминания и задание дня —
 // только личные.
 import { Bot, GrammyError } from "grammy";
-import type { BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, UserFromGetMe } from "grammy/types";
-import type { Button, Incoming, Outgoing } from "../core/messages.js";
+import type { BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, UserFromGetMe } from "grammy/types";
+import type { Button, Incoming, MenuButton, Outgoing } from "../core/messages.js";
 import { ChatUnreachableError, type SendFn } from "../core/reminders.js";
 import { handle, type BotContext } from "../core/scenarios.js";
 
 export interface TelegramMessage {
   text: string;
-  reply_markup?: InlineKeyboardMarkup;
+  /** Одно на сообщение: постоянная клавиатура меню или inline-кнопки (Bot API). */
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup;
 }
 
 function toButton(button: Button): InlineKeyboardButton {
@@ -19,8 +20,18 @@ function toButton(button: Button): InlineKeyboardButton {
     : { text: button.label, callback_data: button.action.data };
 }
 
+function toMenuButton(button: MenuButton): KeyboardButton {
+  return button.webAppUrl ? { text: button.label, web_app: { url: button.webAppUrl } } : { text: button.label };
+}
+
+/** Постоянное меню: reply-клавиатура, не исчезает при следующих сообщениях без кнопок. */
+function toMenu(menu: MenuButton[][]): ReplyKeyboardMarkup {
+  return { keyboard: menu.map((row) => row.map(toMenuButton)), is_persistent: true, resize_keyboard: true };
+}
+
 /** Чистое преобразование «ядро → Telegram» (тестируется без сети). */
 export function toTelegram(out: Outgoing): TelegramMessage {
+  if (out.menu?.length) return { text: out.text, reply_markup: toMenu(out.menu) };
   if (!out.buttons?.length) return { text: out.text };
   return { text: out.text, reply_markup: { inline_keyboard: out.buttons.map((row) => row.map(toButton)) } };
 }
@@ -32,15 +43,12 @@ export function fromTelegram(chatId: number, text: string): Incoming {
   return { chatId: String(chatId), kind: "text", text };
 }
 
-/** Меню команд бота (setMyCommands). */
+/**
+ * Меню команд (setMyCommands): управление — кнопками под чатом, поэтому из команд остаются только /start
+ * (вызвать меню) и /help. Остальные команды (/daily, /remind, …) работают, но не рекламируются.
+ */
 export const COMMANDS: BotCommand[] = [
-  { command: "start", description: "Начать" },
-  { command: "daily", description: "Задание дня" },
-  { command: "cancel", description: "Отменить задание" },
-  { command: "phrase", description: "Фраза дня" },
-  { command: "remind", description: "Напоминания о серии" },
-  { command: "remind_off", description: "Выключить напоминания" },
-  { command: "unlink", description: "Отвязать этот чат" },
+  { command: "start", description: "Показать меню" },
   { command: "help", description: "Помощь" },
 ];
 
@@ -64,12 +72,14 @@ export function createTelegramBot(token: string, ctx: BotContext, opts: { botInf
   });
 
   // Нажатие кнопки: ответ — правкой того же сообщения (чат не засоряется), остальное — новыми сообщениями.
+  // editMessageText принимает только inline-разметку: меню-клавиатуру с ответа снимаем (она и так постоянная).
   personal.on("callback_query:data", async (tg) => {
     const [first, ...rest] = await handle({ chatId: String(tg.chat.id), kind: "callback", data: tg.callbackQuery.data }, ctx);
     await tg.answerCallbackQuery();
     if (first) {
       const m = toTelegram(first);
-      await tg.editMessageText(m.text, options(m)).catch(async (e: unknown) => {
+      const markup = m.reply_markup && "inline_keyboard" in m.reply_markup ? { reply_markup: m.reply_markup } : {};
+      await tg.editMessageText(m.text, markup).catch(async (e: unknown) => {
         if (!notModified(e)) await tg.reply(m.text, options(m));
       });
     }

@@ -67,6 +67,13 @@ const ConfigSchema = z
     AUTH_DEMO_STAFF: z
       .preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.union([z.literal(""), z.enum(["0", "1", "true", "false"]), z.boolean()]).optional())
       .transform((v) => v === true || v === "1" || v === "true"),
+    /**
+     * Демо-сотрудники без второго фактора — для показа жюри (аутентификатор неудобен). Только вместе с
+     * AUTH_DEMO_STAFF и не в production: вход сотрудника становится «почта → код» в один TOTP-шаг меньше.
+     */
+    AUTH_DEMO_STAFF_WITHOUT_TOTP: z
+      .preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.union([z.literal(""), z.enum(["0", "1", "true", "false"]), z.boolean()]).optional())
+      .transform((v) => v === true || v === "1" || v === "true"),
     /** Ключ подписи access-токенов ES256 (PKCS#8 PEM). Пусто — только dev/test: временный ключ при старте. */
     AUTH_JWT_PRIVATE_KEY: optionalString,
     /** Перец HMAC для e-mail, кода класса и IP. */
@@ -128,6 +135,7 @@ const ConfigSchema = z
       if (c.AUTH_DEMO_OTP) ctx.addIssue({ code: "custom", path: ["AUTH_DEMO_OTP"], message: "демо-код запрещён в production" });
       if (c.AUTH_DEMO_CLASS_CODE) ctx.addIssue({ code: "custom", path: ["AUTH_DEMO_CLASS_CODE"], message: "постоянный код класса запрещён в production" });
       if (c.AUTH_DEMO_STAFF) ctx.addIssue({ code: "custom", path: ["AUTH_DEMO_STAFF"], message: "демо-сотрудники запрещены в production" });
+      if (c.AUTH_DEMO_STAFF_WITHOUT_TOTP) ctx.addIssue({ code: "custom", path: ["AUTH_DEMO_STAFF_WITHOUT_TOTP"], message: "вход сотрудников без TOTP запрещён в production" });
       if (c.BOT_SERVICE_TOKEN !== undefined && (c.BOT_SERVICE_TOKEN === DEV_BOT_SERVICE_TOKEN || c.BOT_SERVICE_TOKEN.length < 32)) {
         ctx.addIssue({ code: "custom", path: ["BOT_SERVICE_TOKEN"], message: "в production — собственный секрет не короче 32 символов" });
       }

@@ -4,7 +4,7 @@ import { configureBot, createTelegramBot, fromTelegram, telegramSender, toTelegr
 import { loadConfig, miniAppUrlFor, MISSING_TOKEN_MESSAGE } from "../src/config.js";
 import type { Outgoing } from "../src/core/messages.js";
 import { ChatUnreachableError } from "../src/core/reminders.js";
-import { CALLBACK, handle, TEXT, type BotContext } from "../src/core/scenarios.js";
+import { CALLBACK, handle, MENU, TEXT, type BotContext } from "../src/core/scenarios.js";
 import { BOT_INFO, callbackUpdate, fakeTelegram, FakeApi, textUpdate, USER_PII } from "./fakes.js";
 
 const URL_APP = "https://teletau.example/miniapp";
@@ -12,31 +12,45 @@ const TOKEN = "7000000001:AAFakeTokenForTestsOnly_0123456789ab";
 const cmd = (command: string, chatId = "42") => ({ chatId, kind: "command" as const, command, args: "" });
 const tap = (data: string, chatId = "42") => ({ chatId, kind: "callback" as const, data });
 const labels = (o: Outgoing | undefined) => (o?.buttons ?? []).flat().map((b) => b.label);
+const menuLabels = (o: Outgoing | undefined) => (o?.menu ?? []).flat().map((b) => b.label);
 const ctxWith = (api: FakeApi | null, miniAppUrl: string | undefined = URL_APP): BotContext => ({ api, miniAppUrl });
 
 describe("ядро: /start и /help", () => {
-  it("/start приветствует и даёт кнопку «Учиться» → Mini App, напоминания и задание дня", async () => {
+  it("/start приветствует и ставит постоянное меню: «Учиться» (web_app), задание дня, фраза и напоминания", async () => {
     const [out] = await handle(cmd("start"), ctxWith(new FakeApi()));
     expect(out?.text).toMatch(/Привет/);
-    expect(out?.buttons?.[0]?.[0]).toEqual({ label: "Учиться", action: { kind: "openMiniApp", url: URL_APP } });
-    expect(out?.buttons?.[1]).toEqual([
-      { label: "Напоминания", action: { kind: "callback", data: CALLBACK.menu } },
-      { label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } },
+    expect(out?.buttons).toBeUndefined();
+    expect(out?.menu).toEqual([
+      [{ label: MENU.learn, webAppUrl: URL_APP }],
+      [{ label: MENU.daily }, { label: MENU.phrase }],
+      [{ label: MENU.reminders }],
     ]);
-    expect(out?.text).toContain("/remind");
-    expect(out?.text).toContain("/daily");
+    expect(out?.text).not.toContain("/remind");
+    expect(out?.text).not.toContain("/daily");
   });
 
-  it("без https-адреса Mini App и без API — приветствие без кнопок, но не ошибка", async () => {
+  it("без https-адреса Mini App и без API — приветствие без кнопок и меню, но не ошибка", async () => {
     const [out] = await handle(cmd("start"), { api: null, miniAppUrl: undefined });
     expect(out).toEqual({ text: `${TEXT.start}\n${TEXT.startNoApp}` });
   });
 
-  it("/help перечисляет команды, незнакомый текст — подсказка", async () => {
+  it("/help — кнопки меню, незнакомый текст — подсказка с меню", async () => {
     const [help] = await handle(cmd("help"), ctxWith(null));
-    for (const c of ["/start", "/daily", "/cancel", "/remind", "/remind_off", "/unlink", "/help"]) expect(help?.text).toContain(c);
+    for (const label of [MENU.learn, MENU.daily, MENU.phrase, MENU.reminders]) expect(help?.text).toContain(label.replace(/^[^ ]+ /, ""));
+    expect(help?.text).toContain("/start");
     const [fallback] = await handle({ chatId: "1", kind: "text", text: "сәләм" }, ctxWith(null));
-    expect(fallback?.text).toMatch(/\/help/);
+    expect(fallback?.text).toMatch(/кнопк/i);
+    expect(fallback?.text).toContain("/start");
+  });
+
+  it("нажатие кнопки меню приходит текстом — распознаётся как интент", async () => {
+    const api = new FakeApi().link("42");
+    const [duel] = await handle({ chatId: "42", kind: "text", text: MENU.daily }, ctxWith(api));
+    expect(duel?.text).toContain(TEXT.duelHeader);
+    const [phrase] = await handle({ chatId: "42", kind: "text", text: MENU.phrase }, ctxWith(api));
+    expect(phrase?.text).toContain("Һаумыһығыҙ");
+    const [menu] = await handle({ chatId: "42", kind: "text", text: MENU.reminders }, ctxWith(api));
+    expect(menu?.text).toBe(TEXT.remindersOff);
   });
 
   it("никогда не повторяет chat id и текст пользователя (нет ПДн в сообщениях)", async () => {
@@ -51,7 +65,7 @@ describe("ядро: /start и /help", () => {
     ];
     for (const input of inputs) {
       for (const o of await handle(input, ctxWith(api))) {
-        const all = [o.text, ...labels(o)].join(" ");
+        const all = [o.text, ...labels(o), ...menuLabels(o)].join(" ");
         for (const pii of ["424242", "Айгуль", "89001234567"]) expect(all).not.toContain(pii);
       }
     }
@@ -59,11 +73,12 @@ describe("ядро: /start и /help", () => {
 });
 
 describe("ядро: напоминания о серии по согласию", () => {
-  it("непривязанный чат: «открой Учиться и войди», API ничего не меняет", async () => {
+  it("непривязанный чат: «открой Учиться и войди» с меню, API ничего не меняет", async () => {
     const api = new FakeApi();
     const [out] = await handle(cmd("remind"), ctxWith(api));
     expect(out?.text).toBe(TEXT.notLinked);
-    expect(labels(out)).toEqual(["Учиться"]);
+    expect(labels(out)).toEqual([]);
+    expect(out?.menu?.[0]).toEqual([{ label: MENU.learn, webAppUrl: URL_APP }]);
     const [on] = await handle(cmd("remind_on"), ctxWith(api));
     expect(on?.text).toBe(TEXT.notLinked);
     expect(api.links.size).toBe(0);
@@ -73,16 +88,16 @@ describe("ядро: напоминания о серии по согласию",
     const api = new FakeApi().link("42");
     const [menu] = await handle(cmd("remind"), ctxWith(api));
     expect(menu?.text).toBe(TEXT.remindersOff);
-    expect(menu?.buttons?.[0]?.[0]).toEqual({ label: "Включить в 18:00", action: { kind: "callback", data: CALLBACK.on } });
+    expect(menu?.buttons?.[0]?.[0]).toEqual({ label: "✅ Включить в 18:00", action: { kind: "callback", data: CALLBACK.on } });
 
     const [on] = await handle(tap(CALLBACK.on), ctxWith(api));
     expect(api.links.get("42")).toEqual({ enabled: true, hour: 18 });
     expect(on?.text).toBe(TEXT.remindersOn(18));
-    expect(labels(on)).toEqual(["16:00", "17:00", "✓ 18:00", "19:00", "20:00", "Выключить"]);
+    expect(labels(on)).toEqual(["⏰ 16:00", "⏰ 17:00", "✅ 18:00", "⏰ 19:00", "⏰ 20:00", "🔕 Выключить", "❌ Отвязать чат"]);
 
     const [later] = await handle(tap(CALLBACK.hour(20)), ctxWith(api));
     expect(api.links.get("42")).toEqual({ enabled: true, hour: 20 });
-    expect(labels(later)).toContain("✓ 20:00");
+    expect(labels(later)).toContain("✅ 20:00");
 
     const [off] = await handle(tap(CALLBACK.off), ctxWith(api));
     expect(off?.text).toBe(TEXT.turnedOff);
@@ -108,10 +123,14 @@ describe("ядро: напоминания о серии по согласию",
     expect(api.calls).toEqual([]);
   });
 
-  it("/unlink удаляет привязку вместе с настройками", async () => {
+  it("/unlink и кнопка «❌ Отвязать чат» в меню напоминаний удаляют привязку вместе с настройками", async () => {
     const api = new FakeApi().link("42", { enabled: true });
     const [out] = await handle(cmd("unlink"), ctxWith(api));
     expect(out?.text).toBe(TEXT.unlinked);
+    expect(api.links.has("42")).toBe(false);
+    api.link("42", { enabled: true });
+    const [byButton] = await handle(tap(CALLBACK.unlink), ctxWith(api));
+    expect(byButton?.text).toBe(TEXT.unlinked);
     expect(api.links.has("42")).toBe(false);
   });
 
@@ -132,11 +151,12 @@ describe("ядро: ежедневное задание «Помоги язык�
     return b?.action.kind === "callback" ? b.action.data : "";
   };
 
-  it("непривязанный чат: «открой Учиться и войди» с кнопкой «Учиться»", async () => {
+  it("непривязанный чат: «открой Учиться и войди» с меню", async () => {
     const api = new FakeApi();
     const [out] = await handle(cmd("daily"), ctxWith(api));
     expect(out?.text).toBe(TEXT.notLinkedDaily);
-    expect(labels(out)).toEqual(["Учиться"]);
+    expect(labels(out)).toEqual([]);
+    expect(out?.menu?.[0]).toEqual([{ label: MENU.learn, webAppUrl: URL_APP }]);
     expect(api.calls).toEqual(["daily 42"]);
   });
 
@@ -144,7 +164,7 @@ describe("ядро: ежедневное задание «Помоги язык�
     const api = new FakeApi().link("42");
     const [out] = await handle(cmd("daily"), ctxWith(api));
     expect(out?.text).toBe(`${TEXT.duelHeader}\n\n${TEXT.duelAsk}\n\n«Синтетическая фраза 1»\n\n1. синтез1 икс\n2. синтез1 игрек`);
-    expect(labels(out)).toEqual(["1. синтез1 икс", "2. синтез1 игрек", TEXT.duelBoth, TEXT.duelSkip, TEXT.duelCancel]);
+    expect(labels(out)).toEqual([`1️⃣ синтез1 икс`, `2️⃣ синтез1 игрек`, TEXT.duelBoth, TEXT.duelSkip, TEXT.duelCancel]);
     for (const b of (out?.buttons ?? []).flat()) {
       const data = b.action.kind === "callback" ? b.action.data : "";
       expect(data.length, data).toBeLessThanOrEqual(64);
@@ -240,11 +260,12 @@ describe("ядро: ежедневное задание «Помоги язык�
 });
 
 describe("ядро: фраза дня (ТЗ §3.6)", () => {
-  it("/phrase показывает пару дня без привязки чата, с кнопкой «Учиться»", async () => {
+  it("«💬 Фраза дня» показывает пару дня без привязки чата, ответ несёт меню", async () => {
     const api = new FakeApi();
     const [out] = await handle(cmd("phrase", "777"), ctxWith(api));
     expect(out?.text).toBe("Фраза дня\n\n«Һаумыһығыҙ!»\n— «Здравствуйте!»");
-    expect(labels(out)).toEqual(["Учиться"]);
+    expect(labels(out)).toEqual([]);
+    expect(menuLabels(out)).toEqual([MENU.learn, MENU.daily, MENU.phrase, MENU.reminders]);
     expect(api.calls).toEqual(["phrase"]);
   });
 
@@ -268,6 +289,15 @@ describe("адаптер Telegram: преобразования", () => {
     expect(toTelegram({ text: "x" })).toEqual({ text: "x" });
   });
 
+  it("постоянное меню — reply-клавиатура (web_app и текстовые кнопки), одно reply_markup на сообщение", () => {
+    const msg = toTelegram({ text: "x", menu: [[{ label: "📚 Учиться", webAppUrl: "https://a.b/" }], [{ label: "⚡️ Задание дня" }]] });
+    expect(msg.reply_markup).toEqual({
+      keyboard: [[{ text: "📚 Учиться", web_app: { url: "https://a.b/" } }], [{ text: "⚡️ Задание дня" }]],
+      is_persistent: true,
+      resize_keyboard: true,
+    });
+  });
+
   it("команды с упоминанием бота и аргументами", () => {
     expect(fromTelegram(7, "/Start@teletau_bot class42")).toEqual({ chatId: "7", kind: "command", command: "start", args: "class42" });
     expect(fromTelegram(7, "/remind_off")).toEqual({ chatId: "7", kind: "command", command: "remind_off", args: "" });
@@ -281,20 +311,19 @@ describe("адаптер Telegram: настоящий grammY, подменённ
     return { bot, api, calls: fakeTelegram(bot, reply) };
   };
 
-  it("/start в личном чате → sendMessage с кнопкой web_app; из профиля в ответ ничего не попало", async () => {
+  it("/start в личном чате → sendMessage с постоянным меню; из профиля в ответ ничего не попало", async () => {
     const { bot, calls } = setup();
     await bot.handleUpdate(textUpdate("/start") as never);
     expect(calls.map((c) => c.method)).toEqual(["sendMessage"]);
     const p = calls[0]!.payload;
     expect(p["chat_id"]).toBe(4242);
     expect(p["reply_markup"]).toMatchObject({
-      inline_keyboard: [
-        [{ text: "Учиться", web_app: { url: URL_APP } }],
-        [
-          { text: "Напоминания", callback_data: CALLBACK.menu },
-          { text: "Задание дня", callback_data: CALLBACK.daily },
-        ],
+      keyboard: [
+        [{ text: MENU.learn, web_app: { url: URL_APP } }],
+        [{ text: MENU.daily }, { text: MENU.phrase }],
+        [{ text: MENU.reminders }],
       ],
+      is_persistent: true,
     });
     for (const pii of USER_PII) expect(JSON.stringify(p)).not.toContain(pii);
   });

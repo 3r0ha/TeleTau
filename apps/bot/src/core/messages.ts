@@ -18,6 +18,17 @@ export interface Button {
 
 export interface Outgoing {
   text: string;
-  /** Ряды кнопок */
+  /** Ряды кнопок под сообщением */
   buttons?: Button[][];
+  /**
+   * Постоянное меню под чатом (reply-клавиатура, is_persistent). У сообщения одно reply_markup — меню или inline
+   * кнопки, не оба: сценарии ставят меню только на сообщения без inline-кнопок (Telegram не редактирует клавиатуру).
+   */
+  menu?: MenuButton[][];
+}
+
+/** Кнопка постоянного меню: с адресом — открывает Mini App (web_app, только https), без — присылает текст метки. */
+export interface MenuButton {
+  label: string;
+  webAppUrl?: string;
 }

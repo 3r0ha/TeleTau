@@ -13,7 +13,7 @@ import { homeOf, isStaff } from "../_components/sections";
 type Step = "email" | "code" | "totp";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function StaffLogin({ demoCode }: { demoCode: string | null }) {
+export function StaffLogin({ demoCode, totpDisabled }: { demoCode: string | null; totpDisabled: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -83,6 +83,8 @@ export function StaffLogin({ demoCode }: { demoCode: string | null }) {
     }
   };
 
+  // Демо без второго фактора (AUTH_DEMO_STAFF_WITHOUT_TOTP): «почта → код» — два шага вместо трёх.
+  const steps: Step[] = totpDisabled ? ["email", "code"] : ["email", "code", "totp"];
   const stepNo = step === "email" ? 1 : step === "code" ? 2 : 3;
   return (
     <div className="tt-page console">
@@ -91,12 +93,12 @@ export function StaffLogin({ demoCode }: { demoCode: string | null }) {
         <div className="tt-column console__body console__login">
           <Card roomy>
             <div className="tt-stack tt-stack--loose">
-              <ProgressBar value={stepNo} max={3} label="Шаг входа" valueText={`Шаг ${stepNo} из 3`} showValue />
+              <ProgressBar value={stepNo} max={steps.length} label="Шаг входа" valueText={`Шаг ${stepNo} из ${steps.length}`} showValue />
               {step === "email" ? (
                 <Form className="tt-stack tt-stack--loose" invalidFocus={invalid} onSubmit={() => void requestCode()}>
                   <header className="tt-stack tt-stack--tight">
                     <h1 className="tt-title2">Вход сотрудника</h1>
-                    <p className="tt-lead">Нужны почта и приложение-аутентификатор.</p>
+                    <p className="tt-lead">{totpDisabled ? "Нужны почта и код из письма." : "Нужны почта и приложение-аутентификатор."}</p>
                   </header>
                   <TextField
                     label="Рабочая почта"
@@ -118,7 +120,9 @@ export function StaffLogin({ demoCode }: { demoCode: string | null }) {
                   className="tt-stack tt-stack--loose"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (code.length === challenge?.codeLength) setStep("totp");
+                    if (code.length !== challenge?.codeLength) return;
+                    if (totpDisabled) void verify("");
+                    else setStep("totp");
                   }}
                 >
                   <header className="tt-stack tt-stack--tight">
@@ -140,12 +144,16 @@ export function StaffLogin({ demoCode }: { demoCode: string | null }) {
                       setCode(v);
                       setError(null);
                     }}
-                    onComplete={() => setStep("totp")}
+                    onComplete={(v) => {
+                      if (v.length !== challenge?.codeLength) return;
+                      if (totpDisabled) void verify("");
+                      else setStep("totp");
+                    }}
                     error={error}
                     autoFocus
                   />
-                  <Button type="submit" block disabled={code.length !== challenge?.codeLength}>
-                    Дальше
+                  <Button type="submit" block loading={busy && totpDisabled} disabled={code.length !== challenge?.codeLength}>
+                    {totpDisabled ? "Войти" : "Дальше"}
                   </Button>
                   <LinkButton
                     tone="neutral"

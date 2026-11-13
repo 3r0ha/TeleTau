@@ -5,7 +5,7 @@ import { createTeleTauApi } from "../src/adapters/api.js";
 import type { Outgoing } from "../src/core/messages.js";
 import { ApiUnavailableError } from "../src/core/ports.js";
 import { ChatUnreachableError, sendDueReminders, startReminderLoop, type ReminderRun } from "../src/core/reminders.js";
-import { CALLBACK, TEXT } from "../src/core/scenarios.js";
+import { CALLBACK, MENU, TEXT } from "../src/core/scenarios.js";
 import { FakeApi } from "./fakes.js";
 
 const ctx = { miniAppUrl: "https://teletau.example/miniapp" };
@@ -23,9 +23,9 @@ describe("отбор и отправка напоминаний", () => {
     expect(message.text).toBe("Сегодня ещё не было урока. Пройди один, чтобы не прервать серию.");
     expect(message.text).not.toMatch(/101|102/);
     expect(message.buttons).toEqual([
-      [{ label: "Учиться", action: { kind: "openMiniApp", url: ctx.miniAppUrl } }],
-      [{ label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } }],
-      [{ label: "Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }],
+      [{ label: MENU.learn, action: { kind: "openMiniApp", url: ctx.miniAppUrl } }],
+      [{ label: MENU.daily, action: { kind: "callback", data: CALLBACK.daily } }],
+      [{ label: "🔕 Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }],
     ]);
     expect(sent[1]![1]).toEqual(message);
   });
@@ -70,8 +70,8 @@ describe("отбор и отправка напоминаний", () => {
     const sent: Outgoing[] = [];
     await sendDueReminders({ api, ctx: { miniAppUrl: undefined }, sleep: noSleep, send: async (_id, m) => void sent.push(m) });
     expect(sent[0]?.buttons).toEqual([
-      [{ label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } }],
-      [{ label: "Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }],
+      [{ label: MENU.daily, action: { kind: "callback", data: CALLBACK.daily } }],
+      [{ label: "🔕 Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }],
     ]);
     expect(sent[0]?.text).toBe(TEXT.reminder);
   });

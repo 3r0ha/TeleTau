@@ -202,10 +202,17 @@
 }
 
 /* ───────────── фраза дня ───────────── */
+/* Пчела в соте «произносит» фразу (пузырь — как «Сәләм!» в герое), ниже — русский перевод.
+   Полоса между героем и местами тропы: обычный фон, чтобы не сливаться с соседней затемнённой полосой мест. */
 .lp-phrase {
-  padding-block: var(--tt-space-s600);
-  border-block: 2px solid var(--tt-color-accent-soft-border);
-  background: var(--tt-color-accent-soft);
+  padding-block: var(--tt-space-s800) var(--tt-space-s600);
+}
+
+.lp-phrase__in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tt-space-s300);
   text-align: center;
 }
 
@@ -219,27 +226,76 @@
   color: var(--tt-color-text-secondary);
 }
 
+.lp-phrase__say {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tt-space-s400);
+  max-width: 100%;
+}
+
+.lp-phrase .lp-cell {
+  flex: none;
+  width: 88px;
+}
+
 .lp-phrase__ba {
-  margin-block: var(--tt-space-s250) 0;
+  position: relative;
+  margin: 0;
+  padding: var(--tt-space-s200) var(--tt-space-s500);
+  max-width: 24rem;
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-highlight);
+  color: var(--tt-color-text-on-fill);
   font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-title1);
+  font-size: var(--tt-font-size-title2);
   font-weight: var(--tt-font-weight-black);
   line-height: var(--tt-line-height-tight);
+  text-align: start;
   overflow-wrap: anywhere;
 }
 
+/* Хвост пузыря — к пчеле слева. */
+.lp-phrase__ba::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--tt-space-s300) * -1);
+  top: 50%;
+  width: var(--tt-space-s300);
+  height: var(--tt-space-s400);
+  translate: 0 -50%;
+  background: inherit;
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+}
+
 .lp-phrase__ru {
-  margin-block: var(--tt-space-s150) 0;
-  font-size: var(--tt-font-size-headline);
+  margin: 0;
+  font-size: var(--tt-font-size-body-large);
   line-height: var(--tt-line-height-snug);
   overflow-wrap: anywhere;
 }
 
 .lp-phrase__note {
-  margin-block: var(--tt-space-s300) 0;
+  margin: 0;
   color: var(--tt-color-text-secondary);
   font-size: var(--tt-font-size-caption);
   line-height: var(--tt-line-height-snug);
+}
+
+@media (max-width: 30em) {
+  .lp-phrase__say {
+    flex-direction: column;
+    gap: var(--tt-space-s200);
+  }
+
+  .lp-phrase__ba {
+    max-width: min(24rem, calc(100vw - 32px));
+    text-align: center;
+  }
+
+  .lp-phrase__ba::before {
+    display: none;
+  }
 }
 
 /* ───────────── полоса мест ───────────── */

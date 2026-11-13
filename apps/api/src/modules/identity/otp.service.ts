@@ -13,7 +13,7 @@ import { decrypt, encrypt, hexEquals, hmacHex } from "../../common/crypto.js";
 import { tooManyRequests, unauthorized, unavailable } from "../../common/problem.js";
 import { uuidv7 } from "../../common/uuidv7.js";
 import { APP_CONFIG, type AppConfig } from "../../config/config.js";
-import { demoOtp, encryptionKey } from "../../config/secrets.js";
+import { demoOtp, demoStaffWithoutTotp, encryptionKey } from "../../config/secrets.js";
 import type { Db } from "../../db/database.js";
 import { RateLimiter } from "../../infra/rate-limiter.js";
 import { DB, VALKEY } from "../../infra/tokens.js";
@@ -106,8 +106,9 @@ export class OtpService {
 
     const email = decrypt(this.key, sealedEmail, `otp-email:${body.challengeId}`);
     const existing = await this.accounts.findByEmailSubject(subject || this.accounts.emailSubject(email));
-    if (existing?.kind === "staff") {
+    if (existing?.kind === "staff" && !demoStaffWithoutTotp(this.config)) {
       // Сотрудник: второй фактор обязателен; без него вызов кода не расходуется до конца — консоль спросит TOTP.
+      // Демо AUTH_DEMO_STAFF_WITHOUT_TOTP: показ жюри без аутентификатора — ветка пропускается целиком.
       await this.assertStaffNotLocked(existing.id);
       if (!body.totp) throw unauthorized("totp_required");
       const totp = await this.checkTotp(existing.id, body.totp);

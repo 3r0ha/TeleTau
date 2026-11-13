@@ -21,3 +21,11 @@ export function demoOtp(config: AppConfig): string | undefined {
 export function demoStaffEnabled(config: AppConfig): boolean {
   return config.NODE_ENV !== "production" && config.AUTH_DEMO_STAFF;
 }
+
+/**
+ * Демо-сотрудники без второго фактора (AUTH_DEMO_STAFF_WITHOUT_TOTP): для показа жюри — аутентификатор на телефоне
+ * проверяющего неудобен. Только вместе с демо-сотрудниками и не в production: вход сотрудника — «почта → код».
+ */
+export function demoStaffWithoutTotp(config: AppConfig): boolean {
+  return config.NODE_ENV !== "production" && config.AUTH_DEMO_STAFF && config.AUTH_DEMO_STAFF_WITHOUT_TOTP;
+}

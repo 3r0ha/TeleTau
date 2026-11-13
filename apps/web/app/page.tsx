@@ -144,10 +144,20 @@ export default async function StartPage() {
               <h2 id="lp-phrase-title" className="lp-phrase__title">
                 Фраза дня
               </h2>
-              <p className="lp-phrase__ba" lang="ba">
-                {phrase.textBa}
-              </p>
-              <p className="lp-phrase__ru">{phrase.sourceRu}</p>
+              <div className="lp-phrase__say">
+                {/* Пчела «произносит» фразу дня — пузырь как «Сәләм!» в герое; пчела с книгой — пара из словаря. */}
+                <span className="lp-cell lp-phrase__bee" aria-hidden>
+                  <svg viewBox={`0 0 ${CELL.w} ${CELL.h + CELL.lip}`} focusable="false">
+                    <path className="lp-cell__lip" d={CELL_LIP} />
+                    <path className="lp-cell__face" d={CELL_FACE} />
+                  </svg>
+                  <Pic src={illustrations.beeRead} className="lp-cell__art" />
+                </span>
+                <p className="lp-phrase__ba" lang="ba">
+                  {phrase.textBa}
+                </p>
+              </div>
+              <p className="lp-phrase__ru">«{phrase.sourceRu}»</p>
               <p className="lp-phrase__note">Принятая пара словаря ТелеТау: за перевод проголосовали ученики и взрослые</p>
             </div>
           </section>

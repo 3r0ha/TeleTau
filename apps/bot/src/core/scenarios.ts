@@ -1,4 +1,4 @@
-import type { Button, Incoming, Outgoing } from "./messages.js";
+import type { Button, Incoming, MenuButton, Outgoing } from "./messages.js";
 import { ApiUnavailableError, type ChatLink, type DailyDuel, type DuelChoice, type IssuedDailyDuel, type TeleTauApi } from "./ports.js";
 
 export interface BotContext {
@@ -22,35 +22,47 @@ export const CALLBACK = {
   hour: (h: number) => `rem:h:${h}`,
   daily: "dd:menu",
   dailyCancel: "dd:cancel",
+  /** Отвязка чата из меню напоминаний (была командой /unlink). */
+  unlink: "chat:unlink",
   /** `dd:<uuid>:<choice>` — 44 байта максимум: влезает в лимит callback_data. */
   duel: (dialogId: string, choice: DuelChoice) => `dd:${dialogId}:${choice}`,
 } as const;
 
+/**
+ * Метки постоянного меню (кнопки со смайликом перед текстом): нажатие текстовой кнопки Telegram присылает её метку
+ * обычным сообщением — ядро узнаёт интенты дословно. «📚 Учиться» — web_app-кнопка, открывает Mini App.
+ */
+export const MENU = {
+  learn: "📚 Учиться",
+  daily: "⚡️ Задание дня",
+  phrase: "💬 Фраза дня",
+  reminders: "🔔 Напоминания",
+} as const;
+
 export const TEXT = {
   start: `Привет! Это ${BRAND} — башкирский язык каждый день.`,
-  startLearn: "Уроки — по кнопке «Учиться».",
+  startLearn: "Уроки — по кнопке «📚 Учиться» под чатом.",
   startNoApp: `Уроки — в приложении и на сайте «${BRAND}».`,
-  startRemind: "Напоминания о серии — /remind",
-  startDaily: "Задание дня — /daily",
-  startPhrase: "Фраза дня — /phrase",
+  startRemind: "Напоминания о серии — «🔔 Напоминания».",
+  startDaily: "Задание дня — «⚡️ Задание дня».",
+  startPhrase: "Фраза дня — «💬 Фраза дня».",
   help: [
-    "Команды:",
-    "/start — начать",
-    "/daily — задание дня",
-    "/cancel — отменить задание",
-    "/phrase — фраза дня",
-    "/remind — напоминания о серии",
-    "/remind_off — выключить напоминания",
-    "/unlink — отвязать этот чат",
-    "/help — помощь",
+    "Всё — кнопками под чатом:",
+    "",
+    "📚 Учиться — уроки в приложении",
+    "⚡️ Задание дня — помоги языку",
+    "💬 Фраза дня — новая пара слов",
+    "🔔 Напоминания — серия не прервётся",
+    "",
+    "Если кнопок не видно — нажми /start.",
   ].join("\n"),
-  fallback: "Уроки — по кнопке «Учиться». Задание дня — /daily. Команды — /help.",
-  notLinked: "Сначала открой «Учиться» и войди. Потом снова набери /remind.",
-  notLinkedDaily: "Сначала открой «Учиться» и войди. Потом снова набери /daily.",
+  fallback: "Всё — кнопками под чатом: «📚 Учиться», «⚡️ Задание дня», «💬 Фраза дня», «🔔 Напоминания». Если их не видно — /start.",
+  notLinked: "Сначала нажми «📚 Учиться» и войди. Потом снова — «🔔 Напоминания».",
+  notLinkedDaily: "Сначала нажми «📚 Учиться» и войди. Потом снова — «⚡️ Задание дня».",
   remindersOff: "Напоминания выключены.\nНапишу раз в день, если сегодня ещё не было урока.",
   remindersOn: (hour: number) => `Напомню в ${clock(hour)} по Уфе, если сегодня ещё не было урока.\nДругой час — кнопкой ниже.`,
-  turnedOff: "Напоминания выключены. Включить снова — /remind.",
-  unlinked: "Чат отвязан. Привязать снова — открой «Учиться» и войди.",
+  turnedOff: "Напоминания выключены. Включить снова — «🔔 Напоминания».",
+  unlinked: "Чат отвязан. Привязать снова — открой «📚 Учиться» и войди.",
   unavailable: "Нет связи с сервером. Попробуй позже.",
   remindersDisabled: "Напоминания пока недоступны.",
   /** Напоминание о серии: без имени, ника, числа дней — ничего личного (правило 13). */
@@ -62,13 +74,13 @@ export const TEXT = {
   /** Дуэль: контент и номера сторон; распределение голосов не показываем (защита от конформизма). */
   duelHeader: "Задание дня — «Помоги языку»",
   duelAsk: "Какой перевод лучше?",
-  duelBoth: "Оба подходят",
-  duelSkip: "Не знаю",
-  duelCancel: "Отменить",
+  duelBoth: "✅ Оба подходят",
+  duelSkip: "🙈 Не знаю",
+  duelCancel: "↩️ Отменить",
   duelVoted: "Голос учтён. Спасибо, что помогаешь языку!",
   duelVotedAlready: "Голос за эту пару уже учтён.",
-  duelClosed: "Задание уже закрыто. Новое — /daily.",
-  dailyCancelled: "Задание отменено. Новое — /daily.",
+  duelClosed: "Задание уже закрыто. Новое — «⚡️ Задание дня».",
+  dailyCancelled: "Задание отменено. Новое — «⚡️ Задание дня».",
   dailyNothingToCancel: "Отменять нечего.",
   // ── фраза дня (ТЗ §3.6) ──
   phraseDisabled: "Фраза дня пока недоступна.",
@@ -77,38 +89,57 @@ export const TEXT = {
 
 const clock = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
 
-const learnRow = (ctx: BotContext): Button[][] =>
-  ctx.miniAppUrl ? [[{ label: "Учиться", action: { kind: "openMiniApp", url: ctx.miniAppUrl } }]] : [];
+/** Inline-кнопка «Учиться» — в сообщениях с другими inline-кнопками (например, напоминание), где меню не поставить. */
+const learnButton = (ctx: Pick<BotContext, "miniAppUrl">): Button[] =>
+  ctx.miniAppUrl ? [{ label: MENU.learn, action: { kind: "openMiniApp", url: ctx.miniAppUrl } }] : [];
 
-/** Состояние напоминаний: текст и кнопки (включить / выбрать час / выключить). */
-function remindersView(link: ChatLink, ctx: BotContext): Outgoing {
+/**
+ * Постоянное меню (reply-клавиатура, ставится сообщением без inline-кнопок): «Учиться» — web_app, остальные метки
+ * приходят текстом и распознаются как интенты. Без API показываем только «Учиться»: остальное ответило бы «недоступно».
+ */
+export function menuRows(ctx: Pick<BotContext, "miniAppUrl" | "api">): MenuButton[][] {
+  const rows: MenuButton[][] = [];
+  if (ctx.miniAppUrl) rows.push([{ label: MENU.learn, webAppUrl: ctx.miniAppUrl }]);
+  if (ctx.api) rows.push([{ label: MENU.daily }, { label: MENU.phrase }], [{ label: MENU.reminders }]);
+  return rows;
+}
+
+/** Сообщение с меню, если меню есть (пустое меню — просто текст). */
+const withMenu = (out: Omit<Outgoing, "menu">, ctx: Pick<BotContext, "miniAppUrl" | "api">): Outgoing => {
+  const menu = menuRows(ctx);
+  return menu.length ? { ...out, menu } : out;
+};
+
+/** Состояние напоминаний: текст и кнопки (включить / выбрать час / выключить / отвязать чат). */
+function remindersView(link: ChatLink): Outgoing {
   const { enabled, hour } = link.reminders;
   if (!enabled) {
-    return { text: TEXT.remindersOff, buttons: [[{ label: `Включить в ${clock(hour)}`, action: { kind: "callback", data: CALLBACK.on } }], ...learnRow(ctx)] };
+    return {
+      text: TEXT.remindersOff,
+      buttons: [[{ label: `✅ Включить в ${clock(hour)}`, action: { kind: "callback", data: CALLBACK.on } }], [{ label: "❌ Отвязать чат", action: { kind: "callback", data: CALLBACK.unlink } }]],
+    };
   }
-  const hours = REMINDER_HOUR_CHOICES.map((h) => ({ label: h === hour ? `✓ ${clock(h)}` : clock(h), action: { kind: "callback", data: CALLBACK.hour(h) } }) as const);
-  return { text: TEXT.remindersOn(hour), buttons: [hours, [{ label: "Выключить", action: { kind: "callback", data: CALLBACK.off } }]] };
+  const hours = REMINDER_HOUR_CHOICES.map((h) => ({ label: h === hour ? `✅ ${clock(h)}` : `⏰ ${clock(h)}`, action: { kind: "callback", data: CALLBACK.hour(h) } }) as const);
+  return {
+    text: TEXT.remindersOn(hour),
+    buttons: [hours, [{ label: "🔕 Выключить", action: { kind: "callback", data: CALLBACK.off } }], [{ label: "❌ Отвязать чат", action: { kind: "callback", data: CALLBACK.unlink } }]],
+  };
 }
 
 /** Напоминание о серии для рассылки (core/reminders.ts): «Учиться», «Задание дня» и выключение — под сообщением. */
 export function reminderMessage(ctx: Pick<BotContext, "miniAppUrl" | "api">): Outgoing {
-  const daily = ctx.api ? [{ label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } } as Button] : undefined;
-  return {
-    text: TEXT.reminder,
-    buttons: [...learnRow({ ...ctx, api: null }), ...(daily ? [daily] : []), [{ label: "Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }]],
-  };
+  const rows: Button[][] = [];
+  const learn = learnButton(ctx);
+  if (learn.length) rows.push(learn);
+  if (ctx.api) rows.push([{ label: MENU.daily, action: { kind: "callback", data: CALLBACK.daily } }]);
+  rows.push([{ label: "🔕 Выключить напоминания", action: { kind: "callback", data: CALLBACK.off } }]);
+  return { text: TEXT.reminder, buttons: rows };
 }
 
 function start(ctx: BotContext): Outgoing {
   const lines: string[] = [TEXT.start, ctx.miniAppUrl ? TEXT.startLearn : TEXT.startNoApp];
-  if (ctx.api) lines.push("", TEXT.startRemind, TEXT.startDaily, TEXT.startPhrase);
-  const buttons = [
-    ...learnRow(ctx),
-    ...(ctx.api
-      ? [[{ label: "Напоминания", action: { kind: "callback", data: CALLBACK.menu } } as Button, { label: "Задание дня", action: { kind: "callback", data: CALLBACK.daily } } as Button]]
-      : []),
-  ];
-  return buttons.length ? { text: lines.join("\n"), buttons } : { text: lines.join("\n") };
+  if (ctx.api) lines.push("", TEXT.startDaily, TEXT.startPhrase, TEXT.startRemind);
+  return withMenu({ text: lines.join("\n") }, ctx);
 }
 
 /** Команды и кнопки напоминаний: всё через API — бот сам ничего не хранит. */
@@ -119,9 +150,9 @@ async function reminders(chatId: string, action: "menu" | "on" | "off" | { hour:
     action === "menu"
       ? await api.chat(chatId)
       : await api.setReminders(chatId, action === "on" ? { enabled: true } : action === "off" ? { enabled: false } : { enabled: true, hour: action.hour });
-  if (!link) return { text: TEXT.notLinked, ...(ctx.miniAppUrl ? { buttons: learnRow(ctx) } : {}) };
+  if (!link) return withMenu({ text: TEXT.notLinked }, ctx);
   if (action === "off") return { text: TEXT.turnedOff };
-  return remindersView(link, ctx);
+  return remindersView(link);
 }
 
 function parseCallback(data: string): "menu" | "on" | "off" | { hour: number } | null {
@@ -146,8 +177,8 @@ function duelMessage(duel: IssuedDailyDuel): Outgoing {
   return {
     text: `${TEXT.duelHeader}\n\n${TEXT.duelAsk}\n\n«${duel.sourceRu}»\n\n1. ${duel.a.text}\n2. ${duel.b.text}`,
     buttons: [
-      [{ label: `1. ${duel.a.text}`, action: { kind: "callback", data: CALLBACK.duel(duel.dialogId, "a") } }],
-      [{ label: `2. ${duel.b.text}`, action: { kind: "callback", data: CALLBACK.duel(duel.dialogId, "b") } }],
+      [{ label: `1️⃣ ${duel.a.text}`, action: { kind: "callback", data: CALLBACK.duel(duel.dialogId, "a") } }],
+      [{ label: `2️⃣ ${duel.b.text}`, action: { kind: "callback", data: CALLBACK.duel(duel.dialogId, "b") } }],
       [
         { label: TEXT.duelBoth, action: { kind: "callback", data: CALLBACK.duel(duel.dialogId, "both") } },
         { label: TEXT.duelSkip, action: { kind: "callback", data: CALLBACK.duel(duel.dialogId, "skip") } },
@@ -157,12 +188,12 @@ function duelMessage(duel: IssuedDailyDuel): Outgoing {
   };
 }
 
-/** /daily и кнопка «Задание дня»: выдать дуэль или объяснить, что на сегодня всё (FSM — в API, ADR 0024). */
+/** /daily и кнопка «⚡️ Задание дня»: выдать дуэль или объяснить, что на сегодня всё (FSM — в API, ADR 0024). */
 async function daily(chatId: string, ctx: BotContext): Promise<Outgoing> {
   const api = ctx.api;
   if (!api) return { text: TEXT.dailyDisabled };
   const duel = await api.dailyDuel(chatId);
-  if (!duel) return { text: TEXT.notLinkedDaily, ...(ctx.miniAppUrl ? { buttons: learnRow(ctx) } : {}) };
+  if (!duel) return withMenu({ text: TEXT.notLinkedDaily }, ctx);
   if (duel.state === "done") return { text: TEXT.dailyDone };
   if (duel.state === "empty") return { text: TEXT.dailyEmpty };
   // state = issued — по контракту есть dialogId и стороны (IssuedDailyDuel).
@@ -195,11 +226,19 @@ async function phrase(ctx: BotContext): Promise<Outgoing> {
   if (!api) return { text: TEXT.phraseDisabled };
   const pair = await api.phraseOfDay();
   if (!pair) return { text: TEXT.phraseEmpty };
-  return { text: `Фраза дня\n\n«${pair.textBa}»\n— «${pair.sourceRu}»`, buttons: learnRow(ctx) };
+  return withMenu({ text: `Фраза дня\n\n«${pair.textBa}»\n— «${pair.sourceRu}»` }, ctx);
+}
+
+/** Отвязка чата (кнопка «❌ Отвязать чат» в меню напоминаний, была командой /unlink). */
+async function unlinkChat(chatId: string, ctx: BotContext): Promise<Outgoing> {
+  if (!ctx.api) return { text: TEXT.remindersDisabled };
+  await ctx.api.unlink(chatId);
+  return { text: TEXT.unlinked };
 }
 
 async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
   if (message.kind === "callback") {
+    if (message.data === CALLBACK.unlink) return [await unlinkChat(message.chatId, ctx)];
     const action = parseCallback(message.data);
     if (action) return [await reminders(message.chatId, action, ctx)];
     const duel = parseDuelCallback(message.data);
@@ -208,12 +247,20 @@ async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
     if (duel) return [await duelAnswer(duel.dialogId, duel.choice, ctx)];
     return [];
   }
+  if (message.kind === "text") {
+    // Нажатие кнопки постоянного меню приходит текстом метки — распознаём интенты дословно (MENU).
+    const text = message.text.trim();
+    if (text === MENU.daily) return [await daily(message.chatId, ctx)];
+    if (text === MENU.phrase) return [await phrase(ctx)];
+    if (text === MENU.reminders) return [await reminders(message.chatId, "menu", ctx)];
+    return [withMenu({ text: TEXT.fallback }, ctx)];
+  }
   if (message.kind === "command") {
     switch (message.command) {
       case "start":
         return [start(ctx)];
       case "help":
-        return [{ text: TEXT.help }];
+        return [withMenu({ text: TEXT.help }, ctx)];
       case "daily":
         return [await daily(message.chatId, ctx)];
       case "cancel":
@@ -228,18 +275,17 @@ async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
       case "remind_off":
         return [await reminders(message.chatId, "off", ctx)];
       case "unlink":
-        if (!ctx.api) return [{ text: TEXT.remindersDisabled }];
-        await ctx.api.unlink(message.chatId);
-        return [{ text: TEXT.unlinked }];
+        return [await unlinkChat(message.chatId, ctx)];
     }
   }
-  return [{ text: TEXT.fallback }];
+  return [withMenu({ text: TEXT.fallback }, ctx)];
 }
 
 /**
- * Сценарии бота: /start, /help, напоминания о серии (/remind, /remind_on, /remind_off, кнопки), /unlink,
- * ежедневное задание (ADR 0024): /daily, /cancel, кнопки дуэли — и фраза дня /phrase (ТЗ §3.6). Ответы
- * не содержат данных пользователя; API недоступно — вежливое «попробуй позже», а не ошибка.
+ * Сценарии бота: постоянное меню кнопок (📚 Учиться, ⚡️ Задание дня, 💬 Фраза дня, 🔔 Напоминания) и команды как
+ * запасной путь (/start, /help, /remind*, /daily, /cancel, /phrase, /unlink); напоминания о серии, ежедневное
+ * задание (ADR 0024) и фраза дня (ТЗ §3.6). Ответы не содержат данных пользователя; API недоступно — вежливое
+ * «попробуй позже», а не ошибка.
  */
 export async function handle(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
   try {

@@ -32,3 +32,6 @@ playwright-report/
 .env.bak-localhost
 # Серверный override портов docker-compose (docs/deploy.md §4) — не для репозитория
 docker-compose.override.yml
+# APK для кнопки «Скачать для Android»: артефакт сборки gradle (apps/web/public/teletau.apk),
+# собирается командой из docs/deploy.md и раскладывается деплоем, в git не хранится.
+apps/web/public/*.apk

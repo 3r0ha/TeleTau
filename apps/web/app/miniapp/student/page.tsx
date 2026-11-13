@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Keyboard, QrCode } from "@phosphor-icons/react/ssr";
+import { BookOpen, Keyboard, QrCode } from "@phosphor-icons/react/ssr";
 import { Button, ButtonLink, Illustration, InlineAlert } from "@teletau/ui";
 import { useStudentPaths } from "../../_components/learn/paths";
 import { LoadingBlock, Screen, SimpleTop } from "../../_components/screens";
@@ -22,7 +22,7 @@ export default function MiniAppStudentLogin() {
         <LoadingBlock rows={2} label="Открываем вход" />
       </Screen>
     );
-  return tg.canScanQr ? <TelegramScanLogin /> : <StudentScanPage />;
+  return tg.canScanQr ? <TelegramScanLogin /> : <StudentScanPage withSelf />;
 }
 
 function TelegramScanLogin() {
@@ -64,6 +64,10 @@ function TelegramScanLogin() {
         </div>
         <ButtonLink href={paths.code} variant="secondary" block icon={<Keyboard weight="fill" />}>
           Ввести код класса
+        </ButtonLink>
+        {/* «Учусь сам» (ADR 0022): в Mini App тоже можно без карточки и класса — сразу возраст и ник. */}
+        <ButtonLink href={paths.self} variant="secondary" block icon={<BookOpen weight="fill" />}>
+          Учусь сам
         </ButtonLink>
       </div>
     </Screen>

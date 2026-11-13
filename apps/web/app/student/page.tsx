@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, CameraSlash, ImageSquare, Keyboard, QrCode } from "@phosphor-icons/react/ssr";
+import { BookOpen, Camera, CameraSlash, ImageSquare, Keyboard, QrCode } from "@phosphor-icons/react/ssr";
 import { Button, ButtonLink, InlineAlert, LinkButton } from "@teletau/ui";
 import { ApiProblem, describeProblem } from "@teletau/session/problem";
 import { useSession } from "@teletau/session/react";
@@ -24,8 +24,10 @@ function cameraError(e: unknown): string {
 /**
  * Вход ученика: сканер QR-карточки (камера или фото) и путь без карточки — по коду класса. В QR — только полезная
  * нагрузка `TT1.…` (ADR 0016): она не попадает ни в адрес, ни в историю браузера, а уходит в теле запроса к BFF.
+ * `withSelf` — кнопка «Учусь сам» (ADR 0022): в Mini App вход без карточки и класса нужен, в обычном вебе он
+ * уже есть кнопкой «Начать» в герое лендинга.
  */
-export default function StudentScanPage() {
+export default function StudentScanPage({ withSelf = false }: { withSelf?: boolean } = {}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -161,6 +163,11 @@ export default function StudentScanPage() {
           <ButtonLink href={paths.code} variant="secondary" block icon={<Keyboard weight="fill" />}>
             Ввести код класса
           </ButtonLink>
+          {withSelf ? (
+            <ButtonLink href={paths.self} variant="secondary" block icon={<BookOpen weight="fill" />}>
+              Учусь сам
+            </ButtonLink>
+          ) : null}
         </div>
       </div>
     </Screen>
