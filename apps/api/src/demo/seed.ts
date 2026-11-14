@@ -55,6 +55,7 @@ function print(worlds: WorldSummary[], files: Map<number, string>, web: string, 
           `  Республика: ${w.republic.districts} районов, ${w.republic.schools} школ, ${w.republic.classes} классов, ${w.republic.students} учеников и ${w.republic.selfLearners} «Учусь сам», уроков ${w.republic.lessons}`,
         ]
       : []),
+    ...(w.kzPairs ? [`  Казахско-башкирский словарь: ${w.kzPairs} пар ba-kz (казахский исходник → башкирский вариант) — ${web}/dictionary`] : []),
     `  Консоль (${consoleUrl}/login, код 0000 + TOTP из apps/api/data/README.md): министерство — ministry@demo.teletau.local («Республика»),`,
     `    Фонд — fund@demo.teletau.local («Словарь для Фонда»), модератор — moderator@demo.teletau.local`,
   ];

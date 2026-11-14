@@ -1,0 +1,2 @@
+ALTER TABLE "source_items" DROP CONSTRAINT "source_items_lang";--> statement-breakpoint
+ALTER TABLE "source_items" ADD CONSTRAINT "source_items_lang" CHECK ("source_items"."lang" IN ('ru', 'ba', 'kz'));

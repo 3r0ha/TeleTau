@@ -2710,9 +2710,11 @@ paths:
       operationId: getFundDictionary
       summary: Словарь для Фонда — принятые пары
       description: |
-        Принятые в словарь пары «русский исходник — башкирский вариант» с голосами по группам, датой и источником
-        варианта. Решения duel-v0 — `preliminary: true`: до Consensus Engine они не входят в релиз датасета
-        (ADR 0019) и могут измениться при пересчёте. Голосующие не раскрываются — только числа по группам.
+        Принятые в словарь пары «исходник — башкирский вариант» с голосами по группам, датой и источником
+        варианта. Пары обеих языковых пар: `ba-ru` (башкирский ← русский) и `ba-kz` (башкирский ← казахский),
+        пара каждой строки — в поле `langPair`. Решения duel-v0 — `preliminary: true`: до Consensus Engine
+        они не входят в релиз датасета (ADR 0019) и могут измениться при пересчёте. Голосующие не раскрываются —
+        только числа по группам.
       x-access: { roles: [fund] }
       responses:
         "200":
@@ -2761,8 +2763,9 @@ paths:
       summary: Фраза дня — принятая пара корпуса
       description: |
         Пара дня для лендинга и Telegram-бота (ТЗ §3.6/§3.8): один исходник и его основной принятый вариант.
-        Выбор детерминирован: из принятых пар (`item_state.status = accepted`, основной вариант, без
-        `native_rejected`) индекс — устойчивый хеш учебных суток по Уфе (Asia/Yekaterinburg, UTC+5), поэтому
+        Выбор детерминирован: из принятых пар «башкирский ← русский» (`item_state.status = accepted`, основной
+        вариант, без `native_rejected`; пары ba-kz во фразе дня не участвуют — лендинг показывает русский
+        исходник) индекс — устойчивый хеш учебных суток по Уфе (Asia/Yekaterinburg, UTC+5), поэтому
         в течение суток все клиенты показывают одну и ту же пару, в полночь по Уфе она меняется. Персональных
         данных нет — только тексты пары и источники. Принятых пар ещё нет — поле `pair` отсутствует, блок
         не показывают.
@@ -2786,12 +2789,14 @@ paths:
       operationId: getPublicDictionary
       summary: Публичный словарь — выгрузка принятых пар без регистрации
       description: |
-        Выгрузка словаря (ТЗ §5): принятые пары «русский исходник — башкирский вариант» с источниками — анонимно,
-        без ключей и квот. Персональных данных нет: только тексты пар, их виды, источники и статусы проверки
-        (правило 13). `status=confirmed` — все принятые пары, `status=expert_review` — только проверенные
-        носителем языка. `format=csv` — те же строки таблицей для Excel: разделитель точка с запятой, UTF-8
-        с BOM, столбцы `fragmentId;langPair;translation;textBa;status;confirmed;sources` (источники — названия
-        через запятую). Выгрузка для Фонда с голосами по группам — отдельная операция `getFundDictionary`.
+        Выгрузка словаря (ТЗ §5): принятые пары «исходник — башкирский вариант» с источниками — анонимно,
+        без ключей и квот. Языковые пары: `ba-ru` (башкирский ← русский) и `ba-kz` (башкирский ← казахский);
+        пара каждой строки — в поле `langPair` строки. Персональных данных нет: только тексты пар, их виды,
+        источники и статусы проверки (правило 13). `status=confirmed` — все принятые пары, `status=expert_review`
+        — только проверенные носителем языка. `format=csv` — те же строки таблицей для Excel: разделитель точка
+        с запятой, UTF-8 с BOM, столбцы `fragmentId;langPair;translation;textBa;status;confirmed;sources`
+        (источники — названия через запятую). Выгрузка для Фонда с голосами по группам — отдельная операция
+        `getFundDictionary`.
       security: []
       x-access: { roles: [anonymous] }
       parameters:
@@ -6540,7 +6545,11 @@ components:
           format: uuid
         sourceRu:
           type: string
-          description: Русский исходник
+          description: Исходник — русский (`ba-ru`) или казахский (`ba-kz`)
+        langPair:
+          type: string
+          enum: [ba-ru, ba-kz]
+          description: "Языковая пара: ba-ru — башкирский ← русский, ba-kz — башкирский ← казахский"
         kind:
           $ref: "#/components/schemas/SourceKind"
         textBa:
@@ -6628,7 +6637,8 @@ components:
       type: object
       description: |
         Публичный словарь (ТЗ §5): принятые пары для всех без регистрации. Персональных данных нет — только
-        тексты, источники и статусы (правило 13). Голосующие не раскрываются.
+        тексты, источники и статусы (правило 13). Голосующие не раскрываются. Пары словаря — ba-ru и ba-kz;
+        пара каждой строки — в её поле `langPair`.
       required: [generatedAt, langPair, items]
       properties:
         generatedAt:
@@ -6637,8 +6647,8 @@ components:
           description: Момент выгрузки
         langPair:
           type: string
-          enum: [ba-ru]
-          description: Языковая пара; в MVP — только «башкирский ← русский»
+          enum: [ba-ru, ba-kz]
+          description: "Основная пара словаря — «башкирский ← русский» (ba-ru): с ней работают лендинг и бот; пары строк — в поле langPair каждой строки"
         items:
           type: array
           description: Принятые пары сверху вниз по времени решения
@@ -6646,7 +6656,7 @@ components:
             $ref: "#/components/schemas/PublicDictionaryEntry"
     PublicDictionaryEntry:
       type: object
-      description: Строка словаря — принятый башкирский вариант русского исходника (ТЗ §5)
+      description: Строка словаря — принятый башкирский вариант исходника (ТЗ §5)
       required: [fragmentId, textBa, langPair, translation, sources, confirmed, status]
       properties:
         fragmentId:
@@ -6658,11 +6668,11 @@ components:
           description: Башкирский текст в канонической форме `@teletau/bashkir-text`
         langPair:
           type: string
-          enum: [ba-ru]
-          description: Языковая пара фрагмента
+          enum: [ba-ru, ba-kz]
+          description: "Языковая пара строки: ba-ru — башкирский ← русский, ba-kz — башкирский ← казахский"
         translation:
           type: string
-          description: Русский исходник
+          description: Исходник — русский (`ba-ru`) или казахский (`ba-kz`)
         sources:
           type: array
           description: Источники фрагмента (у вариантов из источников — всегда)

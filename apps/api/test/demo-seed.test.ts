@@ -1,12 +1,19 @@
 // Юнит-тесты демо-сида (src/demo): план мира по календарю Уфы и ответы демо-учеников. Сам сид проверяет мир
 // перед выходом (world.ts, summaries) и прогоняется в каждом `pnpm e2e` на своей базе. Строки — синтетические
-// сочетания букв (как test/fixtures/content), не слова языка (правило 6).
+// сочетания букв (как test/fixtures/content), не слова языка (правило 6); исключение — демо-корпус ba-kz
+// (ниже): это показные пары словаря, источник — «Демо-корпус ТелеТау».
 import { dateToDay, LEAGUE_GROUP_SIZE, mondayOf, ufaDayNumber } from "@teletau/domain-rules";
 import type { Schema } from "@teletau/contracts";
 import { describe, expect, it } from "vitest";
+import { normalize, toComparable } from "@teletau/bashkir-text";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { almostText, answerSheet, correctAnswer, mistakenAnswer, tileWords } from "../src/demo/answers.js";
+import { KZ_PAIRS, KZ_SOURCE, KZ_UNIT, kzExternalId, writeKzCorpus } from "../src/demo/kz-corpus.js";
 import { buildPlan, DEMO_STUDENT_DAYS, DEMO_STUDENT_SEAT, type LessonDayEvent } from "../src/demo/plan.js";
 import { buildRegionPlan, REGION_SCHOOLS, REGION_SELF, regionKidKey, regionNickname } from "../src/demo/region.js";
+import { parseDuelFiles, parseSources } from "../src/modules/corpus/duels-import.js";
 import type { LessonContent } from "../src/modules/content/index.js";
 import { buildPlan as buildRunPlan, checkAnswer } from "../src/modules/learning/run-plan.js";
 
@@ -161,5 +168,50 @@ describe("demo republic (src/demo/region.ts, ADR 0023)", () => {
     expect(small.map((s) => s.key)).toEqual(["r08", "r11"]);
     for (let n = 0; n < 300; n++) expect(regionNickname(n)).toMatch(/^a(0\d|[12]\d|3[01])\.n(0\d|[12]\d|3[0-5])$/);
     expect(new Set(REGION_SELF.map((s) => s.nicknameId)).size).toBe(REGION_SELF.length);
+  });
+});
+
+// Демо-корпус пары ba-kz (src/demo/kz-corpus.ts) — настоящие казахские и башкирские слова: это словарь для показа
+// публичной выгрузки, а не тестовая синтетика. Остальные тесты файла строк языка не содержат (правило 6).
+describe("demo kz-corpus (src/demo/kz-corpus.ts)", () => {
+  it("30–50 пар: казахский исходник и башкирский эквивалент в канонической форме, альтернатива отличается", () => {
+    expect(KZ_PAIRS.length).toBeGreaterThanOrEqual(30);
+    expect(KZ_PAIRS.length).toBeLessThanOrEqual(50);
+    const seenKz = new Set<string>();
+    for (const p of KZ_PAIRS) {
+      expect(p.kz.length).toBeGreaterThan(0);
+      expect(seenKz.has(p.kz)).toBe(false);
+      seenKz.add(p.kz);
+      // Башкирские тексты — в канонической форме normalize() (правило 7), варианты различаются после toComparable.
+      expect(p.ba).toBe(normalize(p.ba));
+      expect(p.alt).toBe(normalize(p.alt));
+      expect(toComparable(p.ba)).not.toBe(toComparable(p.alt));
+      expect(["word", "phrase"]).toContain(p.kind);
+      expect(p.domain).toMatch(/^[a-z]+$/);
+    }
+    // Разделы словаря для демонстрации: приветствие, семья, числа, быт, природа.
+    const domains = new Set(KZ_PAIRS.map((p) => p.domain));
+    expect([...domains].sort()).toEqual(["family", "greeting", "household", "nature", "numbers"]);
+  });
+
+  it("writeKzCorpus пишет файлы, которые разбирает corpus:import: 50 дуэлей с источником «Демо-корпус ТелеТау»", () => {
+    const dir = mkdtempSync(join(tmpdir(), "teletau-kz-test-"));
+    try {
+      const { duelsDir, sourcesFile } = writeKzCorpus(dir);
+      const sources = parseSources(readFileSync(sourcesFile, "utf8"));
+      expect(sources.get(KZ_SOURCE.id)).toMatchObject({ title: "Демо-корпус ТелеТау", license: KZ_SOURCE.license });
+      const duels = parseDuelFiles([{ name: "kz-demo.yaml", text: readFileSync(join(duelsDir, "kz-demo.yaml"), "utf8") }], sources);
+      expect(duels).toHaveLength(KZ_PAIRS.length);
+      duels.forEach((d, n) => {
+        expect(d.externalId).toBe(kzExternalId(n));
+        expect(d.unitId).toBe(KZ_UNIT);
+        expect(d.ru).toBe(KZ_PAIRS[n]!.kz);
+        expect(d.variants[0]!.text).toBe(KZ_PAIRS[n]!.ba);
+        expect(d.variants[1]!.text).toBe(KZ_PAIRS[n]!.alt);
+        for (const v of d.variants) expect(v.sourceRef.title).toBe("Демо-корпус ТелеТау");
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

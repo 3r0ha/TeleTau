@@ -9,7 +9,7 @@ export const sourceKind = pgEnum("corpus_source_kind", ["word", "phrase", "sente
 export const variantOrigin = pgEnum("corpus_variant_origin", ["human", "import", "mt", "llm"]);
 export const variantReview = pgEnum("corpus_variant_review", ["needs_native_review", "native_approved", "native_rejected"]);
 
-/** Исходник (русская фраза дуэли). external_id — id дуэли из YAML («u01-d01»): по нему импорт идемпотентен. */
+/** Исходник дуэли (русская фраза; для пары ba-kz — казахская). external_id — id дуэли из YAML («u01-d01»): по нему импорт идемпотентен. */
 export const sourceItems = pgTable(
   "source_items",
   {
@@ -30,7 +30,7 @@ export const sourceItems = pgTable(
   (t) => [
     uniqueIndex("source_items_external_uq").on(t.externalId),
     index("source_items_unit_idx").on(t.unitId),
-    check("source_items_lang", sql`${t.lang} IN ('ru', 'ba')`),
+    check("source_items_lang", sql`${t.lang} IN ('ru', 'ba', 'kz')`),
   ],
 );
 

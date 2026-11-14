@@ -9,8 +9,12 @@
 // демо-ученик ещё не голосовал из тех, где голосование идёт, — её и выберет сервер (сначала voting). Ещё две такие же
 // «запасные» пары нужны повторам сквозного теста (--e2e-worlds), они же — «ждут» в «Моём вкладе» демо-ученика.
 import { randomInt, randomUUID } from "node:crypto";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import type { Schema } from "@teletau/contracts";
+import { normalize } from "@teletau/bashkir-text";
 import {
   dayToDate,
   duelV0,
@@ -26,17 +30,19 @@ import type { Principal } from "../common/auth.js";
 import { uuidv7 } from "../common/uuidv7.js";
 import type { AppConfig } from "../config/config.js";
 import type { Db } from "../db/database.js";
-import { DB } from "../infra/tokens.js";
+import { DB, PG_POOL } from "../infra/tokens.js";
 import { AssignmentsService } from "../modules/assignments/index.js";
 import { CompetitionService } from "../modules/competition/index.js";
 import { ConsensusService, type Voter } from "../modules/consensus/index.js";
 import { ContentService, type LessonContent } from "../modules/content/index.js";
 import { CorpusService, type DuelItem } from "../modules/corpus/index.js";
+import { importDuels } from "../modules/corpus/duels-import.js";
 import { DEMO_STAFF } from "../modules/identity/index.js";
 import { LearningService, LESSONS_BEFORE_DUELS } from "../modules/learning/index.js";
 import { ClassesService } from "../modules/org/index.js";
 import { ProgressService } from "../modules/progress/index.js";
 import { answerSheet, correctAnswer, mistakenAnswer, type AnswerSheetRow } from "./answers.js";
+import { KZ_PAIRS, kzExternalId, writeKzCorpus } from "./kz-corpus.js";
 import {
   DEMO_STUDENT_DAYS,
   DEMO_STUDENT_NICKNAME_ID,
@@ -146,6 +152,8 @@ export interface WorldSummary {
     selfLearners: number;
     lessons: number;
   };
+  /** Принятые пары ba-kz демо-корпуса (kz-corpus.ts) — только у основного мира. */
+  kzPairs?: number;
 }
 
 /** Итог республики демо-мира (для world.json и вывода сида). */
@@ -241,6 +249,7 @@ export class DemoWorldBuilder {
   private abandoned = 0;
   private lessonsRun = 0;
   private republic: RepublicSummary | undefined;
+  private kzPairs = 0;
 
   constructor(
     private readonly app: NestFastifyApplication,
@@ -560,6 +569,7 @@ export class DemoWorldBuilder {
     const failed = await republic;
     if (failed) throw failed;
     await this.finalizeDuels();
+    await this.kzCorpus();
     return this.summaries();
   }
 
@@ -1150,6 +1160,36 @@ export class DemoWorldBuilder {
     return true;
   }
 
+  /**
+   * Демо-корпус пары ba-kz (kz-corpus.ts): казахский исходник → башкирский эквивалент. Грузится тем же официальным
+   * путём, что дуэли content/corpus (importDuels, lang = kz), затем каждая пара принимается консенсусом, как пары
+   * ba-ru (acceptDuels): учитель второй школы и двое взрослых за первый — верный — вариант, duel-v0 даёт «Принят».
+   * Пары видны в публичном словаре и выгрузке Фонда; фраза дня остаётся парой ba-ru (consensus.service.ts).
+   */
+  private async kzCorpus(): Promise<void> {
+    const dir = mkdtempSync(join(tmpdir(), "teletau-kz-"));
+    try {
+      const { duelsDir, sourcesFile } = writeKzCorpus(dir);
+      await importDuels(this.app.get<import("pg").Pool>(PG_POOL), { dir: duelsDir, sourcesFile, lang: "kz" });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+    const voters = [this.teacher2.principal, (await this.adult(0)).principal, (await this.adult(1)).principal];
+    let t = new Date(this.plan.calendar.now.getTime() - 3 * 60 * 60_000);
+    for (const [n, pair] of KZ_PAIRS.entries()) {
+      const item = await this.corpus.itemByExternalId(kzExternalId(n));
+      if (!item) throw new Error(`сид: нет пары ba-kz ${kzExternalId(n)}`);
+      // Голос — за верный вариант (pair.ba), а не за первый: порядок вариантов в базе не гарантирован.
+      const pick = item.variants.findIndex((v) => v.text === normalize(pair.ba));
+      if (pick !== 0 && pick !== 1) throw new Error(`сид: в паре ba-kz ${item.externalId} нет варианта «${pair.ba}»`);
+      for (const voter of voters) await this.adultVote(voter, item, pick, (t = plus(t, 40_000)));
+      if ((await this.consensus.recompute(item.itemId))?.outcome.status !== "accepted")
+        throw new Error(`сид: пара ba-kz ${item.externalId} не принята`);
+      this.kzPairs += 1;
+    }
+    this.log(`казахско-башкирский словарь: ${this.kzPairs} пар ba-kz приняты`);
+  }
+
   private async summaries(): Promise<WorldSummary[]> {
     const now = this.plan.calendar.now;
     const lesson = await this.lesson(DEMO_LESSON);
@@ -1252,6 +1292,7 @@ export class DemoWorldBuilder {
             }
           : {}),
         ...(w.index === 1 && this.republic ? { republic: this.republic } : {}),
+        ...(w.index === 1 ? { kzPairs: this.kzPairs } : {}),
       });
     }
     return out;

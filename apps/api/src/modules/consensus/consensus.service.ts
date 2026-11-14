@@ -28,6 +28,13 @@ const canonOf = (item: DuelItem): [string, string] => [item.variants[0].id, item
  */
 const LEADERBOARD_SMALL_GROUP = 5;
 
+/** Языковые пары словаря — по языку исходника (source_items.lang): «башкирский ← русский» и «башкирский ← казахский». */
+const LANG_PAIRS = { ru: "ba-ru", kz: "ba-kz" } as const;
+type LangPair = (typeof LANG_PAIRS)[keyof typeof LANG_PAIRS];
+/** Основная пара словаря: с ней работают лендинг и бот — фраза дня всегда из неё (русский исходник). */
+const PRIMARY_LANG_PAIR: LangPair = LANG_PAIRS.ru;
+const langPairOf = (lang: string): LangPair => (lang === "kz" ? LANG_PAIRS.kz : LANG_PAIRS.ru);
+
 /** Перемешивание Фишера — Йейтса (crypto: порядок дуэлей и сторон не предсказывается клиентом). */
 function shuffle<T>(list: T[]): T[] {
   for (let i = list.length - 1; i > 0; i--) {
@@ -310,6 +317,7 @@ export class ConsensusService implements ConsensusApi {
           itemId: item.itemId,
           variantId: v.id,
           sourceRu: item.sourceRu,
+          langPair: langPairOf(item.sourceLang),
           kind: item.kind,
           textBa: v.text,
           review: v.review,
@@ -344,13 +352,16 @@ export class ConsensusService implements ConsensusApi {
 
   /**
    * Фраза дня (ТЗ §3.6) — публичная витрина без регистрации: основной принятый вариант исходника.
+   * Только пара ba-ru (лендинг показывает русский исходник); принятые пары ba-kz в выбор не входят.
    * Выбор детерминирован: пары сортируются по variantId (не по моменту решения — он меняется при пересчёте),
    * индекс — FNV-1a учебных суток по Уфе. В течение суток все клиенты показывают одну и ту же пару.
    */
   async phraseOfDay(now: Date = new Date()): Promise<Schema<"PhraseOfDay">> {
     const date = ufaDate(now);
     const dictionary = await this.fundDictionary(now);
-    const pairs = dictionary.items.filter((row) => row.main).sort((a, b) => a.variantId.localeCompare(b.variantId));
+    const pairs = dictionary.items
+      .filter((row) => row.main && row.langPair === PRIMARY_LANG_PAIR)
+      .sort((a, b) => a.variantId.localeCompare(b.variantId));
     if (pairs.length === 0) return { date };
     const pair = pairs[fnv1a(date) % pairs.length]!;
     return { date, pair: { sourceRu: pair.sourceRu, kind: pair.kind, textBa: pair.textBa, sources: pair.sources } };
@@ -358,10 +369,11 @@ export class ConsensusService implements ConsensusApi {
 
   /**
    * Публичный словарь (ТЗ §5) — принятые пары без регистрации, поверх тех же строк, что для Фонда
-   * (fundDictionary: принятые + без отклонённых носителем), но без голосов групп. `status=expert_review`
-   * оставляет только проверенные носителем (native_approved). Персональных данных нет (правило 13):
-   * fragmentId — идентификатор варианта, не аккаунта. `confirmed=false` — предварительное решение duel-v0
-   * (ADR 0019): в выпуски датасета входят только подтверждённые.
+   * (fundDictionary: принятые + без отклонённых носителем), но без голосов групп. Пары обеих языковых пар:
+   * ba-ru и ba-kz — по языку исходника (source_items.lang). `status=expert_review` оставляет только
+   * проверенные носителем (native_approved). Персональных данных нет (правило 13): fragmentId —
+   * идентификатор варианта, не аккаунта. `confirmed=false` — предварительное решение duel-v0 (ADR 0019):
+   * в выпуски датасета входят только подтверждённые.
    */
   async publicDictionary(status: Schema<"PublicDictionaryEntry">["status"] = "confirmed", now: Date = new Date()): Promise<Schema<"PublicDictionary">> {
     const rows = (await this.fundDictionary(now)).items
@@ -370,14 +382,14 @@ export class ConsensusService implements ConsensusApi {
         (row): Schema<"PublicDictionaryEntry"> => ({
           fragmentId: row.variantId,
           textBa: row.textBa,
-          langPair: "ba-ru",
+          langPair: row.langPair ?? LANG_PAIRS.ru,
           translation: row.sourceRu,
           sources: row.sources,
           confirmed: !row.preliminary,
           status: row.review === "native_approved" ? "expert_review" : "confirmed",
         }),
       );
-    return { generatedAt: now.toISOString(), langPair: "ba-ru", items: rows };
+    return { generatedAt: now.toISOString(), langPair: PRIMARY_LANG_PAIR, items: rows };
   }
 
   /**

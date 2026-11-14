@@ -15,13 +15,16 @@ export interface CorpusVariant {
 
 /**
  * Исходник дуэли с двумя вариантами (пока только origin = import). Порядок variants — канонический и постоянный
- * (по id варианта): относительно него consensus приводит голоса к сторонам a/b правил duel-v0.
+ * (по id варианта): относительно него consensus приводит голоса к сторонам a/b правил duel-v0. Исходник — русский
+ * (пара ba-ru) или казахский (пара ba-kz): язык — в sourceLang, поле sourceRu хранит текст исходника любой пары.
  */
 export interface DuelItem {
   itemId: string;
   /** id дуэли из content/corpus/duels/*.yaml. */
   externalId: string;
   unitId?: string;
+  /** Язык исходника: `ru` (пара ba-ru) или `kz` (пара ba-kz) — по нему словарь помечает langPair. */
+  sourceLang: "ru" | "kz";
   sourceRu: string;
   kind: "word" | "phrase" | "sentence" | "term";
   variants: [CorpusVariant, CorpusVariant];

@@ -1,6 +1,7 @@
 // Импорт дуэлей «Помоги языку» из content/corpus/duels/*.yaml (схема — content/schema/duels.schema.json) в таблицы
-// модуля corpus: русский исходник → source_items (по external_id = id дуэли), два башкирских варианта → variants
-// (origin = import, source_ref с названием и лицензией источника из content/sources.yaml).
+// модуля corpus: исходник → source_items (по external_id = id дуэли; для пары ba-kz — казахский текст в том же поле
+// ru YAML и параметр lang = "kz"), два башкирских варианта → variants (origin = import, source_ref с названием
+// и лицензией источника из content/sources.yaml).
 //
 // Идемпотентно: неизменённые строки не перезаписываются, повторный запуск ничего не меняет. Голоса (judgments)
 // ссылаются на варианты, поэтому набор вариантов уже загруженной дуэли менять нельзя: другой текст варианта
@@ -85,6 +86,8 @@ export interface DuelsImportResult {
 export interface DuelsImportOptions {
   dir?: string;
   sourcesFile?: string;
+  /** Язык исходников: `ru` (пара ba-ru, по умолчанию) или `kz` (пара ba-kz — демо-корпус ТелеТау). */
+  lang?: "ru" | "kz";
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -266,6 +269,7 @@ interface VariantDbRow {
 /** Загружает дуэли в одной транзакции. Пустой каталог — ничего не делает. */
 export async function importDuels(pool: pg.Pool, options: DuelsImportOptions = {}): Promise<DuelsImportResult> {
   const started = Date.now();
+  const lang = options.lang ?? "ru";
   const files = readDuelFiles(options.dir ?? DEFAULT_DUELS_DIR);
   const result: DuelsImportResult = {
     files: files.length,
@@ -310,8 +314,8 @@ export async function importDuels(pool: pg.Pool, options: DuelsImportOptions = {
         }
         const id = uuidv7();
         await client.query(
-          "INSERT INTO source_items (id, external_id, lang, text, text_norm, kind, domain, unit_id, source_ref) VALUES ($1, $2, 'ru', $3, $4, $5, $6, $7, $8)",
-          [id, d.externalId, d.ru, d.ruNorm, d.kind, d.domain, d.unitId, d.sourceRef === null ? null : JSON.stringify(d.sourceRef)],
+          "INSERT INTO source_items (id, external_id, lang, text, text_norm, kind, domain, unit_id, source_ref) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+          [id, d.externalId, lang, d.ru, d.ruNorm, d.kind, d.domain, d.unitId, d.sourceRef === null ? null : JSON.stringify(d.sourceRef)],
         );
         for (const v of d.variants) {
           await client.query(

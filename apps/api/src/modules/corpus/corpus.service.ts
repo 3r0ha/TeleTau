@@ -82,6 +82,7 @@ export class CorpusService implements CorpusApi {
         itemId: item.id,
         externalId: item.externalId,
         ...(item.unitId ? { unitId: item.unitId } : {}),
+        sourceLang: item.lang === "kz" ? "kz" : "ru",
         sourceRu: item.text,
         kind: item.kind,
         variants: pair,

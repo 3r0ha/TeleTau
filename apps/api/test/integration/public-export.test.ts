@@ -1,8 +1,9 @@
 // Публичный словарь и доска почёта (ТЗ §5, §4.5): анонимные выгрузки без регистрации против Docker-стека.
 // Словарь: принятые пары корпуса с источниками и статусами проверки — JSON и CSV (разделитель «;», BOM, CRLF),
-// ?status=expert_review — только проверенные носителем. Доска: топ школ и классов по урокам за период,
-// порог малых групп (группа < 5 активных не показана), ?period=day; мусорный период — 422 проверки схемы.
-// ПДн (правило 13): в ответах только тексты пар и агрегаты школ/классов — ни аккаунтов, ни ников.
+// ?status=expert_review — только проверенные носителем. Пары обеих языковых пар: ba-ru и ba-kz (казахские исходники
+// грузятся importDuels с lang = kz) — строки kz-пар помечены langPair, фраза дня остаётся парой ba-ru. Доска: топ школ
+// и классов по урокам за период, порог малых групп (группа < 5 активных не показана), ?period=day; мусорный период —
+// 422 проверки схемы. ПДн (правило 13): в ответах только тексты пар и агрегаты школ/классов — ни аккаунтов, ни ников.
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -15,6 +16,7 @@ import { uuidv7 } from "../../src/common/uuidv7.js";
 import type { Db } from "../../src/db/database.js";
 import { DB } from "../../src/infra/tokens.js";
 import { CorpusService } from "../../src/modules/corpus/index.js";
+import { ConsensusService } from "../../src/modules/consensus/index.js";
 import { importDuels } from "../../src/modules/corpus/duels-import.js";
 import { ClassesService } from "../../src/modules/org/index.js";
 import { ProgressService } from "../../src/modules/progress/index.js";
@@ -31,6 +33,14 @@ const VOTED = "Словарь голосованный";
 const NATIVE = "Словарь экспертный";
 const votedText = `${VOTED} икс ${RUN}`;
 const nativeText = `${NATIVE} икс ${RUN}`;
+/** Дуэли пары ba-kz: казахский исходник (lang = kz) → принятый башкирский вариант. */
+const KZ_UNIT = `it-kz-${RUN}`;
+const kzPairs = [
+  { kz: "Сәлем қалай", ba: "Сәләм, нисек", alt: "Һаумы, яҡшы" },
+  { kz: "ана", ba: "инә", alt: "әсәй" },
+  { kz: "бір", ba: "бер", alt: "берәү" },
+];
+const kzSources = new Map<string, string>();
 /** Школы доски: большая (5 активных из 6) и малая (2 из 3 — ниже порога). */
 const ids = { district: "", big: "", small: "" };
 const studentIds: string[] = [];
@@ -126,6 +136,30 @@ beforeAll(async () => {
     }
   }
 
+  // ── пара ba-kz: казахские исходники (importDuels lang = kz), принятый вариант — первый ──
+  mkdirSync(join(dir, "kz-duels"));
+  const kv = (text: string) => `\n      - ba: ${text}\n        source:\n          ref: synthetic-kz\n          url: https://example.org/kz/${encodeURIComponent(text)}\n          locator: строка «${text}»\n        review: needs_native_review`;
+  const kzDuel = (n: number, kz: string, ba: string, alt: string) => `  - id: ${KZ_UNIT}-d0${n}\n    ru: "${kz} ${RUN}"\n    kind: word\n    variants:${kv(ba)}${kv(alt)}\n`;
+  writeFileSync(
+    join(dir, "kz-duels", `${KZ_UNIT}.yaml`),
+    `unit: ${KZ_UNIT}\nduels:\n${kzPairs.map((p, n) => kzDuel(n + 1, p.kz, `${p.ba} ${RUN}`, `${p.alt} ${RUN}`)).join("")}`,
+  );
+  writeFileSync(join(dir, "kz-sources.yaml"), `sources:\n  - id: synthetic-kz\n    title: "Синтетика казахской пары"\n    url: https://example.org/kz\n    license: CC0\n    accessed: "2026-11-12"\n`);
+  await importDuels(pool, { dir: join(dir, "kz-duels"), sourcesFile: join(dir, "kz-sources.yaml"), lang: "kz" });
+  const kzItems = await api.app.get(CorpusService).duelPool(KZ_UNIT);
+  expect(kzItems).toHaveLength(kzPairs.length);
+  for (const item of kzItems) {
+    // Голос — за «верный» вариант (p.ba), а не просто за первый: порядок вариантов в базе не гарантирован.
+    const pair = kzPairs.find((p) => item.sourceRu === `${p.kz} ${RUN}`)!;
+    const x = item.variants.find((v) => v.text === `${pair.ba} ${RUN}`)!;
+    const y = item.variants.find((v) => v.text === `${pair.alt} ${RUN}`)!;
+    kzSources.set(x.text, item.sourceRu);
+    for (const s of voters) {
+      const r = await api.post<Schema<"CorpusItemVotes">>("/corpus/judgments", { token: s.accessToken, body: { judgmentId: uuidv7(), itemId: item.itemId, shown: [x.id, y.id], choice: "a" } });
+      expectStatus(r, 201);
+    }
+  }
+
   // ── доска: большая школа (5 из 6 занимались по 3 урока) и малая (2 из 3 — скрыта) ──
   const d = await insertDistrict("Демо-волость доски", ["Публичная школа большая", "Публичная школа малая"]);
   ids.district = d.id;
@@ -187,6 +221,56 @@ describe("GET /public/dictionary (ТЗ §5)", () => {
     expect(native).toContain("false");
     expect(native).toContain("Синтетика публичного словаря");
     expect(native).not.toContain("https://example.org");
+  });
+});
+
+describe("GET /public/dictionary — пара ba-kz (башкирский ← казахский)", () => {
+  it("анониму — строки обеих пар: kz-пары с langPair ba-kz и казахским исходником, ru-пары — ba-ru", async () => {
+    const res = await api.get<Schema<"PublicDictionary">>("/public/dictionary");
+    expectStatus(res, 200);
+    // Верхнее поле — основная пара словаря (лендинг и бот работают с ba-ru); пара строки — в поле строки.
+    expect(res.body.langPair).toBe("ba-ru");
+    const byText = new Map(res.body.items.map((i) => [i.textBa, i]));
+    for (const [ba, kz] of kzSources) {
+      const row = byText.get(ba);
+      expect(row, kz).toBeDefined();
+      expect(row).toMatchObject({ langPair: "ba-kz", translation: kz });
+      expect(row!.sources[0]).toMatchObject({ title: "Синтетика казахской пары", license: "CC0" });
+    }
+    expect(byText.get(votedText)).toMatchObject({ langPair: "ba-ru", translation: `${VOTED} ${RUN}` });
+    expect(byText.get(nativeText)).toMatchObject({ langPair: "ba-ru", translation: `${NATIVE} ${RUN}` });
+  });
+
+  it("выгрузка Фонда помечает пару каждой принятой строки (langPair ba-ru / ba-kz)", async () => {
+    const rows = (await api.app.get(ConsensusService).fundDictionary()).items;
+    const byText = new Map(rows.map((r) => [r.textBa, r]));
+    for (const [ba] of kzSources) expect(byText.get(ba)?.langPair).toBe("ba-kz");
+    expect(byText.get(votedText)?.langPair).toBe("ba-ru");
+    expect(byText.get(nativeText)?.langPair).toBe("ba-ru");
+  });
+
+  it("?format=csv — kz-строки в той же таблице: колонка langPair = ba-kz, заголовок прежний", async () => {
+    const res = await api.get<string>("/public/dictionary?format=csv");
+    expectStatus(res, 200);
+    const lines = res.body.slice(1).split("\r\n");
+    expect(lines[0]).toBe("fragmentId;langPair;translation;textBa;status;confirmed;sources");
+    const kz = lines.find((l) => l.includes(`инә ${RUN}`));
+    expect(kz).toBeDefined();
+    expect(kz).toContain("ba-kz");
+    expect(kz).toContain(`ана ${RUN}`);
+  });
+
+  it("фраза дня остаётся парой ba-ru: за 62 суток казахские исходники не выпадают", async () => {
+    const consensus = api.app.get(ConsensusService);
+    const dictionary = await consensus.publicDictionary();
+    const langOf = new Map(dictionary.items.map((i) => [`${i.translation}\u0000${i.textBa}`, i.langPair]));
+    const kzTexts = new Set([...kzSources.values()]);
+    for (let k = 0; k < 62; k++) {
+      const { pair } = await consensus.phraseOfDay(new Date(Date.UTC(2026, 0, 1) + k * 86_400_000));
+      if (!pair) continue;
+      expect(kzTexts.has(pair.sourceRu)).toBe(false);
+      expect(langOf.get(`${pair.sourceRu}\u0000${pair.textBa}`)).toBe("ba-ru");
+    }
   });
 });
 
