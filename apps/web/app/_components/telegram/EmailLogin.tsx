@@ -137,7 +137,10 @@ export function EmailLogin({ demoCode }: { demoCode: string | null }) {
           <div className="tt-stack tt-stack--loose">
             <header className="tt-stack tt-stack--tight">
               <h1 className="tt-title2">{t("Выбери ник")}</h1>
-              <p className="tt-lead">{t("Так тебя увидят в классе.")}</p>
+              {/* Подпись зависит от вида аккаунта: взрослый учится сам — «в классе» его никто не увидит. */}
+              <p className="tt-lead">
+                {meKind === "child" ? t("Так тебя увидят в классе.") : t("Так тебя увидят в дуэлях «Помоги языку».")}
+              </p>
             </header>
             <NicknamePicker
               submitLabel={t("Начать")}
