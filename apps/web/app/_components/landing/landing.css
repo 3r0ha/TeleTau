@@ -138,11 +138,16 @@
   box-shadow: 0 var(--tt-space-s200) 0 var(--tt-color-border-default);
 }
 
-/* Реплика пчелы, цвета одинаковые в обеих темах. Картинка всегда 4:3 с одной точкой кадрирования: голова пчелы около (76 %, 44 %), реплика слева сверху, хвост к пчеле. */
+/* Реплика пчелы, цвета одинаковые в обеих темах. Картинка всегда 4:3 с одной точкой кадрирования: голова пчелы около (76 %, 44 %), реплика слева сверху, хвост к пчеле.
+   Здесь же фраза дня: башкирский вариант крупно, русский исходник — строкой поменьше; перенос строк разрешён. */
 .lp-hero__hello {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-space-s100);
   position: absolute;
   top: 17%;
   right: 35%;
+  max-width: min(60%, 17rem);
   padding: var(--tt-space-s150) var(--tt-space-s400);
   border-radius: var(--tt-radius-panel);
   background: var(--tt-color-highlight);
@@ -151,7 +156,14 @@
   font-size: var(--tt-font-size-headline);
   font-weight: var(--tt-font-weight-black);
   line-height: var(--tt-line-height-tight);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+/* Русский исходник фразы дня: та же семейка шрифта, но спокойнее. */
+.lp-hero__hello-ru {
+  font-size: var(--tt-font-size-body);
+  font-weight: var(--tt-font-weight-semibold);
+  line-height: var(--tt-line-height-snug);
 }
 
 .lp-hero__hello::after {
@@ -199,96 +211,6 @@
   font-family: var(--tt-font-family-display);
   font-size: var(--tt-font-size-headline);
   font-weight: var(--tt-font-weight-black);
-}
-
-/* ───────────── фраза дня ───────────── */
-/* Пчела в соте «произносит» фразу (пузырь — как «Сәләм!» в герое), ниже — русский перевод.
-   Полоса между героем и местами тропы: обычный фон, чтобы не сливаться с соседней затемнённой полосой мест. */
-.lp-phrase {
-  padding-block: var(--tt-space-s800) var(--tt-space-s600);
-}
-
-.lp-phrase__in {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--tt-space-s300);
-  text-align: center;
-}
-
-.lp-phrase__title {
-  margin: 0;
-  font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-callout);
-  font-weight: var(--tt-font-weight-black);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--tt-color-text-secondary);
-}
-
-.lp-phrase__say {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--tt-space-s400);
-  max-width: 100%;
-}
-
-.lp-phrase .lp-cell {
-  flex: none;
-  width: 88px;
-}
-
-.lp-phrase__ba {
-  position: relative;
-  margin: 0;
-  padding: var(--tt-space-s200) var(--tt-space-s500);
-  max-width: 24rem;
-  border-radius: var(--tt-radius-panel);
-  background: var(--tt-color-highlight);
-  color: var(--tt-color-text-on-fill);
-  font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-title2);
-  font-weight: var(--tt-font-weight-black);
-  line-height: var(--tt-line-height-tight);
-  text-align: start;
-  overflow-wrap: anywhere;
-}
-
-/* Хвост пузыря — к пчеле слева. */
-.lp-phrase__ba::before {
-  content: "";
-  position: absolute;
-  left: calc(var(--tt-space-s300) * -1);
-  top: 50%;
-  width: var(--tt-space-s300);
-  height: var(--tt-space-s400);
-  translate: 0 -50%;
-  background: inherit;
-  clip-path: polygon(100% 0, 100% 100%, 0 50%);
-}
-
-.lp-phrase__ru {
-  margin: 0;
-  font-size: var(--tt-font-size-body-large);
-  line-height: var(--tt-line-height-snug);
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 30em) {
-  .lp-phrase__say {
-    flex-direction: column;
-    gap: var(--tt-space-s200);
-  }
-
-  .lp-phrase__ba {
-    max-width: min(24rem, calc(100vw - 32px));
-    text-align: center;
-  }
-
-  .lp-phrase__ba::before {
-    display: none;
-  }
 }
 
 /* ───────────── доска почёта ───────────── */

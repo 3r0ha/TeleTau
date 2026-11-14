@@ -203,10 +203,19 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 alt="Пчела с планшетом летит над рекой и холмами"
                 fetchPriority="high"
               />
-              {/* Слово из урока «Привет!» курса, needs_native_review (docs/native-review-queue.md, №20). */}
-              <span className="lp-hero__hello" lang="ba" aria-hidden>
-                Сәләм!
-              </span>
+              {/* Пчела «произносит» фразу дня (ТЗ §3.6): башкирский вариант крупно, русский исходник — подписью.
+                  Фразы нет или API молчит — приветствие «Сәләм!» (слово из урока «Привет!», needs_native_review,
+                  docs/native-review-queue.md, №20). */}
+              {phrase ? (
+                <span className="lp-hero__hello">
+                  <span lang="ba">{phrase.textBa}</span>
+                  <span className="lp-hero__hello-ru">«{phrase.sourceRu}»</span>
+                </span>
+              ) : (
+                <span className="lp-hero__hello" lang="ba" aria-hidden>
+                  Сәләм!
+                </span>
+              )}
             </div>
             <div className="lp-hero__text">
               <h1 id="lp-title" className="lp-hero__title">
@@ -216,30 +225,6 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             </div>
           </div>
         </section>
-
-        {phrase && (
-          <section className="lp-phrase" aria-labelledby="lp-phrase-title">
-            <div className="lp-wrap lp-phrase__in">
-              <h2 id="lp-phrase-title" className="lp-phrase__title">
-                Фраза дня
-              </h2>
-              <div className="lp-phrase__say">
-                {/* Пчела «произносит» фразу дня — пузырь как «Сәләм!» в герое; пчела с книгой — пара из словаря. */}
-                <span className="lp-cell lp-phrase__bee" aria-hidden>
-                  <svg viewBox={`0 0 ${CELL.w} ${CELL.h + CELL.lip}`} focusable="false">
-                    <path className="lp-cell__lip" d={CELL_LIP} />
-                    <path className="lp-cell__face" d={CELL_FACE} />
-                  </svg>
-                  <Pic src={illustrations.beeRead} className="lp-cell__art" />
-                </span>
-                <p className="lp-phrase__ba" lang="ba">
-                  {phrase.textBa}
-                </p>
-              </div>
-              <p className="lp-phrase__ru">«{phrase.sourceRu}»</p>
-            </div>
-          </section>
-        )}
 
         {board && (
           <section className="lp-board" aria-labelledby="lp-board-title" data-reveal="">
