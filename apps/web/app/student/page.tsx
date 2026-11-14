@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BookOpen, Camera, CameraSlash, ImageSquare, Keyboard, QrCode } from "@phosphor-icons/react/ssr";
+import { BookOpen, Camera, CameraSlash, EnvelopeSimple, ImageSquare, Keyboard, QrCode } from "@phosphor-icons/react/ssr";
 import { Button, ButtonLink, InlineAlert, LinkButton } from "@teletau/ui";
 import { ApiProblem, describeProblem } from "@teletau/session/problem";
 import { useSession } from "@teletau/session/react";
@@ -167,9 +167,15 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
             {t("Ввести код класса")}
           </ButtonLink>
           {withSelf ? (
-            <ButtonLink href={paths.self} variant="secondary" block icon={<BookOpen weight="fill" />}>
-              {t("Учусь сам")}
-            </ButtonLink>
+            <>
+              <ButtonLink href={paths.self} variant="secondary" block icon={<BookOpen weight="fill" />}>
+                {t("Учусь сам")}
+              </ButtonLink>
+              {/* Mini App: почтовый вход взрослого — сессия в рамке связывает чат с ботом (ADR 0020). */}
+              <ButtonLink href={paths.loginEmail} variant="secondary" block icon={<EnvelopeSimple weight="fill" />}>
+                {t("Войти по почте")}
+              </ButtonLink>
+            </>
           ) : null}
         </div>
       </div>

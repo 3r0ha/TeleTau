@@ -32,6 +32,8 @@ export interface StudentPaths {
   nickname: string;
   /** Вход по коду класса (без карточки). */
   code: string;
+  /** Вход по почте в Mini App (взрослый или ребёнок с привязанной почтой) — связывает чат с ботом. */
+  loginEmail: string;
   /** Ожидание, пока учитель подтвердит заявку по коду класса. */
   wait: string;
   /** «Ты в классе» — только при первом входе. */
@@ -69,6 +71,7 @@ export function useStudentPaths(): LearnerPaths {
       login: `${prefix}/student`,
       nickname: `${prefix}/student/nickname`,
       code: `${prefix}/student/code`,
+      loginEmail: `${prefix}/student/email`,
       wait: `${prefix}/student/wait`,
       joined: `${prefix}/student/class`,
       start: prefix || "/",

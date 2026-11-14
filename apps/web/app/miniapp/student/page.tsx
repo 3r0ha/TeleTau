@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Keyboard, QrCode } from "@phosphor-icons/react/ssr";
+import { BookOpen, EnvelopeSimple, Keyboard, QrCode } from "@phosphor-icons/react/ssr";
 import { Button, ButtonLink, Illustration, InlineAlert } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { useT } from "../../../i18n/client";
@@ -106,6 +106,10 @@ function TelegramScanLogin() {
         {/* «Учусь сам» (ADR 0022): в Mini App тоже можно без карточки и класса — сразу возраст и ник. */}
         <ButtonLink href={paths.self} variant="secondary" block icon={<BookOpen weight="fill" />}>
           {t("Учусь сам")}
+        </ButtonLink>
+        {/* Почтовый вход в рамке: сессия здесь же — чат с ботом связывается сам (ADR 0020). */}
+        <ButtonLink href={paths.loginEmail} variant="secondary" block icon={<EnvelopeSimple weight="fill" />}>
+          {t("Войти по почте")}
         </ButtonLink>
       </div>
     </Screen>

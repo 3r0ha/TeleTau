@@ -160,6 +160,7 @@ describe("Mini App: системная «Назад»", () => {
     login: "/miniapp/student",
     nickname: "/miniapp/student/nickname",
     code: "/miniapp/student/code",
+    loginEmail: "/miniapp/student/email",
     wait: "/miniapp/student/wait",
     joined: "/miniapp/student/class",
     start: "/miniapp",
