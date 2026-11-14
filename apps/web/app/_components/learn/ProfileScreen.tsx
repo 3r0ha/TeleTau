@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
-import { BookOpen, BookOpenText, CaretRight, ChalkboardTeacher, Drop, EnvelopeSimple, Fire, IdentificationCard, Moon, Scales, SignOut, SpeakerHigh, SpeakerSlash, Target } from "@phosphor-icons/react/ssr";
+import { BookOpen, BookOpenText, CaretRight, ChalkboardTeacher, Drop, EnvelopeSimple, Fire, IdentificationCard, Moon, Scales, SignOut, SpeakerHigh, SpeakerSlash, Target, TelegramLogo } from "@phosphor-icons/react/ssr";
 import { Button, Card, CardSub, CardTitle, Dialog, HexAvatar, HoneyComb, Illustration, InlineAlert, LinkButton, ThemeSwitch, avatarFor, hexPath, illustrations, toneFor } from "@teletau/ui";
 import { describeProblem } from "@teletau/session/problem";
 import { session } from "@teletau/session/client";
@@ -60,6 +60,79 @@ function ThemeRow() {
         {t("Тёмная тема")}
       </span>
       <ThemeSwitch labelledBy="theme-label" />
+    </div>
+  );
+}
+
+/** Имя бота из сборки (NEXT_PUBLIC_TELEGRAM_BOT_USERNAME): пусто — строки привязки нет (Mini App привязывается сам). */
+const TELEGRAM_BOT = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim() || null;
+
+/** Привязка доступна ученикам классов (роль student) и взрослым; самостоятельные дети — через Mini App. */
+function canLinkTelegram(me: Me): boolean {
+  return Boolean(TELEGRAM_BOT) && (me.kind === "adult" || me.roles.includes("student"));
+}
+
+/**
+ * Привязка Telegram с сайта (ADR 0020): одноразовый код из профиля → /start <код> боту. В Mini App строка не нужна —
+ * там чат привязывается сам через initData. Новый код гасит предыдущий (API), код живёт 10 минут.
+ */
+function TelegramRow({ canLink }: { canLink: boolean }) {
+  const t = useT();
+  const paths = useStudentPaths();
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setCode(null);
+    setFailed(false);
+    selfApi
+      .issueTelegramLinkCode()
+      .then(({ code: issued }) => setCode(issued))
+      .catch(() => setFailed(true));
+  }, [open]);
+
+  if (!canLink || paths.prefix) return null;
+  return (
+    <div className="settings__row">
+      <TelegramLogo weight="fill" aria-hidden />
+      <span className="settings__name">{t("Телеграм")}</span>
+      <LinkButton onClick={() => setOpen(true)}>{t("Привязать")}</LinkButton>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t("Связать Telegram с аккаунтом")}
+        description={t("Отправь боту этот код — Telegram привяжется к твоему аккаунту. Напоминания и дуэли придут в чат.")}
+        art={illustrations.beeExplain}
+        centered
+        actions={
+          code && TELEGRAM_BOT ? (
+            <Button
+              block
+              // В новой вкладке: текущая остаётся открытой, привязка подтверждается сообщением бота.
+              onClick={() => window.open(`https://t.me/${TELEGRAM_BOT}?start=${code}`, "_blank", "noopener")}
+            >
+              {t("Открыть бота")}
+            </Button>
+          ) : (
+            <Button block onClick={() => setOpen(false)}>
+              {t("Закрыть")}
+            </Button>
+          )
+        }
+      >
+        {failed ? (
+          <InlineAlert tone="danger">{t("Не получилось выдать код. Попробуй ещё раз.")}</InlineAlert>
+        ) : code ? (
+          <p className="tg-link-code" aria-label={t("Код привязки")}>
+            {code}
+          </p>
+        ) : (
+          <LoadingBlock rows={1} />
+        )}
+        {code ? <p className="tg-link-code__hint">{t("Код живёт 10 минут. Отправь его командой /start боту.")}</p> : null}
+      </Dialog>
     </div>
   );
 }
@@ -283,6 +356,7 @@ function ProfileView({
         </div>
         <SoundsRow />
         <LanguageRow />
+        <TelegramRow canLink={canLinkTelegram(me)} />
         {paths.prefix ? null : <ThemeRow />}
         {/* Заявка учителя — по почте: без неё сначала «Сохранить прогресс по почте». */}
         {me.kind === "adult" && me.teacherStatus === "none" && me.profile ? (

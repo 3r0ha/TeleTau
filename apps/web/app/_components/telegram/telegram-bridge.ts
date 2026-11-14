@@ -219,6 +219,14 @@ export class TelegramBridge {
     return value;
   }
 
+  /**
+   * Посмотреть initData не расходуя: проба входа по привязке (ADR 0020) до показа экрана карточки. Вход не удался —
+   * initData остаётся для привязки после входа карточкой (takeInitData в TelegramProvider). Вне Telegram — null.
+   */
+  peekInitData(): string | null {
+    return this.inTelegram ? this.#initData : null;
+  }
+
   get inTelegram(): boolean {
     return this.transport !== null && this.launch !== null;
   }

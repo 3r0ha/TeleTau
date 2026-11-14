@@ -12,4 +12,5 @@ export const selfApi = {
   joinStatus: (requestId: string) => unwrap(api.GET("/api/v1/me/class-join/{requestId}", { params: { path: { requestId } } })),
   me: () => unwrap(api.GET("/api/v1/me")),
   updateMe: (body: Schema<"UpdateMeRequest">) => unwrap(api.PATCH("/api/v1/me", { body })),
+  issueTelegramLinkCode: () => unwrap(api.POST("/api/v1/me/telegram/link-code")),
 };
