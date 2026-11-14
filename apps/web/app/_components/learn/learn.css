@@ -2708,11 +2708,44 @@
   color: var(--tt-color-accent-on);
 }
 
+/* «Почему так?» — объяснение ошибки (docs/04-ai-gigachat.md): GigaChat через шлюз, шаблон при недоступности. */
+.feedback-explain {
+  display: grid;
+  gap: var(--tt-space-s050);
+  justify-items: start;
+  margin-top: var(--tt-space-s100);
+}
+
+.feedback-explain__text {
+  margin: 0;
+}
+
+.feedback-explain__ai {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tt-space-s050);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: 1.2;
+}
+
+.feedback-explain__ai svg {
+  width: 14px;
+  height: 14px;
+  color: var(--tt-color-accent-fill);
+}
+
+.feedback-explain--down {
+  margin: 0;
+  color: var(--tt-color-text-secondary);
+}
+
 /* «Пчёлка» (1–4 класс): минимум текста — без меток заданий, подсказок под панелью и вторых строк листа. */
 :root[data-mode="bee"] .lesson .tt-chip:not(.tt-chip--violet),
 :root[data-mode="bee"] .lesson .tt-letters__hint,
 :root[data-mode="bee"] .lesson .pairs__hint,
 :root[data-mode="bee"] .lesson .feedback-extra,
+:root[data-mode="bee"] .lesson .feedback-explain,
 :root[data-mode="bee"] .after .stat-time {
   display: none;
 }

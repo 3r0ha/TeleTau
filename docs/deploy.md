@@ -210,8 +210,23 @@ sudo systemctl enable --now teletau-api teletau-web teletau-console teletau-bot
 journalctl -u teletau-api -f      # логи; у бота ждём «bot: @teletaubot на связи…»
 ```
 
-`ai-gateway`, `ml-worker` и `workers` для демо-стенда не обязательны (AI-функции — M5); при желании
-запускаются тем же шаблоном.
+`ai-gateway` (порт 4100, `--filter @teletau/ai-gateway`) — пятый юнит `teletau-ai`, нужен для объяснений ошибок
+GigaChat (`ml-worker` и `workers` — не обязательны). Юнит — тот же шаблон, но `WorkingDirectory` не нужен
+(`dist/main.js` запускается из `apps/ai-gateway`) и слушает только `127.0.0.1` (наружу шлюз не публикуем).
+В `.env` стенда:
+
+```sh
+# GigaChat — ключ авторизации (Basic) из личного кабинета developers.sber.ru, тариф физлица
+GIGACHAT_AUTH_KEY='<Basic-ключ>'
+# Корень НУЦ Минцифры — нужен для TLS к api.giga.chat; файл НЕ в git, кладём на стенд руками
+GIGACHAT_CA_FILE='/opt/teletau/apps/ai-gateway/certs/russian_trusted_root_ca.pem'
+# API → шлюз: адрес и (опционально) общий секрет Bearer
+AI_GATEWAY_URL=http://127.0.0.1:4100
+```
+
+Сертификат НУЦ (`russian_trusted_root_ca.pem`, портал Госуслуг → сертификаты НУЦ) кладётся в
+`apps/ai-gateway/certs/` — каталог в `.gitignore`. Без ключа и сертификата шлюз стартует с мок-провайдером:
+кнопка «Почему так?» в уроке работает, но объяснения шаблонные (деградация без ошибок для пользователя).
 
 **Бот — один экземпляр на токен.** Второй процесс с тем же `TELEGRAM_BOT_TOKEN` Telegram не пустит (409).
 Случайный второй запуск локально на машине разработки «отбирает» обновления у стендового бота — следите,

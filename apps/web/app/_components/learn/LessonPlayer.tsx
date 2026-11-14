@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Fire, X } from "@phosphor-icons/react/ssr";
+import { Fire, Sparkle, X } from "@phosphor-icons/react/ssr";
 import { Button, Dialog, EmptyState, FeedbackSheet, IconButton, LinkButton, ProgressBar, Skeleton, SkeletonGroup, SpeakButton, illustrations } from "@teletau/ui";
 import { useT } from "../../../i18n/client";
+import { learnApi } from "./api";
 import { localAudio } from "./audio";
 import { Duel } from "./Duel";
 import { ChoiceTask, FreeTask, PairsTask, TilesTask, WordIntro } from "./exercises";
@@ -133,7 +134,16 @@ export function LessonPlayer({ lesson, onCheck, onNext, onQuit, onStay, onLeave 
       </main>
       <footer className="lesson__foot">
         {feedback && exercise ? (
-          <Feedback exercise={exercise} result={feedback} answer={answer} retryLater={willRetry(lesson)} index={lesson.finished.length} combo={combo} onNext={onNext} />
+          <Feedback
+            exercise={exercise}
+            result={feedback}
+            answer={answer}
+            runId={lesson.run.runId}
+            retryLater={willRetry(lesson)}
+            index={lesson.finished.length}
+            combo={combo}
+            onNext={onNext}
+          />
         ) : intro ? (
           <div className="tt-column lesson__check">
             <Button block onClick={onNext}>
@@ -260,6 +270,49 @@ function HintedAnswer({ text, hint }: { text: string; hint?: AttemptResult["hint
 /** Строка листа, которая в режиме «Пчёлка» не показывается: меньше текста для 1–4 класса (docs/05 §7). */
 const Extra = ({ children }: { children: ReactNode }) => <p className="feedback-extra">{children}</p>;
 
+/**
+ * «Почему так?» — объяснение ошибки (docs/04-ai-gigachat.md сценарий 1): текст готовит GigaChat через ai-gateway
+ * (с меткой «Подсказку подготовил ИИ»), при недоступности — методический шаблон. Лимит и 429 на сервере: здесь
+ * показываем честную причину, урок не прерывается.
+ */
+function AiExplain({ runId, attemptId }: { runId: string; attemptId: string }) {
+  const t = useT();
+  const [state, setState] = useState<{ loading: boolean; failed: boolean; text: string | null; source: "ai" | "template" | null }>({
+    loading: false,
+    failed: false,
+    text: null,
+    source: null,
+  });
+
+  const load = () => {
+    setState({ loading: true, failed: false, text: null, source: null });
+    learnApi.explain(runId, attemptId).then(
+      (explanation) => setState({ loading: false, failed: false, text: explanation.text, source: explanation.source }),
+      () => setState({ loading: false, failed: true, text: null, source: null }),
+    );
+  };
+
+  if (state.failed) return <p className="feedback-explain feedback-explain--down">{t("Подсказка сейчас недоступна.")}</p>;
+  if (!state.text) {
+    return (
+      <Button small variant="secondary" loading={state.loading} onClick={load}>
+        {t("Почему так?")}
+      </Button>
+    );
+  }
+  return (
+    <div className="feedback-explain">
+      <p className="feedback-explain__text">{state.text}</p>
+      {state.source === "ai" ? (
+        <span className="feedback-explain__ai">
+          <Sparkle weight="fill" aria-hidden />
+          {t("Подсказку подготовил ИИ · GigaChat")}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 /** «Верно!» и огонёк «N подряд», когда верных ответов подряд от трёх. */
 function OkTitle({ index, combo }: { index: number; combo: number }) {
   const t = useT();
@@ -281,6 +334,7 @@ function Feedback({
   exercise,
   result,
   answer,
+  runId,
   retryLater,
   index,
   combo,
@@ -289,6 +343,8 @@ function Feedback({
   exercise: Exercise;
   result: AttemptResult;
   answer: Answer | null;
+  /** Объяснение ошибки уходит в забег этой попытки (POST /lesson-runs/{runId}/attempts/{attemptId}/explanation). */
+  runId: string;
   retryLater: boolean;
   index: number;
   combo: number;
@@ -345,6 +401,7 @@ function Feedback({
               </p>
             </WithListen>
           ) : null}
+          <AiExplain runId={runId} attemptId={result.attemptId} />
         </FeedbackSheet>
       );
     case "almost":
@@ -365,6 +422,7 @@ function Feedback({
           ) : (
             <p>{t("Засчитано. Сравни со своим ответом.")}</p>
           )}
+          <AiExplain runId={runId} attemptId={result.attemptId} />
         </FeedbackSheet>
       );
     case "wrong":
@@ -377,6 +435,7 @@ function Feedback({
               </p>
             </WithListen>
           ) : null}
+          <AiExplain runId={runId} attemptId={result.attemptId} />
           {retryLater ? <Extra>{t("Повторим в конце урока.")}</Extra> : null}
         </FeedbackSheet>
       );

@@ -5,6 +5,7 @@ import { ContentModule } from "../content/index.js";
 import { CorpusModule } from "../corpus/index.js";
 import { ProgressModule } from "../progress/index.js";
 import { LearningController } from "./learning.controller.js";
+import { AiExplanations } from "./learning.ai.js";
 import { LearningService } from "./learning.service.js";
 
 /**
@@ -15,7 +16,7 @@ import { LearningService } from "./learning.service.js";
 @Module({
   imports: [ContentModule, CorpusModule, ConsensusModule, ProgressModule, AssignmentsModule],
   controllers: [LearningController],
-  providers: [LearningService],
+  providers: [LearningService, AiExplanations],
   exports: [LearningService],
 })
 export class LearningModule {}

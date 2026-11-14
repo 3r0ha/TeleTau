@@ -1780,6 +1780,48 @@ paths:
         default:
           $ref: "#/components/responses/Unexpected"
 
+  /api/v1/lesson-runs/{runId}/attempts/{attemptId}/explanation:
+    post:
+      tags: [learning]
+      operationId: explainLessonAttempt
+      summary: Объяснение ошибки — GigaChat с шаблонным запасным вариантом
+      description: |
+        Объяснение ошибки после неверного ответа (`almost` / `typo` / `wrong`; сценарий 1 из `docs/04-ai-gigachat.md`).
+        Контекст собирает сервер: задание, принятые варианты, ответ ученика, вердикт и буква-подсказка — в промпт не
+        попадает ничего личного (правило «никаких ПДн в промптах»). Ответ — русский текст ≤ 400 знаков, помеченный
+        источником: `ai` (GigaChat через `apps/ai-gateway`; валидатор закрытого словаря — башкирские слова только из
+        принятых вариантов задания) или `template` (методический шаблон по типу ошибки — деградация без ошибок для
+        пользователя, `docs/04` §2.5). Детям (аккаунт `kind: child`) GigaChat не вызывается — только шаблон; кеш —
+        глобальный по (упражнение контента, класс ошибки): одинаковые ошибки у всех получают одно объяснение.
+        Лимит — 10 объяснений в сутки на аккаунт (учебные сутки по Уфе, `docs/04` §5.5).
+
+        Чужой или несуществующий забег/попытка — 404 (как у попыток: существование чужого не раскрывается).
+        Попытка с вердиктом `correct` или `recorded` (дуэль) — 409 `explanation_not_applicable`: объяснять нечего.
+        Дуэли и «Пары» объясняются шаблоном без вызова GigaChat.
+      x-access: { roles: [student, adult], policy: self }
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - $ref: "#/components/parameters/AttemptId"
+      responses:
+        "200":
+          description: Объяснение ошибки
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiExplanation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Unexpected"
+
   /api/v1/lesson-runs/{runId}/complete:
     post:
       tags: [learning]
@@ -3091,6 +3133,14 @@ components:
       schema:
         type: string
         format: uuid
+    AttemptId:
+      name: attemptId
+      in: path
+      required: true
+      description: Идентификатор попытки (клиентский UUIDv7 из `POST /lesson-runs/{runId}/attempts`)
+      schema:
+        type: string
+        format: uuid
     CorpusItemId:
       name: id
       in: path
@@ -3242,7 +3292,8 @@ components:
         `internal`. Уроки, мотивация, дуэли: `not_implemented` (501 — операция контракта ещё не реализована), `lesson_locked`
         (409 — узел тропы закрыт), `run_conflict` (409 — `runId` уже занят другим уроком или аккаунтом), `run_completed`
         (409 — забег завершён), `run_incomplete` (409 — не на все упражнения есть ответ), `exercise_not_in_run` (422),
-        `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
+        `explanation_not_applicable` (409 — у попытки вердикт `correct`/`recorded`: объяснять нечего),
+        `ai_explanation_limit` (429 — больше 10 объяснений ошибок в сутки на аккаунт), `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
         `answer_type_mismatch` (422 — вид ответа не подходит к упражнению), `already_voted` (409), `vote_required`
         (403 — голоса видны после своего голоса), `content_unavailable` (503 — контент курса не импортирован).
         Значения заданий (ADR 0021): `assignment_limit` (409 — у класса уже два активных задания), `assignment_exists`
@@ -5119,6 +5170,22 @@ components:
           description: «Пары» — верные пары (у `correct` совпадают с ответом)
           items:
             $ref: "#/components/schemas/PairMatch"
+    AiExplanation:
+      type: object
+      description: |
+        Объяснение ошибки (сценарий 1 из `docs/04-ai-gigachat.md`). `source: ai` — текст подготовил GigaChat (в
+        интерфейсе маркируется «Подсказку подготовил ИИ»); `template` — методический шаблон по типу ошибки
+        (GigaChat недоступен, ответ не прошёл валидатор закрытого словаря или аккаунт ребёнка).
+      required: [text, source]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 400
+          description: Русский текст ≤ 400 знаков, поддерживающий тон, без оценки личности
+        source:
+          type: string
+          enum: [ai, template]
     HoneyBreakdown:
       type: object
       description: Мёд за урок (векторы `contracts/test-vectors/xp`)

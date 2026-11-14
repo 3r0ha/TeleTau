@@ -64,6 +64,17 @@ export class LearningController {
     return this.learning.words(principal);
   }
 
+  @Post("lesson-runs/:runId/attempts/:attemptId/explanation")
+  @HttpCode(200)
+  @Operation("explainLessonAttempt")
+  explain(
+    @CurrentPrincipal() principal: Principal,
+    @Param("runId") runId: string,
+    @Param("attemptId") attemptId: string,
+  ): Promise<Schema<"AiExplanation">> {
+    return this.learning.explainAttempt(principal, runId, attemptId);
+  }
+
   @Post("lesson-runs/:runId/complete")
   @HttpCode(200)
   @Operation("completeLessonRun")

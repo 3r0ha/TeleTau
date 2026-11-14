@@ -476,6 +476,22 @@ export async function mockBackend(page: Page, init: Partial<World> = {}): Promis
       const run: Schema<"LessonRun"> = { ...lesson.run, exercises, lessonId, runId, status: "active", startedAt: now() };
       return json(route, 201, run);
     }
+    // Объяснение ошибки (explainLessonAttempt, docs/04-ai-gigachat.md): как API — детям шаблон без вызова GigaChat,
+    // взрослым — «живой» ответ шлюза; верной попытке и голосу объяснение не нужно.
+    const explain = /^\/lesson-runs\/([^/]+)\/attempts\/([^/]+)\/explanation$/.exec(path);
+    if (req.method() === "POST" && explain) {
+      const runId = decodeURIComponent(explain[1]!);
+      const attemptId = decodeURIComponent(explain[2]!);
+      const attempt = L.attempts.find((x) => x.runId === runId && x.body.attemptId === attemptId);
+      if (!attempt || !L.runs.some((r) => r.runId === runId)) return problem(route, 404, "not_found");
+      const verdict = attempt.result.verdict;
+      if (verdict === "correct" || verdict === "recorded") return problem(route, 409, "explanation_not_applicable");
+      if (me()?.kind === "child") {
+        return json(route, 200, { text: "Посмотри на верный ответ и произнеси его вслух — задание вернётся в конце урока.", source: "template" } satisfies Schema<"AiExplanation">);
+      }
+      const right = attempt.result.correctAnswer?.text ?? attempt.result.meaningRu ?? "верный ответ";
+      return json(route, 200, { text: `Ты был совсем рядом! Правильно — «${right}». Сверь особые буквы башкирского алфавита, и слово запомнится само.`, source: "ai" } satisfies Schema<"AiExplanation">);
+    }
     const runOp = /^\/lesson-runs\/([^/]+)\/(attempts|complete)$/.exec(path);
     if (req.method() === "POST" && runOp) {
       const runId = decodeURIComponent(runOp[1]!);

@@ -2,7 +2,7 @@
   "name": "@teletau/ai-gateway",
   "version": "0.1.0",
   "private": true,
-  "description": "Шлюз к GigaChat: бюджеты, кеш, реестр промптов, валидаторы вывода (с M5). В M0 — каркас и мок-провайдер.",
+  "description": "Шлюз к GigaChat: вызовы LLM только здесь (ADR 0008) — реестр промптов, валидатор закрытого словаря, таймауты. Функция 1 «Объяснение ошибки».",
   "type": "module",
   "main": "./dist/main.js",
   "scripts": {
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "fastify": "^5.12.8",
+    "undici": "^7.16.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

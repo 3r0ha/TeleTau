@@ -30,6 +30,7 @@ import {
   newlyEarned,
   type CompletedRun,
 } from "./achievements.js";
+import { AiExplanations } from "./learning.ai.js";
 import type { LearningApi } from "./learning.api.js";
 import { attempts, lessonRuns, srsCards, srsReviews } from "./learning.schema.js";
 import { jumpExercises, jumpOutcome, JUMP_MISTAKES_ALLOWED, JUMP_TITLE_RU } from "./jump.js";
@@ -91,6 +92,7 @@ export class LearningService implements LearningApi {
     protected readonly consensus: ConsensusService,
     protected readonly progress: ProgressService,
     protected readonly assignments: AssignmentsService,
+    private readonly ai: AiExplanations,
   ) {}
 
   async course(principal: Principal, now: Date = new Date()): Promise<Schema<"Course">> {
@@ -415,12 +417,16 @@ export class LearningService implements LearningApi {
     }
   }
 
+  /** Объяснение ошибки после неверного ответа — делегируется AiExplanations (learning.ai.ts). */
+  async explainAttempt(principal: Principal, runId: string, attemptId: string, now: Date = new Date()): Promise<Schema<"AiExplanation">> {
+    return this.ai.explain(principal, runId, attemptId, now);
+  }
+
   async complete(
     principal: Principal,
     runId: string,
     now: Date = new Date(),
-  ): Promise<Schema<"LessonRunSummary">> {
-    return this.db.transaction(async (tx) => {
+  ): Promise<Schema<"LessonRunSummary">> {    return this.db.transaction(async (tx) => {
       // Завершения одного аккаунта — по очереди: номер прохождения за сутки, серия и лига без гонок.
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtextextended(${`teletau:learning-complete:${principal.accountId}`}, 0))`,

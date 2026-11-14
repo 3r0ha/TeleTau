@@ -2652,6 +2652,61 @@
         }
       }
     },
+    "/api/v1/lesson-runs/{runId}/attempts/{attemptId}/explanation": {
+      "post": {
+        "tags": [
+          "learning"
+        ],
+        "operationId": "explainLessonAttempt",
+        "summary": "Объяснение ошибки — GigaChat с шаблонным запасным вариантом",
+        "description": "Объяснение ошибки после неверного ответа (`almost` / `typo` / `wrong`; сценарий 1 из `docs/04-ai-gigachat.md`).\nКонтекст собирает сервер: задание, принятые варианты, ответ ученика, вердикт и буква-подсказка — в промпт не\nпопадает ничего личного (правило «никаких ПДн в промптах»). Ответ — русский текст ≤ 400 знаков, помеченный\nисточником: `ai` (GigaChat через `apps/ai-gateway`; валидатор закрытого словаря — башкирские слова только из\nпринятых вариантов задания) или `template` (методический шаблон по типу ошибки — деградация без ошибок для\nпользователя, `docs/04` §2.5). Детям (аккаунт `kind: child`) GigaChat не вызывается — только шаблон; кеш —\nглобальный по (упражнение контента, класс ошибки): одинаковые ошибки у всех получают одно объяснение.\nЛимит — 10 объяснений в сутки на аккаунт (учебные сутки по Уфе, `docs/04` §5.5).\n\nЧужой или несуществующий забег/попытка — 404 (как у попыток: существование чужого не раскрывается).\nПопытка с вердиктом `correct` или `recorded` (дуэль) — 409 `explanation_not_applicable`: объяснять нечего.\nДуэли и «Пары» объясняются шаблоном без вызова GigaChat.\n",
+        "x-access": {
+          "roles": [
+            "student",
+            "adult"
+          ],
+          "policy": "self"
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RunId"
+          },
+          {
+            "$ref": "#/components/parameters/AttemptId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Объяснение ошибки",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiExplanation"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "default": {
+            "$ref": "#/components/responses/Unexpected"
+          }
+        }
+      }
+    },
     "/api/v1/lesson-runs/{runId}/complete": {
       "post": {
         "tags": [
@@ -4599,6 +4654,16 @@
           "format": "uuid"
         }
       },
+      "AttemptId": {
+        "name": "attemptId",
+        "in": "path",
+        "required": true,
+        "description": "Идентификатор попытки (клиентский UUIDv7 из `POST /lesson-runs/{runId}/attempts`)",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
       "CorpusItemId": {
         "name": "id",
         "in": "path",
@@ -4807,7 +4872,7 @@
       },
       "Problem": {
         "type": "object",
-        "description": "RFC 9457 Problem Details. `code` — машиночитаемая причина (клиенты ветвятся по нему, а не по `title`).\nЗначения: `unauthenticated`, `token_expired`, `forbidden`, `not_found`, `validation_failed`, `bad_request`,\n`rate_limited`, `card_invalid`, `card_revoked`, `consent_revoked`, `class_archived`, `payload_invalid`,\n`class_code_not_found`, `otp_invalid`, `otp_expired`, `otp_attempts_exceeded`, `totp_required`, `totp_invalid`,\n`email_login_unavailable`, `refresh_invalid`, `refresh_reused`, `session_revoked`, `account_blocked`\n(401 — аккаунт заблокирован, вход невозможен до разблокировки), `nickname_not_allowed`,\n`teacher_not_verified`, `school_not_allowed`, `class_exists`, `seat_limit_exceeded`, `print_job_expired`,\n`print_job_replaced` (410 — карточки задания печати уже заменены новым выпуском),\n`join_request_closed`, `consent_required`, `verification_pending`, `already_verified`, `already_decided`,\n`document_not_current`, `consent_exists`, `consent_already_revoked`, `request_in_progress` (409 — запрос\nс этим `Idempotency-Key` ещё выполняется), `idempotency_key_reused` (422 — тот же ключ с другим телом),\n`documents_unavailable` (503 — справочник юридических документов пуст), `staff_locked` (429 — вход сотрудника\nзаблокирован после неверных TOTP), `payload_too_large` (413 — тело запроса больше 64 КБ), `join_queue_full`\n(429 — в классе уже 40 заявок ждут решения учителя), `service_unavailable`,\n`internal`. Уроки, мотивация, дуэли: `not_implemented` (501 — операция контракта ещё не реализована), `lesson_locked`\n(409 — узел тропы закрыт), `run_conflict` (409 — `runId` уже занят другим уроком или аккаунтом), `run_completed`\n(409 — забег завершён), `run_incomplete` (409 — не на все упражнения есть ответ), `exercise_not_in_run` (422),\n`pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),\n`answer_type_mismatch` (422 — вид ответа не подходит к упражнению), `already_voted` (409), `vote_required`\n(403 — голоса видны после своего голоса), `content_unavailable` (503 — контент курса не импортирован).\nЗначения заданий (ADR 0021): `assignment_limit` (409 — у класса уже два активных задания), `assignment_exists`\n(409 — такое же задание уже активно).\nЗначения Telegram (ADR 0020): `init_data_invalid` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`),\n`init_data_expired` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`), `telegram_unavailable`\n(503 — бот не настроен), `chat_not_linked` (404 — чат не привязан), `telegram_login_forbidden`\n(403 — аккаунт сотрудника: вход в консоль по e-mail с TOTP, не через Telegram), `code_not_found`\n(404 — код привязки не найден, истёк или уже использован). Ежедневное задание бота (ADR 0024): `dialog_not_found`\n(404 — диалога нет), `dialog_closed` (409 — диалог отменён или закрыт).\nЗначения самостоятельного обучения (ADR 0022): `login_card_unavailable` (403 — личная карточка аккаунту\nне положена), `email_in_use` (409 — адрес уже у другого аккаунта), `email_already_set` (409),\n`already_in_class` (409 — ученик уже в классе). Список открыт: неизвестный `code`\nклиент обрабатывает по `status`. `title` и `errors[].detail` — понятный человеку текст на русском.\n",
+        "description": "RFC 9457 Problem Details. `code` — машиночитаемая причина (клиенты ветвятся по нему, а не по `title`).\nЗначения: `unauthenticated`, `token_expired`, `forbidden`, `not_found`, `validation_failed`, `bad_request`,\n`rate_limited`, `card_invalid`, `card_revoked`, `consent_revoked`, `class_archived`, `payload_invalid`,\n`class_code_not_found`, `otp_invalid`, `otp_expired`, `otp_attempts_exceeded`, `totp_required`, `totp_invalid`,\n`email_login_unavailable`, `refresh_invalid`, `refresh_reused`, `session_revoked`, `account_blocked`\n(401 — аккаунт заблокирован, вход невозможен до разблокировки), `nickname_not_allowed`,\n`teacher_not_verified`, `school_not_allowed`, `class_exists`, `seat_limit_exceeded`, `print_job_expired`,\n`print_job_replaced` (410 — карточки задания печати уже заменены новым выпуском),\n`join_request_closed`, `consent_required`, `verification_pending`, `already_verified`, `already_decided`,\n`document_not_current`, `consent_exists`, `consent_already_revoked`, `request_in_progress` (409 — запрос\nс этим `Idempotency-Key` ещё выполняется), `idempotency_key_reused` (422 — тот же ключ с другим телом),\n`documents_unavailable` (503 — справочник юридических документов пуст), `staff_locked` (429 — вход сотрудника\nзаблокирован после неверных TOTP), `payload_too_large` (413 — тело запроса больше 64 КБ), `join_queue_full`\n(429 — в классе уже 40 заявок ждут решения учителя), `service_unavailable`,\n`internal`. Уроки, мотивация, дуэли: `not_implemented` (501 — операция контракта ещё не реализована), `lesson_locked`\n(409 — узел тропы закрыт), `run_conflict` (409 — `runId` уже занят другим уроком или аккаунтом), `run_completed`\n(409 — забег завершён), `run_incomplete` (409 — не на все упражнения есть ответ), `exercise_not_in_run` (422),\n`explanation_not_applicable` (409 — у попытки вердикт `correct`/`recorded`: объяснять нечего),\n`ai_explanation_limit` (429 — больше 10 объяснений ошибок в сутки на аккаунт), `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),\n`answer_type_mismatch` (422 — вид ответа не подходит к упражнению), `already_voted` (409), `vote_required`\n(403 — голоса видны после своего голоса), `content_unavailable` (503 — контент курса не импортирован).\nЗначения заданий (ADR 0021): `assignment_limit` (409 — у класса уже два активных задания), `assignment_exists`\n(409 — такое же задание уже активно).\nЗначения Telegram (ADR 0020): `init_data_invalid` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`),\n`init_data_expired` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`), `telegram_unavailable`\n(503 — бот не настроен), `chat_not_linked` (404 — чат не привязан), `telegram_login_forbidden`\n(403 — аккаунт сотрудника: вход в консоль по e-mail с TOTP, не через Telegram), `code_not_found`\n(404 — код привязки не найден, истёк или уже использован). Ежедневное задание бота (ADR 0024): `dialog_not_found`\n(404 — диалога нет), `dialog_closed` (409 — диалог отменён или закрыт).\nЗначения самостоятельного обучения (ADR 0022): `login_card_unavailable` (403 — личная карточка аккаунту\nне положена), `email_in_use` (409 — адрес уже у другого аккаунта), `email_already_set` (409),\n`already_in_class` (409 — ученик уже в классе). Список открыт: неизвестный `code`\nклиент обрабатывает по `status`. `title` и `errors[].detail` — понятный человеку текст на русском.\n",
         "required": [
           "type",
           "title",
@@ -7884,6 +7949,29 @@
             "items": {
               "$ref": "#/components/schemas/PairMatch"
             }
+          }
+        }
+      },
+      "AiExplanation": {
+        "type": "object",
+        "description": "Объяснение ошибки (сценарий 1 из `docs/04-ai-gigachat.md`). `source: ai` — текст подготовил GigaChat (в\nинтерфейсе маркируется «Подсказку подготовил ИИ»); `template` — методический шаблон по типу ошибки\n(GigaChat недоступен, ответ не прошёл валидатор закрытого словаря или аккаунт ребёнка).\n",
+        "required": [
+          "text",
+          "source"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "description": "Русский текст ≤ 400 знаков, поддерживающий тон, без оценки личности"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "ai",
+              "template"
+            ]
           }
         }
       },

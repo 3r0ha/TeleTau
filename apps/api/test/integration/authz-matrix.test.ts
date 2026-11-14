@@ -30,6 +30,8 @@ interface Fixture {
   schoolA: string;
   /** Забег ученика A по уроку синтетического курса (test/fixtures/content). */
   runA: string;
+  /** Неверная попытка ученика A в забеге runA (для объяснения ошибки). */
+  attemptA: string;
   /** Задание класса A (повторение слов) и срок для новых заданий — сегодня по Уфе. */
   assignmentA: string;
   dueOn: string;
@@ -236,6 +238,12 @@ const MATRIX: Record<OperationId, Row> = {
     anonymous: 401,
     wrongRole: { as: "moderator", status: 403 },
     foreign: { as: "studentB", status: 404, note: "забег ученика A: чужой забег неотличим от несуществующего" },
+  },
+  explainLessonAttempt: {
+    req: (f) => ({ path: `/lesson-runs/${f.runA}/attempts/${f.attemptA}/explanation` }),
+    anonymous: 401,
+    wrongRole: { as: "moderator", status: 403 },
+    foreign: { as: "studentB", status: 404, note: "чужой забег/попытка неотличимы от несуществующих" },
   },
   getLessonPreview: {
     req: () => ({ path: "/lessons/t-l1/preview" }),
@@ -484,6 +492,15 @@ beforeAll(async () => {
   await importCourse(pool, buildCourse(readContent(CONTENT_FIXTURE)[0]!), { force: true });
   const runA = randomUUID();
   expectStatus(await api.post(`/lessons/t-l1/runs`, { token: sessions.student.accessToken, body: { runId: runA } }), 201);
+  // Неверная попытка (вердикт wrong) в упражнении ввода e3 — фикстура операции объяснения ошибки.
+  const attemptA = randomUUID();
+  expectStatus(
+    await api.post(`/lesson-runs/${runA}/attempts`, {
+      token: sessions.student.accessToken,
+      body: { attemptId: attemptA, exerciseId: "e3", answer: { type: "text", text: "не-то" } },
+    }),
+    200,
+  );
   const dueOn = ufaDate(new Date());
   const assignment = await api.post<Schema<"ClassAssignment">>(`/classes/${a.id}/assignments`, { token: teacherA.accessToken, body: { kind: "lesson", lessonId: "t-l1", dueOn } });
   expectStatus(assignment, 201);
@@ -499,6 +516,7 @@ beforeAll(async () => {
     verificationPending: v.body.id,
     schoolA: teacherA.school.id,
     runA,
+    attemptA,
     assignmentA: assignment.body.id,
     dueOn,
     classJoinRequest: join.body.requestId,
@@ -588,7 +606,7 @@ describe("authorization matrix covers every contract operation (ADR 0017 §4)", 
     });
   }
 
-  it("rejected requests changed nothing: class A still has 3 seats, the join request is pending, the consent is given, run A has no attempts, one assignment", async () => {
+  it("rejected requests changed nothing: class A still has 3 seats, the join request is pending, the consent is given, run A has only the fixture attempt, one assignment", async () => {
     const detail = await api.get<Schema<"ClassDetail">>(`/classes/${fixture.classA}`, { token: sessions.teacher.accessToken });
     expect(detail.body.seats?.map((s) => [s.number, s.cardVersion])).toEqual([
       [1, 1],
@@ -602,7 +620,8 @@ describe("authorization matrix covers every contract operation (ADR 0017 §4)", 
       "SELECT status, (SELECT count(*)::int FROM attempts WHERE run_id = lesson_runs.id) AS attempts FROM lesson_runs WHERE id = $1",
       [fixture.runA],
     );
-    expect(run.rows).toEqual([{ status: "active", attempts: 0 }]);
+    // Одна попытка — фикстура объяснения ошибки (создана в beforeAll, до отклоняемых запросов).
+    expect(run.rows).toEqual([{ status: "active", attempts: 1 }]);
     const tasks = await api.get<Schema<"ClassAssignments">>(`/classes/${fixture.classA}/assignments`, { token: sessions.teacher.accessToken });
     expect(tasks.body.active.map((t) => [t.id, t.kind])).toEqual([[fixture.assignmentA, "lesson"]]);
   });

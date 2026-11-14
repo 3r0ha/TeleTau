@@ -1019,6 +1019,37 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/lesson-runs/{runId}/attempts/{attemptId}/explanation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Объяснение ошибки — GigaChat с шаблонным запасным вариантом
+         * @description Объяснение ошибки после неверного ответа (`almost` / `typo` / `wrong`; сценарий 1 из `docs/04-ai-gigachat.md`).
+         *     Контекст собирает сервер: задание, принятые варианты, ответ ученика, вердикт и буква-подсказка — в промпт не
+         *     попадает ничего личного (правило «никаких ПДн в промптах»). Ответ — русский текст ≤ 400 знаков, помеченный
+         *     источником: `ai` (GigaChat через `apps/ai-gateway`; валидатор закрытого словаря — башкирские слова только из
+         *     принятых вариантов задания) или `template` (методический шаблон по типу ошибки — деградация без ошибок для
+         *     пользователя, `docs/04` §2.5). Детям (аккаунт `kind: child`) GigaChat не вызывается — только шаблон; кеш —
+         *     глобальный по (упражнение контента, класс ошибки): одинаковые ошибки у всех получают одно объяснение.
+         *     Лимит — 10 объяснений в сутки на аккаунт (учебные сутки по Уфе, `docs/04` §5.5).
+         *
+         *     Чужой или несуществующий забег/попытка — 404 (как у попыток: существование чужого не раскрывается).
+         *     Попытка с вердиктом `correct` или `recorded` (дуэль) — 409 `explanation_not_applicable`: объяснять нечего.
+         *     Дуэли и «Пары» объясняются шаблоном без вызова GigaChat.
+         */
+        post: operations["explainLessonAttempt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/lesson-runs/{runId}/complete": {
         parameters: {
             query?: never;
@@ -1867,7 +1898,8 @@ export interface components {
          *     `internal`. Уроки, мотивация, дуэли: `not_implemented` (501 — операция контракта ещё не реализована), `lesson_locked`
          *     (409 — узел тропы закрыт), `run_conflict` (409 — `runId` уже занят другим уроком или аккаунтом), `run_completed`
          *     (409 — забег завершён), `run_incomplete` (409 — не на все упражнения есть ответ), `exercise_not_in_run` (422),
-         *     `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
+         *     `explanation_not_applicable` (409 — у попытки вердикт `correct`/`recorded`: объяснять нечего),
+         *     `ai_explanation_limit` (429 — больше 10 объяснений ошибок в сутки на аккаунт), `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
          *     `answer_type_mismatch` (422 — вид ответа не подходит к упражнению), `already_voted` (409), `vote_required`
          *     (403 — голоса видны после своего голоса), `content_unavailable` (503 — контент курса не импортирован).
          *     Значения заданий (ADR 0021): `assignment_limit` (409 — у класса уже два активных задания), `assignment_exists`
@@ -3053,6 +3085,17 @@ export interface components {
             hint?: components["schemas"]["LetterHint"];
             /** @description «Пары» — верные пары (у `correct` совпадают с ответом) */
             correctPairs?: components["schemas"]["PairMatch"][];
+        };
+        /**
+         * @description Объяснение ошибки (сценарий 1 из `docs/04-ai-gigachat.md`). `source: ai` — текст подготовил GigaChat (в
+         *     интерфейсе маркируется «Подсказку подготовил ИИ»); `template` — методический шаблон по типу ошибки
+         *     (GigaChat недоступен, ответ не прошёл валидатор закрытого словаря или аккаунт ребёнка).
+         */
+        AiExplanation: {
+            /** @description Русский текст ≤ 400 знаков, поддерживающий тон, без оценки личности */
+            text: string;
+            /** @enum {string} */
+            source: "ai" | "template";
         };
         /** @description Мёд за урок (векторы `contracts/test-vectors/xp`) */
         HoneyBreakdown: {
@@ -4294,6 +4337,8 @@ export interface components {
         UnitId: string;
         /** @description Идентификатор забега (клиентский UUIDv7 из `POST /lessons/{lessonId}/runs`) */
         RunId: string;
+        /** @description Идентификатор попытки (клиентский UUIDv7 из `POST /lesson-runs/{runId}/attempts`) */
+        AttemptId: string;
         /** @description Идентификатор исходника корпуса (`itemId` дуэли) */
         CorpusItemId: string;
         /** @description Идентификатор задания класса */
@@ -5709,6 +5754,37 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    explainLessonAttempt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Идентификатор забега (клиентский UUIDv7 из `POST /lessons/{lessonId}/runs`) */
+                runId: components["parameters"]["RunId"];
+                /** @description Идентификатор попытки (клиентский UUIDv7 из `POST /lesson-runs/{runId}/attempts`) */
+                attemptId: components["parameters"]["AttemptId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Объяснение ошибки */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiExplanation"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
             default: components["responses"]["Unexpected"];
         };
     };

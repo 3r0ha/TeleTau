@@ -85,6 +85,41 @@ export const attempts = pgTable(
 );
 
 /**
+ * Кеш объяснений ошибок (docs/04-ai-gigachat.md §3 сценарий 1): (упражнение контента, класс ошибки) → текст.
+ * Кешируются только ответы GigaChat, прошедшие валидатор закрытого словаря в шлюзе; шаблоны не кешируются —
+ * при появлении GigaChat объяснение станет живым. Персональных данных нет: ключи — контент и класс ошибки.
+ */
+export const aiExplanations = pgTable(
+  "ai_explanations",
+  {
+    exerciseId: text("exercise_id").notNull(),
+    /** Класс ошибки — вердикт попытки, для которого объясняем: almost / typo / wrong. */
+    errorClass: text("error_class").notNull(),
+    text: text("text").notNull(),
+    createdAt: tstz("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ name: "ai_explanations_pk", columns: [t.exerciseId, t.errorClass] }),
+    check("ai_explanations_error_class", sql`${t.errorClass} IN ('almost', 'typo', 'wrong')`),
+    check("ai_explanations_text_len", sql`char_length(${t.text}) BETWEEN 1 AND 400`),
+  ],
+);
+
+/** Сколько объяснений ошибок аккаунт взял за учебные сутки по Уфе — лимит docs/04 §5.5 (по умолчанию 10). */
+export const aiExplanationUses = pgTable(
+  "ai_explanation_uses",
+  {
+    accountId: uuid("account_id").notNull(),
+    day: date("day").notNull(),
+    count: integer("count").notNull(),
+  },
+  (t) => [
+    primaryKey({ name: "ai_explanation_uses_pk", columns: [t.accountId, t.day] }),
+    check("ai_explanation_uses_range", sql`${t.count} >= 0`),
+  ],
+);
+
+/**
  * Карточка повторения: слово словаря курса (content.words.id — ключ слова, текстом, без внешнего ключа) у аккаунта.
  * Появляется при завершении урока, где слово было (new_words), обновляется первой попыткой упражнения в забеге
  * повторения. Числа — FSRS-6 (fsrs_version), даты — сутки по Уфе.

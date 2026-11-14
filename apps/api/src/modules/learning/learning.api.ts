@@ -9,6 +9,11 @@ export interface LearningApi {
   // `now` — подменённые часы для демо-сида и тестов (сутки и неделя по Уфе); контроллер его не передаёт.
   startRun(principal: Principal, lessonId: string, body: Schema<"StartLessonRunRequest">, now?: Date): Promise<Schema<"LessonRun">>;
   submitAttempt(principal: Principal, runId: string, body: Schema<"AttemptRequest">, now?: Date): Promise<Schema<"AttemptResult">>;
+  /**
+   * Объяснение ошибки (docs/04-ai-gigachat.md сценарий 1): GigaChat через ai-gateway с валидатором закрытого
+   * словаря, кеш по (упражнение, класс ошибки), дневной лимит и методический шаблон при недоступности.
+   */
+  explainAttempt(principal: Principal, runId: string, attemptId: string, now?: Date): Promise<Schema<"AiExplanation">>;
   complete(principal: Principal, runId: string, now?: Date): Promise<Schema<"LessonRunSummary">>;
   /** Забег повторения из слов со сроком на сегодня (до 8); повторять нечего — забег без упражнений. */
   startReview(principal: Principal, body: Schema<"StartLessonRunRequest">, now?: Date): Promise<Schema<"LessonRun">>;

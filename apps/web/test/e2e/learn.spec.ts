@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { generateQrCard } from "@teletau/auth-codes";
 import { createRequire } from "node:module";
-import { childMe, mockBackend, qrPhoto } from "./mock-api";
+import { childMe, adultMe, mockBackend, qrPhoto } from "./mock-api";
 import { CURRENT_NODE, LESSON_ID, learnWorld } from "./mock-learn";
 import { settleAnimations } from "./settle";
 
@@ -255,6 +255,45 @@ test.describe("M2: урок", () => {
     expect(w.learn.attempts.map((a) => a.body.hintsUsed)).toEqual([2, undefined, undefined, undefined, undefined]);
     expect(w.learn.runs).toEqual([{ lessonId: LESSON_ID, runId: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-7/), accepts: ["word_intro"] }]);
     expect(w.learn.resultSeen).toEqual(["2026-11-02"]);
+  });
+
+  test("объяснение ошибки (GigaChat): у взрослого «Почему так?» даёт текст ИИ с меткой, у ребёнка — шаблон без метки", async ({ page }) => {
+    // Взрослый самоучка: подсказку готовит GigaChat (source ai) — текст с честной меткой «Подсказку подготовил ИИ».
+    await mockBackend(page, { account: adultMe({ roles: ["student"], teacherStatus: "none", classes: [] }) });
+    await page.goto("/learn");
+    // Взрослый после входа выбирает путь («Учиться» / «Я учитель») — нам на тропу ученика.
+    await page.getByRole("button", { name: "Учиться" }).click();
+    // У взрослого нет ника — сначала выбор: ник → тропа (как в miniapp.spec.ts).
+    await page.getByRole("radio").first().check();
+    await page.getByRole("button", { name: "Начать" }).click();
+    await expect(page.getByRole("button", { name: CURRENT_NODE })).toBeVisible();
+    await page.getByRole("button", { name: CURRENT_NODE }).click();
+    await pastNewWords(page);
+    // Плитки в неверном порядке — «Пока не так».
+    const bank = page.getByRole("group", { name: "Слова" });
+    for (const word of ["мәктәпкә", "Мин", "барам"]) await bank.getByRole("button", { name: word, exact: true }).click();
+    await page.getByRole("button", { name: "Проверить" }).click();
+    await expect(page.getByRole("heading", { name: "Пока не так" })).toBeVisible();
+    await page.getByRole("button", { name: "Почему так?" }).click();
+    await expect(page.locator(".feedback-explain__text")).toContainText("Мин мәктәпкә барам.");
+    await expect(page.locator(".feedback-explain__ai")).toContainText("Подсказку подготовил ИИ · GigaChat");
+    await expectAccessible(page, "лист с объяснением ошибки");
+    await page.getByRole("button", { name: "Дальше" }).click();
+  });
+
+  test("объяснение ошибки: ребёнку — шаблон без вызова GigaChat (без метки ИИ)", async ({ page }) => {
+    await mockBackend(page, { account: childMe() });
+    await openTrail(page);
+    await page.getByRole("button", { name: CURRENT_NODE }).click();
+    await pastNewWords(page);
+    const bank = page.getByRole("group", { name: "Слова" });
+    for (const word of ["мәктәпкә", "Мин", "барам"]) await bank.getByRole("button", { name: word, exact: true }).click();
+    await page.getByRole("button", { name: "Проверить" }).click();
+    await expect(page.getByRole("heading", { name: "Пока не так" })).toBeVisible();
+    await page.getByRole("button", { name: "Почему так?" }).click();
+    await expect(page.locator(".feedback-explain__text")).toContainText("вернётся в конце урока");
+    await expect(page.locator(".feedback-explain__ai")).toHaveCount(0);
+    await page.getByRole("button", { name: "Дальше" }).click();
   });
 
   test("всё неверно: упражнение возвращается один раз, после второй ошибки — верный ответ и дальше; урок завершается", async ({ page }) => {

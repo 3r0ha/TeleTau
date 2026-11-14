@@ -11,6 +11,9 @@ export const learnApi = {
   startRun: (lessonId: string, runId: string) =>
     unwrap(api.POST("/api/v1/lessons/{lessonId}/runs", { params: { path: { lessonId } }, body: { runId, accepts: ["word_intro"] } })),
   attempt: (runId: string, body: Schema<"AttemptRequest">) => unwrap(api.POST("/api/v1/lesson-runs/{runId}/attempts", { params: { path: { runId } }, body })),
+  // Объяснение ошибки (docs/04-ai-gigachat.md сценарий 1): GigaChat через ai-gateway с запасным шаблоном.
+  explain: (runId: string, attemptId: string) =>
+    unwrap(api.POST("/api/v1/lesson-runs/{runId}/attempts/{attemptId}/explanation", { params: { path: { runId, attemptId } } })),
   complete: (runId: string) => unwrap(api.POST("/api/v1/lesson-runs/{runId}/complete", { params: { path: { runId } } })),
   league: () => unwrap(api.GET("/api/v1/leagues/current")),
   leagueResultSeen: (weekStart: string) => unwrap(api.POST("/api/v1/leagues/result-seen", { body: { weekStart } })),

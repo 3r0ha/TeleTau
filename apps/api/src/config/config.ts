@@ -108,6 +108,17 @@ const ConfigSchema = z
     /** Адрес консоли сотрудников — разрешённый origin CORS. */
     PUBLIC_CONSOLE_URL: z.url().default("http://localhost:3100"),
 
+    // AI-слой (docs/04-ai-gigachat.md): шлюз GigaChat.
+    /**
+     * Адрес ai-gateway (apps/ai-gateway, порт 4100) — единственный путь вызова GigaChat (ADR 0008). Недоступен —
+     * объяснения ошибок деградируют к шаблонам (docs/04 §2.5), остальное работает.
+     */
+    AI_GATEWAY_URL: z.url().default("http://127.0.0.1:4100"),
+    /** Общий секрет API ↔ ai-gateway (Authorization: Bearer). Не задан — шлюз проверять нечего (localhost). */
+    AI_GATEWAY_TOKEN: optionalString.pipe(z.string().trim().min(16).optional()),
+    /** Лимит объяснений ошибок на аккаунт в учебные сутки (docs/04 §5.5). */
+    AI_EXPLANATION_LIMIT: z.coerce.number().int().min(0).max(100).default(10),
+
     // Telegram (ADR 0020).
     /**
      * Токен бота от @BotFather — тот же, что у apps/bot: им API проверяет подпись initData Mini App (POST /telegram/link).
