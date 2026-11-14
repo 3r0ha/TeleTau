@@ -156,6 +156,16 @@ export function createSessionRoute({ cookiePrefix, appVersion, trustProxy, apiTi
         const { data, error, response } = await api.POST("/api/v1/auth/login-card", { body: { payload, device } });
         return data ? withSession(req, data, installId) : passProblem(error, response);
       }
+      case "telegram": {
+        // Вход в Mini App по привязке (ADR 0020): подпись initData проверяет API; строка — только в теле, не в адрес.
+        // str() режет до 600 знаков, а initData бывает длинной — свой предел по контракту (1–4096).
+        const initData = (await readBody(req)).initData;
+        if (typeof initData !== "string" || initData.length === 0 || initData.length > 4096) {
+          return problem(422, "validation_failed", "initData не распознана");
+        }
+        const { data, error, response } = await api.POST("/api/v1/auth/telegram", { body: { initData, device } });
+        return data ? withSession(req, data, installId) : passProblem(error, response);
+      }
       case "self": {
         // «Учусь сам» (ADR 0022): ник из словаря и возрастной диапазон; устройство сессии — cookie установки.
         const body = await readBody(req);

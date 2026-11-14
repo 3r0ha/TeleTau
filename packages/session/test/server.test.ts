@@ -206,6 +206,51 @@ describe("BFF: «Учусь сам» и личная карточка (ADR 0022)
   });
 });
 
+describe("BFF: вход в Mini App по initData привязки (ADR 0020)", () => {
+  const post = (body: unknown) =>
+    new NextRequest(`${ORIGIN}/api/session/telegram`, {
+      method: "POST",
+      headers: { origin: ORIGIN, host: "localhost:3000", "sec-fetch-site": "same-origin", "content-type": "application/json", ...stamped("203.0.113.7") },
+      body: JSON.stringify(body),
+    });
+  const session = {
+    accessToken: "a",
+    accessTokenExpiresAt: new Date(Date.now() + 600_000).toISOString(),
+    refreshToken: "r",
+    refreshTokenExpiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+    account: { id: "x", kind: "child" },
+  };
+  const initData = "user=%7B%22id%22%3A279058397%7D&auth_date=1793800000&hash=abc";
+
+  it("telegram: initData уходит только в теле запроса к /auth/telegram, ответ — сессия с cookie", async () => {
+    const seen = fakeApi(() => new Response(JSON.stringify(session), { status: 200, headers: { "content-type": "application/json" } }));
+    const route = createSessionRoute({ cookiePrefix: "t", appVersion: "test", trustProxy: "" });
+    const res = await call(route, post({ initData }), "telegram");
+    expect(res.status).toBe(200);
+    expect(new URL(seen[0]!.url).pathname).toBe("/api/v1/auth/telegram");
+    expect(seen[0]!.url).not.toContain("initData");
+    expect(((await seen[0]!.json()) as { initData: string }).initData).toBe(initData);
+    expect(res.headers.getSetCookie().some((c) => c.startsWith("t_rt="))).toBe(true);
+  });
+
+  it("telegram: 404 chat_not_linked от API проходит как есть — миниапп покажет вход по карточке", async () => {
+    fakeApi(() => problem(404, "chat_not_linked"));
+    const route = createSessionRoute({ cookiePrefix: "t", appVersion: "test", trustProxy: "" });
+    const res = await call(route, post({ initData }), "telegram");
+    expect(res.status).toBe(404);
+    expect(((await res.json()) as { code: string }).code).toBe("chat_not_linked");
+  });
+
+  it("telegram: пустая, не строка и длиннее 4096 знаков initData — 422 без обращения к API", async () => {
+    const seen = fakeApi();
+    const route = createSessionRoute({ cookiePrefix: "t", appVersion: "test", trustProxy: "" });
+    for (const body of [{}, { initData: "" }, { initData: 42 }, { initData: "x".repeat(4097) }]) {
+      expect((await call(route, post(body), "telegram")).status).toBe(422);
+    }
+    expect(seen).toHaveLength(0);
+  });
+});
+
 describe("BFF: флаг Secure у cookie сессии в dev", () => {
   const session = {
     accessToken: "a",

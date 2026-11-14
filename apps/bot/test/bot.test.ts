@@ -72,6 +72,65 @@ describe("ядро: /start и /help", () => {
   });
 });
 
+describe("ядро: /start <код> — привязка одноразовым кодом (ADR 0020)", () => {
+  it("верный код: чат связан, код одноразовый — второй чат тем же кодом не привяжется", async () => {
+    const api = new FakeApi().issueCode("ABCDEFGH");
+    const [out] = await handle({ chatId: "42", kind: "command", command: "start", args: "ABCDEFGH" }, ctxWith(api));
+    expect(out?.text).toBe(TEXT.linked);
+    expect(api.links.has("42")).toBe(true);
+    expect(api.linkCodes.size).toBe(0);
+    const [again] = await handle({ chatId: "43", kind: "command", command: "start", args: "ABCDEFGH" }, ctxWith(api));
+    expect(again?.text).toBe(TEXT.linkCodeBad);
+    expect(api.links.has("43")).toBe(false);
+  });
+
+  it("неизвестный код — подсказка взять свежий в профиле, чат не привязан", async () => {
+    const api = new FakeApi();
+    const [out] = await handle({ chatId: "42", kind: "command", command: "start", args: "ZZZZZZZZ" }, ctxWith(api));
+    expect(out?.text).toBe(TEXT.linkCodeBad);
+    expect(api.links.size).toBe(0);
+  });
+
+  it("без кода и с мусором вместо него — прежний /start, API не дёргается", async () => {
+    const api = new FakeApi();
+    for (const args of ["", "   ", "привет", "12345678", "abcdefghi"]) {
+      const [out] = await handle({ chatId: "42", kind: "command", command: "start", args }, ctxWith(api));
+      expect(out?.text).toContain(TEXT.start);
+    }
+    expect(api.calls).toEqual([]);
+  });
+
+  it("код в нижнем регистре и с лишними аргументами гасится; без API — «нет связи»", async () => {
+    const api = new FakeApi().issueCode("ABCDEFGH");
+    const [out] = await handle({ chatId: "42", kind: "command", command: "start", args: "abcdefgh ещё слово" }, ctxWith(api));
+    expect(out?.text).toBe(TEXT.linked);
+    const [noApi] = await handle({ chatId: "44", kind: "command", command: "start", args: "ABCDEFGH" }, ctxWith(null));
+    expect(noApi?.text).toBe(TEXT.unavailable);
+  });
+
+  it("ответ не содержит код и chat id (нет ПДн)", async () => {
+    const api = new FakeApi().issueCode("ABCDEFGH");
+    const outputs = [
+      ...(await handle({ chatId: "424242", kind: "command", command: "start", args: "ABCDEFGH" }, ctxWith(api))),
+      ...(await handle({ chatId: "424242", kind: "command", command: "start", args: "ZZZZZZZZ" }, ctxWith(api))),
+    ];
+    for (const o of outputs) {
+      const all = [o.text, ...labels(o), ...menuLabels(o)].join(" ");
+      expect(all).not.toContain("424242");
+      expect(all).not.toContain("ABCDEFGH");
+    }
+  });
+
+  it("адаптер: /start ABCDEFGH из настоящего сообщения доходит до погашения кода", async () => {
+    const api = new FakeApi().issueCode("ABCDEFGH");
+    const bot = createTelegramBot(TOKEN, ctxWith(api), { botInfo: BOT_INFO });
+    const calls = fakeTelegram(bot);
+    await bot.handleUpdate(textUpdate("/start ABCDEFGH") as never);
+    expect(api.calls).toEqual(["redeem 4242 ABCDEFGH"]);
+    expect(calls[0]!.payload).toMatchObject({ chat_id: 4242, text: TEXT.linked });
+  });
+});
+
 describe("ядро: напоминания о серии по согласию", () => {
   it("непривязанный чат: «открой Учиться и войди» с меню, API ничего не меняет", async () => {
     const api = new FakeApi();

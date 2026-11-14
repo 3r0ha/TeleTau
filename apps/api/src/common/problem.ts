@@ -71,6 +71,8 @@ const TITLES: Record<string, string> = {
   init_data_expired: "Запуск из Telegram устарел — откройте приложение кнопкой в боте ещё раз",
   telegram_unavailable: "Telegram-бот пока не подключён",
   chat_not_linked: "Чат Telegram не привязан",
+  telegram_login_forbidden: "Сотрудникам вход через Telegram недоступен — войдите в консоль по e-mail",
+  code_not_found: "Код привязки не найден или истёк — возьмите свежий в профиле",
   // Ежедневное задание бота (ADR 0024)
   dialog_not_found: "Задание не найдено",
   dialog_closed: "Задание уже закрыто",

@@ -1,14 +1,17 @@
+import { randomInt } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
 import { ufaDate } from "@teletau/domain-rules";
 import { and, eq, gte, inArray, isNull, lt, lte, ne, or } from "drizzle-orm";
+import type { Redis } from "ioredis";
 import type { Principal } from "../../common/auth.js";
-import { ApiError, conflict, forbidden, notFound, unavailable, unprocessable } from "../../common/problem.js";
+import { ApiError, conflict, forbidden, notFound, unauthorized, unavailable, unprocessable } from "../../common/problem.js";
 import { ACCOUNTS_PORT, type AccountsPort } from "../../common/ports.js";
 import { uuidv7 } from "../../common/uuidv7.js";
 import { APP_CONFIG, type AppConfig } from "../../config/config.js";
 import type { Db } from "../../db/database.js";
-import { DB } from "../../infra/tokens.js";
+import { RateLimiter, type Limit } from "../../infra/rate-limiter.js";
+import { DB, VALKEY } from "../../infra/tokens.js";
 import { ConsensusService } from "../consensus/index.js";
 import { ProgressService } from "../progress/index.js";
 import { verifyInitData } from "./init-data.js";
@@ -17,6 +20,30 @@ import { telegramDialogs, telegramLinks } from "./telegram.schema.js";
 
 type LinkRow = typeof telegramLinks.$inferSelect;
 type DialogRow = typeof telegramDialogs.$inferSelect;
+
+/** Вход по привязке (POST /auth/telegram): 10 попыток в час на чат — выдача сессий не превращается в перебор. */
+export const TELEGRAM_LOGIN: Limit = { max: 10, windowMs: 3600_000 };
+/** Выпуск кода привязки: 1 в минуту на аккаунт — код один, свежий и без очереди. */
+export const LINK_CODE_ISSUE: Limit = { max: 1, windowMs: 60_000 };
+/** Погашение кодов ботом: 10 в час на чат — брут-форс 8-значного кода бесполезен. */
+export const LINK_CODE_REDEEM: Limit = { max: 10, windowMs: 3600_000 };
+/** Жизнь одноразового кода привязки, секунды. */
+export const LINK_CODE_TTL_SECONDS = 600;
+/** Алфавит кода без похожих символов (0/O, 1/I): 32 знака — 5 бит на символ. */
+const LINK_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+/** Префиксы ключей Valkey: код → аккаунт и аккаунт → действующий код (для гашения прежнего). */
+const LINK_CODE_KEY = "tg-link-code:";
+const LINK_CODE_ACCOUNT_KEY = "tg-link-code-account:";
+
+/**
+ * Выпуск кода атомарно: прежний код аккаунта гасится, новый становится единственным действующим. KEYS: префикс
+ * кодов, ключ «аккаунт → код». ARGV: TTL, новый код, id аккаунта. Возвращает прежний код (для тестов).
+ */
+const ISSUE_CODE = `local old = redis.call("GET", KEYS[2])
+if old and old ~= ARGV[2] then redis.call("DEL", KEYS[1] .. old) end
+redis.call("SET", KEYS[1] .. ARGV[2], ARGV[3], "EX", tonumber(ARGV[1]))
+redis.call("SET", KEYS[2], ARGV[2], "EX", tonumber(ARGV[1]))
+return old or ""`;
 
 const remindersOf = (row: Pick<LinkRow, "remindersEnabled" | "reminderHour">): Schema<"TelegramReminders"> => ({
   enabled: row.remindersEnabled,
@@ -41,7 +68,8 @@ function uuidOf(raw: string): string {
 }
 
 /**
- * Модуль telegram (ADR 0020): привязка личного чата с ботом к аккаунту по подписи initData Mini App и напоминания о
+ * Модуль telegram (ADR 0020): привязка личного чата с ботом к аккаунту по подписи initData Mini App или одноразовому
+ * коду с сайта (Valkey), вход по привязке (для identity) и напоминания о
  * серии по согласию. Хранит только chat_id и id аккаунта (telegram.schema.ts). Серию берёт у progress через его
  * публичный сервис — чужие таблицы не читает (правило 4). Служебные операции бота (роль service) проверяет
  * AccessControl до обработчика.
@@ -54,6 +82,8 @@ export class TelegramService {
   constructor(
     @Inject(DB) private readonly db: Db,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(VALKEY) private readonly valkey: Redis,
+    private readonly limiter: RateLimiter,
     private readonly progress: ProgressService,
     private readonly consensus: ConsensusService,
     @Inject(ACCOUNTS_PORT) private readonly accounts: AccountsPort,
@@ -65,18 +95,89 @@ export class TelegramService {
     if (!botToken) throw unavailable("telegram_unavailable");
     const check = verifyInitData(body.initData, botToken, now);
     if (!check.ok) throw unprocessable(check.reason === "expired" ? "init_data_expired" : "init_data_invalid");
+    const row = await this.bind(check.userId, principal.accountId, now);
+    return { reminders: remindersOf(row) };
+  }
+
+  /**
+   * POST /auth/telegram (вход по привязке, вызывается из identity): подпись initData → user.id → лимит на чат →
+   * аккаунт привязки. Статус аккаунта и сессия — у identity (таблица accounts — его). Сама строка не сохраняется.
+   */
+  async accountIdOfInitData(body: Schema<"TelegramLoginRequest">, now: Date = new Date()): Promise<string> {
+    const botToken = this.config.TELEGRAM_BOT_TOKEN;
+    if (!botToken) throw unavailable("telegram_unavailable");
+    const check = verifyInitData(body.initData, botToken, now);
+    if (!check.ok) throw unauthorized(check.reason === "expired" ? "init_data_expired" : "init_data_invalid");
+    await this.limiter.consume(`tg-login:chat:${check.userId}`, TELEGRAM_LOGIN);
+    const [row] = await this.db
+      .select({ accountId: telegramLinks.accountId })
+      .from(telegramLinks)
+      .where(eq(telegramLinks.chatId, check.userId));
+    if (!row) throw notFound("chat_not_linked");
+    return row.accountId;
+  }
+
+  /**
+   * POST /me/telegram/link-code: одноразовый код на 10 минут в Valkey. Новый код гасит прежний аккаунта
+   * (скрипт ISSUE_CODE — атомарно). Не чаще 1 в минуту. Сотрудникам код не положен — 403.
+   */
+  async issueLinkCode(principal: Principal, now: Date = new Date()): Promise<Schema<"TelegramLinkCode">> {
+    if (principal.kind === "staff") throw forbidden("telegram_login_forbidden");
+    await this.limiter.consume(`tg-link-code:issue:${principal.accountId}`, LINK_CODE_ISSUE);
+    const code = this.generateLinkCode();
+    await this.kv(() =>
+      this.valkey.eval(ISSUE_CODE, 2, LINK_CODE_KEY, `${LINK_CODE_ACCOUNT_KEY}${principal.accountId}`, String(LINK_CODE_TTL_SECONDS), code, principal.accountId) as Promise<string>,
+    );
+    return { code, expiresAt: new Date(now.getTime() + LINK_CODE_TTL_SECONDS * 1000).toISOString() };
+  }
+
+  /**
+   * POST /telegram/bot/chats/link-code/redeem (бот, /start <код>): код расходуется атомарно (GETDEL — только один
+   * запрос из параллельных), привязка — общий путь с /telegram/link: чат переходит к аккаунту кода, активные дуэли
+   * прежнего владельца отменяются. Нет/истёк/использован — 404 code_not_found; брут-форс — 10 в час на чат.
+   */
+  async redeemLinkCode(body: Schema<"TelegramLinkCodeRedeemRequest">, now: Date = new Date()): Promise<Schema<"TelegramChat">> {
+    const chatId = chatIdOf(body.chatId);
+    await this.limiter.consume(`tg-link-code:redeem:${chatId}`, LINK_CODE_REDEEM);
+    const accountId = await this.kv(() => this.valkey.getdel(`${LINK_CODE_KEY}${body.code}`));
+    if (!accountId) throw notFound("code_not_found");
+    // «Аккаунт → код» больше не нужен: код израсходован, следующий выпуск его не увидит.
+    await this.kv(() => this.valkey.del(`${LINK_CODE_ACCOUNT_KEY}${accountId}`).catch(() => undefined));
+    const row = await this.bind(chatId, accountId, now);
+    return chatOf(row);
+  }
+
+  /**
+   * Общий путь привязки (Mini App и код с сайта): upsert «чат → аккаунт» (повторная привязка переносит чат) и
+   * закрытие выданных этому чату диалогов прежнего аккаунта — голос не уйдёт от прошлого владельца (ADR 0024).
+   */
+  private async bind(chatId: number, accountId: string, now: Date): Promise<LinkRow> {
     const [row] = await this.db
       .insert(telegramLinks)
-      .values({ chatId: check.userId, accountId: principal.accountId, linkedAt: now })
-      .onConflictDoUpdate({ target: telegramLinks.chatId, set: { accountId: principal.accountId, linkedAt: now, updatedAt: now } })
+      .values({ chatId, accountId, linkedAt: now })
+      .onConflictDoUpdate({ target: telegramLinks.chatId, set: { accountId, linkedAt: now, updatedAt: now } })
       .returning();
-    // Чат перешёл к новому аккаунту: выданные этому чату диалоги прежнего аккаунта закрываются — голос не уйдёт от
-    // прошлого владельца привязки (ADR 0024).
     await this.db
       .update(telegramDialogs)
       .set({ status: "cancelled", cancelledAt: now })
-      .where(and(eq(telegramDialogs.chatId, check.userId), eq(telegramDialogs.status, "issued"), ne(telegramDialogs.accountId, principal.accountId)));
-    return { reminders: remindersOf(row!) };
+      .where(and(eq(telegramDialogs.chatId, chatId), eq(telegramDialogs.status, "issued"), ne(telegramDialogs.accountId, accountId)));
+    return row!;
+  }
+
+  /** Код привязки: 8 символов алфавита без похожих. */
+  private generateLinkCode(): string {
+    let code = "";
+    for (let i = 0; i < 8; i++) code += LINK_CODE_ALPHABET[randomInt(LINK_CODE_ALPHABET.length)];
+    return code;
+  }
+
+  /** Valkey недоступен — 503: без него ни код не выдать, ни погасить (как вызовы кода входа). */
+  private async kv<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch {
+      throw unavailable();
+    }
   }
 
   /** GET /telegram/bot/chats/{chatId} (бот). */

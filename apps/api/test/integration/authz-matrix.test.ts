@@ -369,11 +369,27 @@ const MATRIX: Record<OperationId, Row> = {
     wrongRole: { as: "moderator", status: 403 },
     foreign: NA_SERVICE,
   },
+  // Одноразовый код привязки (свой — политика self) и его погашение ботом (служба).
+  issueTelegramLinkCode: {
+    req: () => ({ path: "/me/telegram/link-code" }),
+    anonymous: 401,
+    wrongRole: { as: "moderator", status: 403, note: "сотруднику код привязки не положен" },
+    foreign: NA_SELF,
+  },
+  redeemTelegramLinkCode: {
+    req: () => ({ path: "/telegram/bot/chats/link-code/redeem", body: { code: "ABCDEFGH", chatId: "279058397" } }),
+    anonymous: 401,
+    wrongRole: { as: "student", status: 403, note: "погашает код только бот с секретом сервиса" },
+    foreign: NA_SERVICE,
+  },
 
   // ── «Учусь сам» (ADR 0022). Личная карточка и почта — только свои (self); заявка в класс уже вошедшего ученика —
   // своя: чужая неотличима от несуществующей (404, настоящая заявка самостоятельного ученика — fixture.classJoinRequest). ──
   createSelfLearner: { req: () => ({ path: "/auth/self" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
   loginWithLoginCard: { req: () => ({ path: "/auth/login-card" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
+  // Вход по привязке Telegram: подпись initData и чат — свои, чужого ресурса в запросе нет. Пустое тело — как у
+  // других публичных входов: валидация (400) режет раньше проверки подписи, авторизация не мешает анониму.
+  loginByTelegram: { req: () => ({ path: "/auth/telegram" }), anonymous: NA_PUBLIC, wrongRole: NA_PUBLIC, foreign: NA_PUBLIC },
   getMyLoginCard: { req: () => ({ path: "/me/login-card" }), anonymous: 401, wrongRole: { as: "moderator", status: 403, note: "у сотрудника карточки нет" }, foreign: NA_SELF },
   issueMyLoginCard: { req: () => ({ path: "/me/login-card" }), anonymous: 401, wrongRole: { as: "admin", status: 403 }, foreign: NA_SELF },
   attachMyEmail: {

@@ -156,6 +156,16 @@ class SessionStore {
     return s.account;
   }
 
+  /**
+   * Вход в Mini App по initData Telegram (ADR 0020): подпись проверяет API, сессия выдаётся по привязке чата.
+   * 404 `chat_not_linked` пробрасывается как есть — миниапп покажет обычный вход (карточку или «Учусь сам»).
+   */
+  async loginWithTelegram(initData: string): Promise<Me> {
+    const s = await withShortRetry(() => post<BrowserSession>("telegram", { initData }));
+    this.accept(s);
+    return s.account;
+  }
+
   /** «Учусь сам» (ADR 0022): аккаунт без ПДн — ник из словаря, возрастной диапазон и (по желанию) цель дня. */
   async startSelf(body: { nicknameId: string; ageBand: Schema<"AgeBand">; dailyGoal?: number }): Promise<Me> {
     const s = await post<BrowserSession>("self", body);

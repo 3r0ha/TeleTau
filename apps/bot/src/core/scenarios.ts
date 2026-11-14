@@ -46,6 +46,10 @@ export const TEXT = {
   startRemind: "Напоминания о серии — «🔔 Напоминания».",
   startDaily: "Задание дня — «⚡️ Задание дня».",
   startPhrase: "Фраза дня — «💬 Фраза дня».",
+  // ── привязка одноразовым кодом (ADR 0020) ──
+  /** Код погашен: чат связан с аккаунтом — напоминания и дуэли придут сюда. */
+  linked: "Готово! Этот телеграм теперь связан с твоим аккаунтом ТелеТау. Напоминания и дуэли придут сюда.",
+  linkCodeBad: "Код не подошёл — возможно, истёк или уже использован. Возьми свежий в профиле на сайте и пришли /start <код>.",
   help: [
     "Всё — кнопками под чатом:",
     "",
@@ -140,6 +144,19 @@ function start(ctx: BotContext): Outgoing {
   const lines: string[] = [TEXT.start, ctx.miniAppUrl ? TEXT.startLearn : TEXT.startNoApp];
   if (ctx.api) lines.push("", TEXT.startDaily, TEXT.startPhrase, TEXT.startRemind);
   return withMenu({ text: lines.join("\n") }, ctx);
+}
+
+/** Код привязки из `/start <код>`: первый аргумент, 8 знаков без похожих 0/O и 1/I (контракт). */
+const LINK_CODE_RE = /^[2-9A-HJ-NP-Z]{8}$/;
+
+/** `/start <код>`: погасить код и связать чат с аккаунтом; код не подошёл — подсказка взять свежий в профиле. */
+async function startWithCode(chatId: string, args: string, ctx: BotContext): Promise<Outgoing> {
+  const code = (args.trim().split(/\s+/)[0] ?? "").toUpperCase();
+  if (!LINK_CODE_RE.test(code)) return start(ctx);
+  const api = ctx.api;
+  if (!api) return { text: TEXT.unavailable };
+  const link = await api.redeemLinkCode(chatId, code);
+  return link ? withMenu({ text: TEXT.linked }, ctx) : { text: TEXT.linkCodeBad };
 }
 
 /** Команды и кнопки напоминаний: всё через API — бот сам ничего не хранит. */
@@ -258,7 +275,7 @@ async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
   if (message.kind === "command") {
     switch (message.command) {
       case "start":
-        return [start(ctx)];
+        return [await startWithCode(message.chatId, message.args, ctx)];
       case "help":
         return [withMenu({ text: TEXT.help }, ctx)];
       case "daily":
@@ -283,9 +300,9 @@ async function route(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
 
 /**
  * Сценарии бота: постоянное меню кнопок (📚 Учиться, ⚡️ Задание дня, 💬 Фраза дня, 🔔 Напоминания) и команды как
- * запасной путь (/start, /help, /remind*, /daily, /cancel, /phrase, /unlink); напоминания о серии, ежедневное
- * задание (ADR 0024) и фраза дня (ТЗ §3.6). Ответы не содержат данных пользователя; API недоступно — вежливое
- * «попробуй позже», а не ошибка.
+ * запасной путь (/start, /help, /remind*, /daily, /cancel, /phrase, /unlink); `/start <код>` — привязка чата
+ * одноразовым кодом с сайта (ADR 0020); напоминания о серии, ежедневное задание (ADR 0024) и фраза дня (ТЗ §3.6).
+ * Ответы не содержат данных пользователя; API недоступно — вежливое «попробуй позже», а не ошибка.
  */
 export async function handle(message: Incoming, ctx: BotContext): Promise<Outgoing[]> {
   try {

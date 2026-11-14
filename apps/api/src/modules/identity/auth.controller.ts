@@ -7,6 +7,7 @@ import { OtpService } from "./otp.service.js";
 import { SelfLearnerService } from "./self-learner.service.js";
 import { SessionsService, type SessionTokens } from "./sessions.service.js";
 import { StudentLoginService } from "./student-login.service.js";
+import { TelegramLoginService } from "./telegram-login.service.js";
 
 type AuthSession = Schema<"AuthSession">;
 
@@ -18,6 +19,7 @@ export class AuthController {
     private readonly sessions: SessionsService,
     private readonly me: MeService,
     private readonly selfLearners: SelfLearnerService,
+    private readonly telegramLogin: TelegramLoginService,
   ) {}
 
   private async session(tokens: SessionTokens, accountId: string): Promise<AuthSession> {
@@ -47,6 +49,15 @@ export class AuthController {
   @Operation("loginWithLoginCard")
   async loginCard(@Body() body: Schema<"LoginCardLoginRequest">, @ReqMeta() meta: RequestMeta): Promise<AuthSession> {
     const s = await this.selfLearners.loginWithCard(body, meta);
+    return this.session(s.tokens, s.accountId);
+  }
+
+  /** Вход по привязанному Telegram (Mini App без карточки, ADR 0020): initData — только в теле, не логируется. */
+  @Post("telegram")
+  @HttpCode(200)
+  @Operation("loginByTelegram")
+  async telegram(@Body() body: Schema<"TelegramLoginRequest">): Promise<AuthSession> {
+    const s = await this.telegramLogin.login(body);
     return this.session(s.tokens, s.accountId);
   }
 

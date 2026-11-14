@@ -7,12 +7,14 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Redis } from "ioredis";
 import type { Schema } from "@teletau/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Principal } from "../../src/common/auth.js";
 import { ACCOUNTS_PORT } from "../../src/common/ports.js";
 import type { Db } from "../../src/db/database.js";
-import { DB } from "../../src/infra/tokens.js";
+import { RateLimiter } from "../../src/infra/rate-limiter.js";
+import { DB, VALKEY } from "../../src/infra/tokens.js";
 import { ConsensusService } from "../../src/modules/consensus/index.js";
 import { importDuels } from "../../src/modules/corpus/duels-import.js";
 import { ProgressService } from "../../src/modules/progress/index.js";
@@ -150,9 +152,189 @@ describe("POST /telegram/link — привязка чата по подписи 
 
   it("бот не настроен (нет TELEGRAM_BOT_TOKEN) — 503 telegram_unavailable", async () => {
     const config = { ...testConfig(), TELEGRAM_BOT_TOKEN: undefined };
-    const svc = new TelegramService(db, config, api.app.get(ProgressService), api.app.get(ConsensusService), api.app.get(ACCOUNTS_PORT));
+    const svc = new TelegramService(db, config, api.app.get<Redis>(VALKEY), api.app.get(RateLimiter), api.app.get(ProgressService), api.app.get(ConsensusService), api.app.get(ACCOUNTS_PORT));
     const principal: Principal = { accountId: adult.account.id, kind: "adult", roles: [], sessionId: "", deviceId: "" };
     await expect(svc.link(principal, { initData: initData(newChat()) })).rejects.toMatchObject({ status: 503, code: "telegram_unavailable" });
+  });
+});
+
+describe("POST /auth/telegram — вход по привязке (Mini App без карточки)", () => {
+  const principalOf = (s: AuthSession): Principal => ({ accountId: s.account.id, kind: s.account.kind, roles: s.account.roles, sessionId: "", deviceId: "" });
+  const telegram = () => api.app.get(TelegramService);
+  const login = (init: string, device = newDevice()) => api.post<AuthSession>("/auth/telegram", { body: { initData: init, device } });
+
+  it("связанный чат → 200 и сессия аккаунта привязки, как по личной карточке", async () => {
+    const chat = newChat();
+    await telegram().link(principalOf(student), { initData: initData(chat) });
+    const res = await login(initData(chat));
+    expectStatus(res, 200);
+    expect(res.body.account.id).toBe(student.account.id);
+    expect(res.body.refreshToken).toMatch(/^ttr_/);
+    // Сессия работает: GET /me по access-токену.
+    const me = await api.get("/me", { token: res.body.accessToken });
+    expectStatus(me, 200);
+  });
+
+  it("чат не привязан → 404 chat_not_linked (клиент покажет обычный вход)", async () => {
+    const res = await api.post<Problem>("/auth/telegram", { body: { initData: initData(newChat()), device: newDevice() } });
+    expect([res.status, res.body.code]).toEqual([404, "chat_not_linked"]);
+  });
+
+  it("чужая подпись и мусор — 401 init_data_invalid; старше суток — 401 init_data_expired", async () => {
+    const chat = newChat();
+    await telegram().link(principalOf(adult), { initData: initData(chat) });
+    const cases: Array<[string, string]> = [
+      [initData(chat, { token: "7000000002:AAAnotherBotTokenForTests_000000000" }), "init_data_invalid"],
+      ["query_id=1&auth_date=1&hash=zz", "init_data_invalid"],
+      [initData(chat, { authDate: Math.floor(Date.now() / 1000) - 2 * 86_400 }), "init_data_expired"],
+    ];
+    for (const [raw, code] of cases) {
+      const res = await api.post<Problem>("/auth/telegram", { body: { initData: raw, device: newDevice() } });
+      expect([res.status, res.body.code], raw.slice(0, 40)).toEqual([401, code]);
+    }
+  });
+
+  it("аккаунт сотрудника → 403 telegram_login_forbidden (сотрудникам — консоль с TOTP)", async () => {
+    const moderator = await api.loginStaff("moderator");
+    const chat = newChat();
+    await telegram().link({ accountId: moderator.account.id, kind: "staff", roles: moderator.account.roles, sessionId: "", deviceId: "" }, { initData: initData(chat) });
+    const res = await api.post<Problem>("/auth/telegram", { body: { initData: initData(chat), device: newDevice() } });
+    expect([res.status, res.body.code]).toEqual([403, "telegram_login_forbidden"]);
+  });
+
+  it("заблокированный аккаунт → 401 account_blocked; разблокированный — снова входит", async () => {
+    const who = await api.loginAdult(email("tg-blocked"));
+    const chat = newChat();
+    await telegram().link(principalOf(who), { initData: initData(chat) });
+    await pool.query("UPDATE accounts SET status = 'blocked' WHERE id = $1", [who.account.id]);
+    const blocked = await api.post<Problem>("/auth/telegram", { body: { initData: initData(chat), device: newDevice() } });
+    expect([blocked.status, blocked.body.code]).toEqual([401, "account_blocked"]);
+    await pool.query("UPDATE accounts SET status = 'active' WHERE id = $1", [who.account.id]);
+    expectStatus(await login(initData(chat)), 200);
+  });
+
+  it("лимит входа: 10 в час на чат, 11-й — 429 rate_limited", async () => {
+    const chat = newChat();
+    await telegram().link(principalOf(adult), { initData: initData(chat) });
+    const device = newDevice();
+    for (let i = 0; i < 10; i++) expectStatus(await login(initData(chat), device), 200);
+    const limited = await api.post<Problem>("/auth/telegram", { body: { initData: initData(chat), device } });
+    expect([limited.status, limited.body.code]).toEqual([429, "rate_limited"]);
+    expect(Number(limited.headers["retry-after"])).toBeGreaterThan(0);
+  });
+});
+
+describe("одноразовый код привязки (без Mini App): выпуск на сайте, погашение ботом", () => {
+  const telegram = () => api.app.get(TelegramService);
+  const valkey = () => api.app.get<Redis>(VALKEY);
+  const principalOf = (s: AuthSession): Principal => ({ accountId: s.account.id, kind: s.account.kind, roles: s.account.roles, sessionId: "", deviceId: "" });
+  const issue = (token: string) => api.post<Schema<"TelegramLinkCode">>("/me/telegram/link-code", { token });
+  const redeem = (code: string, chatId: number, headers: Record<string, string> = service) =>
+    api.post<Schema<"TelegramChat"> & Problem>("/telegram/bot/chats/link-code/redeem", { headers, body: { code, chatId: String(chatId) } });
+
+  it("выпуск: код 8 знаков без похожих, срок 10 минут; повтор в ту же минуту — 429", async () => {
+    const res = await issue(adult.accessToken);
+    expectStatus(res, 200);
+    expect(res.body.code).toMatch(/^[2-9A-HJ-NP-Z]{8}$/);
+    expect(Date.parse(res.body.expiresAt)).toBeGreaterThan(Date.now() + 9 * 60_000);
+    const again = await api.post<Problem>("/me/telegram/link-code", { token: adult.accessToken });
+    expect([again.status, again.body.code]).toEqual([429, "rate_limited"]);
+    // Счётчик лимита — свой на аккаунт: ученик берёт код свободно.
+    expectStatus(await issue(student.accessToken), 200);
+  });
+
+  it("погашение: чат привязывается к аккаунту кода; код одноразовый; неверный — 404 code_not_found", async () => {
+    await valkey().del(`rl:tg-link-code:issue:${adult.account.id}`);
+    const { body } = await issue(adult.accessToken);
+    const chat = newChat();
+    const res = await redeem(body.code, chat);
+    expectStatus(res, 200);
+    expect(res.body).toEqual({ chatId: String(chat), reminders: { enabled: false, hour: 18 } });
+    expect((await linkRow(chat))?.["account_id"]).toBe(adult.account.id);
+    // Код израсходован: повтор (в том числе из другого чата) — 404.
+    const replay = await redeem(body.code, newChat());
+    expect([replay.status, replay.body.code]).toEqual([404, "code_not_found"]);
+    // Несуществующий код — тот же ответ (без различения причин).
+    const missing = await redeem("ZZZZZZZZ", chat);
+    expect([missing.status, missing.body.code]).toEqual([404, "code_not_found"]);
+  });
+
+  it("новый код гасит прежний: после перевыпуска старый не гасится", async () => {
+    const who = await api.loginAdult(email("tg-code"));
+    const first = (await issue(who.accessToken)).body;
+    await valkey().del(`rl:tg-link-code:issue:${who.account.id}`);
+    const second = (await issue(who.accessToken)).body;
+    expect(second.code).not.toBe(first.code);
+    const chat = newChat();
+    const stale = await redeem(first.code, chat);
+    expect([stale.status, stale.body.code]).toEqual([404, "code_not_found"]);
+    expectStatus(await redeem(second.code, chat), 200);
+    expect((await linkRow(chat))?.["account_id"]).toBe(who.account.id);
+  });
+
+  // Своя синтетическая дуэль (как в «ежедневном задании»): этот describe идёт раньше импорта его пула,
+  // а в прогоне одних telegram-тестов корпус до сих пор пуст.
+  const CODE_UNIT = `tg-code-${RUN}`;
+  const codeSources = `sources:
+  - id: synthetic-tg-code
+    title: "Синтетический источник кода привязки"
+    url: https://example.org/tg-code
+    license: CC0
+    accessed: "2026-11-14"
+`;
+  const codeDuel = `  - id: ${CODE_UNIT}-d01
+    ru: "Синтетическая фраза кода"
+    kind: phrase
+    variants:
+      - ba: код-синтез икс
+        source:
+          ref: synthetic-tg-code
+          url: https://example.org/tg-code/1x
+          locator: строка «икс 1»
+        review: needs_native_review
+      - ba: код-синтез игрек
+        source:
+          ref: synthetic-tg-code
+          url: https://example.org/tg-code/1y
+          locator: строка «игрек 1»
+        review: needs_native_review
+`;
+
+  it("погашение переносит чат от прежнего владельца и закрывает его активную дуэль (семантика /telegram/link)", async () => {
+    const holder = await api.loginAdult(email("tg-code-holder"));
+    const chat = newChat();
+    await telegram().link(principalOf(holder), { initData: initData(chat) });
+    const dir = mkdtempSync(join(tmpdir(), "tg-code-pool"));
+    writeFileSync(join(dir, "sources.yaml"), codeSources);
+    mkdirSync(join(dir, "duels"));
+    writeFileSync(join(dir, "duels", "duels.yaml"), `unit: ${CODE_UNIT}\nduels:\n${codeDuel}`);
+    await importDuels(pool, { dir: join(dir, "duels"), sourcesFile: join(dir, "sources.yaml") });
+    const issued = await telegram().dailyDuel(String(chat), new Date());
+    expect(issued.state).toBe("issued");
+
+    const who = await api.loginAdult(email("tg-code-new"));
+    await valkey().del(`rl:tg-link-code:issue:${who.account.id}`);
+    const { body } = await issue(who.accessToken);
+    expectStatus(await redeem(body.code, chat), 200);
+    expect((await linkRow(chat))?.["account_id"]).toBe(who.account.id);
+    // Диалог прежнего владельца закрыт — голос не уйдёт от прошлого аккаунта привязки (ADR 0024).
+    const dialog = await pool.query<{ status: string }>("SELECT status::text AS status FROM telegram_dialogs WHERE dialog_id = $1", [issued.dialogId]);
+    expect(dialog.rows[0]?.status).toBe("cancelled");
+  });
+
+  it("доступ: без секрета — 401, access-токен пользователя — 403; выпуск кода анониму — 401", async () => {
+    await valkey().del(`rl:tg-link-code:issue:${adult.account.id}`);
+    const code = (await issue(adult.accessToken)).body.code;
+    expect((await api.post("/telegram/bot/chats/link-code/redeem", { body: { code, chatId: String(newChat()) } })).status).toBe(401);
+    expect((await api.post("/telegram/bot/chats/link-code/redeem", { token: student.accessToken, body: { code, chatId: String(newChat()) } })).status).toBe(403);
+    expect((await api.post("/me/telegram/link-code", { body: {} })).status).toBe(401);
+  });
+
+  it("брут-форс кодов: 10 погашений в час на чат, 11-й — 429", async () => {
+    const chat = newChat();
+    for (let i = 0; i < 10; i++) expect([(await redeem("ZZZZZZZZ", chat)).status]).toEqual([404]);
+    const limited = await redeem("ZZZZZZZZ", chat);
+    expect([limited.status, limited.body.code]).toEqual([429, "rate_limited"]);
   });
 });
 

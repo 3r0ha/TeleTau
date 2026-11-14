@@ -25,6 +25,8 @@ export class FakeApi implements TeleTauApi {
   readonly calls: string[] = [];
   due: string[] = [];
   down = false;
+  /** Одноразовые коды привязки: код → «аккаунт»; погашение удаляет код и связывает чат. */
+  readonly linkCodes = new Map<string, string>();
   /** Пул дуэлей ежедневки; три синтетических исходника по умолчанию. */
   pool: FakeDuelItem[] = [
     { sourceRu: "Синтетическая фраза 1", a: "синтез1 икс", b: "синтез1 игрек" },
@@ -43,6 +45,12 @@ export class FakeApi implements TeleTauApi {
 
   link(chatId: string, reminders: Partial<Reminders> = {}): this {
     this.links.set(chatId, { enabled: false, hour: 18, ...reminders });
+    return this;
+  }
+
+  /** Выдать код привязки (как сайт через POST /me/telegram/link-code). */
+  issueCode(code: string, accountId = "00000000-0000-4000-8000-000000000009"): this {
+    this.linkCodes.set(code, accountId);
     return this;
   }
 
@@ -69,6 +77,14 @@ export class FakeApi implements TeleTauApi {
 
   async chat(chatId: string) {
     this.check(`chat ${chatId}`);
+    return this.view(chatId);
+  }
+
+  async redeemLinkCode(chatId: string, code: string) {
+    this.check(`redeem ${chatId} ${code}`);
+    if (!this.linkCodes.has(code)) return null;
+    this.linkCodes.delete(code);
+    this.links.set(chatId, { enabled: false, hour: 18 });
     return this.view(chatId);
   }
 

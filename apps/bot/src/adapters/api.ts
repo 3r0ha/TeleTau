@@ -57,6 +57,10 @@ export function createTeleTauApi(o: ApiOptions): TeleTauApi {
     async chat(chatId) {
       return settle<ChatLink>(await client.GET("/api/v1/telegram/bot/chats/{chatId}", { params: { path: { chatId } } }), true);
     },
+    async redeemLinkCode(chatId, code) {
+      // 404 code_not_found — код не найден/истёк/погашен: не ошибка связи, а «нет такого кода» (null).
+      return settle<ChatLink>(await client.POST("/api/v1/telegram/bot/chats/link-code/redeem", { body: { code, chatId } }), true);
+    },
     async setReminders(chatId, update) {
       return settle<ChatLink>(await client.PUT("/api/v1/telegram/bot/chats/{chatId}/reminders", { params: { path: { chatId } }, body: update }), true);
     },

@@ -269,6 +269,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Вход по привязанному Telegram (Mini App без карточки)
+         * @description Mini App, чей Telegram уже привязан (`POST /telegram/link`), входит без карточки: `initData` проверяется так же
+         *     (подпись HMAC-SHA-256 токеном бота, `auth_date` не старше суток), из строки берётся только `user.id` — он же
+         *     `chat_id` личного чата. Чат ищется в привязках: найден — сессия выдаётся, как по личной карточке; нет —
+         *     404 `chat_not_linked` — клиент показывает обычный вход (карточку или «Учусь сам»). Аккаунт сотрудника —
+         *     403 `telegram_login_forbidden` (сотрудникам вход в консоль по e-mail с TOTP); заблокированный — 401
+         *     `account_blocked`, удалённый — 401 `session_revoked`. Подпись не сошлась или строка не разобрана — 401
+         *     `init_data_invalid`; `initData` старше суток — 401 `init_data_expired`; бот не настроен — 503
+         *     `telegram_unavailable`. `initData` годна 24 часа; не чаще 10 входов в час на чат.
+         */
+        post: operations["loginByTelegram"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/login-card": {
         parameters: {
             query?: never;
@@ -1424,6 +1451,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/telegram/link-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Одноразовый код привязки Telegram — взять на сайте
+         * @description Привязка без Mini App: аккаунт берёт на сайте одноразовый код (8 знаков, без похожих 0/O и 1/I) и присылает
+         *     боту командой `/start <код>`. Код живёт 10 минут, хранится в Valkey и одноразовый: выпуск нового гасит
+         *     прежний. Не чаще 1 кода в минуту на аккаунт — дальше 429. Сотрудникам код не положен — 403 (вход в консоль
+         *     по e-mail с TOTP). Сама привязка — той же upsert-семантикой, что `POST /telegram/link`.
+         */
+        post: operations["issueTelegramLinkCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/telegram/bot/chats/link-code/redeem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Погасить код привязки (служебная, для бота)
+         * @description Только для бота (`X-Service-Token`): вызывается из `/start <код>`. Код ищется в Valkey и расходуется
+         *     атомарно (нет, истёк или уже использован — 404 `code_not_found`). Привязка — той же upsert-семантикой, что
+         *     `POST /telegram/link`: чат переходит к аккаунту кода, активные дуэли прежнего владельца отменяются (ADR 0024).
+         *     Брут-форс кодов — не чаще 10 погашений в час на чат, дальше 429.
+         */
+        post: operations["redeemTelegramLinkCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/telegram/bot/chats/{chatId}": {
         parameters: {
             query?: never;
@@ -1799,9 +1872,11 @@ export interface components {
          *     (403 — голоса видны после своего голоса), `content_unavailable` (503 — контент курса не импортирован).
          *     Значения заданий (ADR 0021): `assignment_limit` (409 — у класса уже два активных задания), `assignment_exists`
          *     (409 — такое же задание уже активно).
-         *     Значения Telegram (ADR 0020): `init_data_invalid` (422 — подпись `initData` не сошлась или строка не разобрана),
-         *     `init_data_expired` (422 — `initData` старше суток), `telegram_unavailable` (503 — бот не настроен),
-         *     `chat_not_linked` (404 — чат не привязан). Ежедневное задание бота (ADR 0024): `dialog_not_found`
+         *     Значения Telegram (ADR 0020): `init_data_invalid` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`),
+         *     `init_data_expired` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`), `telegram_unavailable`
+         *     (503 — бот не настроен), `chat_not_linked` (404 — чат не привязан), `telegram_login_forbidden`
+         *     (403 — аккаунт сотрудника: вход в консоль по e-mail с TOTP, не через Telegram), `code_not_found`
+         *     (404 — код привязки не найден, истёк или уже использован). Ежедневное задание бота (ADR 0024): `dialog_not_found`
          *     (404 — диалога нет), `dialog_closed` (409 — диалог отменён или закрыт).
          *     Значения самостоятельного обучения (ADR 0022): `login_card_unavailable` (403 — личная карточка аккаунту
          *     не положена), `email_in_use` (409 — адрес уже у другого аккаунта), `email_already_set` (409),
@@ -3657,6 +3732,33 @@ export interface components {
              */
             initData: string;
         };
+        /** @description Вход по привязанному Telegram: initData проверяется, чат ищется в привязках (POST /auth/telegram) */
+        TelegramLoginRequest: {
+            /**
+             * @description `Telegram.WebApp.initData` как есть — строка запроса с подписью `hash`. Не логируется; из неё читается
+             *     только `user.id`.
+             */
+            initData: string;
+            device: components["schemas"]["DeviceInfo"];
+        };
+        /**
+         * @description Одноразовый код привязки Telegram (10 минут): ученик или взрослый берёт его на сайте и присылает боту
+         *     командой `/start <код>`. Новый код гасит прежний.
+         */
+        TelegramLinkCode: {
+            /**
+             * @description 8 знаков без похожих (без 0/O и 1/I)
+             * @example K7Q4MZ2T
+             */
+            code: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        TelegramLinkCodeRedeemRequest: {
+            /** @description Одноразовый код привязки из профиля на сайте */
+            code: string;
+            chatId: components["schemas"]["TelegramChatIdValue"];
+        };
         /** @description Привязка создана или обновлена. `chat_id` не возвращается — он не нужен вебу */
         TelegramLink: {
             reminders: components["schemas"]["TelegramReminders"];
@@ -4506,6 +4608,38 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationFailed"];
+            429: components["responses"]["TooManyRequests"];
+            503: components["responses"]["ServiceUnavailable"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    loginByTelegram: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Вход выполнен */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthSession"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             422: components["responses"]["ValidationFailed"];
             429: components["responses"]["TooManyRequests"];
             503: components["responses"]["ServiceUnavailable"];
@@ -6133,6 +6267,62 @@ export interface operations {
             404: components["responses"]["NotFound"];
             422: components["responses"]["ValidationFailed"];
             503: components["responses"]["ServiceUnavailable"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    issueTelegramLinkCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Код выдан */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramLinkCode"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            503: components["responses"]["ServiceUnavailable"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    redeemTelegramLinkCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramLinkCodeRedeemRequest"];
+            };
+        };
+        responses: {
+            /** @description Привязка установлена */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramChat"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["ValidationFailed"];
+            429: components["responses"]["TooManyRequests"];
             default: components["responses"]["Unexpected"];
         };
     };

@@ -25,6 +25,8 @@ export type DuelAnswer = { kind: "ok"; replay: boolean } | { kind: "closed" } | 
 export interface TeleTauApi {
   /** Привязка чата; null — чат не привязан. */
   chat(chatId: string): Promise<ChatLink | null>;
+  /** Погасить одноразовый код привязки (`/start <код>`); null — код не найден, истёк или уже использован. */
+  redeemLinkCode(chatId: string, code: string): Promise<ChatLink | null>;
   /** Согласие на напоминания и час по Уфе; null — чат не привязан. */
   setReminders(chatId: string, update: Schema<"TelegramRemindersUpdate">): Promise<ChatLink | null>;
   /** Удалить привязку целиком (вместе с настройками). */

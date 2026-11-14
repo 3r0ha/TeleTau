@@ -5,8 +5,9 @@ import { Operation } from "../../common/contract.js";
 import { TelegramService } from "./telegram.service.js";
 
 /**
- * Привязка чата из Mini App (вошедший ученик или взрослый) и служебные операции бота (роль service, X-Service-Token —
- * проверяет AccessControl). Тело запроса привязки (initData) не логируется: ключ `initData` маскирует фильтр логов.
+ * Привязка чата из Mini App (вошедший ученик или взрослый), одноразовый код привязки с сайта и служебные операции
+ * бота (роль service, X-Service-Token — проверяет AccessControl). Тело запроса привязки (initData) не логируется:
+ * ключ `initData` маскирует фильтр логов.
  */
 @Controller()
 export class TelegramController {
@@ -17,6 +18,22 @@ export class TelegramController {
   @Operation("linkTelegramChat")
   link(@CurrentPrincipal() principal: Principal, @Body() body: Schema<"TelegramLinkRequest">): Promise<Schema<"TelegramLink">> {
     return this.telegram.link(principal, body);
+  }
+
+  /** Одноразовый код привязки без Mini App (ADR 0020): ученик или взрослый берёт на сайте, шлёт боту /start <код>. */
+  @Post("me/telegram/link-code")
+  @HttpCode(200)
+  @Operation("issueTelegramLinkCode")
+  issueLinkCode(@CurrentPrincipal() principal: Principal): Promise<Schema<"TelegramLinkCode">> {
+    return this.telegram.issueLinkCode(principal);
+  }
+
+  /** Погашение кода привязки (бот): чат связывается с аккаунтом кода — как POST /telegram/link. */
+  @Post("telegram/bot/chats/link-code/redeem")
+  @HttpCode(200)
+  @Operation("redeemTelegramLinkCode")
+  redeemLinkCode(@Body() body: Schema<"TelegramLinkCodeRedeemRequest">): Promise<Schema<"TelegramChat">> {
+    return this.telegram.redeemLinkCode(body);
   }
 
   @Get("telegram/bot/chats/:chatId")
