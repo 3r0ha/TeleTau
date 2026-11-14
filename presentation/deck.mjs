@@ -66,6 +66,13 @@ export function deck({ icon }) {
 
   const phone = (src, cls = "") => `<div class="phone ${cls}"><img src="shots/${src}" alt=""></div>`;
   const win = (src) => `<div class="window"><div class="window__bar"><i></i><i></i><i></i></div><img src="shots/${src}" alt=""></div>`;
+  /** Полноэкранный слайд-снимок: один скрин на весь слайд, короткий заголовок, без текста — рассказ голосом. */
+  const full = (n, tag, src) => `
+<section class="slide slide--full">
+  <h2 class="title">${tag}</h2>
+  <img class="full__img" src="shots/${src}" alt="">
+  ${foot(n)}
+</section>`;
   const brand = `<div class="brand"><img src="${ART}/app-icon.webp" alt="">ТелеТау</div>`;
   const foot = (n) => `<div class="foot">${brand}<span>${n}</span></div>`;
 
@@ -85,31 +92,6 @@ export function deck({ icon }) {
   </div>
 </section>`,
 
-    // Проблема
-    (n) => `
-<section class="slide slide--center">
-  <h2 class="title">Проблема</h2>
-  <div class="stats">
-    <div class="card stat">
-      <div class="stat__num">1,09 млн</div>
-      <p class="stat__text">человек владеют башкирским языком</p>
-      <p class="stat__src">Всероссийская перепись населения</p>
-    </div>
-    <div class="card stat">
-      <div class="stat__num accent">«Уязвимый»</div>
-      <p class="stat__text">статус языка у&nbsp;ЮНЕСКО</p>
-      <p class="stat__src">Атлас языков мира под угрозой исчезновения</p>
-    </div>
-    <div class="card stat">
-      <div class="stat__num">435</div>
-      <p class="stat__text">башкирских предложений с&nbsp;переводом в&nbsp;Tatoeba, у&nbsp;татарского 101&nbsp;736</p>
-      <p class="stat__src">Tatoeba</p>
-    </div>
-  </div>
-  <div class="note">${icon("Info")}В Duolingo башкирского нет. Остальные приложения: разговорники и&nbsp;тренажёры слов.</div>
-  ${foot(n)}
-</section>`,
-
     // Архитектура
     (n) => `
 <section class="slide arch-slide">
@@ -124,14 +106,12 @@ export function deck({ icon }) {
         ${box("Android", "Kotlin, Jetpack Compose", { iconName: "AndroidLogo" })}
         ${box("Telegram", "бот на grammY, Mini App", { iconName: "TelegramLogo" })}
       </div>
-      <div class="arch__contract">${icon("FileCode")}<span><b>Контракт OpenAPI 3.1</b>, 73 операции. Клиенты для TypeScript, Swift и&nbsp;Kotlin генерируются из&nbsp;него</span></div>
       <p class="arch__label">Сервер</p>
       <div class="arch__api">
         <div class="arch__api-head"><b>API: модульный монолит</b><span>TypeScript, NestJS, Fastify</span></div>
         <div class="chips">
           ${["Вход и сессии", "Школы и классы", "Согласия", "Курс", "Уроки и повторение", "Прогресс и серия", "Лиги", "Корпус переводов", "Голоса", "Задания", "Министерство", "Модерация", "Telegram", "Аудит"].map((m) => `<span class="chip">${m}</span>`).join("")}
         </div>
-        <p class="arch__note">Модуль не обращается к чужим таблицам, это проверяет линтер</p>
       </div>
       <p class="arch__label">Данные и сервисы</p>
       <div class="arch__row arch__row--4">
@@ -180,10 +160,10 @@ export function deck({ icon }) {
 <section class="slide">
   <h2 class="title">Урок</h2>
   <div class="phones phones--row">
-    <div class="device">${phone("lesson-tiles.png", "phone--row")}<p class="caption">Сборка фразы<small>из готовых слов</small></p></div>
-    <div class="device">${phone("lesson-input.png", "phone--row")}<p class="caption">Ввод текста<small>9 башкирских букв на клавиатуре</small></p></div>
-    <div class="device">${phone("lesson-word.png", "phone--row")}<p class="caption">Новое слово<small>с записью носителя</small></p></div>
-    <div class="device">${phone("result.png", "phone--row")}<p class="caption">Итог урока<small>мёд, точность, новые слова</small></p></div>
+    ${phone("lesson-tiles.png", "phone--md")}
+    ${phone("lesson-input.png", "phone--md")}
+    ${phone("lesson-word.png", "phone--md")}
+    ${phone("result.png", "phone--md")}
   </div>
   ${foot(n)}
 </section>`,
@@ -191,16 +171,10 @@ export function deck({ icon }) {
     // Мотивация
     (n) => `
 <section class="slide">
-  <div class="split">
-    <div>
-      <h2 class="title">Мотивация</h2>
-      <ul class="points">
-        <li>${hex("streak", 84, "Fire")}<span><b>Серия дней</b> и цель дня. Заморозка серии бесплатная, две в запасе</span></li>
-        <li>${hex("honey", 84, "Trophy")}<span><b>Лига недели:</b> группы до 20 учеников, пятеро лучших переходят выше</span></li>
-        <li>${hex("green", 84, "Medal")}<span><b>12 наград</b> за уроки, серию, слова и&nbsp;голоса</span></li>
-      </ul>
-    </div>
-    <div class="phones">${phone("league.png")}${phone("awards.png")}</div>
+  <h2 class="title">Мотивация</h2>
+  <div class="phones phones--row">
+    ${phone("league.png", "phone--lg")}
+    ${phone("awards.png", "phone--lg")}
   </div>
   ${foot(n)}
 </section>`,
@@ -208,51 +182,34 @@ export function deck({ icon }) {
     // Помоги языку
     (n) => `
 <section class="slide">
-  <div class="split">
-    <div>
-      <h2 class="title">«Помоги языку»</h2>
-      <ul class="points">
-        <li>${hex("violet", 84, "Scales")}<span>В уроке ученик выбирает один из&nbsp;<b>двух переводов</b> из открытых источников</span></li>
-        <li>${hex("water", 84, "UsersThree")}<span>Голоса <b>детей, взрослых и&nbsp;учителей</b> считаются раздельно. Голос учителя весит больше</span></li>
-        <li>${hex("green", 84, "SealCheck")}<span>Принятая пара попадает в&nbsp;<b>словарь для Фонда</b> башкирского языка</span></li>
-      </ul>
-    </div>
-    <div class="phones">${phone("duel.png")}</div>
+  <h2 class="title">«Помоги языку»</h2>
+  <div class="phones phones--row">
+    ${phone("duel.png", "phone--lg")}
+    ${phone("duel-groups.png", "phone--lg")}
   </div>
   ${foot(n)}
 </section>`,
 
-    // Учитель
-    (n) => `
-<section class="slide">
-  <h2 class="title">Кабинет учителя</h2>
-  <div class="duo">
-    <div>${win("teacher-home.png")}<p class="caption">Сводка класса<small>кто занимался сегодня, задание, кто отстаёт</small></p></div>
-    <div>${win("teacher-progress.png")}<p class="caption">Прогресс по урокам<small>выгрузка в CSV и печать</small></p></div>
-  </div>
-  ${foot(n)}
-</section>`,
+    // Сайт, словарь и доска — снимки стенда, целиком на слайд
+    (n) => full(n, "Сайт на башкирском", "landing-ba.png"),
+    (n) => full(n, "Публичный словарь", "dictionary.png"),
+    (n) => full(n, "Доска почёта", "landing-board.png"),
 
-    // Министерство и Фонд
-    (n) => `
-<section class="slide">
-  <h2 class="title">Консоль министерства и&nbsp;Фонда</h2>
-  <div class="duo">
-    <div>${win("ministry.png")}<p class="caption">Республика<small>районы, школы и активность по неделям. Группы меньше 5 учеников скрыты</small></p></div>
-    <div>${win("fund.png")}<p class="caption">Словарь для Фонда<small>принятые пары с голосами, выгрузка в CSV и JSON</small></p></div>
-  </div>
-  ${foot(n)}
-</section>`,
+    // Кабинет учителя и консоль — снимки целиком
+    (n) => full(n, "Кабинет учителя", "teacher-home.png"),
+    (n) => full(n, "Прогресс класса", "teacher-progress.png"),
+    (n) => full(n, "Министерство", "ministry.png"),
+    (n) => full(n, "Фонд языка", "fund.png"),
 
-    // Платформы
+    // Мобильные приложения
     (n) => `
 <section class="slide">
-  <h2 class="title">Платформы</h2>
-  <div class="devices">
-    <div class="device">${win("web-desktop.png")}<p class="caption">Сайт</p></div>
-    <div class="device">${phone("ios-trail.png", "phone--sm")}<p class="caption">iOS</p></div>
-    <div class="device">${phone("android-lesson.png", "phone--sm")}<p class="caption">Android</p></div>
-    <div class="device">${phone("miniapp.png", "phone--sm")}<p class="caption">Telegram</p></div>
+  <h2 class="title">Мобильные приложения</h2>
+  <div class="phones phones--row">
+    ${phone("android-welcome.png", "phone--md")}
+    ${phone("android-board.png", "phone--md")}
+    ${phone("ios-trail.png", "phone--md")}
+    ${phone("miniapp.png", "phone--md")}
   </div>
   ${foot(n)}
 </section>`,
@@ -264,9 +221,9 @@ export function deck({ icon }) {
   <div class="numbers">
     <div class="number">${hex("honey", 104, "MapTrifold")}<div><div class="number__val">6 мест</div><p class="number__text">от Уфы до Сабантуя</p></div></div>
     <div class="number">${hex("water", 104, "BookOpen")}<div><div class="number__val">35 уроков</div><p class="number__text">281 упражнение</p></div></div>
-    <div class="number">${hex("violet", 104, "Scales")}<div><div class="number__val">39 пар</div><p class="number__text">в «Помоги языку»</p></div></div>
+    <div class="number">${hex("violet", 104, "Scales")}<div><div class="number__val">86 пар</div><p class="number__text">в открытом словаре: баш—рус 36, баш—каз 50</p></div></div>
     <div class="number">${hex("green", 104, "SpeakerHigh")}<div><div class="number__val">35 слов</div><p class="number__text">с записью носителя</p></div></div>
-    <div class="number">${hex("streak", 104, "Medal")}<div><div class="number__val">12 наград</div><p class="number__text">за серию, слова, голоса</p></div></div>
+    <div class="number">${hex("streak", 104, "Translate")}<div><div class="number__val">3 языка</div><p class="number__text">интерфейса: русский, башкирский, казахский</p></div></div>
     <div class="number">${hex("honey", 104, "DeviceMobile")}<div><div class="number__val">4 платформы</div><p class="number__text">сайт, iOS, Android, Telegram</p></div></div>
   </div>
   ${foot(n)}

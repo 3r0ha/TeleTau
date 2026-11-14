@@ -177,6 +177,34 @@ img {
   border-radius: 46px;
 }
 
+.phone--md {
+  width: 350px;
+}
+
+.phone--lg {
+  width: 370px;
+}
+
+/* Полноэкранный снимок: один скрин на слайд, вписан целиком (фон слайда и приложения один). */
+.slide--full {
+  display: flex;
+  flex-direction: column;
+  padding: 40px 0 0;
+}
+
+.slide--full .title {
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+.slide--full .full__img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
 .window {
   position: relative;
   overflow: hidden;
@@ -532,6 +560,21 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Только телефоны (без окна): центрируем ряд, иначе space-between раскидает их по краям. */
+.devices--phones {
+  justify-content: center;
+  gap: var(--tt-space-s1200);
+}
+
+/* Доска почёта: широкое окно сайта + телефон приложения, выровнены по низу подписей. */
+.board {
+  display: flex;
+  gap: var(--tt-space-s1200);
+  align-items: flex-end;
+  justify-content: center;
+  margin-top: 88px;
 }
 
 /* ───── цифры ───── */
