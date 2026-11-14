@@ -7,13 +7,15 @@
 // 5. Для каждого файла с башкирским текстом есть строка в docs/native-review-queue.md (путь файла в обратных кавычках).
 // Плюс целостность, которую схема не выражает: id уникальны, уроки и узлы тропы совпадают, ссылки дуэлей существуют,
 // new_words — точные копии строк урока, варианты дуэли различаются после toComparable, в русских полях нет башкирских букв.
+// Плюс синтез озвучки (content/audio/tts/<слаг>.ogg, scripts/tts): слаг — ttsSlug(normalize(ba)) строки курса
+// без записи носителя; файл-сирота или слаг строки с записью — ошибка (запись всегда предпочтительнее синтеза).
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { parseDocument } from "yaml";
-import { audioCopyPath, audioWord, isLatinWord, latinMatches } from "./lib/audio.mjs";
+import { audioCopyPath, audioWord, isLatinWord, latinMatches, ttsSlug } from "./lib/audio.mjs";
 import { isInvokedDirectly } from "./lib/invoked.mjs";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -161,11 +163,16 @@ export async function checkContent(root = REPO) {
   const lessonFiles = [];
   const duelFiles = [];
   const audioFiles = new Set();
+  const ttsFiles = new Set();
   for (const f of files) {
     const r = rel(root, f);
     if (r === "content/sources.yaml") continue;
     if (/^content\/audio\/[^/]+\.(ogg|oga|opus|mp3|wav|flac|webm)$/.test(r)) {
       audioFiles.add(r);
+      continue;
+    }
+    if (/^content\/audio\/tts\/[^/]+\.ogg$/.test(r)) {
+      ttsFiles.add(r);
       continue;
     }
     if (/^content\/course\/[^/]+\/course\.yaml$/.test(r)) courseFiles.push(f);
@@ -175,7 +182,7 @@ export async function checkContent(root = REPO) {
     else if (/^content\/corpus\/duels\/[^/]+\.yaml$/.test(r)) duelFiles.push(f);
     else
       errors.push(
-        `${r}: неизвестный файл контента (ожидаются course.yaml, unit.yaml, lessons/*.yaml, corpus/duels/*.yaml, audio/<слово>.<ogg|mp3|…>)`,
+        `${r}: неизвестный файл контента (ожидаются course.yaml, unit.yaml, lessons/*.yaml, corpus/duels/*.yaml, audio/<слово>.<ogg|mp3|…>, audio/tts/<слаг>.ogg)`,
       );
   }
   if (!courseFiles.length) errors.push("content/course/*/course.yaml: ни одного курса");
@@ -208,9 +215,12 @@ export async function checkContent(root = REPO) {
     usedAudio.add(local);
   }
 
-  /** Общие проверки башкирских строк, ссылок на источники и русских полей файла. */
+  /**
+   * Общие проверки башкирских строк, ссылок на источники и русских полей файла. courseSlugs (только для файлов
+   * курса) наполняется слагами строк без записи носителя — по ним проверяются TTS-копии content/audio/tts.
+   */
   const filesWithBa = [];
-  function checkStrings(file, data) {
+  function checkStrings(file, data, courseSlugs) {
     const r = rel(root, file);
     let baCount = 0;
     walk(data, "", (obj, path) => {
@@ -249,6 +259,11 @@ export async function checkContent(root = REPO) {
           errors.push(`${at}: normalize(raw «${obj.raw}») = «${normalize(obj.raw)}» ≠ ba`);
       }
       if (obj.audio?.url) checkAudio(at, obj.ba, obj.audio);
+      if (courseSlugs && obj.review !== "native_rejected") {
+        const slug = ttsSlug(obj.ba);
+        if (obj.audio?.url) courseSlugs.native.add(slug);
+        else courseSlugs.want.add(slug);
+      }
     });
     stats.baStrings += baCount;
     if (baCount) filesWithBa.push(r);
@@ -286,12 +301,13 @@ export async function checkContent(root = REPO) {
   const exerciseIds = new Set();
   const nodeIds = new Set();
   const lessonsSeen = new Set();
+  const courseSlugs = { want: new Set(), native: new Set() }; // слаги строк курса без записи / с записью
   for (const cf of courseFiles) {
     stats.files++;
     const course = readYaml(cf, errors, root);
     if (!course) continue;
     errors.push(...schemaErrors(ajv, "course.schema.json", course, cf, root));
-    checkStrings(cf, course);
+    checkStrings(cf, course, courseSlugs);
     const courseDir = dirname(cf);
     const cr = rel(root, cf);
     if (course.id && basename(courseDir) !== course.id)
@@ -316,7 +332,7 @@ export async function checkContent(root = REPO) {
       const unit = readYaml(uf, errors, root);
       if (!unit) continue;
       errors.push(...schemaErrors(ajv, "unit.schema.json", unit, uf, root));
-      checkStrings(uf, unit);
+      checkStrings(uf, unit, courseSlugs);
       if (unit.id !== unitId) errors.push(`${ur}: id «${unit.id}» ≠ «${unitId}»`);
       if (unit.order !== ui + 1)
         errors.push(`${ur}: order ${unit.order}, а в course.units юнит стоит ${ui + 1}-м`);
@@ -349,7 +365,7 @@ export async function checkContent(root = REPO) {
         if (!lesson) continue;
         stats.lessons++;
         errors.push(...schemaErrors(ajv, "lesson.schema.json", lesson, lf, root));
-        checkStrings(lf, lesson);
+        checkStrings(lf, lesson, courseSlugs);
         if (lesson.id !== basename(lf, ".yaml"))
           errors.push(`${lr}: id «${lesson.id}» не совпадает с именем файла`);
         if (lesson.unit !== unitId) errors.push(`${lr}: unit «${lesson.unit}» ≠ «${unitId}»`);
@@ -455,6 +471,22 @@ export async function checkContent(root = REPO) {
   for (const a of audioFiles)
     if (!usedAudio.has(a)) errors.push(`${a}: запись не привязана ни к одной строке (поле audio)`);
   stats.audio = usedAudio.size;
+
+  // --- синтез озвучки строк без записи (content/audio/tts; scripts/tts/README.md)
+  if (ttsFiles.size) usedSources.add("silero-tts-v5-cis");
+  for (const r of ttsFiles) {
+    const slug = basename(r).replace(/\.ogg$/i, "");
+    if (!/^[а-яёәөүғҡңҙҫһ0-9-]+$/.test(slug))
+      errors.push(`${r}: имя — слаг строки (ttsSlug): строчные башкирские буквы, цифры и «-»`);
+    else if (courseSlugs.native.has(slug))
+      errors.push(`${r}: у строки «${slug}» есть запись носителя — синтез не подменяет запись`);
+    else if (!courseSlugs.want.has(slug))
+      errors.push(`${r}: слаг «${slug}» не соответствует строке курса без записи`);
+  }
+  for (const slug of courseSlugs.want)
+    if (!ttsFiles.has(`content/audio/tts/${slug}.ogg`))
+      warnings.push(`content/audio/tts/${slug}.ogg: строки «${slug}» нет синтеза — в уроке не будет «Послушать»`);
+  stats.tts = ttsFiles.size;
 
   for (const id of sourceIds)
     if (!usedSources.has(id))

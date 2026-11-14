@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { questGoal, questProgress, QUEST_STUDENT_CAP } from "../src/modules/competition/quest.js";
 import type { DuelCard } from "../src/modules/consensus/index.js";
 import type { CourseContent, ExerciseContent } from "../src/modules/content/index.js";
-import { buildCourse, readContent, tileWords, type CourseFiles, type ExerciseRow } from "../src/modules/content/content-import.js";
+import { AUDIO_M4A_TYPE, AUDIO_OGG_TYPE, buildCourse, readContent, tileWords, ttsSlug, type AudioValue, type CourseFiles, type ExerciseRow } from "../src/modules/content/content-import.js";
 import { buildPlan, checkAnswer, lessonDuelsAllowed, LESSONS_BEFORE_DUELS, LETTER_PANEL, shouldRetry, shuffle, type PlanItem } from "../src/modules/learning/run-plan.js";
 import { buildTrail, lessonsPassed } from "../src/modules/learning/trail.js";
 
@@ -77,6 +77,42 @@ describe("content:import — разбор курса (content-import.ts)", () =>
     const changed = structuredClone(f);
     ((changed.lessons["t-l2"] as { title_ru: string }).title_ru = "Другое");
     expect(buildCourse(changed).hash).not.toBe(bundle.hash);
+    const ttsAdded = structuredClone(f);
+    ttsAdded.tts = { "слаг-без-строки": "0123456789abcdef" }; // сам состав tts меняет хеш, строк не задевая
+    expect(buildCourse(ttsAdded).hash).not.toBe(bundle.hash);
+  });
+
+  it("синтез — фолбэк строки без записи: слаг ttsSlug, источник silero-tts-v5-cis", () => {
+    expect(ttsSlug("«Сәләм, дус!»")).toBe("сәләм-дус");
+    expect(ttsSlug("  Хәйерле иртә!")).toBe("хәйерле-иртә");
+    const f = structuredClone(files());
+    (f.sources as { sources: unknown[] }).sources.push({
+      id: "silero-tts-v5-cis",
+      title: "Силеро: синтез речи (тест)",
+      url: "https://example.org/silero",
+      license: "MIT",
+    });
+    f.tts = { "пиҡол-тумә": "0123456789abcdef" };
+    const b = buildCourse(f);
+    const tiles = b.exercises.find((e) => e.id === "t-l1-tiles")!;
+    const accepted = (tiles.answerKey as { kind: "accepted"; accepted: { audio?: AudioValue }[] }).accepted[0]!;
+    expect(accepted.audio).toEqual({
+      url: "/audio/0123456789abcdef.m4a",
+      files: [
+        { url: "/audio/0123456789abcdef.m4a", type: AUDIO_M4A_TYPE },
+        { url: "/audio/0123456789abcdef.ogg", type: AUDIO_OGG_TYPE },
+      ],
+      source: { title: "Силеро: синтез речи (тест)", url: "https://example.org/silero", license: "MIT" },
+    });
+    // слово словаря наследует озвучку строки урока
+    expect(b.words.find((w) => w.text === "Пиҡол тумә!")?.audio?.url).toBe("/audio/0123456789abcdef.m4a");
+    // строки без слага в tts остаются без озвучки
+    const choice = b.exercises.find((e) => e.id === "t-l1-choice")!;
+    expect((choice.payload as { prompt: { audio?: unknown } }).prompt.audio).toBeUndefined();
+    // источника синтеза нет в sources.yaml — ошибка импорта
+    const noSource = structuredClone(files());
+    noSource.tts = { "пиҡол-тумә": "0123456789abcdef" };
+    expect(() => buildCourse(noSource)).toThrow(/silero-tts-v5-cis/);
   });
 
   it("ошибки формата: нет файла урока открытого юнита, повтор id упражнения, неизвестный источник", () => {
@@ -103,6 +139,19 @@ describe("content:import — разбор курса (content-import.ts)", () =>
         expect(b.exercises.some((e) => e.lessonId === l.id), l.id).toBe(true);
       }
     }
+  });
+
+  it.skipIf(readContent().length === 0)("демо-контент: запись носителя не подменяется синтезом, синтез помечен источником", () => {
+    const words = readContent().flatMap((f) => buildCourse(f).words);
+    const native = words.filter((w) => w.audio && !w.audio.source.title.includes("Силеро"));
+    const synth = words.filter((w) => w.audio?.source.title.includes("Силеро"));
+    expect(native.length).toBeGreaterThan(0);
+    expect(synth.length).toBeGreaterThan(0);
+    for (const w of synth) expect(w.audio?.source.license).toContain("MIT");
+    // слова с записью носителя не подменены: мәктәп — запись Lingua Libre (ea19…), не синтез
+    const mektep = words.find((w) => w.text === "мәктәп")?.audio;
+    expect(mektep?.url).toBe("/audio/ea19a019193a9d21.m4a");
+    expect(mektep?.source.title).not.toContain("Силеро");
   });
 
   it("нет каталога course/ — курсов нет", () => {

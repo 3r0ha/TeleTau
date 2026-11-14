@@ -101,3 +101,13 @@ sources:
       Источник статьи на странице — bashkortostan450.ru; на неё же ссылается статья ba.wikipedia об этикете.
       Используется только для русского толкования прощаний («до свидания»): башкирские слова там набраны
       без башкирских букв, поэтому сами строки взяты из ba.wikipedia.
+  - id: silero-tts-v5-cis
+    title: "Силеро: синтез речи башкирского (модель v5_cis_base_nostress, диктор bak_aigul)"
+    kind: other
+    url: https://github.com/snakers4/silero-models
+    license: MIT (LICENSE_CIS для моделей v5_cis_base)
+    accessed: "2026-11-14"
+    note: >-
+      Синтез, а не запись носителя: озвучка строк курса без записи из Wikimedia Commons/Lingua Libre.
+      Файлы — content/audio/tts/<слаг>.ogg (Ogg Vorbis, 24 кГц), генерация — scripts/tts; разрешение
+      владельца от 14.11.2026 (правило 6 о «не придумывать» — про текст, синтез помечен этим источником).

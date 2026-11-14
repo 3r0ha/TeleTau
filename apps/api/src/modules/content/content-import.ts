@@ -79,6 +79,23 @@ export function audioCopyName(url: string): string {
 /** Id копии записи — как у scripts/prepare-audio.mjs: первые 16 hex SHA-256 содержимого. */
 export const audioCopyId = (bytes: Uint8Array): string => createHash("sha256").update(bytes).digest("hex").slice(0, 16);
 
+/**
+ * Слаг башкирской строки — имя синтезированной копии в content/audio/tts (TTS ≠ запись носителя):
+ * NFC → нижний регистр → краевая пунктуация снята → пробелы в «-» → прочая пунктуация удалена.
+ * Тот же алгоритм — ttsSlug в scripts/lib/audio.mjs; слаги собирает scripts/tts/collect-slugs.mjs.
+ */
+export function ttsSlug(text: string): string {
+  return text
+    .normalize("NFC")
+    .toLowerCase()
+    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
+    .replace(/\s+/gu, "-")
+    .replace(/[^\p{L}\p{N}-]/gu, "");
+}
+
+/** Источник синтезированной озвучки в content/sources.yaml (модель Silero v5_cis_base_nostress, диктор bak_aigul). */
+const TTS_SOURCE_REF = "silero-tts-v5-cis";
+
 /** Локальная запись по id копии: AAC — основной адрес, затем Ogg (oggType — audioOggType). */
 export function localAudio(id: string, source: Citation, oggType: string = AUDIO_OGG_TYPE): AudioValue {
   const m4a = `/audio/${id}.m4a`;
@@ -157,7 +174,7 @@ export interface ExerciseRow {
 export interface CourseBundle {
   courseId: string;
   version: number;
-  /** SHA-256 канонического JSON всех файлов курса и реестра источников. */
+  /** SHA-256 канонического JSON всех файлов курса, реестра источников и состава синтеза (tts). */
   hash: string;
   units: UnitRow[];
   lessons: LessonRow[];
@@ -176,10 +193,12 @@ export interface CourseFiles {
   sources: unknown;
   /** Копии записей в <root>/audio: имя файла → id (audioCopyId). Нет копии записи из контента — ошибка импорта. */
   audio?: Record<string, string>;
+  /** Синтез в <root>/audio/tts: слаг строки (ttsSlug) → id (audioCopyId). Фолбэк для строк без записи носителя. */
+  tts?: Record<string, string>;
 }
 
 /** Реестр источников и копии записей — то, на что ссылаются строки курса. */
-type Sources = Map<string, SourceInfo> & { audio?: ReadonlyMap<string, string> };
+type Sources = Map<string, SourceInfo> & { audio?: ReadonlyMap<string, string>; tts?: ReadonlyMap<string, string> };
 
 // ── разбор ──
 
@@ -266,14 +285,34 @@ function audioOf(raw: unknown, sources: Sources, where: string): AudioValue | un
   return localAudio(id, license ? { ...source, license } : source, audioOggType(name));
 }
 
+/**
+ * Синтезированная озвучка строки (фолбэк, когда записи носителя нет): копия content/audio/tts/<слаг>.ogg
+ * (Silero, scripts/tts). Происхождение честно видно в источнике (silero-tts-v5-cis в sources.yaml):
+ * синтез — не запись носителя. Строки с записью носителя синтезом не подменяются.
+ */
+function ttsAudio(text: string, sources: Sources, where: string): AudioValue | undefined {
+  const id = sources.tts?.get(ttsSlug(text));
+  if (id === undefined) return undefined;
+  const src = sources.get(TTS_SOURCE_REF);
+  if (!src) throw new ContentError(`${where}: нет источника «${TTS_SOURCE_REF}» в sources.yaml (синтез озвучки)`);
+  const source: Citation = {
+    title: src.title,
+    ...(src.url ? { url: src.url } : {}),
+    ...(src.license ? { license: src.license } : {}),
+  };
+  return localAudio(id, source, AUDIO_OGG_TYPE);
+}
+
 function baText(raw: unknown, sources: Sources, where: string): BaParsed {
   const o = obj(raw, where);
   const review = str(o, "review", where);
   if (!REVIEWS.has(review)) throw new ContentError(`${where}: неизвестный статус проверки «${review}»`);
   const ru = optStr(o, "ru");
-  const audio = audioOf(o["audio"], sources, `${where}.audio`);
+  const text = normalize(str(o, "ba", where));
+  // Запись носителя (content/audio); если её нет — синтезированная копия (content/audio/tts), помеченный фолбэк.
+  const audio = audioOf(o["audio"], sources, `${where}.audio`) ?? ttsAudio(text, sources, where);
   return {
-    text: normalize(str(o, "ba", where)),
+    text,
     review: review as ReviewFlag,
     source: citation(o["source"], sources, where),
     ...(ru ? { ru } : {}),
@@ -317,7 +356,10 @@ function canonical(v: unknown): unknown {
 
 /** Строки таблиц из разобранных файлов курса. */
 export function buildCourse(files: CourseFiles): CourseBundle {
-  const sources: Sources = Object.assign(readSources(files.sources), { audio: new Map(Object.entries(files.audio ?? {})) });
+  const sources: Sources = Object.assign(readSources(files.sources), {
+    audio: new Map(Object.entries(files.audio ?? {})),
+    tts: new Map(Object.entries(files.tts ?? {})),
+  });
   const course = obj(files.course, "course.yaml");
   const courseId = str(course, "id", "course.yaml");
   const version = int(course, "version", "course.yaml");
@@ -434,7 +476,8 @@ export function buildCourse(files: CourseFiles): CourseBundle {
   });
 
   const hash = createHash("sha256")
-    .update(JSON.stringify(canonical({ course: files.course, units: files.units, lessons: files.lessons, sources: files.sources })))
+    // tts входит в хеш: состав синтеза меняет курс (кнопка «Послушать»), без смены version импорт не сработает
+    .update(JSON.stringify(canonical({ course: files.course, units: files.units, lessons: files.lessons, sources: files.sources, tts: files.tts ?? {} })))
     .digest("hex");
   return { courseId, version, hash, units, lessons, exercises, words: [...words.values()], skipped };
 }
@@ -546,6 +589,7 @@ const DEFAULT_ROOT = fileURLToPath(new URL("../../../../../content/", import.met
 
 const readYaml = (path: string): unknown => parse(readFileSync(path, "utf8"));
 const isDir = (p: string) => existsSync(p) && statSync(p).isDirectory();
+const isFile = (p: string) => existsSync(p) && statSync(p).isFile();
 
 /** Все курсы каталога `<root>/course/*` (у каждого — course.yaml) с реестром `<root>/sources.yaml`. */
 export function readContent(root: string = DEFAULT_ROOT): CourseFiles[] {
@@ -559,7 +603,14 @@ export function readContent(root: string = DEFAULT_ROOT): CourseFiles[] {
   const sources = readYaml(join(root, "sources.yaml"));
   const audioDir = join(root, "audio");
   const audio: Record<string, string> = {};
-  if (isDir(audioDir)) for (const f of readdirSync(audioDir).sort()) audio[f.normalize("NFC")] = audioCopyId(readFileSync(join(audioDir, f)));
+  // каталог tts внутри audio — отдельная карта ниже, файлы не смешиваются
+  if (isDir(audioDir))
+    for (const f of readdirSync(audioDir).sort())
+      if (isFile(join(audioDir, f))) audio[f.normalize("NFC")] = audioCopyId(readFileSync(join(audioDir, f)));
+  const ttsDir = join(root, "audio/tts");
+  const tts: Record<string, string> = {};
+  if (isDir(ttsDir))
+    for (const f of readdirSync(ttsDir).sort()) if (/\.ogg$/i.test(f)) tts[f.replace(/\.ogg$/i, "").normalize("NFC")] = audioCopyId(readFileSync(join(ttsDir, f)));
   return dirs.map((dir) => {
     const course = readYaml(join(dir, "course.yaml"));
     const units: Record<string, unknown> = {};
@@ -575,7 +626,7 @@ export function readContent(root: string = DEFAULT_ROOT): CourseFiles[] {
       if (!isDir(lessonDir)) continue;
       for (const f of readdirSync(lessonDir).sort()) if (f.endsWith(".yaml")) lessons[f.slice(0, -".yaml".length)] = readYaml(join(lessonDir, f));
     }
-    return { course, units, lessons, sources, audio };
+    return { course, units, lessons, sources, audio, tts };
   });
 }
 

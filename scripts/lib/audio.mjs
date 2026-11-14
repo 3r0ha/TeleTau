@@ -46,6 +46,21 @@ export function audioCopyPath(url) {
  */
 export const isOggOriginal = (copy) => /\.(ogg|oga)$/i.test(copy);
 
+/**
+ * Слаг башкирской строки — имя TTS-копии в content/audio/tts (синтез речи, не запись носителя):
+ * NFC → нижний регистр → краевая пунктуация снята → пробелы в «-» → прочая пунктуация удалена
+ * («Сәләм, дус!» → «сәләм-дус»). Тот же алгоритм — ttsSlug в content-import.ts; слаги строк курса собирает
+ * scripts/tts/collect-slugs.mjs, файлы синтезирует scripts/tts/generate.py, проверяет check-content.mjs.
+ */
+export function ttsSlug(text) {
+  return text
+    .normalize("NFC")
+    .toLowerCase()
+    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
+    .replace(/\s+/gu, "-")
+    .replace(/[^\p{L}\p{N}-]/gu, "");
+}
+
 /** Все ссылки audio.url в разобранном YAML (любая вложенность). */
 export function audioUrls(data, out = new Set()) {
   if (Array.isArray(data)) for (const x of data) audioUrls(x, out);

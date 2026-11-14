@@ -1,13 +1,15 @@
 // Озвучка со своего сайта: веб отдаёт записи произношения сам, без upload.wikimedia.org (на показе может не быть
 // интернета; чужой сайт — лишняя зависимость). Источник — копии записей Commons в content/audio (их SHA-1 сверены
-// с Commons, content/sources.yaml); ссылки на записи — поле audio.url в контенте курса.
+// с Commons, content/sources.yaml); ссылки на записи — поле audio.url в контенте курса. Строкам без записи
+// носителя озвучку синтезирует scripts/tts (content/audio/tts/<слаг>.ogg, Silero) — импорт курса подставляет
+// её как фолбэк, помеченный источником silero-tts-v5-cis.
 //
 //   node scripts/prepare-audio.mjs          — разложить записи в apps/web/public/audio и записать манифест
 //   node scripts/prepare-audio.mjs --check  — проверить, что всё на месте и актуально (конвертер не нужен)
 //
 // Для каждой записи — два файла с именем по содержимому (первые 16 hex SHA-256 копии): <id>.m4a — AAC, его играют все
-// платформы (iOS, Android, Safari), и <id>.ogg — для Ogg-оригинала (Ogg Vorbis, как на Commons) побайтная копия, для
-// записи в другом формате (WAV Lingua Libre) — Ogg Opus. Кодирует встроенный в macOS afconvert (Opus — в CAF, контейнер
+// платформы (iOS, Android, Safari), и <id>.ogg — для Ogg-оригинала (Vorbis, как на Commons, и TTS-копий из
+// content/audio/tts) побайтная копия, для записи в другом формате (WAV Lingua Libre) — Ogg Opus. Кодирует встроенный в macOS afconvert (Opus — в CAF, контейнер
 // Ogg собирает scripts/lib/ogg-opus.mjs) или ffmpeg, если он запускается; без конвертера файлы не создаются — --check
 // это покажет.
 // Пути к копиям отдаёт API (AudioClip.url = /audio/<id>.m4a, files — оба файла): тот же id считает импорт курса
@@ -37,7 +39,7 @@ function yamlFiles(dir) {
   return out;
 }
 
-/** Записи курса: ссылка Commons → копия в content/audio и id по её содержимому. */
+/** Озвучка курса: записи Commons (url → копия в content/audio) и синтез (content/audio/tts/<слаг>.ogg). */
 export function collectClips(root = REPO) {
   const urls = new Set();
   for (const f of yamlFiles(join(root, "content/course"))) audioUrls(parse(readFileSync(f, "utf8")), urls);
@@ -49,6 +51,14 @@ export function collectClips(root = REPO) {
     const id = createHash("sha256").update(readFileSync(abs)).digest("hex").slice(0, 16);
     clips.push({ url, copy, id });
   }
+  // Синтез: имя файла — слаг строки курса без записи (scripts/tts); слаг проверяет check-content.mjs.
+  const ttsDir = join(root, "content/audio/tts");
+  if (existsSync(ttsDir))
+    for (const name of readdirSync(ttsDir).sort()) {
+      if (!/\.ogg$/i.test(name)) continue;
+      const copy = `content/audio/tts/${name}`;
+      clips.push({ url: null, copy, id: createHash("sha256").update(readFileSync(join(root, copy))).digest("hex").slice(0, 16) });
+    }
   return clips;
 }
 

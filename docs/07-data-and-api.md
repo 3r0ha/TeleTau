@@ -140,6 +140,12 @@ words                         course_id, id (ключ слова), text, review,
 daily_missions                account_id, date, cells jsonb, completed_cells, finished_at
 ```
 
+> **Озвучка (M2 → день 5).** Записи носителей (Commons / Lingua Libre, 35) лежат в `content/audio`,
+> синтез башкирского (Silero `v5_cis_base_nostress`, 172 строки без записи, MIT) — в `content/audio/tts`;
+> копии обоих — `apps/web/public/audio` (`prepare-audio.mjs`, AAC m4a + Ogg). В `words.audio`/упражнениях —
+> путь на своём сайте (`/audio/<id>.m4a`) и `source` с происхождением: синтез помечен источником
+> `silero-tts-v5-cis` (sources.yaml) — синтез ≠ запись носителя; запись всегда предпочтительнее синтеза.
+
 ### 1.3. Мотивация и соревнование
 
 ```
