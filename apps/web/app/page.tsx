@@ -7,6 +7,8 @@ import createClient from "openapi-fetch";
 import { Brand, ButtonLink, hexPath, illustrations } from "@teletau/ui";
 import type { paths, Schema } from "@teletau/contracts";
 import { API_BASE_URL } from "@teletau/session/config";
+import { getT } from "../i18n/server";
+import type { T } from "../i18n/core";
 import { plural } from "./_components/learn/format";
 import { androidApkUrl } from "./_components/landing/apk";
 import { HeroActions, StartButton } from "./_components/landing/HeroActions";
@@ -20,7 +22,7 @@ const LEGAL_VERSION = "2026-11-01";
 
 type Tone = "honey" | "green" | "water" | "violet";
 
-/** Места тропы — по-русски, с темой юнита (content/course/ba-ru/units/*). */
+/** Места тропы — русские строки служат ключами перевода (тема юнита, content/course/ba-ru/units/*); t() — при рендере. */
 const PLACES: { name: string; topic: string; art: StaticImageData; tone: Tone }[] = [
   { name: "Уфа", topic: "Знакомство", art: img.placeUfa, tone: "honey" },
   { name: "Шульган-Таш", topic: "Семья", art: img.placeShulgantash, tone: "green" },
@@ -73,9 +75,6 @@ async function loadLeaderboard(period: BoardPeriod): Promise<Schema<"PublicLeade
 /** Число с разрядами по-русски: 1234 → «1 234». */
 const fmt = (n: number) => n.toLocaleString("ru-RU");
 
-/** Уроков по-русски: 1 урок, 2 урока, 5 уроков (plural из learn/format — чистая функция, безопасна на сервере). */
-const lessonsRu = (n: number) => plural(n, ["урок", "урока", "уроков"]);
-
 /** Строка доски почёта: место, группа (школа или класс) и уроки за период — без имён и ников (правило 13). */
 type BoardRow = { rank: number; name: string; sub: string; lessons: number };
 
@@ -119,7 +118,7 @@ function Stage({ tone }: { tone: Tone }) {
 }
 
 /** Группа доски («Школы» или «Классы») — компактный топ-3: строка на место, из счётчиков — только уроки. */
-function BoardTop({ title, rows }: { title: string; rows: BoardRow[] }) {
+function BoardTop({ title, rows, t }: { title: string; rows: BoardRow[]; t: T }) {
   return (
     <div className="lp-board__top">
       <h3 className="lp-board__top-title">{title}</h3>
@@ -133,7 +132,7 @@ function BoardTop({ title, rows }: { title: string; rows: BoardRow[] }) {
                 <span className="lp-board__sub">{r.sub}</span>
               </span>
               <span className="lp-board__metric">
-                {fmt(r.lessons)} {lessonsRu(r.lessons)}
+                {fmt(r.lessons)} {plural(r.lessons, [t("урок"), t("урока"), t("уроков")])}
               </span>
             </li>
           ))}
@@ -161,11 +160,11 @@ function Feature({ id, title, text, art, flip, children }: { id: string; title: 
   );
 }
 
-function AndroidButton({ href }: { href: string }) {
+function AndroidButton({ href, t }: { href: string; t: T }) {
   return (
     <a className="lp-store" href={href}>
       <AndroidLogo weight="fill" aria-hidden />
-      Скачать для Android
+      {t("Скачать для Android")}
     </a>
   );
 }
@@ -178,6 +177,7 @@ function AndroidButton({ href }: { href: string }) {
  */
 export default async function StartPage({ searchParams }: { searchParams: Promise<{ period?: string | string[] }> }) {
   await connection();
+  const t = await getT();
   const apk = androidApkUrl(process.env.ANDROID_APK_URL);
   const hero = illustrations.heroLanding;
   // Период доски из адреса; невалидное или потерянное значение — неделя (контракт getPublicLeaderboard).
@@ -200,7 +200,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 sizes="(min-width: 1024px) 760px, calc(100vw - 32px)"
                 width={hero.width}
                 height={hero.height}
-                alt="Пчела с планшетом летит над рекой и холмами"
+                alt={t("Пчела с планшетом летит над рекой и холмами")}
                 fetchPriority="high"
               />
               {/* Пчела «произносит» фразу дня (ТЗ §3.6): башкирский вариант крупно, русский исходник — подписью.
@@ -219,7 +219,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             </div>
             <div className="lp-hero__text">
               <h1 id="lp-title" className="lp-hero__title">
-                Учи башкирский&nbsp;— легко и&nbsp;каждый день
+                {t("Учи башкирский\u00A0— легко и\u00A0каждый день")}
               </h1>
               <HeroActions />
             </div>
@@ -231,25 +231,25 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             <div className="lp-wrap lp-board__in">
               <div className="lp-board__head">
                 <h2 id="lp-board-title" className="lp-board__title">
-                  Доска почёта
+                  {t("Доска почёта")}
                 </h2>
                 {/* Период — обычные ссылки на ту же страницу: серверный компонент, без состояния. */}
-                <nav className="lp-board__periods" aria-label="Период доски почёта">
+                <nav className="lp-board__periods" aria-label={t("Период доски почёта")}>
                   {BOARD_PERIODS.map((p) => (
                     <Link key={p.value} className="lp-board__period" href={`/?period=${p.value}`} aria-current={p.value === period ? "page" : undefined}>
-                      {p.label}
+                      {t(p.label)}
                     </Link>
                   ))}
                 </nav>
               </div>
               {/* На витрине — только призёры; полная доска живёт в приложении, экран /board. */}
               <div className="lp-board__tops">
-                {board.schools.length > 0 && <BoardTop title="Школы" rows={board.schools.slice(0, 3).map(schoolRow)} />}
-                {board.classes.length > 0 && <BoardTop title="Классы" rows={board.classes.slice(0, 3).map(classRow)} />}
+                {board.schools.length > 0 && <BoardTop title={t("Школы")} rows={board.schools.slice(0, 3).map(schoolRow)} t={t} />}
+                {board.classes.length > 0 && <BoardTop title={t("Классы")} rows={board.classes.slice(0, 3).map(classRow)} t={t} />}
               </div>
               <p className="lp-board__all">
                 <Link className="lp-board__all-link" href="/board">
-                  Вся доска — в приложении
+                  {t("Вся доска — в приложении")}
                 </Link>
               </p>
             </div>
@@ -258,7 +258,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
 
         <section className="lp-places" aria-labelledby="lp-places-title">
           <h2 id="lp-places-title" className="tt-visually-hidden">
-            Места тропы
+            {t("Места тропы")}
           </h2>
           <ul className="lp-wrap lp-places__list">
             {PLACES.map((p) => (
@@ -270,8 +270,8 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                   </svg>
                   <Pic src={p.art} className="lp-cell__art" />
                 </span>
-                <b className="lp-place__name">{p.name}</b>
-                <span className="lp-place__topic">{p.topic}</span>
+                <b className="lp-place__name">{t(p.name)}</b>
+                <span className="lp-place__topic">{t(p.topic)}</span>
               </li>
             ))}
           </ul>
@@ -279,8 +279,8 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
 
         <Feature
           id="lp-lessons"
-          title="Мёд и серия"
-          text="Короткие уроки с пчелой: за каждый — мёд, за дни подряд — серия."
+          title={t("Мёд и серия")}
+          text={t("Короткие уроки с пчелой: за каждый — мёд, за дни подряд — серия.")}
           art={
             <div className="lp-art">
               <Stage tone="honey" />
@@ -292,13 +292,13 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
         <Feature
           id="lp-trail"
           flip
-          title="Путь по родным местам"
-          text="От Уфы до Сабантуя. На каждом месте — новая тема и новые слова."
+          title={t("Путь по родным местам")}
+          text={t("От Уфы до Сабантуя. На каждом месте — новая тема и новые слова.")}
           art={
             <div className="lp-art lp-art--phone">
               <Stage tone="green" />
               <Pic src={img.artSpruce} className="lp-float lp-float--spruce" />
-              <Phone src={img.screenTrail} alt="Экран тропы: место Уфа и уроки" />
+              <Phone src={img.screenTrail} alt={t("Экран тропы: место Уфа и уроки")} />
               <Pic src={img.artBoat} className="lp-float lp-float--boat" />
             </div>
           }
@@ -306,8 +306,8 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
 
         <Feature
           id="lp-help"
-          title="Помоги языку"
-          text="Выбирай перевод, который звучит лучше. Из голосов складывается словарь башкирского."
+          title={t("Помоги языку")}
+          text={t("Выбирай перевод, который звучит лучше. Из голосов складывается словарь башкирского.")}
           art={
             <div className="lp-art">
               <Stage tone="violet" />
@@ -320,13 +320,13 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
         <Feature
           id="lp-league"
           flip
-          title="Лига и класс"
-          text="Каждую неделю — новая лига. С классом проходите общий квест."
+          title={t("Лига и класс")}
+          text={t("Каждую неделю — новая лига. С классом проходите общий квест.")}
           art={
             <div className="lp-art lp-art--phone">
               <Stage tone="water" />
               <Pic src={img.artBadgeClover} className="lp-float lp-float--clover" />
-              <Phone src={img.screenLeague} alt="Экран лиги: таблица недели" />
+              <Phone src={img.screenLeague} alt={t("Экран лиги: таблица недели")} />
               <Pic src={img.artBadgeLinden} className="lp-float lp-float--linden" />
               <Pic src={img.artBadgeFireweed} className="lp-float lp-float--fireweed" />
             </div>
@@ -343,24 +343,24 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             </div>
             <div className="lp-row__text">
               <h2 id="lp-school" className="lp-h2">
-                Для школ
+                {t("Для школ")}
               </h2>
               <ul className="lp-checks">
                 <li>
                   <Check weight="bold" aria-hidden />
-                  Класс входит по карточкам
+                  {t("Класс входит по карточкам")}
                 </li>
                 <li>
                   <Check weight="bold" aria-hidden />
-                  Задания на неделю
+                  {t("Задания на неделю")}
                 </li>
                 <li>
                   <Check weight="bold" aria-hidden />
-                  Видно, кто занимался
+                  {t("Видно, кто занимался")}
                 </li>
               </ul>
               <ButtonLink href="/teacher/login?as=teacher" variant="secondary" icon={<ChalkboardTeacher weight="fill" aria-hidden />} className="lp-row__cta">
-                Кабинет учителя
+                {t("Кабинет учителя")}
               </ButtonLink>
             </div>
           </div>
@@ -372,15 +372,15 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
               <div className="lp-art lp-art--anywhere">
                 <Stage tone="honey" />
                 <Pic src={img.artAnywhere} className="lp-art__main lp-art__main--anywhere" />
-                <Phone src={img.screenResult} alt="Экран итога урока: мёд и точность" className="lp-phone--side" />
+                <Phone src={img.screenResult} alt={t("Экран итога урока: мёд и точность")} className="lp-phone--side" />
               </div>
             </div>
             <div className="lp-row__text">
               <h2 id="lp-apps" className="lp-h2">
-                Учись где удобно
+                {t("Учись где удобно")}
               </h2>
-              <p className="lp-lead">На компьютере, планшете и телефоне.</p>
-              {apk ? <AndroidButton href={apk} /> : null}
+              <p className="lp-lead">{t("На компьютере, планшете и телефоне.")}</p>
+              {apk ? <AndroidButton href={apk} t={t} /> : null}
             </div>
           </div>
         </section>
@@ -390,7 +390,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             <Pic src={img.artBeeFly} className="lp-final__bee lp-final__bee--fly" />
             <div className="lp-final__text">
               <h2 id="lp-final" className="lp-final__title">
-                Первый урок&nbsp;— пять минут
+                {t("Первый урок\u00A0— пять минут")}
               </h2>
               <StartButton />
             </div>
@@ -401,29 +401,29 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
 
       <footer className="lp-foot">
         <div className="lp-wrap">
-          <nav className="lp-foot__cols" aria-label="Ссылки">
+          <nav className="lp-foot__cols" aria-label={t("Ссылки")}>
             <div className="lp-foot__col">
-              <h2 className="lp-foot__title">Ученикам</h2>
+              <h2 className="lp-foot__title">{t("Ученикам")}</h2>
               <ul>
                 <li>
-                  <Link href="/self">Начать</Link>
+                  <Link href="/self">{t("Начать")}</Link>
                 </li>
                 <li>
-                  <Link href="/student">Войти по карточке</Link>
+                  <Link href="/student">{t("Войти по карточке")}</Link>
                 </li>
               </ul>
             </div>
             <div className="lp-foot__col">
-              <h2 className="lp-foot__title">Учителям</h2>
+              <h2 className="lp-foot__title">{t("Учителям")}</h2>
               <ul>
                 <li>
-                  <Link href="/teacher/login?as=teacher">Кабинет учителя</Link>
+                  <Link href="/teacher/login?as=teacher">{t("Кабинет учителя")}</Link>
                 </li>
               </ul>
             </div>
             {apk ? (
               <div className="lp-foot__col">
-                <h2 className="lp-foot__title">Приложение</h2>
+                <h2 className="lp-foot__title">{t("Приложение")}</h2>
                 <ul>
                   <li>
                     <a href={apk}>Android</a>
@@ -432,13 +432,13 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
               </div>
             ) : null}
             <div className="lp-foot__col">
-              <h2 className="lp-foot__title">Документы</h2>
+              <h2 className="lp-foot__title">{t("Документы")}</h2>
               <ul>
                 <li>
-                  <Link href={`/legal/terms/${LEGAL_VERSION}`}>Условия</Link>
+                  <Link href={`/legal/terms/${LEGAL_VERSION}`}>{t("Условия")}</Link>
                 </li>
                 <li>
-                  <Link href={`/legal/privacy/${LEGAL_VERSION}`}>Конфиденциальность</Link>
+                  <Link href={`/legal/privacy/${LEGAL_VERSION}`}>{t("Конфиденциальность")}</Link>
                 </li>
               </ul>
             </div>

@@ -6,6 +6,7 @@ import { Button, ChoiceGroup, HexAvatar, InlineAlert, LinkButton, Skeleton, Skel
 import { api, unwrap } from "@teletau/session/api";
 import { describeProblem } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
+import { useT } from "../../i18n/client";
 
 export interface PickedNickname {
   id: string;
@@ -29,6 +30,7 @@ export function NicknamePicker({
 }) {
   const [round, setRound] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
+  const t = useT();
   const suggestions = useResource(() => unwrap(api.GET("/api/v1/nicknames/suggest", { params: { query: { count: 3 } } })), [round]);
   const items = suggestions.data?.items ?? [];
   const chosen = items.find((n) => n.id === picked);
@@ -36,7 +38,7 @@ export function NicknamePicker({
   return (
     <div className="tt-stack">
       {suggestions.loading && !items.length ? (
-        <SkeletonGroup label="Подбираем ники" className="tt-stack tt-stack--tight">
+        <SkeletonGroup label={t("Подбираем ники")} className="tt-stack tt-stack--tight">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} height={60} radius="button" />
           ))}
@@ -46,12 +48,12 @@ export function NicknamePicker({
         <div className="tt-stack tt-stack--tight">
           <InlineAlert tone="danger">{describeProblem(suggestions.error, "child")}</InlineAlert>
           <Button variant="secondary" icon={<ArrowsClockwise weight="bold" />} loading={suggestions.loading} onClick={suggestions.reload}>
-            Попробовать снова
+            {t("Попробовать снова")}
           </Button>
         </div>
       ) : (
         <ChoiceGroup
-          legend="Варианты ника"
+          legend={t("Варианты ника")}
           hideLegend
           value={picked}
           onChange={setPicked}
@@ -67,7 +69,7 @@ export function NicknamePicker({
           }}
           disabled={suggestions.loading || submitting}
         >
-          Другие варианты
+          {t("Другие варианты")}
         </LinkButton>
       ) : null}
       {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}

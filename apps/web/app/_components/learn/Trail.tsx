@@ -4,6 +4,8 @@ import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState } from "r
 import { ArrowsClockwise, Barbell, BookOpen, ChalkboardTeacher, ChatCircleText, Check, CheckCircle, CircleNotch, LockSimple, Scales, Star, Trophy } from "@phosphor-icons/react/ssr";
 import { Bee, Button, EmptyState, HexNode, ProgressBar, SvgBee, illustrations, useReducedMotion } from "@teletau/ui";
 import { serverNow } from "@teletau/session/clock";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 import { assignmentTitle, dueForStudent, ufaDay } from "../assignments";
 import type { Course, CourseNode, CourseUnit, NodeIcon } from "./model";
 import { plural } from "./format";
@@ -15,6 +17,7 @@ const rowTop = (i: number, cur: number) => i * NODE_ROW + (cur >= 0 && i >= cur 
 
 const ICONS: Record<NodeIcon, typeof Star> = { star: Star, "chat-circle-text": ChatCircleText, "book-open": BookOpen, barbell: Barbell };
 const ICON_CYCLE: NodeIcon[] = ["star", "chat-circle-text", "book-open", "barbell"];
+/** Русские подписи состояний узла — ключи перевода, t() применяется при рендере (nodeLabel). */
 const STATE_NAMES: Record<CourseNode["state"], string> = { done: "пройден", current: "следующий", open: "доступен", locked: "закрыт" };
 
 function nodeIcon(node: CourseNode, i: number) {
@@ -25,11 +28,11 @@ function nodeIcon(node: CourseNode, i: number) {
   return <Icon weight="fill" />;
 }
 
-function nodeLabel(node: CourseNode): string {
-  const what = node.kind === "lesson" ? `Урок «${node.titleRu}»` : node.titleRu;
-  if (node.state === "current") return `${what} — начать`;
+function nodeLabel(node: CourseNode, t: T): string {
+  const what = node.kind === "lesson" ? t("Урок «{title}»", { title: node.titleRu }) : node.titleRu;
+  if (node.state === "current") return t("{what} — начать", { what });
   // Засчитан сданным испытанием для перехода (docs/02 §2) — выглядит как пройденный.
-  return `${what}, ${node.passedByTest ? "пройден испытанием" : STATE_NAMES[node.state]}`;
+  return t("{what}, {state}", { what, state: node.passedByTest ? t("пройден испытанием") : t(STATE_NAMES[node.state]) });
 }
 
 /** Текущее место экспедиции: юнит с текущим узлом, иначе первый незаконченный открытый, иначе последний открытый. */
@@ -69,12 +72,12 @@ interface TrailProps {
 const HINT_MS = 6000;
 
 /** Подсказка у закрытого узла: какой урок пройти сначала. */
-function lockedHint(course: Course, nodeId: string): string {
+function lockedHint(course: Course, nodeId: string, t: T): string {
   const all = course.units.flatMap((u) => u.nodes);
   const i = all.findIndex((n) => n.id === nodeId);
   const before = i > 0 ? all[i - 1] : undefined;
-  if (before && (before.state === "current" || before.state === "open")) return `Сначала пройди «${before.titleRu}»`;
-  return "Сначала пройди предыдущие уроки";
+  if (before && (before.state === "current" || before.state === "open")) return t("Сначала пройди «{title}»", { title: before.titleRu });
+  return t("Сначала пройди предыдущие уроки");
 }
 
 /** Полоса у верхнего края окна, под панелью со счётчиками: здесь липкий баннер юнита. Пока в ней плашки или шапка места, баннер не нужен. */
@@ -92,6 +95,7 @@ const overlapsTopZone = (el: HTMLElement | null | undefined) => {
  * показывает место, мимо которого прокручиваем.
  */
 export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, onJump }: TrailProps) {
+  const t = useT();
   const unit = currentUnit(course);
   const next = nextNode(course);
   const reduced = useReducedMotion();
@@ -99,10 +103,10 @@ export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, 
   const [hint, setHint] = useState<{ id: string; text: string } | null>(null);
   useEffect(() => {
     if (!hint) return;
-    const t = setTimeout(() => setHint(null), HINT_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setHint(null), HINT_MS);
+    return () => clearTimeout(timer);
   }, [hint]);
-  const onLocked = (node: CourseNode) => setHint({ id: node.id, text: lockedHint(course, node.id) });
+  const onLocked = (node: CourseNode) => setHint({ id: node.id, text: lockedHint(course, node.id, t) });
 
   const placeIndex = unit ? course.units.findIndex((u) => u.id === unit.id) : -1;
   const unitRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -163,14 +167,14 @@ export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, 
         {pills}
         <EmptyState
           art="emptyAllDone"
-          title="На сегодня всё"
+          title={t("На сегодня всё")}
           actions={
             <Button block variant={reviewDue > 0 && onReview ? "secondary" : "primary"} onClick={() => setShowTrail(true)}>
-              На тропу
+              {t("На тропу")}
             </Button>
           }
         >
-          Все уроки пройдены. Новые скоро появятся.
+          {t("Все уроки пройдены. Новые скоро появятся.")}
         </EmptyState>
       </>
     );
@@ -204,7 +208,7 @@ export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, 
                   else unitRefs.current.delete(u.id);
                 }}
                 className={[`unit unit--${placeArt(u.place.slug).tone}`, here && "unit--here", here && u.nodes[0]?.state === "current" && "unit--start"].filter(Boolean).join(" ")}
-                aria-label={`Место ${u.order} · ${u.place.titleRu} · ${u.topicRu}`}
+                aria-label={t("Место {order} · {place} · {topic}", { order: u.order, place: u.place.titleRu, topic: u.topicRu })}
               >
                 {here ? <UnitHead ref={headRef} unit={u} /> : <PlaceSign unit={u} />}
                 {u.jump && onJump ? <JumpOffer unit={u} onJump={onJump} busy={busy === u.id} /> : null}
@@ -217,7 +221,7 @@ export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, 
           <div className="path-end">
             <Bee frame="beeFly" width={120} float />
             <p className="path-end__title">
-              Впереди ещё {ahead} {plural(ahead, ["место", "места", "мест"])}
+              {t("Впереди ещё {n} {word}", { n: ahead, word: plural(ahead, [t("место"), t("места"), t("мест")]) })}
             </p>
           </div>
         ) : null}
@@ -228,6 +232,7 @@ export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, 
 
 /** Шапка текущего места (вместо вывески): картинка-полоса справа, название, тема и сколько пройдено — две строки и полоса. */
 function UnitHead({ unit, ref }: { unit: CourseUnit; ref: React.Ref<HTMLElement> }) {
+  const t = useT();
   const art = placeArt(unit.place.slug);
   const done = unit.nodes.filter((n) => n.state === "done").length;
   const total = unit.nodes.length;
@@ -246,11 +251,11 @@ function UnitHead({ unit, ref }: { unit: CourseUnit; ref: React.Ref<HTMLElement>
           )}
         </h1>
         <p className="unit-head__topic">
-          {unit.topicRu} · <span aria-hidden>{`${done} из ${total}`}</span>
+          {unit.topicRu} · <span aria-hidden>{t("{done} из {total}", { done, total })}</span>
         </p>
       </div>
       {/* Сколько пройдено — тонкой медовой полосой по нижнему краю шапки. */}
-      <ProgressBar value={done} max={total} label="Пройдено на этом месте" valueText={`${done} из ${total}`} />
+      <ProgressBar value={done} max={total} label={t("Пройдено на этом месте")} valueText={t("{done} из {total}", { done, total })} />
     </header>
   );
 }
@@ -275,6 +280,7 @@ function TodayPills({
   onReview?: () => void;
   ref: React.Ref<HTMLDivElement>;
 }) {
+  const t = useT();
   const list = [...(course.assignments ?? [])].sort((a, b) => Number(a.done) - Number(b.done));
   const review = reviewDue > 0 && onReview;
   if (!list.length && !review) return null;
@@ -291,9 +297,9 @@ function TodayPills({
                 <CheckCircle weight="fill" />
               </span>
               <span className="today-pill__text">
-                <span className="today-pill__kicker">Задание учителя выполнено </span>
+                <span className="today-pill__kicker">{t("Задание учителя выполнено")} </span>
                 <span className="today-pill__title" id={titleId}>
-                  {assignmentTitle(a)}
+                  {assignmentTitle(a, t)}
                 </span>
               </span>
             </section>
@@ -306,19 +312,20 @@ function TodayPills({
             key={a.id}
             tone="task"
             icon={<ChalkboardTeacher weight="fill" />}
-            kicker={`Задание учителя · ${dueForStudent(a.dueOn, today)}`}
-            title={assignmentTitle(a)}
+            kicker={t("Задание учителя · {due}", { due: dueForStudent(a.dueOn, today, t) })}
+            title={assignmentTitle(a, t)}
             onClick={start}
             busy={Boolean(node && busy === node.id)}
           />
         );
       })}
-      {review ? <TodayPill tone="review" icon={<ArrowsClockwise weight="bold" />} title={`Повторить ${reviewDue} ${plural(reviewDue, ["слово", "слова", "слов"])}`} onClick={onReview} /> : null}
+      {review ? <TodayPill tone="review" icon={<ArrowsClockwise weight="bold" />} title={t("Повторить {n} {word}", { n: reviewDue, word: plural(reviewDue, [t("слово"), t("слова"), t("слов")]) })} onClick={onReview} /> : null}
     </div>
   );
 }
 
 function TodayPill({ tone, icon, kicker, title, onClick, busy }: { tone: "task" | "review"; icon: React.ReactNode; kicker?: string; title: string; onClick?: () => void; busy?: boolean }) {
+  const t = useT();
   const body = (
     <>
       <span className="today-pill__icon" aria-hidden>
@@ -337,13 +344,14 @@ function TodayPill({ tone, icon, kicker, title, onClick, busy }: { tone: "task" 
     <button type="button" className={`${cls} today-pill--action`} onClick={onClick} disabled={busy} aria-busy={busy || undefined}>
       {body}{" "}
       <span className="today-pill__go">
-        {busy ? <CircleNotch weight="bold" className="tt-spin" aria-hidden /> : "Начать"}
+        {busy ? <CircleNotch weight="bold" className="tt-spin" aria-hidden /> : t("Начать")}
       </span>
     </button>
   );
 }
 
 function PlaceSign({ unit }: { unit: CourseUnit }) {
+  const t = useT();
   const art = placeArt(unit.place.slug);
   const sign = art.sign ? illustrations[art.sign] : undefined;
   const locked = unit.state === "locked";
@@ -354,8 +362,8 @@ function PlaceSign({ unit }: { unit: CourseUnit }) {
       <div className="place-sign__text">
         <span className="place-sign__chip">
           {locked ? <LockSimple weight="fill" aria-hidden /> : allDone ? <Check weight="bold" aria-hidden /> : null}
-          Место {unit.order}
-          {locked ? <span className="tt-visually-hidden">, закрыто</span> : null}
+          {t("Место {order}", { order: unit.order })}
+          {locked ? <span className="tt-visually-hidden">{`, ${t("закрыто")}`}</span> : null}
         </span>
         <h2 className="place-sign__name">
           <PlaceName place={unit.place} />
@@ -383,6 +391,7 @@ function UnitTrack({
   onLocked: (node: CourseNode) => void;
   hint: { id: string; text: string } | null;
 }) {
+  const t = useT();
   return (
     <div className="track">
       <TrackArt unit={unit} withBee={withBee} />
@@ -394,14 +403,14 @@ function UnitTrack({
               <div className={["track__node", `track__node--o${i % 8}`, hint?.id === node.id && "track__node--nope"].filter(Boolean).join(" ")} data-node={node.id}>
                 {node.state === "current" ? (
                   <span className="track__bubble" aria-hidden>
-                    Начать
+                    {t("Начать")}
                   </span>
                 ) : null}
                 <HexNode
                   state={node.state}
                   tone={tone}
                   icon={nodeIcon(node, i)}
-                  label={nodeLabel(node)}
+                  label={nodeLabel(node, t)}
                   sealed={sealed === node.id}
                   onClick={node.state === "locked" ? () => onLocked(node) : busy ? undefined : () => onStart(node)}
                 />

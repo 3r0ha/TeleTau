@@ -3,6 +3,7 @@
 import type { Ref } from "react";
 import { Scales } from "@phosphor-icons/react/ssr";
 import { AnswerOptions, Chip, Illustration, type AnswerOptionItem } from "@teletau/ui";
+import { useT } from "../../../i18n/client";
 import { useDigitKeys } from "./keys";
 import type { DuelChoice } from "./model";
 
@@ -40,28 +41,29 @@ const CHOICES: DuelChoice[] = ["a", "b", "both", "skip"];
  * Компонент не знает, кто голосует: ученик в уроке (POST /lesson-runs/{runId}/attempts) или учитель в разделе
  * «Помогите языку» (POST /corpus/judgments) — кнопку «Отдать голос» и лист после голоса рисует экран.
  */
-export function Duel({ sourceRu, a, b, value, onChange, disabled, keyboard, headingAs: Heading = "h1", headingRef, chipLabel = "Помоги языку", art = true }: DuelProps) {
+export function Duel({ sourceRu, a, b, value, onChange, disabled, keyboard, headingAs: Heading = "h1", headingRef, chipLabel, art = true }: DuelProps) {
+  const t = useT();
   useDigitKeys(4, (i) => onChange(CHOICES[i]!), Boolean(keyboard && !disabled));
   const options: AnswerOptionItem<DuelChoice>[] = [
     { value: "a", mark: "A", shortcut: "1", label: a, lang: "ba" },
     { value: "b", mark: "B", shortcut: "2", label: b, lang: "ba" },
-    { value: "both", look: "pill", shortcut: "3", label: "Оба подходят" },
-    { value: "skip", look: "pill", shortcut: "4", label: "Не знаю" },
+    { value: "both", look: "pill", shortcut: "3", label: t("Оба подходят") },
+    { value: "skip", look: "pill", shortcut: "4", label: t("Не знаю") },
   ];
   return (
     <div className="duel">
       {art ? <Illustration name="sceneDuel" width={118} className="duel__art" /> : null}
       <Chip tone="violet" icon={<Scales weight="fill" aria-hidden />}>
-        {chipLabel}
+        {chipLabel ?? t("Помоги языку")}
       </Chip>
       <Heading ref={headingRef} tabIndex={-1} className="task-title tt-step-heading">
-        Какой перевод лучше?
+        {t("Какой перевод лучше?")}
       </Heading>
       <div className="duel__source">
-        <small>По-русски</small>
+        <small>{t("По-русски")}</small>
         <p>{sourceRu}</p>
       </div>
-      <AnswerOptions label="Варианты перевода" tone="violet" options={options} value={value} onChange={onChange} disabled={disabled} />
+      <AnswerOptions label={t("Варианты перевода")} tone="violet" options={options} value={value} onChange={onChange} disabled={disabled} />
     </div>
   );
 }

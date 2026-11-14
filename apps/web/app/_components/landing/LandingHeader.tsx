@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { CaretDown, EnvelopeSimple, QrCode } from "@phosphor-icons/react/ssr";
 import { Brand, ThemeToggleButton, buttonClass } from "@teletau/ui";
+import { useT } from "../../../i18n/client";
+import { LanguageSwitcher } from "../LanguageSwitcher";
 
 /** «Войти»: раскрывающийся список из двух ссылок. Закрывается по Esc, щелчку мимо и уходу фокуса. */
 function SignInMenu() {
@@ -11,6 +13,7 @@ function SignInMenu() {
   const box = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const menuId = useId();
+  const t = useT();
 
   useEffect(() => {
     if (!open) return;
@@ -46,24 +49,24 @@ function SignInMenu() {
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
       >
-        Войти
+        {t("Войти")}
         <CaretDown weight="bold" aria-hidden />
       </button>
       <div id={menuId} className="lp-signin__menu" hidden={!open}>
         <Link href="/student" className="lp-signin__item">
           <QrCode weight="bold" aria-hidden />
-          По карточке
+          {t("По карточке")}
         </Link>
         <Link href="/teacher/login" className="lp-signin__item">
           <EnvelopeSimple weight="bold" aria-hidden />
-          По почте
+          {t("По почте")}
         </Link>
       </div>
     </div>
   );
 }
 
-/** Шапка стартовой страницы: логотип, тема, «Войти». Липкая; после прокрутки — тоньше и с границей снизу. */
+/** Шапка стартовой страницы: логотип, тема, языки, «Войти». Липкая; после прокрутки — тоньше и с границей снизу. */
 export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -79,6 +82,7 @@ export function LandingHeader() {
         <Brand />
         <div className="lp-head__end">
           <ThemeToggleButton />
+          <LanguageSwitcher compact />
           <SignInMenu />
         </div>
       </div>

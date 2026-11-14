@@ -5,6 +5,7 @@ import type { Icon } from "@phosphor-icons/react";
 import { BookOpen, Books, Fire, FlagBanner, Footprints, MapPin, Scales, SealCheck, Star, Target } from "@phosphor-icons/react/ssr";
 import { Card, Dialog, ProgressBar, hexPath } from "@teletau/ui";
 import { AfterScreen, useScreenSound } from "./AfterLesson";
+import { useT } from "../../../i18n/client";
 import type { Achievement, LessonSummary, MyAchievements } from "./model";
 import "./achievements.css";
 
@@ -96,15 +97,16 @@ function MiniBar({ value, max }: { value: number; max: number }) {
  * подробностями: что сделать и когда получена.
  */
 export function AchievementsCard({ data }: { data: MyAchievements }) {
+  const t = useT();
   const [open, setOpen] = useState<Achievement | null>(null);
   return (
     <Card as="section" className="tab-card awards" aria-labelledby="awards-title">
       <div className="awards__head">
         <h2 className="tt-card__title" id="awards-title">
-          Награды
+          {t("Награды")}
         </h2>
         <span className="awards__count">
-          {data.earned} из {data.total}
+          {t("{n} из {total}", { n: data.earned, total: data.total })}
         </span>
       </div>
       <ul className="awards__grid">
@@ -116,18 +118,18 @@ export function AchievementsCard({ data }: { data: MyAchievements }) {
               <span className="award__name">{a.titleRu}</span>
               {a.earnedOn ? (
                 <span className="award__meta">
-                  <span className="tt-visually-hidden">Получена </span>
+                  <span className="tt-visually-hidden">{t("Получена")} </span>
                   {dayLong(a.earnedOn)}
                 </span>
               ) : a.target > 1 ? (
                 <>
                   <MiniBar value={a.progress} max={a.target} />
                   <span className="award__meta">
-                    {a.progress} из {a.target}
+                    {t("{n} из {total}", { n: a.progress, total: a.target })}
                   </span>
                 </>
               ) : (
-                <span className="tt-visually-hidden">Ещё не получена</span>
+                <span className="tt-visually-hidden">{t("Ещё не получена")}</span>
               )}
             </button>
           </li>
@@ -139,9 +141,9 @@ export function AchievementsCard({ data }: { data: MyAchievements }) {
             <AchievementBadge achievement={open} size="medium" />
             <p className="award-sheet__text">{open.descriptionRu}</p>
             {open.earnedOn ? (
-              <p className="award-sheet__done">Получена {dayLong(open.earnedOn)}</p>
+              <p className="award-sheet__done">{t("Получена {date}", { date: dayLong(open.earnedOn) })}</p>
             ) : open.target > 1 ? (
-              <ProgressBar value={open.progress} max={open.target} label={open.titleRu} valueText={`${open.progress} из ${open.target}`} showValue />
+              <ProgressBar value={open.progress} max={open.target} label={open.titleRu} valueText={t("{n} из {total}", { n: open.progress, total: open.target })} showValue />
             ) : null}
           </div>
         ) : null}
@@ -155,6 +157,7 @@ export function AchievementsCard({ data }: { data: MyAchievements }) {
  * Несколько наград за урок — все на одном экране.
  */
 export function NewAchievementScreen({ summary, onContinue }: { summary: LessonSummary; onContinue: () => void }) {
+  const t = useT();
   const list = summary.newAchievements ?? [];
   useScreenSound("levelUp");
   const single = list.length === 1 ? list[0] : undefined;
@@ -162,11 +165,11 @@ export function NewAchievementScreen({ summary, onContinue }: { summary: LessonS
     <AfterScreen
       visual={single ? <AchievementBadge achievement={single} size="hero" rise /> : null}
       confetti
-      action="Дальше"
+      action={t("Дальше")}
       onAction={onContinue}
     >
       <h1 className="after__title" tabIndex={-1}>
-        {single ? "Новая награда!" : "Новые награды!"}
+        {single ? t("Новая награда!") : t("Новые награды!")}
       </h1>
       {single ? (
         <p className="after__lead award-new__name">{single.titleRu}</p>

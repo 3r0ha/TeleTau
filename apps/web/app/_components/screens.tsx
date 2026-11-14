@@ -8,6 +8,7 @@ import { FOLD_MAP } from "@teletau/bashkir-text";
 import { Button, ButtonLink, EmptyState, IconButton, LinkButton, Skeleton, SkeletonGroup, TopBar } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem, isNetworkError, type Audience } from "@teletau/session/problem";
+import { useT } from "../../i18n/client";
 
 /** Каркас экрана: верхняя панель + основная область (id="main" — цель ссылки «К основному содержимому»). */
 export function Screen({
@@ -35,16 +36,19 @@ export function Screen({
 }
 
 /** Кнопка «Назад» в верхней панели: на конкретный адрес (надёжнее истории при входе по ссылке из QR). */
-export function BackLink({ href, label = "Назад" }: { href: string; label?: string }) {
+export function BackLink({ href, label }: { href: string; label?: string }) {
+  const t = useT();
+  const text = label ?? t("Назад");
   return (
-    <Link href={href} className="tt-icon-btn" aria-label={label} title={label}>
+    <Link href={href} className="tt-icon-btn" aria-label={text} title={text}>
       <ArrowLeft weight="bold" />
     </Link>
   );
 }
 
-export function BackButton({ onClick, label = "Назад" }: { onClick: () => void; label?: string }) {
-  return <IconButton label={label} icon={<ArrowLeft weight="bold" />} onClick={onClick} />;
+export function BackButton({ onClick, label }: { onClick: () => void; label?: string }) {
+  const t = useT();
+  return <IconButton label={label ?? t("Назад")} icon={<ArrowLeft weight="bold" />} onClick={onClick} />;
 }
 
 export function SimpleTop({ back, start, title, end, wide }: { back?: string; start?: ReactNode; title?: ReactNode; end?: ReactNode; wide?: boolean }) {
@@ -57,6 +61,7 @@ export function SimpleTop({ back, start, title, end, wide }: { back?: string; st
  */
 export function SignOutAction({ onBeforeLogout, to = "/" }: { onBeforeLogout?: () => void; to?: string }) {
   const router = useRouter();
+  const t = useT();
   const [busy, setBusy] = useState(false);
   return (
     <LinkButton
@@ -70,15 +75,16 @@ export function SignOutAction({ onBeforeLogout, to = "/" }: { onBeforeLogout?: (
         router.replace(to);
       }}
     >
-      Выйти
+      {t("Выйти")}
     </LinkButton>
   );
 }
 
 /** Скелетон экрана: заголовок, текст и блоки — пока данные грузятся. */
-export function LoadingBlock({ rows = 3, label = "Загружаем" }: { rows?: number; label?: string }) {
+export function LoadingBlock({ rows = 3, label }: { rows?: number; label?: string }) {
+  const t = useT();
   return (
-    <SkeletonGroup label={label} className="tt-stack">
+    <SkeletonGroup label={label ?? t("Загружаем")} className="tt-stack">
       <Skeleton width="60%" height={30} />
       <Skeleton width="85%" height={16} />
       {Array.from({ length: rows }, (_, i) => (
@@ -93,35 +99,36 @@ export function LoadingBlock({ rows = 3, label = "Загружаем" }: { rows?
  * Действие — повторить.
  */
 export function LoadError({ error, onRetry, audience = "adult", home }: { error: unknown; onRetry: () => void; audience?: Audience; home?: string }) {
+  const t = useT();
   const you = audience === "child";
   if (isNetworkError(error)) {
     return (
       <EmptyState
         art="emptyOffline"
-        title="Нет связи"
+        title={t("Нет связи")}
         actions={
           <Button block onClick={onRetry}>
-            Попробовать снова
+            {t("Попробовать снова")}
           </Button>
         }
       >
-        {you ? "Проверь интернет." : "Проверьте подключение к интернету. Как только сеть вернётся, всё загрузится."}
+        {you ? t("Проверь интернет.") : t("Проверьте подключение к интернету. Как только сеть вернётся, всё загрузится.")}
       </EmptyState>
     );
   }
   return (
     <EmptyState
       art="emptyError"
-      title="Что-то пошло не так"
+      title={t("Что-то пошло не так")}
       role="alert"
       actions={
         <>
           <Button block onClick={onRetry}>
-            Попробовать снова
+            {t("Попробовать снова")}
           </Button>
           {home ? (
             <ButtonLink href={home} variant="secondary" block>
-              На главную
+              {t("На главную")}
             </ButtonLink>
           ) : null}
         </>

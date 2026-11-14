@@ -9,6 +9,7 @@ import { describeProblem } from "@teletau/session/problem";
 import { useResource, useSession } from "@teletau/session/react";
 import { assignmentTitle, dueForStudent, ufaDay } from "../assignments";
 import { ClassTitle } from "../screens";
+import { useT } from "../../../i18n/client";
 import { learnApi } from "./api";
 import { plural, questTask, TIER_NAMES, weekdayShort } from "./format";
 import type { ClassHive, Course, CourseNode, LeagueStanding, MyProgress, StreakDay } from "./model";
@@ -56,10 +57,11 @@ export function StudentRail({ tab, course: givenCourse, progress: givenProgress,
 
   const ref = useRef<HTMLElement>(null);
   useStickyRail(ref, on);
+  const t = useT();
 
   if (!on) return null;
   return (
-    <aside ref={ref} className="tt-shell__rail rail" aria-label="Мой день">
+    <aside ref={ref} className="tt-shell__rail rail" aria-label={t("Мой день")}>
       {progress ? (
         <>
           <RailStats progress={progress} />
@@ -83,11 +85,12 @@ export function StudentRail({ tab, course: givenCourse, progress: givenProgress,
 
 /** Карточка колонки не загрузилась: тихо исчезать нельзя — объясняем и даём обновить. */
 function RailError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  const t = useT();
   return (
     <div className="tt-stack tt-stack--tight">
       <InlineAlert tone="danger">{describeProblem(error, "child")}</InlineAlert>
       <Button small variant="secondary" onClick={onRetry}>
-        Обновить
+        {t("Обновить")}
       </Button>
     </div>
   );
@@ -116,24 +119,25 @@ function useStickyRail(ref: React.RefObject<HTMLElement | null>, on: boolean) {
 
 /** Счётчики, как в шапке тропы на телефоне: серия, мёд, значок лиги. */
 function RailStats({ progress }: { progress: MyProgress }) {
+  const t = useT();
   const streak = progress.streak.current;
   const honey = progress.honey.total;
   const tier = progress.league?.tier;
   return (
-    <ul className="rail-stats" aria-label="Счётчики">
+    <ul className="rail-stats" aria-label={t("Счётчики")}>
       <li className={["rail-stat", "rail-stat--streak", streak > 0 && "rail-stat--lit"].filter(Boolean).join(" ")}>
         <Fire weight="fill" aria-hidden />
         <b>{streak}</b>
-        <span className="tt-visually-hidden">{plural(streak, ["день подряд", "дня подряд", "дней подряд"])}</span>
+        <span className="tt-visually-hidden">{plural(streak, [t("день подряд"), t("дня подряд"), t("дней подряд")])}</span>
       </li>
       <li className="rail-stat rail-stat--honey">
         <Drop weight="fill" aria-hidden />
         <b>{honey}</b>
-        <span className="tt-visually-hidden">мёда</span>
+        <span className="tt-visually-hidden">{t("мёда")}</span>
       </li>
       {tier ? (
         <li className="rail-stat rail-stat--league">
-          <Illustration name={leagueBadges[tier]} width={36} alt={`Лига ${TIER_NAMES[tier].gen}`} />
+          <Illustration name={leagueBadges[tier]} width={36} alt={t("Лига {name}", { name: TIER_NAMES[tier].gen })} />
         </li>
       ) : null}
     </ul>
@@ -146,18 +150,27 @@ const CELL_LIP = 4;
 
 /** Цель дня — соты-уроки (сделанные — мёд с галочкой), под ними неделя серии. */
 function GoalCard({ progress }: { progress: MyProgress }) {
+  const t = useT();
   const goal = progress.dailyGoal;
   const { streak } = progress;
   const done = goal ? Math.min(goal.done, goal.target) : 0;
+  // Подписи дней недели серии — фабрика от t (константой быть не может: зависит от языка).
+  const dayText: Record<StreakDay["status"], string> = {
+    done: t("цель выполнена"),
+    frozen: t("заморозка"),
+    missed: t("пропуск"),
+    today: t("сегодня"),
+    future: t("впереди"),
+  };
   return (
     <Card as="section" className="rail-card rail-goal" aria-labelledby="rail-goal-title">
       <div className="rail-card__head">
         <h2 className="rail-card__title" id="rail-goal-title">
-          Цель дня
+          {t("Цель дня")}
         </h2>
         {goal ? (
           <span className="rail-card__meta">
-            {done} из {goal.target}
+            {t("{n} из {total}", { n: done, total: goal.target })}
           </span>
         ) : null}
       </div>
@@ -172,15 +185,15 @@ function GoalCard({ progress }: { progress: MyProgress }) {
               </svg>
             ))}
           </div>
-          {goal.met ? <p className="rail-card__sub">Цель выполнена</p> : null}
+          {goal.met ? <p className="rail-card__sub">{t("Цель выполнена")}</p> : null}
         </>
       ) : null}
       <div className="rail-streak">
         <p className={["rail-streak__count", streak.current > 0 && "rail-streak__count--lit"].filter(Boolean).join(" ")}>
           <Fire weight="fill" aria-hidden />
-          {streak.current} {plural(streak.current, ["день подряд", "дня подряд", "дней подряд"])}
+          {streak.current} {plural(streak.current, [t("день подряд"), t("дня подряд"), t("дней подряд")])}
         </p>
-        <ol className="rail-week" aria-label="Неделя">
+        <ol className="rail-week" aria-label={t("Неделя")}>
           {streak.week.map((d) => (
             <li key={d.date} className={`rail-week__day rail-week__day--${d.status}`}>
               <svg width={28} height={25} viewBox="0 0 28 25" aria-hidden focusable="false">
@@ -188,7 +201,7 @@ function GoalCard({ progress }: { progress: MyProgress }) {
               </svg>
               <span aria-hidden>{weekdayShort(d.date)}</span>
               <span className="tt-visually-hidden">
-                {weekdayShort(d.date)}: {DAY_TEXT[d.status]}
+                {weekdayShort(d.date)}: {dayText[d.status]}
               </span>
             </li>
           ))}
@@ -198,20 +211,13 @@ function GoalCard({ progress }: { progress: MyProgress }) {
   );
 }
 
-const DAY_TEXT: Record<StreakDay["status"], string> = {
-  done: "цель выполнена",
-  frozen: "заморозка",
-  missed: "пропуск",
-  today: "сегодня",
-  future: "впереди",
-};
-
 /**
  * Задания учителя (ADR 0021) и «Повторить N слов» — как плашки на тропе телефона. На тропе кнопки начинают урок здесь
  * же, на других вкладках ведут на тропу.
  */
 function RailTasks({ course, tab, onStart, onReview }: { course: Course; tab: StudentSection; onStart?: (node: CourseNode) => void; onReview?: () => void }) {
   const paths = useStudentPaths();
+  const t = useT();
   const list = [...(course.assignments ?? [])].sort((a, b) => Number(a.done) - Number(b.done));
   const due = tab === "words" ? 0 : (course.review?.due ?? 0);
   if (!list.length && !due) return null;
@@ -226,7 +232,7 @@ function RailTasks({ course, tab, onStart, onReview }: { course: Course; tab: St
             <section key={a.id} className="task-card task-card--done rail-task" aria-labelledby={titleId}>
               <CheckCircle weight="fill" className="task-card__check" aria-hidden />
               <div>
-                <p className="task-card__kicker">Задание учителя выполнено</p>
+                <p className="task-card__kicker">{t("Задание учителя выполнено")}</p>
                 <h2 className="task-card__title task-card__title--small" id={titleId}>
                   {assignmentTitle(a)}
                 </h2>
@@ -243,7 +249,7 @@ function RailTasks({ course, tab, onStart, onReview }: { course: Course; tab: St
               <div>
                 <p className="task-card__kicker">
                   <ChalkboardTeacher weight="fill" aria-hidden />
-                  Задание учителя · <span className="task-card__due">{dueForStudent(a.dueOn, today)}</span>
+                  {t("Задание учителя")} · <span className="task-card__due">{dueForStudent(a.dueOn, today)}</span>
                 </p>
                 <h2 className="task-card__title" id={titleId}>
                   {assignmentTitle(a)}
@@ -253,12 +259,12 @@ function RailTasks({ course, tab, onStart, onReview }: { course: Course; tab: St
             {tab === "path" ? (
               start ? (
                 <Button block onClick={start}>
-                  Начать задание
+                  {t("Начать задание")}
                 </Button>
               ) : null
             ) : (
               <ButtonLink block href={a.kind === "review" ? paths.review : paths.learn}>
-                К заданию
+                {t("К заданию")}
               </ButtonLink>
             )}
           </section>
@@ -270,17 +276,17 @@ function RailTasks({ course, tab, onStart, onReview }: { course: Course; tab: St
             <Illustration name="beeRead" width={52} className="review-card__bee" />
             <div>
               <h2 className="review-card__title" id="rail-review-title">
-                Повторить {due} {plural(due, ["слово", "слова", "слов"])}
+                {t("Повторить {n} {word}", { n: due, word: plural(due, [t("слово"), t("слова"), t("слов")]) })}
               </h2>
             </div>
           </div>
           {tab === "path" && onReview ? (
             <Button block icon={<ArrowsClockwise weight="bold" aria-hidden />} onClick={onReview}>
-              Начать
+              {t("Начать")}
             </Button>
           ) : (
             <ButtonLink block href={paths.review} icon={<ArrowsClockwise weight="bold" aria-hidden />}>
-              Начать
+              {t("Начать")}
             </ButtonLink>
           )}
         </section>
@@ -292,29 +298,30 @@ function RailTasks({ course, tab, onStart, onReview }: { course: Course; tab: St
 /** Лига недели: значок, место, мёд и что нужно для повышения. */
 function LeagueCard({ league }: { league: LeagueStanding }) {
   const paths = useStudentPaths();
+  const t = useT();
   const name = TIER_NAMES[league.tier];
   const next = LEAGUE_TIERS[LEAGUE_TIERS.indexOf(league.tier) + 1];
   const mine = league.members.find((m) => m.me) ?? league.me;
   const lastUp = league.members.filter((m) => m.zone === "promote").at(-1);
   let status: { up?: boolean; text: string };
-  if (!mine) status = { text: "Пройди урок, чтобы попасть в таблицу." };
-  else if (!next || league.zones.promote === 0) status = { text: "Это высшая лига." };
-  else if (mine.zone === "promote") status = { up: true, text: "Ты в зоне повышения" };
+  if (!mine) status = { text: t("Пройди урок, чтобы попасть в таблицу.") };
+  else if (!next || league.zones.promote === 0) status = { text: t("Это высшая лига.") };
+  else if (mine.zone === "promote") status = { up: true, text: t("Ты в зоне повышения") };
   else if (lastUp) {
     const need = Math.max(1, lastUp.points - mine.points + 1);
-    status = { text: `До повышения — ${need} мёда` };
-  } else status = { text: `Первые ${league.zones.promote} перейдут в Лигу ${TIER_NAMES[next].gen}.` };
+    status = { text: t("До повышения — {n} мёда", { n: need }) };
+  } else status = { text: t("Первые {n} перейдут в Лигу {name}.", { n: league.zones.promote, name: TIER_NAMES[next].gen }) };
   return (
     <Card as="section" className="rail-card rail-league" aria-labelledby="rail-league-title">
       <div className="rail-league__row">
         <Illustration name={leagueBadges[league.tier]} width={60} className="rail-league__badge" />
         <div>
           <h2 className="rail-card__title" id="rail-league-title">
-            Лига {name.gen}
+            {t("Лига {name}", { name: name.gen })}
           </h2>
           {mine ? (
             <p className="rail-card__sub">
-              {mine.rank}-е место · {mine.points} мёда
+              {t("{rank}-е место · {points} мёда", { rank: mine.rank, points: mine.points })}
             </p>
           ) : null}
         </div>
@@ -324,7 +331,7 @@ function LeagueCard({ league }: { league: LeagueStanding }) {
         {status.text}
       </p>
       <Link href={paths.league} className="rail-card__link">
-        Открыть таблицу
+        {t("Открыть таблицу")}
         <CaretRight weight="bold" aria-hidden />
       </Link>
     </Card>
@@ -334,6 +341,7 @@ function LeagueCard({ league }: { league: LeagueStanding }) {
 /** Квест недели улья класса — общий прогресс, без рейтингов отдельных детей (docs/05 §8, п. 5). */
 function QuestCard({ hive, classTitle }: { hive: ClassHive; classTitle: string }) {
   const paths = useStudentPaths();
+  const t = useT();
   const { goal, progress, completed } = hive.quest;
   const value = Math.min(progress, goal);
   return (
@@ -341,18 +349,18 @@ function QuestCard({ hive, classTitle }: { hive: ClassHive; classTitle: string }
       <div className="rail-quest__row">
         <div>
           <p className="rail-card__kicker">
-            Улей <ClassTitle title={classTitle} />
+            {t("Улей")} <ClassTitle title={classTitle} />
           </p>
           <h2 className="rail-card__title" id="rail-quest-title">
-            {completed ? "Квест выполнен!" : "Квест недели"}
+            {completed ? t("Квест выполнен!") : t("Квест недели")}
           </h2>
         </div>
         <Illustration name="sceneClassHive" width={64} className="rail-quest__art" />
       </div>
       <p className="rail-card__sub">{questTask(goal)}</p>
-      <ProgressBar value={value} max={goal} label="Квест класса" valueText={`${progress} из ${goal}`} showValue />
+      <ProgressBar value={value} max={goal} label={t("Квест класса")} valueText={t("{n} из {total}", { n: progress, total: goal })} showValue />
       <Link href={paths.hive} className="rail-card__link">
-        Открыть улей
+        {t("Открыть улей")}
         <CaretRight weight="bold" aria-hidden />
       </Link>
     </Card>

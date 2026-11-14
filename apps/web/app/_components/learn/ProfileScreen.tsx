@@ -10,6 +10,9 @@ import { session } from "@teletau/session/client";
 import { useResource } from "@teletau/session/react";
 import type { Me } from "@teletau/session/types";
 import { ClassTitle, LoadError, LoadingBlock } from "../screens";
+import { LanguageRow } from "../LanguageSwitcher";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 import { learnApi } from "./api";
 import { plural } from "./format";
 import { AchievementsCard } from "./Achievements";
@@ -23,12 +26,13 @@ import { playSound, setSoundsOn, useSoundsOn } from "./sound";
 
 /** «Звуки»: выключатель звуков урока на этом устройстве (запись носителя «Послушать» играет всегда). */
 function SoundsRow() {
+  const t = useT();
   const on = useSoundsOn();
   return (
     <div className="settings__row">
       {on ? <SpeakerHigh weight="fill" aria-hidden /> : <SpeakerSlash weight="fill" aria-hidden />}
       <span className="settings__name" id="sounds-label">
-        Звуки
+        {t("Звуки")}
       </span>
       <button
         type="button"
@@ -48,11 +52,12 @@ function SoundsRow() {
 }
 
 function ThemeRow() {
+  const t = useT();
   return (
     <div className="settings__row">
       <Moon weight="fill" aria-hidden />
       <span className="settings__name" id="theme-label">
-        Тёмная тема
+        {t("Тёмная тема")}
       </span>
       <ThemeSwitch labelledBy="theme-label" />
     </div>
@@ -66,6 +71,7 @@ function ThemeRow() {
  */
 export function ProfileScreen() {
   const account = useStudent();
+  const t = useT();
   const enabled = Boolean(account);
   const progress = useResource(() => learnApi.progress(), [account?.id], { enabled });
   const cells = useResource(() => learnApi.myCells(), [account?.id], { enabled });
@@ -89,7 +95,7 @@ export function ProfileScreen() {
           }}
         />
       ) : (
-        <LoadingBlock rows={4} label="Загружаем профиль" />
+        <LoadingBlock rows={4} label={t("Загружаем профиль")} />
       )}
     </StudentShell>
   );
@@ -135,6 +141,7 @@ function ProfileView({
 }) {
   const router = useRouter();
   const paths = useStudentPaths();
+  const t = useT();
   const [leaving, setLeaving] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
   const klass = studentClass(me);
@@ -162,33 +169,33 @@ function ProfileView({
         </div>
       </header>
 
-      <ul className="pstats" aria-label="Мои итоги">
+      <ul className="pstats" aria-label={t("Мои итоги")}>
         <li className="pstat">
           <Fire weight="fill" aria-hidden className="pstat__icon pstat__icon--streak" />
           <p>
             <b>{streak.current}</b>
-            <span>{plural(streak.current, ["день подряд", "дня подряд", "дней подряд"])}</span>
+            <span>{plural(streak.current, [t("день подряд"), t("дня подряд"), t("дней подряд")])}</span>
           </p>
         </li>
         <li className="pstat">
           <Drop weight="fill" aria-hidden className="pstat__icon pstat__icon--honey" />
           <p>
             <b>{honey.total}</b>
-            <span>мёда</span>
+            <span>{t("мёда")}</span>
           </p>
         </li>
         <li className="pstat">
           <BookOpen weight="fill" aria-hidden className="pstat__icon pstat__icon--words" />
           <p>
             <b>{words}</b>
-            <span>{plural(words, ["слово", "слова", "слов"])}</span>
+            <span>{plural(words, [t("слово"), t("слова"), t("слов")])}</span>
           </p>
         </li>
         <li className="pstat">
           <Scales weight="fill" aria-hidden className="pstat__icon pstat__icon--votes" />
           <p>
             <b>{votes}</b>
-            <span>{plural(votes, ["голос", "голоса", "голосов"])}</span>
+            <span>{plural(votes, [t("голос"), t("голоса"), t("голосов")])}</span>
           </p>
         </li>
       </ul>
@@ -200,14 +207,14 @@ function ProfileView({
           <BookOpenText weight="fill" />
         </span>
         <span className="dict-link__text">
-          <b>Мой словарь</b>
+          <b>{t("Мой словарь")}</b>
           {dictionary ? (
             <span>
               {dictionary.summary.review
-                ? `Повторить ${dictionary.summary.review} ${plural(dictionary.summary.review, ["слово", "слова", "слов"])}`
+                ? t("Повторить {n} {word}", { n: dictionary.summary.review, word: plural(dictionary.summary.review, [t("слово"), t("слова"), t("слов")]) })
                 : dictionary.summary.total
-                  ? "Все слова выучены"
-                  : "Пока пусто"}
+                  ? t("Все слова выучены")
+                  : t("Пока пусто")}
             </span>
           ) : null}
         </span>
@@ -221,8 +228,8 @@ function ProfileView({
             <IdentificationCard weight="fill" />
           </span>
           <span className="dict-link__text">
-            <b>Моя карточка входа</b>
-            <span>{me.loginCard === "issued" ? "Вход с другого устройства" : "Сохранит мёд и серию"}</span>
+            <b>{t("Моя карточка входа")}</b>
+            <span>{me.loginCard === "issued" ? t("Вход с другого устройства") : t("Сохранит мёд и серию")}</span>
           </span>
           <CaretRight weight="bold" aria-hidden className="dict-link__caret" />
         </Link>
@@ -233,8 +240,8 @@ function ProfileView({
             <EnvelopeSimple weight="fill" />
           </span>
           <span className="dict-link__text">
-            <b>Сохранить прогресс по почте</b>
-            <span>Вход с любого устройства</span>
+            <b>{t("Сохранить прогресс по почте")}</b>
+            <span>{t("Вход с любого устройства")}</span>
           </span>
           <CaretRight weight="bold" aria-hidden className="dict-link__caret" />
         </Link>
@@ -244,14 +251,14 @@ function ProfileView({
 
       <Card as="section" className="tab-card cells-card" aria-labelledby="cells-title">
         {matured ? <Illustration name="sceneWordAccepted" width={96} className="cells-card__art" /> : null}
-        <CardTitle id="cells-title">Мой вклад в словарь</CardTitle>
+        <CardTitle id="cells-title">{t("Мой вклад в словарь")}</CardTitle>
         {cellsTotal ? (
           <>
             <CardSub>
               {[
-                `${matured} в словаре`,
-                pending ? `${pending} ${plural(pending, ["ждёт", "ждут", "ждут"])} итога` : null,
-                honeyPending ? `+${honeyPending} мёда созревает` : null,
+                t("{n} в словаре", { n: matured }),
+                pending ? t("{n} {word} итога", { n: pending, word: plural(pending, [t("ждёт"), t("ждут"), t("ждут")]) }) : null,
+                honeyPending ? t("+{n} мёда созревает", { n: honeyPending }) : null,
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -261,33 +268,34 @@ function ProfileView({
             </div>
           </>
         ) : (
-          <CardSub>Голосуй в «Помоги языку» на тропе.</CardSub>
+          <CardSub>{t("Голосуй в «Помоги языку» на тропе.")}</CardSub>
         )}
       </Card>
 
-      <Card as="section" className="tab-card settings" aria-label="Настройки">
+      <Card as="section" className="tab-card settings" aria-label={t("Настройки")}>
         <div className="settings__row">
           <Target weight="fill" aria-hidden />
           <span className="settings__text">
-            <span className="settings__name">Цель дня</span>
+            <span className="settings__name">{t("Цель дня")}</span>
             <span className="settings__val">{goalTitle(me.dailyGoal)}</span>
           </span>
-          <LinkButton onClick={() => setGoalOpen(true)}>Изменить</LinkButton>
+          <LinkButton onClick={() => setGoalOpen(true)}>{t("Изменить")}</LinkButton>
         </div>
         <SoundsRow />
+        <LanguageRow />
         {paths.prefix ? null : <ThemeRow />}
         {/* Заявка учителя — по почте: без неё сначала «Сохранить прогресс по почте». */}
         {me.kind === "adult" && me.teacherStatus === "none" && me.profile ? (
           <div className="settings__row">
             <ChalkboardTeacher weight="fill" aria-hidden />
             <Link href={nextTeacherStep(me)} className="settings__name settings__link">
-              Я учитель
+              {t("Я учитель")}
             </Link>
           </div>
         ) : null}
         <div className="settings__row">
           <LinkButton tone="danger" icon={<SignOut weight="bold" aria-hidden />} onClick={() => setLeaving(true)}>
-            Выйти
+            {t("Выйти")}
           </LinkButton>
         </div>
       </Card>
@@ -297,8 +305,8 @@ function ProfileView({
       <Dialog
         open={leaving}
         onClose={() => setLeaving(false)}
-        title={noWayBack ? "Сначала сделай карточку" : "Уже уходишь?"}
-        description={leaveText(me)}
+        title={noWayBack ? t("Сначала сделай карточку") : t("Уже уходишь?")}
+        description={leaveText(t, me)}
         art={noWayBack ? illustrations.beeThink : illustrations.beeSympathy}
         centered
         hideClose
@@ -306,11 +314,11 @@ function ProfileView({
           <>
             {noWayBack ? (
               <Button block onClick={() => router.push(paths.card)}>
-                Сделать карточку
+                {t("Сделать карточку")}
               </Button>
             ) : (
               <Button block onClick={() => setLeaving(false)}>
-                Остаться
+                {t("Остаться")}
               </Button>
             )}
             <LinkButton
@@ -324,7 +332,7 @@ function ProfileView({
                 window.location.replace(paths.start);
               }}
             >
-              Выйти
+              {t("Выйти")}
             </LinkButton>
           </>
         }
@@ -334,15 +342,16 @@ function ProfileView({
 }
 
 /** Чем войти снова — по тому, как ученик сюда попал (ADR 0022). */
-function leaveText(me: Me): string {
-  if (me.loginCard === "none" && !me.profile && !studentClass(me)) return "Без неё мёд и серию не вернуть.";
-  if (me.loginCard === "issued") return "Войти снова можно по твоей карточке.";
-  if (me.kind === "adult") return "Войти снова можно по почте.";
-  return "Войти снова можно по карточке или коду класса.";
+function leaveText(t: T, me: Me): string {
+  if (me.loginCard === "none" && !me.profile && !studentClass(me)) return t("Без неё мёд и серию не вернуть.");
+  if (me.loginCard === "issued") return t("Войти снова можно по твоей карточке.");
+  if (me.kind === "adult") return t("Войти снова можно по почте.");
+  return t("Войти снова можно по карточке или коду класса.");
 }
 
 /** «Цель дня»: 1, 2 или 3 урока (PATCH /me dailyGoal, ADR 0022). */
 function GoalDialog({ open, me, onClose }: { open: boolean; me: Me; onClose: () => void }) {
+  const t = useT();
   const [goal, setGoal] = useState<Goal>(asGoal(me.dailyGoal));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -353,7 +362,7 @@ function GoalDialog({ open, me, onClose }: { open: boolean; me: Me; onClose: () 
     <Dialog
       open={open}
       onClose={onClose}
-      title="Цель дня"
+      title={t("Цель дня")}
       actions={
         <>
           {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
@@ -373,7 +382,7 @@ function GoalDialog({ open, me, onClose }: { open: boolean; me: Me; onClose: () 
               }
             }}
           >
-            Сохранить
+            {t("Сохранить")}
           </Button>
         </>
       }
@@ -415,6 +424,7 @@ function writeSeen(accountId: string, seen: CellsSeen) {
  * устройства (только номер аккаунта и числа, без ПДн); первый заход ничего не показывает, а запоминает.
  */
 function MaturedHoney({ accountId, cells }: { accountId: string; cells: MyCellsPage }) {
+  const t = useT();
   const { matured, honeyFinal } = cells.summary;
   const [fresh, setFresh] = useState<{ count: number; honey: number } | null>(null);
   useEffect(() => {
@@ -424,16 +434,21 @@ function MaturedHoney({ accountId, cells }: { accountId: string; cells: MyCellsP
   }, [accountId, matured, honeyFinal]);
   if (!fresh) return null;
   const { count, honey } = fresh;
-  const plus = honey > 0 ? ` · +${honey} мёда` : "";
+  const plus = honey > 0 ? t(" · +{n} мёда", { n: honey }) : "";
   return (
     <section className="matured" role="status" aria-labelledby="matured-title">
       <Illustration name="sceneHoneyMatured" width={92} className="matured__art" />
       <div>
         <h2 className="matured__title" id="matured-title">
-          Мёд созрел!
+          {t("Мёд созрел!")}
         </h2>
         <p className="matured__text">
-          {`${count} ${plural(count, ["перевод", "перевода", "переводов"])} с твоим голосом ${plural(count, ["вошёл", "вошли", "вошли"])} в словарь${plus}`}
+          {t("{count} {word} с твоим голосом {verb} в словарь{plus}", {
+            count,
+            word: plural(count, [t("перевод"), t("перевода"), t("переводов")]),
+            verb: plural(count, [t("вошёл"), t("вошли"), t("вошли")]),
+            plus,
+          })}
         </p>
       </div>
     </section>

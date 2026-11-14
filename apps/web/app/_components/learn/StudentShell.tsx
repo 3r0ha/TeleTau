@@ -7,6 +7,7 @@ import { Drop, Fire } from "@phosphor-icons/react/ssr";
 import { Bee, GoalMeter, Illustration, StudentSideNav, StudentTabBar, leagueBadges, type StudentSection } from "@teletau/ui";
 import { useRequireAccount } from "@teletau/session/react";
 import type { Me } from "@teletau/session/types";
+import { useT } from "../../../i18n/client";
 import { plural, TIER_NAMES } from "./format";
 import type { MyProgress } from "./model";
 import { useStudentPaths } from "./paths";
@@ -84,6 +85,7 @@ export function StudentShell({
  */
 export function LearnTopBar({ progress }: { progress: MyProgress | undefined }) {
   const paths = useStudentPaths();
+  const t = useT();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 4);
@@ -101,15 +103,17 @@ export function LearnTopBar({ progress }: { progress: MyProgress | undefined }) 
         <p className={["learn-stat", "learn-stat--streak", streak > 0 && "learn-stat--lit"].filter(Boolean).join(" ")}>
           <Fire weight="fill" aria-hidden />
           <span aria-hidden>{progress ? streak : "–"}</span>
-          <span className="tt-visually-hidden">Серия: {streak} {plural(streak, ["день", "дня", "дней"])} подряд</span>
+          <span className="tt-visually-hidden">
+            {t("Серия: {n} {word} подряд", { n: streak, word: plural(streak, [t("день"), t("дня"), t("дней")]) })}
+          </span>
         </p>
         <p className="learn-stat learn-stat--honey">
           <Drop weight="fill" aria-hidden />
           <span aria-hidden>{progress ? honey : "–"}</span>
-          <span className="tt-visually-hidden">Мёд: {honey}</span>
+          <span className="tt-visually-hidden">{t("Мёд: {n}", { n: honey })}</span>
         </p>
         {tier ? (
-          <Link href={paths.league} className="learn-stat learn-stat--league" aria-label={`Лига ${TIER_NAMES[tier].gen}`}>
+          <Link href={paths.league} className="learn-stat learn-stat--league" aria-label={t("Лига {name}", { name: TIER_NAMES[tier].gen })}>
             <Illustration name={leagueBadges[tier]} width={30} />
           </Link>
         ) : (
@@ -122,14 +126,15 @@ export function LearnTopBar({ progress }: { progress: MyProgress | undefined }) 
 
 /** Заставка (prototype 22-splash): медовый экран с летящей пчелой — пока открывается тропа. */
 export function Splash() {
+  const t = useT();
   return (
-    <div className="learn-splash" role="status" aria-label="Открываем тропу">
+    <div className="learn-splash" role="status" aria-label={t("Открываем тропу")}>
       <Bee frame="beeFly" width={200} className="learn-splash__bee" />
       {/* «ТелеТау» — имя бренда, needs_native_review (docs/native-review-queue.md, №1) */}
       <p className="learn-splash__brand" lang="ba">
         ТелеТау
       </p>
-      <p className="learn-splash__tagline">башкирский язык каждый день</p>
+      <p className="learn-splash__tagline">{t("башкирский язык каждый день")}</p>
     </div>
   );
 }

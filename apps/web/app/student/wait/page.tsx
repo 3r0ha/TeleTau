@@ -10,6 +10,8 @@ import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/pr
 import { ClassTitle, Screen, SimpleTop } from "../../_components/screens";
 import { useStudentPaths } from "../../_components/learn/paths";
 import { clearTicket, loadTicket, type JoinTicket } from "../ticket";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 
 type Status = Schema<"JoinRequestStatus"> | "missing" | "closed";
 
@@ -23,15 +25,16 @@ interface Closed {
  * Учитель закрыл вход (отзыв согласия родителем) или класс в архиве — ждать дальше бессмысленно. Текст про класс —
  * общий с входом по QR (describeProblem); про согласие — без слова «карточка»: ученик входил по коду класса.
  */
-function closedBy(e: ApiProblem): Closed {
-  if (e.code === "class_archived") return { title: "Класс закрыт", text: describeProblem(e, "child") };
-  return { title: "Вход закрыт", text: "Подойди к учителю." };
+function closedBy(t: T, e: ApiProblem): Closed {
+  if (e.code === "class_archived") return { title: t("Класс закрыт"), text: describeProblem(e, "child") };
+  return { title: t("Вход закрыт"), text: t("Подойди к учителю.") };
 }
 
 /** «Ждём, пока учитель подтвердит»: опрос заявки раз в pollIntervalSeconds; при одобрении — сессия и класс. */
 export default function WaitPage() {
   const router = useRouter();
   const paths = useStudentPaths();
+  const t = useT();
   const [ticket, setTicket] = useState<JoinTicket | null>(null);
   const [status, setStatus] = useState<Status>("pending");
   const [offline, setOffline] = useState(false);
@@ -40,16 +43,17 @@ export default function WaitPage() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    const t = loadTicket();
-    if (!t) {
+    // Локальное имя — «saved», чтобы не затенять переводчик t (useT).
+    const saved = loadTicket();
+    if (!saved) {
       setStatus("missing");
       return;
     }
-    setTicket(t);
+    setTicket(saved);
     let stopped = false;
     const poll = async () => {
       try {
-        const res = await session.pollClassCode(t.requestId, t.pollToken);
+        const res = await session.pollClassCode(saved.requestId, saved.pollToken);
         if (stopped) return;
         setOffline(false);
         setError(null);
@@ -74,13 +78,13 @@ export default function WaitPage() {
           clearTicket();
           setOffline(false);
           setError(null);
-          setClosed(closedBy(e));
+          setClosed(closedBy(t, e));
           setStatus("closed");
           return;
         }
         setOffline(isNetworkError(e));
         if (!isNetworkError(e)) setError(describeProblem(e, "child"));
-        timer.current = setTimeout(poll, Math.max(3, t.pollIntervalSeconds) * 1000);
+        timer.current = setTimeout(poll, Math.max(3, saved.pollIntervalSeconds) * 1000);
       }
     };
     void poll();
@@ -92,7 +96,7 @@ export default function WaitPage() {
 
   const again = (
     <ButtonLink href={paths.code} block>
-      Ввести код
+      {t("Ввести код")}
     </ButtonLink>
   );
 
@@ -105,7 +109,7 @@ export default function WaitPage() {
         role="alert"
         actions={
           <ButtonLink href={paths.login} block>
-            Выйти
+            {t("Выйти")}
           </ButtonLink>
         }
       >
@@ -114,33 +118,33 @@ export default function WaitPage() {
     );
   } else if (status === "missing") {
     body = (
-      <EmptyState art="beeThink" title="Заявки нет" actions={again}>
-        Введи код класса заново.
+      <EmptyState art="beeThink" title={t("Заявки нет")} actions={again}>
+        {t("Введи код класса заново.")}
       </EmptyState>
     );
   } else if (status === "rejected") {
     body = (
-      <EmptyState art="beeSympathy" title="Учитель не принял заявку" role="alert" actions={again}>
-        Подойди к учителю и попробуй ещё раз.
+      <EmptyState art="beeSympathy" title={t("Учитель не принял заявку")} role="alert" actions={again}>
+        {t("Подойди к учителю и попробуй ещё раз.")}
       </EmptyState>
     );
   } else if (status === "expired") {
     body = (
-      <EmptyState art="beeSleep" title="Заявка устарела" role="alert" actions={again}>
-        Попроси учителя показать код ещё раз.
+      <EmptyState art="beeSleep" title={t("Заявка устарела")} role="alert" actions={again}>
+        {t("Попроси учителя показать код ещё раз.")}
       </EmptyState>
     );
   } else if (status === "consumed") {
     body = (
-      <EmptyState art="beeThink" title="Вход уже выполнен" actions={again}>
-        Если это был не ты, введи код заново.
+      <EmptyState art="beeThink" title={t("Вход уже выполнен")} actions={again}>
+        {t("Если это был не ты, введи код заново.")}
       </EmptyState>
     );
   } else {
     body = (
       <EmptyState
         art="beeIdle"
-        title="Ждём учителя"
+        title={t("Ждём учителя")}
         role="status"
         actions={
           <>
@@ -153,26 +157,26 @@ export default function WaitPage() {
                 router.replace(paths.login);
               }}
             >
-              Выйти
+              {t("Выйти")}
             </LinkButton>
           </>
         }
       >
         {ticket ? (
           <>
-            Класс <ClassTitle title={ticket.classTitle} />. Скажи учителю свой ник: <b>«{ticket.nickname}»</b>.
-            Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.
+            {t("Класс")} <ClassTitle title={ticket.classTitle} />. {t("Скажи учителю свой ник:")} <b>«{ticket.nickname}»</b>.
+            {t("Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.")}
             <p className="tt-pulse">
               <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
-              Проверяем каждые несколько секунд
+              {t("Проверяем каждые несколько секунд")}
             </p>
           </>
         ) : (
           <>
-            Учитель скоро пустит тебя в класс. Как только он примет, эта страница сама обновится.
+            {t("Учитель скоро пустит тебя в класс. Как только он примет, эта страница сама обновится.")}
             <p className="tt-pulse">
               <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
-              Проверяем каждые несколько секунд
+              {t("Проверяем каждые несколько секунд")}
             </p>
           </>
         )}
@@ -181,10 +185,10 @@ export default function WaitPage() {
   }
 
   return (
-    <Screen top={<SimpleTop title="Вход по коду класса" />}>
+    <Screen top={<SimpleTop title={t("Вход по коду класса")} />}>
       {body}
       <div aria-live="polite">
-        {offline ? <InlineAlert tone="honey">Нет связи. Заявка не потеряется.</InlineAlert> : null}
+        {offline ? <InlineAlert tone="honey">{t("Нет связи. Заявка не потеряется.")}</InlineAlert> : null}
         {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
       </div>
     </Screen>

@@ -7,6 +7,7 @@ import { Brand, Button, ButtonLink, Card, Chip, Dialog, HexAvatar, HoneyConfetti
 import { api, unwrap } from "@teletau/session/api";
 import { session } from "@teletau/session/client";
 import { useRequireAccount, useResource } from "@teletau/session/react";
+import { useT } from "../../../i18n/client";
 import { useStudentPaths } from "../../_components/learn/paths";
 import { ClassTitle, LoadError, LoadingBlock, Screen } from "../../_components/screens";
 
@@ -20,6 +21,7 @@ export default function StudentClassPage() {
   const paths = useStudentPaths();
   const account = useRequireAccount("child", paths.login);
   const router = useRouter();
+  const t = useT();
   const [leaving, setLeaving] = useState(false);
   const me = useResource(() => unwrap(api.GET("/api/v1/me")), [account?.id], { enabled: Boolean(account) });
 
@@ -36,7 +38,7 @@ export default function StudentClassPage() {
 
   return (
     <Screen
-      top={<TopBar start={<Brand href="/" />} end={<IconButton label="Выйти" icon={<SignOut weight="bold" />} onClick={() => setLeaving(true)} />} />}
+      top={<TopBar start={<Brand href="/" />} end={<IconButton label={t("Выйти")} icon={<SignOut weight="bold" />} onClick={() => setLeaving(true)} />} />}
       className="joined"
     >
       {!current || (me.loading && !me.data) ? (
@@ -47,14 +49,14 @@ export default function StudentClassPage() {
         <div className="joined__body">
           {/* Первый вход в класс — маленький праздник (без анимации при «Уменьшении движения»). */}
           <HoneyConfetti />
-          <Illustration name="sceneClassHive" width={200} alt="Пчёлы класса летят к общей борти" className="joined__art" />
+          <Illustration name="sceneClassHive" width={200} alt={t("Пчёлы класса летят к общей борти")} className="joined__art" />
           <h1 className="tt-title1">
             {klass ? (
               <>
-                Ты в классе <ClassTitle title={klass.title} />
+                {t("Ты в классе")} <ClassTitle title={klass.title} />
               </>
             ) : (
-              "Вход выполнен"
+              t("Вход выполнен")
             )}
           </h1>
           {klass ? <p className="tt-lead">{klass.schoolName}</p> : null}
@@ -63,27 +65,27 @@ export default function StudentClassPage() {
               {klass?.seatNumber ? String(klass.seatNumber).padStart(2, "0") : undefined}
             </HexAvatar>
             <div className="tt-stack tt-stack--tight">
-              <p className="tt-headline">{nickname ?? "Ник не выбран"}</p>
-              {klass?.seatNumber ? <Chip tone="honey">Место {seatLabel(klass.seatNumber)}</Chip> : null}
+              <p className="tt-headline">{nickname ?? t("Ник не выбран")}</p>
+              {klass?.seatNumber ? <Chip tone="honey">{t("Место {n}", { n: seatLabel(klass.seatNumber) })}</Chip> : null}
             </div>
           </Card>
           <ButtonLink href={paths.learn} block icon={<Path weight="fill" aria-hidden />} className="joined__go">
-            На тропу
+            {t("На тропу")}
           </ButtonLink>
         </div>
       )}
       <Dialog
         open={leaving}
         onClose={() => setLeaving(false)}
-        title="Уже уходишь?"
-        description="Войти снова можно по карточке или коду класса."
+        title={t("Уже уходишь?")}
+        description={t("Войти снова можно по карточке или коду класса.")}
         art={illustrations.beeSympathy}
         centered
         hideClose
         actions={
           <>
             <Button block onClick={() => setLeaving(false)}>
-              Остаться
+              {t("Остаться")}
             </Button>
             <LinkButton
               tone="danger"
@@ -94,7 +96,7 @@ export default function StudentClassPage() {
                 window.location.replace(paths.start);
               }}
             >
-              Выйти
+              {t("Выйти")}
             </LinkButton>
           </>
         }

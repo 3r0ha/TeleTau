@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Drop } from "@phosphor-icons/react/ssr";
 import { Button, GlintBadge, GoalMeter, HoneyConfetti, Illustration, StatTile, StatTiles, hexPath, illustrations, leagueBadges, useCountUp, type IllustrationName } from "@teletau/ui";
+import { useT } from "../../../i18n/client";
 import { duration, plural, TIER_NAMES, weekdayShort } from "./format";
 import type { LessonRun, LessonSummary, RunKind, StreakDay } from "./model";
 import { playSound, type SoundName } from "./sound";
@@ -82,16 +83,15 @@ export function AfterScreen({
  * Упражнений нет (prototype 20-empty-done): у «Помоги языку» закончились дуэли, за которые ученик ещё не голосовал
  * (POST /lessons/{lessonId}/runs отдаёт забег без упражнений), или повторять пока нечего (POST /reviews/runs).
  */
-const NOTHING: Record<"help" | "review" | "lesson", { title: string; lead: string }> = {
-  help: { title: "Все пары уже оценены", lead: "Новые появятся позже." },
-  review: { title: "Пока нечего повторять", lead: "Новые слова появятся после уроков." },
-  lesson: { title: "Здесь пока пусто", lead: "В этом уроке пока нет заданий." },
-};
-
 export function NothingToDo({ kind, onContinue }: { kind: RunKind; onContinue: () => void }) {
-  const text = NOTHING[kind === "help_language" ? "help" : kind === "review" ? "review" : "lesson"];
+  const t = useT();
+  const text = {
+    help: { title: t("Все пары уже оценены"), lead: t("Новые появятся позже.") },
+    review: { title: t("Пока нечего повторять"), lead: t("Новые слова появятся после уроков.") },
+    lesson: { title: t("Здесь пока пусто"), lead: t("В этом уроке пока нет заданий.") },
+  }[kind === "help_language" ? "help" : kind === "review" ? "review" : "lesson"];
   return (
-    <AfterScreen art="emptyAllDone" artAlt="" action="На тропу" onAction={onContinue}>
+    <AfterScreen art="emptyAllDone" artAlt="" action={t("На тропу")} onAction={onContinue}>
       <h1 className="after__title" tabIndex={-1}>
         {text.title}
       </h1>
@@ -105,6 +105,7 @@ export function NothingToDo({ kind, onContinue }: { kind: RunKind; onContinue: (
  * сколько сот осталось. Выполнена раньше — ничего не показываем.
  */
 function GoalNote({ summary }: { summary: LessonSummary }) {
+  const t = useT();
   const goal = summary.dailyGoal;
   if (!goal) return null;
   if (summary.dailyGoalReached)
@@ -112,7 +113,7 @@ function GoalNote({ summary }: { summary: LessonSummary }) {
       <div className="goal-note goal-note--done" role="status">
         <GoalMeter done={goal.done} target={goal.target} celebrate />
         <p>
-          <b>Цель дня выполнена</b>
+          <b>{t("Цель дня выполнена")}</b>
         </p>
       </div>
     );
@@ -121,9 +122,7 @@ function GoalNote({ summary }: { summary: LessonSummary }) {
   return (
     <div className="goal-note">
       <GoalMeter done={goal.done} target={goal.target} />
-      <p>
-        Ещё {left} {plural(left, ["сота", "соты", "сот"])} до цели дня
-      </p>
+      <p>{t("Ещё {n} {word} до цели дня", { n: left, word: plural(left, [t("сота"), t("соты"), t("сот")]) })}</p>
     </div>
   );
 }
@@ -133,30 +132,31 @@ function GoalNote({ summary }: { summary: LessonSummary }) {
  * падают соты-конфетти, счётчик мёда «набегает» (при «Уменьшении движения» — сразу итог, без конфетти).
  */
 export function ResultScreen({ run, summary, place, onContinue }: { run: LessonRun; summary: LessonSummary; place: LessonPlace; onContinue: () => void }) {
+  const t = useT();
   const helping = run.kind === "help_language";
   const reviewing = run.kind === "review";
-  const title = helping ? "Спасибо за помощь!" : reviewing ? "Повторение пройдено!" : run.kind === "place_test" ? "Испытание пройдено!" : "Урок пройден!";
+  const title = helping ? t("Спасибо за помощь!") : reviewing ? t("Повторение пройдено!") : run.kind === "place_test" ? t("Испытание пройдено!") : t("Урок пройден!");
   const pending = summary.honey.pendingFromVotes;
   const where = reviewing
     ? ""
-    : [place.topicRu, helping ? "Помоги языку" : place.lessonNumber ? `урок ${place.lessonNumber}` : run.titleRu].filter(Boolean).join(" · ");
+    : [place.topicRu, helping ? t("Помоги языку") : place.lessonNumber ? t("урок {n}", { n: place.lessonNumber }) : run.titleRu].filter(Boolean).join(" · ");
   const honey = useCountUp(summary.honey.total);
   useScreenSound("complete");
   return (
-    <AfterScreen art="sceneLessonComplete" artAlt="Пчела радуется на запечатанных сотах" artMotion="hop" confetti action="Дальше" onAction={onContinue}>
+    <AfterScreen art="sceneLessonComplete" artAlt={t("Пчела радуется на запечатанных сотах")} artMotion="hop" confetti action={t("Дальше")} onAction={onContinue}>
       <h1 className="after__title" tabIndex={-1}>
         {title}
       </h1>
       {where ? (
         <p className="after__lead">
           {where}
-          {helping && pending ? ` · ещё +${pending} мёда созреет позже` : null}
+          {helping && pending ? ` · ${t("ещё +{n} мёда созреет позже", { n: pending })}` : null}
         </p>
       ) : null}
-      <StatTiles label="Итог урока">
-        <StatTile label="Мёд" icon={<Drop weight="fill" />} value={`+${honey}`} />
-        <StatTile label="Точность" value={`${Math.round(summary.accuracy * 100)}%`} />
-        <StatTile label="Время" value={duration(summary.durationSeconds)} className="stat-time" />
+      <StatTiles label={t("Итог урока")}>
+        <StatTile label={t("Мёд")} icon={<Drop weight="fill" />} value={`+${honey}`} />
+        <StatTile label={t("Точность")} value={`${Math.round(summary.accuracy * 100)}%`} />
+        <StatTile label={t("Время")} value={duration(summary.durationSeconds)} className="stat-time" />
       </StatTiles>
       <GoalNote summary={summary} />
       {summary.newWords.length ? (
@@ -164,7 +164,7 @@ export function ResultScreen({ run, summary, place, onContinue }: { run: LessonR
           <Illustration name="beeRead" width={60} className="new-words__bee" />
           <div>
             <h2 className="new-words__label" id="new-words-title">
-              Новые слова
+              {t("Новые слова")}
             </h2>
             <ul className="new-words__list">
               {summary.newWords.map((w) => (
@@ -185,22 +185,23 @@ export function ResultScreen({ run, summary, place, onContinue }: { run: LessonR
  * сота во льду). Цифра «выпрыгивает», сегодняшняя сота сразу запечатывается мёдом, прошлые дни уже закрыты (learn.css).
  */
 export function StreakScreen({ summary, onContinue }: { summary: LessonSummary; onContinue: () => void }) {
+  const t = useT();
   const { current, freezes, week, today } = summary.streak;
   useScreenSound("streak");
   // Цель дня уже на итоге урока — здесь только о серии.
-  const lead = current <= 1 ? "Серия началась. Приходи завтра." : "Приходи завтра, чтобы не прервать серию.";
+  const lead = current <= 1 ? t("Серия началась. Приходи завтра.") : t("Приходи завтра, чтобы не прервать серию.");
   return (
-    <AfterScreen art="sceneStreak" artAlt="Цепочка сот с огоньками" wide action="Дальше" onAction={onContinue}>
+    <AfterScreen art="sceneStreak" artAlt={t("Цепочка сот с огоньками")} wide action={t("Дальше")} onAction={onContinue}>
       <p className="streak__num" aria-hidden>
         {current}
       </p>
       <h1 className="after__title after__title--tight" tabIndex={-1}>
         <span className="tt-visually-hidden">{current} </span>
-        {plural(current, ["день подряд", "дня подряд", "дней подряд"])}
+        {plural(current, [t("день подряд"), t("дня подряд"), t("дней подряд")])}
       </h1>
       <p className="after__lead">{lead}</p>
       <div className="week-card">
-        <ol className="week" aria-label="Эта неделя">
+        <ol className="week" aria-label={t("Эта неделя")}>
           {week.map((d) => (
             <WeekDay key={d.date} day={d} today={d.date === today} />
           ))}
@@ -208,7 +209,7 @@ export function StreakScreen({ summary, onContinue }: { summary: LessonSummary; 
         {freezes > 0 ? (
           <p className="week-card__foot">
             <img src={illustrations.itemStreakFreeze.src} width={26} height={Math.round((illustrations.itemStreakFreeze.height / illustrations.itemStreakFreeze.width) * 26)} alt="" />
-            {freezes} {plural(freezes, ["заморозка", "заморозки", "заморозок"])} в запасе
+            {t("{n} {word} в запасе", { n: freezes, word: plural(freezes, [t("заморозка"), t("заморозки"), t("заморозок")]) })}
           </p>
         ) : null}
       </div>
@@ -219,11 +220,13 @@ export function StreakScreen({ summary, onContinue }: { summary: LessonSummary; 
 const DAY_W = 32;
 const DAY_H = 28;
 
+/** Подпись статуса дня недели для читалки — переводится при рендере (WeekDay). */
 const DAY_TEXT: Record<StreakDay["status"], string> = { done: "цель выполнена", frozen: "заморозка", missed: "пропуск", today: "сегодня", future: "впереди" };
 
 function WeekDay({ day, today }: { day: StreakDay; today: boolean }) {
+  const t = useT();
   const state = day.status === "frozen" ? "frozen" : day.status === "done" ? "done" : "empty";
-  const text = DAY_TEXT[day.status];
+  const text = t(DAY_TEXT[day.status]);
   const lip = state === "empty" ? 0 : 3;
   return (
     <li className={["week__day", today && "week__day--today"].filter(Boolean).join(" ")}>
@@ -241,6 +244,7 @@ function WeekDay({ day, today }: { day: StreakDay; today: boolean }) {
 
 /** «Новая лига — Кипрей!» (prototype 15-league-up): Аҡбуҙат парит и несёт выше, значок новой лиги поднимается с бликом. */
 export function LeagueUpScreen({ summary, onContinue, busy }: { summary: LessonSummary; onContinue: () => void; busy?: boolean }) {
+  const t = useT();
   const result = summary.leagueResult;
   useScreenSound("levelUp");
   if (!result) return null;
@@ -249,20 +253,20 @@ export function LeagueUpScreen({ summary, onContinue, busy }: { summary: LessonS
   return (
     <AfterScreen
       art="sceneLeagueUp"
-      artAlt="Крылатый жеребёнок Аҡбуҙат"
+      artAlt={t("Крылатый жеребёнок Аҡбуҙат")}
       artMotion="fly"
       confetti
       tone="violet"
-      action="Дальше"
+      action={t("Дальше")}
       actionVariant="violet"
       onAction={onContinue}
       busy={busy}
     >
       <h1 className="after__title" tabIndex={-1}>
-        Новая лига — {to.nom}!
+        {t("Новая лига — {league}!", { league: to.nom })}
       </h1>
-      <p className="after__lead">Ты среди лучших в Лиге {from.gen}.</p>
-      <GlintBadge name={leagueBadges[result.tierAfter]} alt={`Значок Лиги ${to.gen}`} width={96} rise className="after__badge" />
+      <p className="after__lead">{t("Ты среди лучших в Лиге {league}.", { league: from.gen })}</p>
+      <GlintBadge name={leagueBadges[result.tierAfter]} alt={t("Значок Лиги {league}", { league: to.gen })} width={96} rise className="after__badge" />
     </AfterScreen>
   );
 }

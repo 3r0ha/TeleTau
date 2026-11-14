@@ -9,6 +9,8 @@ import { session } from "@teletau/session/client";
 import { describeProblem } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
 import type { Schema } from "@teletau/contracts";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 import { isNotFound, LoadError, LoadingBlock, Screen, SimpleTop } from "../screens";
 import { useStudentPaths } from "./paths";
 import { selfApi } from "./self-api";
@@ -48,9 +50,10 @@ function qrPath(text: string): { size: number; d: string } {
  */
 function CardQr({ payload }: { payload: string }) {
   const { size, d } = useMemo(() => qrPath(payload), [payload]);
+  const t = useT();
   const box = size + QUIET * 2;
   return (
-    <svg className="site-qr login-card__qr" viewBox={`${-QUIET} ${-QUIET} ${box} ${box}`} role="img" aria-label="QR-код карточки входа" shapeRendering="crispEdges">
+    <svg className="site-qr login-card__qr" viewBox={`${-QUIET} ${-QUIET} ${box} ${box}`} role="img" aria-label={t("QR-код карточки входа")} shapeRendering="crispEdges">
       <rect className="site-qr__bg" x={-QUIET} y={-QUIET} width={box} height={box} />
       <path className="site-qr__dark" d={d} />
     </svg>
@@ -65,7 +68,7 @@ const family = (key: "fontFamily.display" | "fontFamily.text") => `"${base[key] 
  * Картинка карточки для сохранения (PNG, 1080 × 1350): название, ник, QR и шаги входа. Цвета — светлая тема токенов
  * (печать и фото экрана), шрифты — те же, что у интерфейса (ждём их загрузки, иначе холст возьмёт системный).
  */
-async function cardPng(card: LoginCard, nickname: string): Promise<Blob> {
+async function cardPng(t: T, card: LoginCard, nickname: string): Promise<Blob> {
   const W = 1080;
   const H = 1350;
   const canvas = document.createElement("canvas");
@@ -97,7 +100,7 @@ async function cardPng(card: LoginCard, nickname: string): Promise<Blob> {
   ctx.fillText("ТелеТау", W / 2, 190);
   ctx.fillStyle = light["color.text.secondary"]!;
   ctx.font = `600 38px ${text}`;
-  ctx.fillText("Карточка входа", W / 2, 250);
+  ctx.fillText(t("Карточка входа"), W / 2, 250);
   ctx.fillStyle = light["color.text.primary"]!;
   ctx.font = `900 52px ${display}`;
   ctx.fillText(nickname, W / 2, 330);
@@ -114,16 +117,16 @@ async function cardPng(card: LoginCard, nickname: string): Promise<Blob> {
 
   ctx.fillStyle = light["color.text.secondary"]!;
   ctx.font = `600 34px ${text}`;
-  const steps = [`1. Открой ${window.location.host}`, "2. Нажми «У меня есть карточка или код»", "3. «Сканировать карточку» и наведи на этот код"];
+  const steps = [t("1. Открой {host}", { host: window.location.host }), t("2. Нажми «У меня есть карточка или код»"), t("3. «Сканировать карточку» и наведи на этот код")];
   steps.forEach((line, i) => ctx.fillText(line, W / 2, 1065 + i * 52));
   ctx.font = `600 28px ${text}`;
-  ctx.fillText(`Выпуск ${card.version} · не показывай карточку чужим`, W / 2, 1230);
+  ctx.fillText(t("Выпуск {n} · не показывай карточку чужим", { n: card.version }), W / 2, 1230);
 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas"))), "image/png"));
 }
 
-async function download(card: LoginCard, nickname: string) {
-  const blob = await cardPng(card, nickname);
+async function download(t: T, card: LoginCard, nickname: string) {
+  const blob = await cardPng(t, card, nickname);
   const href = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = href;
@@ -142,6 +145,7 @@ async function download(card: LoginCard, nickname: string) {
 export function LoginCardScreen() {
   const me = useStudent();
   const paths = useStudentPaths();
+  const t = useT();
   const allowed = Boolean(me?.loginCard);
   const card = useResource(() => selfApi.loginCard(), [me?.id], { enabled: allowed });
   const [busy, setBusy] = useState(false);
@@ -167,26 +171,26 @@ export function LoginCardScreen() {
   const none = card.error && isNotFound(card.error);
 
   return (
-    <Screen top={<SimpleTop back={paths.me} title="Карточка входа" />} className="login-card">
+    <Screen top={<SimpleTop back={paths.me} title={t("Карточка входа")} />} className="login-card">
       {!me ? (
         <LoadingBlock rows={2} />
       ) : !allowed ? (
         <EmptyState
           art="beeIdle"
-          title="Карточка не нужна"
+          title={t("Карточка не нужна")}
           actions={
             <LinkButton tone="neutral" onClick={() => history.back()}>
-              Назад
+              {t("Назад")}
             </LinkButton>
           }
         >
-          {me.kind === "adult" ? "Ты входишь по почте." : "Ты входишь по карточке от учителя."}
+          {me.kind === "adult" ? t("Ты входишь по почте.") : t("Ты входишь по карточке от учителя.")}
         </EmptyState>
       ) : card.data ? (
         <div className="tt-stack tt-stack--loose">
           <header className="tt-stack tt-stack--tight">
-            <h1 className="tt-title2">Моя карточка входа</h1>
-            <p className="tt-lead">На другом устройстве: «У меня есть карточка или код» → «Сканировать карточку».</p>
+            <h1 className="tt-title2">{t("Моя карточка входа")}</h1>
+            <p className="tt-lead">{t("На другом устройстве: «У меня есть карточка или код» → «Сканировать карточку».")}</p>
           </header>
           <Card className="login-card__card">
             <div className="login-card__who">
@@ -194,11 +198,11 @@ export function LoginCardScreen() {
               <p className="tt-headline">{me.nickname}</p>
             </div>
             <CardQr payload={card.data.payload} />
-            <p className="login-card__meta">Выпуск {card.data.version}</p>
+            <p className="login-card__meta">{t("Выпуск {n}", { n: card.data.version })}</p>
           </Card>
           <p className="login-card__warn">
             <IdentificationCard weight="fill" aria-hidden />
-            Не показывай карточку чужим.
+            {t("Не показывай карточку чужим.")}
           </p>
           <div aria-live="polite">{error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}</div>
           <div className="tt-stack tt-stack--tight">
@@ -208,31 +212,31 @@ export function LoginCardScreen() {
               loading={saving}
               onClick={async () => {
                 setSaving(true);
-                await download(card.data!, me.nickname ?? "").catch(() => setError("Не получилось сохранить картинку. Сделай снимок экрана."));
+                await download(t, card.data!, me.nickname ?? "").catch(() => setError(t("Не получилось сохранить картинку. Сделай снимок экрана.")));
                 setSaving(false);
               }}
             >
-              Сохранить картинку
+              {t("Сохранить картинку")}
             </Button>
             <LinkButton tone="neutral" icon={<ArrowsClockwise weight="bold" aria-hidden />} disabled={busy} onClick={() => setConfirm(true)}>
-              Сделать новую карточку
+              {t("Сделать новую карточку")}
             </LinkButton>
           </div>
           <Dialog
             open={confirm}
             onClose={() => setConfirm(false)}
-            title="Сделать новую карточку?"
-            description="Старая перестанет работать."
+            title={t("Сделать новую карточку?")}
+            description={t("Старая перестанет работать.")}
             art={illustrations.beeThink}
             centered
             hideClose
             actions={
               <>
                 <Button block loading={busy} onClick={() => void issue()}>
-                  Сделать новую
+                  {t("Сделать новую")}
                 </Button>
                 <LinkButton tone="neutral" onClick={() => setConfirm(false)}>
-                  Отмена
+                  {t("Отмена")}
                 </LinkButton>
               </>
             }
@@ -241,22 +245,22 @@ export function LoginCardScreen() {
       ) : none ? (
         <EmptyState
           art="beeRead"
-          title="Сделай карточку входа"
+          title={t("Сделай карточку входа")}
           actions={
             <>
               <Button block loading={busy} onClick={() => void issue()}>
-                Сделать карточку
+                {t("Сделать карточку")}
               </Button>
               {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
             </>
           }
         >
-          С ней войдёшь с любого устройства, мёд и серия сохранятся.
+          {t("С ней войдёшь с любого устройства, мёд и серия сохранятся.")}
         </EmptyState>
       ) : card.error ? (
         <LoadError error={card.error} onRetry={card.reload} audience="child" />
       ) : (
-        <LoadingBlock rows={2} label="Загружаем карточку" />
+        <LoadingBlock rows={2} label={t("Загружаем карточку")} />
       )}
     </Screen>
   );

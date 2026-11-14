@@ -5,6 +5,7 @@ import { Button, ButtonLink, HexAvatar, avatarFor, toneFor } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { useSession } from "@teletau/session/react";
 import type { Me } from "@teletau/session/types";
+import { useT } from "../../../i18n/client";
 import { homeOf } from "../home";
 
 /** Вход на этом устройстве уже открыт: аккаунт и куда его вернуть. Без сессии (и на сервере) — null. */
@@ -23,6 +24,7 @@ function useResume(): { me: Me; home: string } | null {
  * «Продолжить» и «Это не я»: школьный планшет общий, поэтому без автоматического перехода в чужой аккаунт.
  */
 export function HeroActions() {
+  const t = useT();
   const resume = useResume();
   if (resume) {
     const { me, home } = resume;
@@ -35,10 +37,10 @@ export function HeroActions() {
           </p>
         ) : null}
         <ButtonLink href={home} block>
-          Продолжить
+          {t("Продолжить")}
         </ButtonLink>
         <Button variant="secondary" block onClick={() => void session.logout()}>
-          Это не я
+          {t("Это не я")}
         </Button>
       </div>
     );
@@ -46,10 +48,10 @@ export function HeroActions() {
   return (
     <div className="lp-hero__actions">
       <ButtonLink href="/self" block>
-        Начать
+        {t("Начать")}
       </ButtonLink>
       <ButtonLink href="/student" variant="secondary" block>
-        У меня есть карточка или код
+        {t("У меня есть карточка или код")}
       </ButtonLink>
     </div>
   );
@@ -57,14 +59,15 @@ export function HeroActions() {
 
 /** Кнопка финального призыва: «Начать», а при открытом входе — «Продолжить». */
 export function StartButton() {
+  const t = useT();
   const resume = useResume();
   return resume ? (
     <ButtonLink href={resume.home} className="lp-final__btn">
-      Продолжить
+      {t("Продолжить")}
     </ButtonLink>
   ) : (
     <ButtonLink href="/self" className="lp-final__btn">
-      Начать
+      {t("Начать")}
     </ButtonLink>
   );
 }

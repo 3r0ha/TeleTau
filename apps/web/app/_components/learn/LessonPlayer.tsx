@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Fire, X } from "@phosphor-icons/react/ssr";
 import { Button, Dialog, EmptyState, FeedbackSheet, IconButton, LinkButton, ProgressBar, Skeleton, SkeletonGroup, SpeakButton, illustrations } from "@teletau/ui";
+import { useT } from "../../../i18n/client";
 import { localAudio } from "./audio";
 import { Duel } from "./Duel";
 import { ChoiceTask, FreeTask, PairsTask, TilesTask, WordIntro } from "./exercises";
@@ -14,8 +15,6 @@ const VERDICT_SOUND: Record<AttemptResult["verdict"], SoundName> = { correct: "c
 
 /** С какого числа верных ответов подряд лист «Верно» показывает огонёк «N подряд». */
 const COMBO_FROM = 3;
-
-const OK_TITLES = ["Верно!", "Точно!"];
 
 interface LessonPlayerProps {
   lesson: LessonState;
@@ -33,6 +32,7 @@ interface LessonPlayerProps {
  * «Новое слово» — без проверки: вместо «Проверить» сразу «Дальше».
  */
 export function LessonPlayer({ lesson, onCheck, onNext, onQuit, onStay, onLeave }: LessonPlayerProps) {
+  const t = useT();
   const exercise = currentExercise(lesson);
   const retry = isRetry(lesson);
   const intro = isIntro(lesson);
@@ -117,9 +117,9 @@ export function LessonPlayer({ lesson, onCheck, onNext, onQuit, onStay, onLeave 
     <div className="lesson">
       <header className="lesson__head">
         <div className="tt-column lesson__head-inner">
-          <IconButton label="Выйти из урока" icon={<X weight="bold" />} onClick={onQuit} />
+          <IconButton label={t("Выйти из урока")} icon={<X weight="bold" />} onClick={onQuit} />
           <div ref={progressRef} className="lesson__progress">
-            <ProgressBar value={done} max={total} label="Прогресс урока" valueText={`Пройдено ${done} из ${total}`} />
+            <ProgressBar value={done} max={total} label={t("Прогресс урока")} valueText={t("Пройдено {done} из {total}", { done, total })} />
           </div>
         </div>
       </header>
@@ -137,13 +137,13 @@ export function LessonPlayer({ lesson, onCheck, onNext, onQuit, onStay, onLeave 
         ) : intro ? (
           <div className="tt-column lesson__check">
             <Button block onClick={onNext}>
-              Дальше
+              {t("Дальше")}
             </Button>
           </div>
         ) : (
           <div className="tt-column lesson__check">
             <Button block variant={isDuel ? "violet" : "primary"} disabled={!answer} loading={checking} onClick={check}>
-              {isDuel ? "Отдать голос" : "Проверить"}
+              {isDuel ? t("Отдать голос") : t("Проверить")}
             </Button>
           </div>
         )}
@@ -220,11 +220,12 @@ function PairsFix({ exercise, result, links }: { exercise: Extract<Exercise, { t
 
 /** Строка листа с записью носителя: текст и «Послушать» рядом. */
 function WithListen({ audio, word, children }: { audio?: { url: string }; word: string; children: ReactNode }) {
+  const t = useT();
   if (localAudio(audio).length === 0) return <>{children}</>;
   return (
     <div className="feedback-listen">
       {children}
-      <SpeakButton sources={localAudio(audio)} size="small" label={`Послушать: ${word}`} />
+      <SpeakButton sources={localAudio(audio)} size="small" label={t("Послушать: {word}", { word })} />
     </div>
   );
 }
@@ -261,13 +262,15 @@ const Extra = ({ children }: { children: ReactNode }) => <p className="feedback-
 
 /** «Верно!» и огонёк «N подряд», когда верных ответов подряд от трёх. */
 function OkTitle({ index, combo }: { index: number; combo: number }) {
+  const t = useT();
+  const titles = [t("Верно!"), t("Точно!")];
   return (
     <>
-      {OK_TITLES[index % OK_TITLES.length]}
+      {titles[index % titles.length]}
       {combo >= COMBO_FROM ? (
         <span className="combo">
           <Fire weight="fill" aria-hidden />
-          {combo} подряд
+          {t("{n} подряд", { n: combo })}
         </span>
       ) : null}
     </>
@@ -291,18 +294,19 @@ function Feedback({
   combo: number;
   onNext: () => void;
 }) {
+  const t = useT();
   const correct = result.correctAnswer?.text ?? "";
   const audio = result.correctAnswer?.audio;
   if (exercise.type === "match_pairs") {
     const links = new Map(answer?.type === "pairs" ? answer.pairs.map((l) => [l.left, l.right]) : []);
     return result.verdict === "wrong" ? (
-      <FeedbackSheet tone="bad" title="Пока не так" actionLabel="Дальше" onAction={onNext}>
-        <p>Правильно так:</p>
+      <FeedbackSheet tone="bad" title={t("Пока не так")} actionLabel={t("Дальше")} onAction={onNext}>
+        <p>{t("Правильно так:")}</p>
         <PairsFix exercise={exercise} result={result} links={links} />
-        {retryLater ? <Extra>Повторим в конце урока.</Extra> : null}
+        {retryLater ? <Extra>{t("Повторим в конце урока.")}</Extra> : null}
       </FeedbackSheet>
     ) : (
-      <FeedbackSheet tone="ok" title={<OkTitle index={index} combo={combo} />} actionLabel="Дальше" onAction={onNext} />
+      <FeedbackSheet tone="ok" title={<OkTitle index={index} combo={combo} />} actionLabel={t("Дальше")} onAction={onNext} />
     );
   }
   // У выбора правильный ответ — русский вариант, у плиток и ввода — башкирская фраза.
@@ -327,16 +331,18 @@ function Feedback({
   switch (result.verdict) {
     case "correct":
       return (
-        <FeedbackSheet tone="ok" title={<OkTitle index={index} combo={combo} />} actionLabel="Дальше" onAction={onNext}>
+        <FeedbackSheet tone="ok" title={<OkTitle index={index} combo={combo} />} actionLabel={t("Дальше")} onAction={onNext}>
           {meaning}
         </FeedbackSheet>
       );
     case "typo":
       return (
-        <FeedbackSheet tone="ok" title="Верно, но с опечаткой" actionLabel="Дальше" onAction={onNext}>
+        <FeedbackSheet tone="ok" title={t("Верно, но с опечаткой")} actionLabel={t("Дальше")} onAction={onNext}>
           {answerText ? (
             <WithListen audio={audio} word={correct}>
-              <p>Правильно: {answerText}</p>
+              <p>
+                {t("Правильно:")} {answerText}
+              </p>
             </WithListen>
           ) : null}
         </FeedbackSheet>
@@ -344,42 +350,40 @@ function Feedback({
     case "almost":
       // Засчитано, но одна башкирская буква заменена похожей русской: показываем слово с этой буквой.
       return (
-        <FeedbackSheet tone="almost" title="Почти!" art={illustrations.beeSurprise} actionLabel="Дальше" onAction={onNext}>
+        <FeedbackSheet tone="almost" title={t("Почти!")} art={illustrations.beeSurprise} actionLabel={t("Дальше")} onAction={onNext}>
           {correct ? (
             <p className="feedback-answer">
               <HintedAnswer text={correct} hint={result.hint} />
             </p>
           ) : null}
           {result.hint ? (
-            <p>
-              Засчитано. Здесь пишется «<span lang="ba">{result.hint.expected}</span>»
-              {result.hint.got && result.hint.got !== result.hint.expected ? (
-                <>
-                  , а не «<span lang="ba">{result.hint.got}</span>»
-                </>
-              ) : null}
-              .
-            </p>
+            result.hint.got && result.hint.got !== result.hint.expected ? (
+              <p>{t("Засчитано. Здесь пишется «{expected}», а не «{got}».", { expected: result.hint.expected, got: result.hint.got })}</p>
+            ) : (
+              <p>{t("Засчитано. Здесь пишется «{expected}».", { expected: result.hint.expected })}</p>
+            )
           ) : (
-            <p>Засчитано. Сравни со своим ответом.</p>
+            <p>{t("Засчитано. Сравни со своим ответом.")}</p>
           )}
         </FeedbackSheet>
       );
     case "wrong":
       return (
-        <FeedbackSheet tone="bad" title="Пока не так" actionLabel="Дальше" onAction={onNext}>
+        <FeedbackSheet tone="bad" title={t("Пока не так")} actionLabel={t("Дальше")} onAction={onNext}>
           {answerText ? (
             <WithListen audio={audio} word={correct}>
-              <p>Правильно: {answerText}</p>
+              <p>
+                {t("Правильно:")} {answerText}
+              </p>
             </WithListen>
           ) : null}
-          {retryLater ? <Extra>Повторим в конце урока.</Extra> : null}
+          {retryLater ? <Extra>{t("Повторим в конце урока.")}</Extra> : null}
         </FeedbackSheet>
       );
     case "recorded":
       return (
-        <FeedbackSheet tone="voted" title="Голос учтён" art={illustrations.beeCheer} actionLabel="Дальше" onAction={onNext}>
-          <p>Итог появится в профиле.</p>
+        <FeedbackSheet tone="voted" title={t("Голос учтён")} art={illustrations.beeCheer} actionLabel={t("Дальше")} onAction={onNext}>
+          <p>{t("Итог появится в профиле.")}</p>
         </FeedbackSheet>
       );
   }
@@ -387,22 +391,23 @@ function Feedback({
 
 /** «Уже уходишь?» (prototype 12-lesson-quit): лист с пчелой, «Остаться» — основное действие. */
 function QuitDialog({ open, onStay, onLeave }: { open: boolean; onStay: () => void; onLeave: () => void }) {
+  const t = useT();
   return (
     <Dialog
       open={open}
       onClose={onStay}
-      title="Уже уходишь?"
-      description="Урок начнётся сначала."
+      title={t("Уже уходишь?")}
+      description={t("Урок начнётся сначала.")}
       art={illustrations.beeSympathy}
       centered
       hideClose
       actions={
         <>
           <Button block onClick={onStay}>
-            Остаться
+            {t("Остаться")}
           </Button>
           <LinkButton tone="danger" onClick={onLeave}>
-            Выйти
+            {t("Выйти")}
           </LinkButton>
         </>
       }
@@ -412,17 +417,18 @@ function QuitDialog({ open, onStay, onLeave }: { open: boolean; onStay: () => vo
 
 /** Урок открывается: тот же каркас, вместо задания — скелетон. */
 export function LessonLoading({ onLeave }: { onLeave: () => void }) {
+  const t = useT();
   return (
     <div className="lesson">
       <header className="lesson__head">
         <div className="tt-column lesson__head-inner">
-          <IconButton label="Выйти из урока" icon={<X weight="bold" />} onClick={onLeave} />
-          <ProgressBar value={0} max={100} label="Прогресс урока" valueText="0%" />
+          <IconButton label={t("Выйти из урока")} icon={<X weight="bold" />} onClick={onLeave} />
+          <ProgressBar value={0} max={100} label={t("Прогресс урока")} valueText="0%" />
         </div>
       </header>
       <main id="main" className="lesson__body">
         <div className="tt-column lesson__column">
-          <SkeletonGroup label="Открываем урок" className="tt-stack">
+          <SkeletonGroup label={t("Открываем урок")} className="tt-stack">
             <Skeleton width={140} height={30} radius="button" />
             <Skeleton width="80%" height={30} />
             <Skeleton height={120} radius="card" />
@@ -436,6 +442,7 @@ export function LessonLoading({ onLeave }: { onLeave: () => void }) {
 
 /** Итог урока сохраняется; при сбое — «Что-то пошло не так» с повтором (тот же runId: сервер не начислит дважды). */
 export function LessonSaving({ failed, onRetry, onLeave }: { failed?: boolean; onRetry: () => void; onLeave: () => void }) {
+  const t = useT();
   return (
     <div className="lesson lesson--center">
       <main id="main" className="lesson__body">
@@ -443,23 +450,23 @@ export function LessonSaving({ failed, onRetry, onLeave }: { failed?: boolean; o
           {failed ? (
             <EmptyState
               art="emptyError"
-              title="Итог не сохранился"
+              title={t("Итог не сохранился")}
               role="alert"
               actions={
                 <>
                   <Button block onClick={onRetry}>
-                    Попробовать снова
+                    {t("Попробовать снова")}
                   </Button>
                   <LinkButton tone="neutral" onClick={onLeave}>
-                    На тропу
+                    {t("На тропу")}
                   </LinkButton>
                 </>
               }
             >
-              Проверь интернет. Ответы не пропадут.
+              {t("Проверь интернет. Ответы не пропадут.")}
             </EmptyState>
           ) : (
-            <SkeletonGroup label="Сохраняем урок" className="tt-stack lesson__saving">
+            <SkeletonGroup label={t("Сохраняем урок")} className="tt-stack lesson__saving">
               <Skeleton width={220} height={220} radius="card" />
               <Skeleton width="60%" height={30} />
             </SkeletonGroup>

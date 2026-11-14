@@ -9,6 +9,8 @@ import { Button, CodeInput, EmptyState, InlineAlert, LinkButton, StepHeading } f
 import { session } from "@teletau/session/client";
 import { describeProblem } from "@teletau/session/problem";
 import { useOnline, useResource } from "@teletau/session/react";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 import { ClassTitle, LoadingBlock, Screen, SimpleTop, useDocumentTitle } from "../screens";
 import { useStudentPaths } from "./paths";
 import { selfApi } from "./self-api";
@@ -16,11 +18,12 @@ import { studentClass, useStudent } from "./StudentShell";
 
 type Ticket = Schema<"ClassJoinTicket">;
 
-const CODE_ERRORS = {
-  empty: "Введи код с доски.",
-  invalid_character: "В коде только буквы и цифры.",
-  invalid_length: "В коде 6 символов.",
-} as const;
+/** Ошибки ввода кода (parseClassCode) — на языке интерфейса (t доступен только при рендере). */
+const codeErrors = (t: T) => ({
+  empty: t("Введи код с доски."),
+  invalid_character: t("В коде только буквы и цифры."),
+  invalid_length: t("В коде 6 символов."),
+});
 
 /** Заявка — в sessionStorage вкладки: перезагрузка во время ожидания её не теряет (живёт 15 минут). */
 const TICKET_KEY = "tt-class-join";
@@ -51,12 +54,13 @@ export function JoinClassScreen() {
   const me = useStudent();
   const paths = useStudentPaths();
   const router = useRouter();
+  const t = useT();
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   useEffect(() => setTicket(loadTicket()), []);
-  useDocumentTitle(ticket ? "Ждём учителя" : "Вступить в класс");
+  useDocumentTitle(ticket ? t("Ждём учителя") : t("Вступить в класс"));
 
   const status = useResource(() => selfApi.joinStatus(ticket!.requestId), [ticket?.requestId], {
     enabled: Boolean(ticket),
@@ -78,7 +82,7 @@ export function JoinClassScreen() {
   const submit = async () => {
     const parsed = parseClassCode(code);
     if (!parsed.ok) {
-      setCodeError(CODE_ERRORS[parsed.error]);
+      setCodeError(codeErrors(t)[parsed.error]);
       return;
     }
     setBusy(true);
@@ -101,46 +105,46 @@ export function JoinClassScreen() {
   };
 
   return (
-    <Screen top={<SimpleTop back={paths.hive} title="Вступить в класс" />} className="join-class">
+    <Screen top={<SimpleTop back={paths.hive} title={t("Вступить в класс")} />} className="join-class">
       {!me ? (
         <LoadingBlock rows={2} />
       ) : studentClass(me) && state !== "approved" ? (
-        <EmptyState art="sceneClassHive" title="Ты уже в классе">
-          Улей класса — во вкладке «Класс».
+        <EmptyState art="sceneClassHive" title={t("Ты уже в классе")}>
+          {t("Улей класса — во вкладке «Класс».")}
         </EmptyState>
       ) : ticket && (state === "rejected" || state === "expired") ? (
         <EmptyState
           art="beeSympathy"
-          title={state === "rejected" ? "Учитель не принял заявку" : "Заявка устарела"}
+          title={state === "rejected" ? t("Учитель не принял заявку") : t("Заявка устарела")}
           actions={
             <Button block onClick={again}>
-              Ввести код
+              {t("Ввести код")}
             </Button>
           }
         >
-          {state === "rejected" ? "Подойди к учителю и попробуй ещё раз." : "Попроси учителя показать код ещё раз."}
+          {state === "rejected" ? t("Подойди к учителю и попробуй ещё раз.") : t("Попроси учителя показать код ещё раз.")}
         </EmptyState>
       ) : ticket ? (
         <EmptyState
           art="beeIdle"
-          title="Ждём учителя"
+          title={t("Ждём учителя")}
           role="status"
           actions={
             <>
               {/* Опрос продолжается сам; сеть пропала — заявка не теряется, а страница проверит снова, когда связь вернётся. */}
-              {offline ? <InlineAlert tone="honey">Нет связи. Заявка не потеряется.</InlineAlert> : null}
+              {offline ? <InlineAlert tone="honey">{t("Нет связи. Заявка не потеряется.")}</InlineAlert> : null}
               {status.error && !offline ? <InlineAlert tone="danger">{describeProblem(status.error, "child")}</InlineAlert> : null}
               <LinkButton tone="neutral" onClick={again}>
-                Отменить
+                {t("Отменить")}
               </LinkButton>
             </>
           }
         >
-          Класс <ClassTitle title={ticket.class.title} />. Скажи учителю свой ник: <b>«{me.nickname}»</b>.
-          Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.
+          {t("Класс")} <ClassTitle title={ticket.class.title} />. {t("Скажи учителю свой ник:")} <b>«{me.nickname}»</b>.
+          {t("Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.")}
           <p className="tt-pulse">
             <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
-            Проверяем каждые несколько секунд
+            {t("Проверяем каждые несколько секунд")}
           </p>
         </EmptyState>
       ) : (
@@ -152,15 +156,15 @@ export function JoinClassScreen() {
           }}
         >
           <header className="tt-stack tt-stack--tight">
-            <StepHeading focusKey="code">Введи код класса</StepHeading>
-            <p className="tt-lead">Код написан на доске в классе. Мёд и серия сохранятся.</p>
+            <StepHeading focusKey="code">{t("Введи код класса")}</StepHeading>
+            <p className="tt-lead">{t("Код написан на доске в классе. Мёд и серия сохранятся.")}</p>
           </header>
           <CodeInput
             length={6}
             charset="code"
             groupSize={3}
             compact
-            label="Код класса"
+            label={t("Код класса")}
             value={code}
             onChange={(v) => {
               setCode(v);
@@ -171,7 +175,7 @@ export function JoinClassScreen() {
             autoFocus
           />
           <Button type="submit" block loading={busy} disabled={code.length < 6}>
-            Отправить заявку
+            {t("Отправить заявку")}
           </Button>
         </form>
       )}

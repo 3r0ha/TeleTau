@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { getLocale } from "../i18n/server";
+import { LocaleProvider } from "../i18n/client";
 import type { ReactNode } from "react";
 import tokens from "@teletau/design-tokens/tokens.json";
 import { THEME_COOKIE, ToastProvider, parseTheme } from "@teletau/ui";
@@ -67,15 +69,19 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   await connection();
   // data-theme из cookie (packages/ui/src/theme.ts); без неё тема светлая.
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  // Язык интерфейса из cookie (i18n/server); без неё — русский. Провайдер даёт локаль клиентским компонентам.
+  const locale = await getLocale();
   return (
-    <html lang="ru" data-theme={theme ?? undefined}>
+    <html lang={locale} data-theme={theme ?? undefined}>
       <body>
         <a className="tt-skip-link" href="#main">
           К основному содержимому
         </a>
         <UiModeSync />
         <ServiceWorkerRegistration />
-        <ToastProvider>{children}</ToastProvider>
+        <LocaleProvider locale={locale}>
+          <ToastProvider>{children}</ToastProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

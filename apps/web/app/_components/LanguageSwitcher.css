@@ -1,0 +1,40 @@
+/* Переключатель языка (LanguageSwitcher): сегмент из трёх кнопок — как сегмент статусов в консоли.
+   Активный язык — на «сотовом» акценте, остальные — обычные. Компактный (шапка лендинга) — тот же сегмент. */
+.lang-switch {
+  display: inline-flex;
+  gap: var(--tt-space-s100);
+}
+
+.lang-switch button {
+  min-height: 36px;
+  padding: 0 var(--tt-space-s300);
+  border: 2px solid var(--tt-color-border-default);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  color: var(--tt-color-text-secondary);
+  font-family: inherit;
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-semibold);
+  cursor: pointer;
+}
+
+.lang-switch button:hover {
+  background: var(--tt-color-bg-sunken);
+}
+
+.lang-switch button[aria-pressed="true"] {
+  border-color: var(--tt-color-accent-text);
+  background: var(--tt-color-accent-soft);
+  color: var(--tt-color-accent-text);
+}
+
+/* В строке настроек сегмент прижат вправо — имя «Язык» занимает строку (settings__row в learn.css). */
+.settings__row .lang-switch {
+  flex: none;
+}
+
+/* Шапка лендинга: сегмент в ряду действий, крошечный. */
+.lang-switch--compact button {
+  min-height: 32px;
+  padding: 0 var(--tt-space-s200);
+}

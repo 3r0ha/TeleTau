@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { getT } from "../../../i18n/server";
 
-export const metadata: Metadata = { title: "Мой словарь" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Мой словарь") };
+}
 
 export default function Layout({ children }: { children: ReactNode }) {
   return children;

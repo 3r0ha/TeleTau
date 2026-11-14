@@ -8,6 +8,7 @@ import { Illustration, StepHeading, type IllustrationName } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { describeProblem } from "@teletau/session/problem";
 import { useRequireAccount } from "@teletau/session/react";
+import { useT } from "../../i18n/client";
 import { BackButton, LoadingBlock, Screen, SignOutAction, SimpleTop, useDocumentTitle } from "../_components/screens";
 import { useFlowSteps } from "../_components/steps";
 import { DEFAULT_GOAL } from "../_components/learn/GoalPicker";
@@ -16,8 +17,6 @@ import { NicknamePicker } from "../student/NicknamePicker";
 import { nextTeacherStep } from "../teacher/useTeacher";
 
 type Step = "choose" | "nick";
-
-const TITLES: Record<Step, string> = { choose: "Что дальше?", nick: "Выбери ник" };
 
 function Choice({ href, onClick, art, title, text }: { href?: string; onClick?: () => void; art: IllustrationName; title: string; text: string }) {
   const body = (
@@ -51,12 +50,15 @@ export default function WelcomePage() {
   const params = useSearchParams();
   const me = useRequireAccount("adult", "/teacher/login");
   const flow = useFlowSteps<Step>("choose");
+  const t = useT();
+  // Заголовки шагов на языке интерфейса: t доступен только при рендере, поэтому словарь — внутри компонента.
+  const titles: Record<Step, string> = { choose: t("Что дальше?"), nick: t("Выбери ник") };
   const asked = params.get("step");
   // Старый адрес шага цели (?step=goal) ведёт к нику: цель больше не спрашиваем.
   const step: Step = asked === "nick" || asked === "goal" ? "nick" : "choose";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useDocumentTitle(TITLES[step]);
+  useDocumentTitle(titles[step]);
 
   // Уже выбрал: учится — на тропу; учитель или заявитель — в кабинет.
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function WelcomePage() {
     }
   };
 
-  const start = step === "choose" ? undefined : <BackButton label="Назад" onClick={() => flow.back("choose")} />;
+  const start = step === "choose" ? undefined : <BackButton label={t("Назад")} onClick={() => flow.back("choose")} />;
 
   return (
     <Screen top={<SimpleTop
@@ -92,16 +94,16 @@ export default function WelcomePage() {
       ) : (
         <div className="tt-stack tt-stack--loose">
           <header className="self__head">
-            <StepHeading focusKey={step}>{TITLES[step]}</StepHeading>
+            <StepHeading focusKey={step}>{titles[step]}</StepHeading>
             <Illustration name={step === "nick" ? "beeThink" : "beeFly"} width={84} className="self__bee" />
           </header>
           {step === "choose" ? (
-            <nav className="start__ways" aria-label="Что дальше">
-              <Choice onClick={() => flow.go("nick")} art="beeRead" title="Учиться" text="Уроки башкирского языка" />
-              <Choice href={nextTeacherStep(me)} art="beeTeacher" title="Я учитель" text="Класс, задания, прогресс учеников" />
+            <nav className="start__ways" aria-label={t("Что дальше")}>
+              <Choice onClick={() => flow.go("nick")} art="beeRead" title={t("Учиться")} text={t("Уроки башкирского языка")} />
+              <Choice href={nextTeacherStep(me)} art="beeTeacher" title={t("Я учитель")} text={t("Класс, задания, прогресс учеников")} />
             </nav>
           ) : (
-            <NicknamePicker submitLabel="Начать" submitting={busy} error={error} onPick={(picked) => void learn(picked.id)} />
+            <NicknamePicker submitLabel={t("Начать")} submitting={busy} error={error} onPick={(picked) => void learn(picked.id)} />
           )}
         </div>
       )}

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Keyboard, QrCode } from "@phosphor-icons/react/ssr";
 import { ButtonLink, EmptyState } from "@teletau/ui";
 import { Screen, SimpleTop } from "../_components/screens";
+import { useT } from "../../i18n/client";
 
 /**
  * Старый адрес карточки `/q#TT1.…` (ADR 0016). Секрет из адреса страница НЕ принимает: ссылка с
@@ -13,22 +14,23 @@ import { Screen, SimpleTop } from "../_components/screens";
  * Фрагмент всё же стираем из адресной строки, чтобы его не увидели через плечо.
  */
 export default function QrLandingPage() {
+  const t = useT();
   useEffect(() => {
     if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname);
   }, []);
 
   return (
-    <Screen top={<SimpleTop back="/" title="Вход по карточке" />}>
+    <Screen top={<SimpleTop back="/" title={t("Вход по карточке")} />}>
       <EmptyState
         art="beeExplain"
-        title="Карточку сканируют на сайте"
+        title={t("Карточку сканируют на сайте")}
         actions={
           <>
             <ButtonLink href="/student" block icon={<QrCode weight="bold" />}>
-              Сканировать карточку
+              {t("Сканировать карточку")}
             </ButtonLink>
             <ButtonLink href="/student/code" block variant="secondary" icon={<Keyboard weight="fill" />}>
-              Войти по коду класса
+              {t("Войти по коду класса")}
             </ButtonLink>
           </>
         }

@@ -3,6 +3,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from "react";
 import { ArrowsClockwise } from "@phosphor-icons/react/ssr";
 import { AnswerOptions, Bee, Chip, LetterPanel, SpeakButton, WordTile, type IllustrationName } from "@teletau/ui";
+import { useT } from "../../../i18n/client";
 import { localAudio } from "./audio";
 import { playSound } from "./sound";
 import { useDigitKeys } from "./keys";
@@ -40,8 +41,9 @@ function tone(result: AttemptResult | null | undefined): "ok" | "almost" | "bad"
  * ошибки («Ещё раз») или это повторение слов. Тип задания уже назван заголовком — второй раз его не пишем.
  */
 function Kind({ retry, review }: { retry: boolean; review?: boolean }) {
-  if (retry) return <Chip icon={<ArrowsClockwise weight="bold" aria-hidden />}>Ещё раз</Chip>;
-  if (review) return <Chip icon={<ArrowsClockwise weight="bold" aria-hidden />}>Повторение</Chip>;
+  const t = useT();
+  if (retry) return <Chip icon={<ArrowsClockwise weight="bold" aria-hidden />}>{t("Ещё раз")}</Chip>;
+  if (review) return <Chip icon={<ArrowsClockwise weight="bold" aria-hidden />}>{t("Повторение")}</Chip>;
   return null;
 }
 
@@ -153,10 +155,11 @@ function HintedText({ text, hints, onOpen }: { text: string; hints?: PromptHint[
  * упражнениями с этим словом. Ответа нет: «Дальше» в подвале урока.
  */
 export function WordIntro({ exercise, headingRef }: { exercise: WordIntroExercise; headingRef: Ref<HTMLHeadingElement> }) {
+  const t = useT();
   const text = exercise.word.text;
   return (
     <>
-      <Title headingRef={headingRef}>Новое слово</Title>
+      <Title headingRef={headingRef}>{t("Новое слово")}</Title>
       <div className="newword">
         <Bee frame="beeTeacher" width={160} className="newword__bee" float />
         <div className="newword__card">
@@ -175,6 +178,7 @@ export function WordIntro({ exercise, headingRef }: { exercise: WordIntroExercis
 
 /** «Переведи на башкирский» — собери ответ из плиток (tiles_ru_ba, prototype 05–06). */
 export function TilesTask({ exercise, onAnswer, onHint, disabled, retry, review, headingRef, result }: ExerciseProps<TilesExercise>) {
+  const t = useT();
   const [picked, setPicked] = useState<string[]>([]);
   // Ответ сообщается в том же событии, что и выбор: «Проверить» и Enter видят его сразу, без лишней отрисовки.
   const update = (next: string[]) => {
@@ -187,15 +191,15 @@ export function TilesTask({ exercise, onAnswer, onHint, disabled, retry, review,
   return (
     <>
       <Kind retry={retry} review={review} />
-      <Title headingRef={headingRef}>Переведи на башкирский</Title>
+      <Title headingRef={headingRef}>{t("Переведи на башкирский")}</Title>
       <Prompt bee="beeExplain">
         <HintedText text={exercise.promptRu} hints={exercise.hints} onOpen={onHint} />
       </Prompt>
       {/* Нажатие на плитку ответа возвращает её в банк. */}
-      <div className={["tiles-answer", verdict && `tiles-answer--${verdict}`].filter(Boolean).join(" ")} role="group" aria-label="Твой ответ — нажми на слово, чтобы убрать">
+      <div className={["tiles-answer", verdict && `tiles-answer--${verdict}`].filter(Boolean).join(" ")} role="group" aria-label={t("Твой ответ — нажми на слово, чтобы убрать")}>
         {picked.length === 0 ? (
           <span className="tiles-answer__hint" aria-hidden>
-            Нажимай на слова внизу
+            {t("Нажимай на слова внизу")}
           </span>
         ) : null}
         {picked.map((id, k) => (
@@ -204,7 +208,7 @@ export function TilesTask({ exercise, onAnswer, onHint, disabled, retry, review,
           </WordTile>
         ))}
       </div>
-      <div className="tiles-bank" role="group" aria-label="Слова">
+      <div className="tiles-bank" role="group" aria-label={t("Слова")}>
         {exercise.tiles.map((t) => (
           <WordTile key={t.id} used={picked.includes(t.id)} disabled={disabled} onClick={() => update([...picked, t.id])}>
             {t.text}
@@ -217,6 +221,7 @@ export function TilesTask({ exercise, onAnswer, onHint, disabled, retry, review,
 
 /** «Что значит это слово?» — узнавание при первом знакомстве (choice_ba_ru, prototype 07): клавиши 1–4. */
 export function ChoiceTask({ exercise, onAnswer, disabled, retry, review, headingRef, result }: ExerciseProps<ChoiceExercise>) {
+  const t = useT();
   const [choice, setChoice] = useState<string | null>(null);
   const pick = (optionId: string | undefined) => {
     if (!optionId) return;
@@ -231,7 +236,7 @@ export function ChoiceTask({ exercise, onAnswer, disabled, retry, review, headin
   return (
     <>
       <Kind retry={retry} review={review} />
-      <Title headingRef={headingRef}>Что значит это слово?</Title>
+      <Title headingRef={headingRef}>{t("Что значит это слово?")}</Title>
       <div className="word-card">
         <p className="word-card__text" lang="ba">
           {exercise.prompt}
@@ -240,7 +245,7 @@ export function ChoiceTask({ exercise, onAnswer, disabled, retry, review, headin
         <SpeakButton sources={localAudio(exercise.promptAudio)} />
       </div>
       <AnswerOptions
-        label="Варианты перевода"
+        label={t("Варианты перевода")}
         options={exercise.options.map((o, i) => ({ value: o.id, mark: String(i + 1), label: o.textRu }))}
         value={choice}
         onChange={pick}
@@ -253,6 +258,7 @@ export function ChoiceTask({ exercise, onAnswer, disabled, retry, review, headin
 
 /** «Напиши по-башкирски» — ввод с панелью башкирских букв (free_ru_ba, prototype 08–09). Enter — проверить. */
 export function FreeTask({ exercise, onAnswer, onHint, onSubmit, disabled, retry, review, headingRef, result }: ExerciseProps<FreeExercise>) {
+  const t = useT();
   const [text, setText] = useState("");
   const field = useRef<HTMLTextAreaElement>(null);
   const caret = useRef<number | null>(null);
@@ -283,7 +289,7 @@ export function FreeTask({ exercise, onAnswer, onHint, onSubmit, disabled, retry
   return (
     <>
       <Kind retry={retry} review={review} />
-      <Title headingRef={headingRef}>Напиши по-башкирски</Title>
+      <Title headingRef={headingRef}>{t("Напиши по-башкирски")}</Title>
       <Prompt bee="beeThink">
         <HintedText text={exercise.promptRu} hints={exercise.hints} onOpen={onHint} />
       </Prompt>
@@ -291,8 +297,8 @@ export function FreeTask({ exercise, onAnswer, onHint, onSubmit, disabled, retry
         <textarea
           ref={field}
           lang="ba"
-          aria-label={`Перевод на башкирский: ${exercise.promptRu}`}
-          placeholder="Твой ответ"
+          aria-label={t("Перевод на башкирский: {prompt}", { prompt: exercise.promptRu })}
+          placeholder={t("Твой ответ")}
           value={text}
           readOnly={disabled}
           autoComplete="off"
@@ -322,6 +328,7 @@ const PAIR_TONES = 5;
  * Верные пары знает только сервер: после проверки (result) каждая пара отмечается «верно» или «не так».
  */
 export function PairsTask({ exercise, onAnswer, disabled, retry, review, headingRef, result }: ExerciseProps<PairsExercise>) {
+  const t = useT();
   const [links, setLinks] = useState<PairLink[]>([]);
   const [picked, setPicked] = useState<{ side: "left" | "right"; id: string } | null>(null);
 
@@ -355,7 +362,7 @@ export function PairsTask({ exercise, onAnswer, disabled, retry, review, heading
     const verdict = verdictOf(link);
     const selected = picked?.side === side && picked.id === id;
     // Для читалки: имя — само слово, описание — номер пары и после проверки — верно ли.
-    const status = [index >= 0 && `пара ${index + 1}`, verdict === "ok" && "верно", verdict === "bad" && "не так"].filter(Boolean).join(", ");
+    const status = [index >= 0 && t("пара {n}", { n: index + 1 }), verdict === "ok" && t("верно"), verdict === "bad" && t("не так")].filter(Boolean).join(", ");
     const statusId = `${exercise.id}-${side}-${id}`;
     const cls = [
       "pair",
@@ -389,13 +396,13 @@ export function PairsTask({ exercise, onAnswer, disabled, retry, review, heading
   return (
     <>
       <Kind retry={retry} review={review} />
-      <Title headingRef={headingRef}>Соедини пары</Title>
-      <p className="pairs__hint">Нажми слово и его перевод</p>
+      <Title headingRef={headingRef}>{t("Соедини пары")}</Title>
+      <p className="pairs__hint">{t("Нажми слово и его перевод")}</p>
       <div className="pairs">
-        <ul className="pairs__col" aria-label="Слова">
+        <ul className="pairs__col" aria-label={t("Слова")}>
           {exercise.left.map((w) => item("left", w.id, w.text, "ba"))}
         </ul>
-        <ul className="pairs__col" aria-label="Переводы">
+        <ul className="pairs__col" aria-label={t("Переводы")}>
           {exercise.right.map((r) => item("right", r.id, r.textRu))}
         </ul>
       </div>

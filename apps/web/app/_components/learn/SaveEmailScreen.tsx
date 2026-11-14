@@ -8,6 +8,7 @@ import { Button, CodeInput, EmptyState, Form, InlineAlert, LinkButton, StepHeadi
 import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem, fieldErrors } from "@teletau/session/problem";
 import { LoadingBlock, Screen, SimpleTop, useDocumentTitle } from "../screens";
+import { useT } from "../../../i18n/client";
 import { useStudentPaths } from "./paths";
 import { selfApi } from "./self-api";
 import { useStudent } from "./StudentShell";
@@ -23,6 +24,7 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
   const me = useStudent();
   const paths = useStudentPaths();
   const router = useRouter();
+  const t = useT();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<Schema<"OtpChallenge"> | null>(null);
@@ -31,11 +33,11 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const invalid = useInvalidFocus();
-  useDocumentTitle(challenge ? "Код из письма" : "Сохранить по почте");
+  useDocumentTitle(challenge ? t("Код из письма") : t("Сохранить по почте"));
 
   const request = async () => {
     if (!EMAIL_RE.test(email.trim())) {
-      setEmailError("Нужен адрес почты, например name@mail.ru");
+      setEmailError(t("Нужен адрес почты, например name@mail.ru"));
       invalid.request();
       return;
     }
@@ -75,21 +77,21 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
   };
 
   return (
-    <Screen top={<SimpleTop back={paths.me} title="Сохранить по почте" />} className="auth">
+    <Screen top={<SimpleTop back={paths.me} title={t("Сохранить по почте")} />} className="auth">
       {!me ? (
         <LoadingBlock rows={2} />
       ) : me.profile || me.emailLogin ? (
-        <EmptyState art="beeIdle" title="Почта уже сохранена">
-          Входи по почте с любого устройства.
+        <EmptyState art="beeIdle" title={t("Почта уже сохранена")}>
+          {t("Входи по почте с любого устройства.")}
         </EmptyState>
       ) : !challenge ? (
         <Form className="tt-stack tt-stack--loose" invalidFocus={invalid} onSubmit={() => void request()}>
           <header className="tt-stack tt-stack--tight">
-            <StepHeading focusKey="email">Сохранить прогресс по почте</StepHeading>
-            <p className="tt-lead">Будешь входить с любого устройства по коду из письма.</p>
+            <StepHeading focusKey="email">{t("Сохранить прогресс по почте")}</StepHeading>
+            <p className="tt-lead">{t("Будешь входить с любого устройства по коду из письма.")}</p>
           </header>
           <TextField
-            label="Электронная почта"
+            label={t("Электронная почта")}
             type="email"
             name="email"
             autoComplete="email"
@@ -103,7 +105,7 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
           />
           {formError ? <InlineAlert tone="danger">{formError}</InlineAlert> : null}
           <Button type="submit" block loading={busy}>
-            Получить код
+            {t("Получить код")}
           </Button>
         </Form>
       ) : (
@@ -115,19 +117,19 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
           }}
         >
           <header className="tt-stack tt-stack--tight">
-            <StepHeading focusKey="code">Введи код</StepHeading>
+            <StepHeading focusKey="code">{t("Введи код")}</StepHeading>
             <p className="tt-lead">
-              Код отправлен на <b className="tt-break-anywhere">{email.trim()}</b>.
+              {t("Код отправлен на")} <b className="tt-break-anywhere">{email.trim()}</b>.
             </p>
           </header>
           {demoCode ? (
             <InlineAlert tone="honey">
-              Демо-режим: код всегда <b className="tt-num">{demoCode}</b>.
+              {t("Демо-режим: код всегда")} <b className="tt-num">{demoCode}</b>.
             </InlineAlert>
           ) : null}
           <CodeInput
             length={challenge.codeLength}
-            label="Код из письма"
+            label={t("Код из письма")}
             value={code}
             onChange={(v) => {
               setCode(v);
@@ -140,10 +142,10 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
           />
           {formError ? <InlineAlert tone="danger">{formError}</InlineAlert> : null}
           <Button type="submit" block loading={busy} disabled={code.length < challenge.codeLength}>
-            Сохранить
+            {t("Сохранить")}
           </Button>
           <LinkButton tone="neutral" onClick={() => setChallenge(null)}>
-            Другой адрес
+            {t("Другой адрес")}
           </LinkButton>
         </form>
       )}

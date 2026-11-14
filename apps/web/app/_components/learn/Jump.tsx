@@ -6,6 +6,7 @@
 import { useEffect } from "react";
 import { Drop, Lightning } from "@phosphor-icons/react/ssr";
 import { Button, StatTile, StatTiles, useCountUp } from "@teletau/ui";
+import { useT } from "../../../i18n/client";
 import { AfterScreen } from "./AfterLesson";
 import type { Course, CourseUnit, LessonSummary } from "./model";
 import { placeArt } from "./places";
@@ -14,14 +15,22 @@ import "./jump.css";
 
 /** «Уже знаешь? — Пройти испытание» под вывеской закрытого места. */
 export function JumpOffer({ unit, onJump, busy }: { unit: CourseUnit; onJump: (unit: CourseUnit) => void; busy?: boolean }) {
+  const t = useT();
   const id = `jump-${unit.id}`;
   return (
     <div className="jump-offer" role="group" aria-labelledby={id}>
       <p className="jump-offer__text" id={id}>
-        Уже знаешь?
+        {t("Уже знаешь?")}
       </p>
-      <Button small variant="secondary" icon={<Lightning weight="fill" aria-hidden />} loading={busy} onClick={() => onJump(unit)} aria-label={`Пройти испытание и открыть место «${unit.place.titleRu}»`}>
-        Пройти испытание
+      <Button
+        small
+        variant="secondary"
+        icon={<Lightning weight="fill" aria-hidden />}
+        loading={busy}
+        onClick={() => onJump(unit)}
+        aria-label={t("Пройти испытание и открыть место «{place}»", { place: unit.place.titleRu })}
+      >
+        {t("Пройти испытание")}
       </Button>
     </div>
   );
@@ -32,6 +41,7 @@ export function JumpOffer({ unit, onJump, busy }: { unit: CourseUnit; onJump: (u
  * потеряно, уроки на месте.
  */
 export function JumpResultScreen({ course, summary, onContinue }: { course: Course | undefined; summary: LessonSummary; onContinue: () => void }) {
+  const t = useT();
   const jump = summary.jump;
   const unit = course?.units.find((u) => u.id === jump?.unitId);
   const passed = jump?.passed ?? false;
@@ -41,18 +51,18 @@ export function JumpResultScreen({ course, summary, onContinue }: { course: Cour
   }, [passed]);
   if (!passed) {
     return (
-      <AfterScreen art="beeSympathy" artAlt="" action="К урокам" onAction={onContinue}>
+      <AfterScreen art="beeSympathy" artAlt="" action={t("К урокам")} onAction={onContinue}>
         <h1 className="after__title" tabIndex={-1}>
-          Пока рано
+          {t("Пока рано")}
         </h1>
       </AfterScreen>
     );
   }
   const art = unit ? placeArt(unit.place.slug) : undefined;
   return (
-    <AfterScreen art={art?.hero ?? "beeCheer"} artAlt={art?.heroAlt ?? ""} wide={Boolean(art?.hero)} artMotion={art?.hero ? undefined : "hop"} confetti action="Дальше" onAction={onContinue}>
+    <AfterScreen art={art?.hero ?? "beeCheer"} artAlt={art?.heroAlt ?? ""} wide={Boolean(art?.hero)} artMotion={art?.hero ? undefined : "hop"} confetti action={t("Дальше")} onAction={onContinue}>
       <h1 className="after__title" tabIndex={-1}>
-        Место открыто
+        {t("Место открыто")}
       </h1>
       {unit ? (
         <p className="after__lead jump-result__place">
@@ -66,8 +76,8 @@ export function JumpResultScreen({ course, summary, onContinue }: { course: Cour
         </p>
       ) : null}
       <div className="jump-result__honey">
-        <StatTiles label="Итог испытания">
-          <StatTile label="Мёд" icon={<Drop weight="fill" />} value={`+${honey}`} />
+        <StatTiles label={t("Итог испытания")}>
+          <StatTile label={t("Мёд")} icon={<Drop weight="fill" />} value={`+${honey}`} />
         </StatTiles>
       </div>
     </AfterScreen>

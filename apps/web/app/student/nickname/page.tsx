@@ -8,6 +8,7 @@ import { api, unwrap } from "@teletau/session/api";
 import { session } from "@teletau/session/client";
 import { describeProblem } from "@teletau/session/problem";
 import { useRequireAccount } from "@teletau/session/react";
+import { useT } from "../../../i18n/client";
 import { LoadingBlock, Screen, SimpleTop } from "../../_components/screens";
 import { useStudentPaths } from "../../_components/learn/paths";
 import { NicknamePicker } from "../NicknamePicker";
@@ -20,6 +21,7 @@ export default function NicknamePage() {
   const paths = useStudentPaths();
   const me = useRequireAccount("child", paths.login);
   const router = useRouter();
+  const t = useT();
   const [submitting, setSubmitting] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,17 +33,17 @@ export default function NicknamePage() {
   };
 
   return (
-    <Screen top={<SimpleTop title="Твой ник" />}>
+    <Screen top={<SimpleTop title={t("Твой ник")} />}>
       {!me ? (
         <LoadingBlock />
       ) : (
         <div className="tt-stack tt-stack--loose">
           <header className="tt-stack tt-stack--tight">
-            <h1 className="tt-title2">Выбери ник</h1>
-            <p className="tt-lead">Так тебя увидят в классе.</p>
+            <h1 className="tt-title2">{t("Выбери ник")}</h1>
+            <p className="tt-lead">{t("Так тебя увидят в классе.")}</p>
           </header>
           <NicknamePicker
-            submitLabel="Выбрать"
+            submitLabel={t("Выбрать")}
             submitting={submitting}
             error={error}
             onPick={async (nick) => {
@@ -59,7 +61,7 @@ export default function NicknamePage() {
             }}
           />
           <LinkButton tone="neutral" icon={<SignOut weight="bold" aria-hidden />} onClick={() => void leave()} disabled={leaving || submitting}>
-            Это не моя карточка
+            {t("Это не моя карточка")}
           </LinkButton>
         </div>
       )}

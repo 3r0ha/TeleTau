@@ -6,17 +6,20 @@ import { normalizeCodeInput, parseClassCode } from "@teletau/auth-codes";
 import { Button, CodeInput, ProgressBar, StepHeading } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem } from "@teletau/session/problem";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 import { BackButton, BackLink, Screen, SimpleTop, useDocumentTitle } from "../../_components/screens";
 import { NicknamePicker } from "../NicknamePicker";
 import { useFlowSteps } from "../../_components/steps";
 import { saveTicket } from "../ticket";
 import { useStudentPaths } from "../../_components/learn/paths";
 
-const CODE_ERRORS = {
-  empty: "Введи код с доски.",
-  invalid_character: "В коде только буквы и цифры.",
-  invalid_length: "В коде 6 символов.",
-} as const;
+/** Ошибки ввода кода (parseClassCode) — на языке интерфейса (t доступен только при рендере). */
+const codeErrors = (t: T) => ({
+  empty: t("Введи код с доски."),
+  invalid_character: t("В коде только буквы и цифры."),
+  invalid_length: t("В коде 6 символов."),
+});
 
 type Step = "code" | "nick";
 
@@ -50,6 +53,7 @@ export default function ClassCodePage() {
   const paths = useStudentPaths();
   const params = useSearchParams();
   const flow = useFlowSteps<Step>("code");
+  const t = useT();
   const step: Step = params.get("step") === "nick" ? "nick" : "code";
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
@@ -57,7 +61,7 @@ export default function ClassCodePage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const restored = useRef(false);
 
-  useDocumentTitle(step === "code" ? "Код класса" : "Выбери ник");
+  useDocumentTitle(step === "code" ? t("Код класса") : t("Выбери ник"));
 
   // Черновик кода — после перезагрузки или возврата «Назад». Шаг ника без годного кода — назад к вводу.
   // Исправление адреса — после монтирования: Next.js подключает свой history.replaceState эффектом корня, позже нашего.
@@ -76,7 +80,7 @@ export default function ClassCodePage() {
   const next = (value = code) => {
     const parsed = parseClassCode(value);
     if (!parsed.ok) {
-      setCodeError(CODE_ERRORS[parsed.error]);
+      setCodeError(codeErrors(t)[parsed.error]);
       return;
     }
     setCodeError(null);
@@ -88,18 +92,23 @@ export default function ClassCodePage() {
     <Screen
       top={
         <SimpleTop
-          start={step === "code" ? <BackLink href={paths.login} /> : <BackButton label="Назад к коду" onClick={() => flow.back("code")} />}
-          title="Вход по коду класса"
+          start={step === "code" ? <BackLink href={paths.login} /> : <BackButton label={t("Назад к коду")} onClick={() => flow.back("code")} />}
+          title={t("Вход по коду класса")}
         />
       }
     >
       <div className="tt-stack tt-stack--loose">
-        <ProgressBar value={step === "code" ? 1 : 2} max={2} label="Шаг входа" valueText={step === "code" ? "Шаг 1 из 2" : "Шаг 2 из 2"} />
+        <ProgressBar
+          value={step === "code" ? 1 : 2}
+          max={2}
+          label={t("Шаг входа")}
+          valueText={step === "code" ? t("Шаг {n} из {total}", { n: 1, total: 2 }) : t("Шаг {n} из {total}", { n: 2, total: 2 })}
+        />
 
         {/* Один заголовок на оба шага: при смене шага на него переходит фокус (StepHeading). */}
         <header className="tt-stack tt-stack--tight">
-          <StepHeading focusKey={step}>{step === "code" ? "Введи код класса" : "Выбери ник"}</StepHeading>
-          <p className="tt-lead">{step === "code" ? "Код написан на доске в классе." : "По нему учитель узнает тебя."}</p>
+          <StepHeading focusKey={step}>{step === "code" ? t("Введи код класса") : t("Выбери ник")}</StepHeading>
+          <p className="tt-lead">{step === "code" ? t("Код написан на доске в классе.") : t("По нему учитель узнает тебя.")}</p>
         </header>
 
         {step === "code" ? (
@@ -115,7 +124,7 @@ export default function ClassCodePage() {
               charset="code"
               groupSize={3}
               compact
-              label="Код класса"
+              label={t("Код класса")}
               value={code}
               onChange={(v) => {
                 setCode(v);
@@ -126,13 +135,13 @@ export default function ClassCodePage() {
               autoFocus
             />
             <Button type="submit" block disabled={code.length < 6}>
-              Дальше
+              {t("Дальше")}
             </Button>
           </form>
         ) : (
           <div className="tt-stack tt-stack--loose">
             <NicknamePicker
-              submitLabel="Отправить заявку"
+              submitLabel={t("Отправить заявку")}
               submitting={submitting}
               error={submitError}
               onPick={async (nick) => {

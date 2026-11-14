@@ -5,6 +5,7 @@ import { Button, InlineAlert, openSheetEntry, useToast } from "@teletau/ui";
 import { useResource } from "@teletau/session/react";
 import { describeProblem, isNetworkError } from "@teletau/session/problem";
 import { LoadError, LoadingBlock } from "../screens";
+import { useT } from "../../../i18n/client";
 import { NewAchievementScreen } from "./Achievements";
 import { LeagueUpScreen, NothingToDo, ResultScreen, StreakScreen, type LessonPlace } from "./AfterLesson";
 import { learnApi } from "./api";
@@ -51,6 +52,7 @@ function useSplash(ready: boolean): boolean {
  * эффекты: запросы к API по состоянию автомата, «Назад» во время урока и обновление тропы после него.
  */
 export function LearnFlow() {
+  const t = useT();
   const account = useStudent();
   const toast = useToast();
   const [state, dispatch] = useReducer(flowReducer, initialFlow);
@@ -105,14 +107,14 @@ export function LearnFlow() {
         setStartError({
           node: state.node,
           runId: state.runId,
-          message: isNetworkError(e) ? "Нет связи. Урок не открылся." : describeProblem(e, "child"),
+          message: isNetworkError(e) ? t("Нет связи. Урок не открылся.") : describeProblem(e, "child"),
         });
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [state]);
+  }, [state, t]);
 
   // Время ответа — от показа упражнения.
   const shownAt = useRef(Date.now());
@@ -136,11 +138,11 @@ export function LearnFlow() {
         (result) => dispatch({ type: "verdict", result }),
         (e: unknown) => {
           dispatch({ type: "attemptFailed" });
-          toast(isNetworkError(e) ? "Нет связи. Нажми «Проверить» ещё раз." : describeProblem(e, "child"), "error");
+          toast(isNetworkError(e) ? t("Нет связи. Нажми «Проверить» ещё раз.") : describeProblem(e, "child"), "error");
         },
       );
     },
-    [lesson, toast],
+    [lesson, toast, t],
   );
 
   // Итог урока: тот же runId при повторе — мёд не начислится дважды. Экран серии — только если этот урок выполнил
@@ -257,7 +259,7 @@ export function LearnFlow() {
                   <InlineAlert tone="danger">{startError.message}</InlineAlert>
                   {/* Повтор — с тем же runId: если сервер его уже создал, дубликата не будет. */}
                   <Button onClick={() => dispatch({ type: "start", node: startError.node, runId: startError.runId })}>
-                    Попробовать ещё раз
+                    {t("Попробовать ещё раз")}
                   </Button>
                 </div>
               ) : null}
@@ -275,7 +277,7 @@ export function LearnFlow() {
           ) : course.error ? (
             <LoadError error={course.error} onRetry={course.reload} audience="child" />
           ) : (
-            <LoadingBlock rows={4} label="Открываем тропу" />
+            <LoadingBlock rows={4} label={t("Открываем тропу")} />
           )}
         </StudentShell>
       );

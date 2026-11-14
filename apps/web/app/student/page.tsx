@@ -5,6 +5,8 @@ import { BookOpen, Camera, CameraSlash, ImageSquare, Keyboard, QrCode } from "@p
 import { Button, ButtonLink, InlineAlert, LinkButton } from "@teletau/ui";
 import { ApiProblem, describeProblem } from "@teletau/session/problem";
 import { useSession } from "@teletau/session/react";
+import { useT } from "../../i18n/client";
+import type { T } from "../../i18n/core";
 import { Screen, SimpleTop } from "../_components/screens";
 import { decodeImageFile, decodeVideoFrame, useQrLogin } from "./qr";
 import { useStudentPaths } from "../_components/learn/paths";
@@ -13,12 +15,12 @@ type CameraState = { status: "off" } | { status: "starting" } | { status: "on" }
 
 const SCAN_INTERVAL_MS = 250;
 
-function cameraError(e: unknown): string {
+function cameraError(t: T, e: unknown): string {
   const name = e instanceof DOMException ? e.name : "";
-  if (name === "NotAllowedError" || name === "SecurityError") return "Нет доступа к камере. Разреши его в браузере или загрузи фото карточки.";
-  if (name === "NotFoundError" || name === "OverconstrainedError") return "Камера не найдена. Загрузи фото карточки.";
-  if (name === "NotReadableError") return "Камера занята. Закрой другое приложение и попробуй снова.";
-  return "Камера не включилась. Загрузи фото карточки.";
+  if (name === "NotAllowedError" || name === "SecurityError") return t("Нет доступа к камере. Разреши его в браузере или загрузи фото карточки.");
+  if (name === "NotFoundError" || name === "OverconstrainedError") return t("Камера не найдена. Загрузи фото карточки.");
+  if (name === "NotReadableError") return t("Камера занята. Закрой другое приложение и попробуй снова.");
+  return t("Камера не включилась. Загрузи фото карточки.");
 }
 
 /**
@@ -37,6 +39,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
   const { state, login, reset } = useQrLogin();
   const paths = useStudentPaths();
   const sessionState = useSession();
+  const t = useT();
   // Сессию завершил сервер (перевыпуск карточки — 401 session_revoked, контракт reissueSeatCard): объясняем, что делать.
   const ended = sessionState.status === "anonymous" && (sessionState.reason === "session_revoked" || sessionState.reason === "card_reissued") ? sessionState.reason : null;
 
@@ -69,7 +72,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
     reset();
     setPhotoError(null);
     if (!navigator.mediaDevices?.getUserMedia) {
-      setCamera({ status: "error", message: "В этом браузере нет камеры. Загрузи фото карточки." });
+      setCamera({ status: "error", message: t("В этом браузере нет камеры. Загрузи фото карточки.") });
       return;
     }
     setCamera({ status: "starting" });
@@ -83,7 +86,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
       scanLoop();
     } catch (e) {
       stop();
-      setCamera({ status: "error", message: cameraError(e) });
+      setCamera({ status: "error", message: cameraError(t, e) });
     }
   };
 
@@ -96,7 +99,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
     const text = await decodeImageFile(file).catch(() => null);
     if (fileRef.current) fileRef.current.value = "";
     if (!text) {
-      setPhotoError("QR-код не виден. Сфотографируй карточку ближе и ровнее.");
+      setPhotoError(t("QR-код не виден. Сфотографируй карточку ближе и ровнее."));
       return;
     }
     await login(text);
@@ -111,35 +114,35 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
   const live = camera.status === "on" || camera.status === "starting";
 
   return (
-    <Screen top={<SimpleTop back={paths.start} title="Вход ученика" />}>
+    <Screen top={<SimpleTop back={paths.start} title={t("Вход ученика")} />}>
       <div className="tt-stack tt-stack--loose scan">
-        <h1 className="tt-title2">Покажи карточку камере</h1>
+        <h1 className="tt-title2">{t("Покажи карточку камере")}</h1>
 
         <div className="scan__frame" data-live={live}>
-          <video ref={videoRef} className="scan__video" playsInline muted aria-label="Изображение с камеры" hidden={!live} />
+          <video ref={videoRef} className="scan__video" playsInline muted aria-label={t("Изображение с камеры")} hidden={!live} />
           {live ? (
             <span className="scan__corners" aria-hidden />
           ) : (
             <div className="scan__idle">
               <QrCode weight="duotone" aria-hidden className="scan__qr" />
               <Button onClick={start} icon={<Camera weight="fill" />} loading={busy}>
-                {busy ? "Входим…" : "Сканировать карточку"}
+                {busy ? t("Входим…") : t("Сканировать карточку")}
               </Button>
             </div>
           )}
         </div>
         {live ? (
           <div className="scan__live-actions">
-            {camera.status === "on" ? <p className="scan__hint">Держи карточку ровно</p> : null}
+            {camera.status === "on" ? <p className="scan__hint">{t("Держи карточку ровно")}</p> : null}
             <LinkButton tone="neutral" icon={<CameraSlash weight="bold" aria-hidden />} onClick={turnOff}>
-              Выключить камеру
+              {t("Выключить камеру")}
             </LinkButton>
           </div>
         ) : null}
 
         <div aria-live="polite" className="tt-stack tt-stack--tight">
           {ended && state.status === "idle" ? <InlineAlert tone="honey">{describeProblem(new ApiProblem(401, { code: ended }), "child")}</InlineAlert> : null}
-          {busy ? <p className="tt-visually-hidden">Карточка найдена, входим</p> : null}
+          {busy ? <p className="tt-visually-hidden">{t("Карточка найдена, входим")}</p> : null}
           {state.status === "error" ? <InlineAlert tone="danger">{state.message}</InlineAlert> : null}
           {camera.status === "error" ? <InlineAlert tone="danger">{camera.message}</InlineAlert> : null}
           {photoError ? <InlineAlert tone="danger">{photoError}</InlineAlert> : null}
@@ -150,7 +153,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
             ref={fileRef}
             id="card-photo"
             type="file"
-            aria-label="Фото карточки"
+            aria-label={t("Фото карточки")}
             accept="image/*"
             capture="environment"
             className="tt-visually-hidden"
@@ -158,14 +161,14 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
             onChange={(e) => void onPhoto(e.target.files?.[0])}
           />
           <Button variant="secondary" block icon={<ImageSquare weight="fill" />} onClick={() => fileRef.current?.click()} disabled={busy}>
-            Загрузить фото
+            {t("Загрузить фото")}
           </Button>
           <ButtonLink href={paths.code} variant="secondary" block icon={<Keyboard weight="fill" />}>
-            Ввести код класса
+            {t("Ввести код класса")}
           </ButtonLink>
           {withSelf ? (
             <ButtonLink href={paths.self} variant="secondary" block icon={<BookOpen weight="fill" />}>
-              Учусь сам
+              {t("Учусь сам")}
             </ButtonLink>
           ) : null}
         </div>

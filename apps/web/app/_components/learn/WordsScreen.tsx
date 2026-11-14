@@ -8,6 +8,7 @@ import { useResource } from "@teletau/session/react";
 import { LoadError, LoadingBlock } from "../screens";
 import { learnApi } from "./api";
 import { plural } from "./format";
+import { useT } from "../../../i18n/client";
 import type { MyWord, MyWords } from "./model";
 import { useStudentPaths } from "./paths";
 import { StudentShell, useStudent } from "./StudentShell";
@@ -19,6 +20,7 @@ import { StudentShell, useStudent } from "./StudentShell";
  */
 export function WordsScreen() {
   const account = useStudent();
+  const t = useT();
   const words = useResource(() => learnApi.words(), [account?.id], { enabled: Boolean(account) });
   return (
     <StudentShell tab="words" className="words">
@@ -27,7 +29,7 @@ export function WordsScreen() {
       ) : words.error ? (
         <LoadError error={words.error} audience="child" onRetry={words.reload} />
       ) : (
-        <LoadingBlock rows={5} label="Открываем словарь" />
+        <LoadingBlock rows={5} label={t("Открываем словарь")} />
       )}
     </StudentShell>
   );
@@ -35,6 +37,7 @@ export function WordsScreen() {
 
 function WordsView({ data }: { data: MyWords }) {
   const paths = useStudentPaths();
+  const t = useT();
   const { total, review } = data.summary;
   const toReview = data.words.filter((w) => w.status === "review");
   const learned = data.words.filter((w) => w.status === "learned");
@@ -43,13 +46,13 @@ function WordsView({ data }: { data: MyWords }) {
       <header className="words__head">
         <Link href={paths.me} className="words__back">
           <CaretLeft weight="bold" aria-hidden />
-          Профиль
+          {t("Профиль")}
         </Link>
-        <h1 className="page-title">Мой словарь</h1>
+        <h1 className="page-title">{t("Мой словарь")}</h1>
         {total ? (
           <p className="page-lead">
-            {total} {plural(total, ["слово", "слова", "слов"])}
-            {review ? null : " · все выучены"}
+            {total} {plural(total, [t("слово"), t("слова"), t("слов")])}
+            {review ? null : ` · ${t("все выучены")}`}
           </p>
         ) : null}
       </header>
@@ -57,15 +60,15 @@ function WordsView({ data }: { data: MyWords }) {
       {total === 0 ? (
         <EmptyState
           art="emptyAllDone"
-          title="Слов пока нет"
+          title={t("Слов пока нет")}
           headingAs="h2"
           actions={
             <ButtonLink block href={paths.learn}>
-              На тропу
+              {t("На тропу")}
             </ButtonLink>
           }
         >
-          Они появятся после урока.
+          {t("Они появятся после урока.")}
         </EmptyState>
       ) : null}
 
@@ -75,24 +78,25 @@ function WordsView({ data }: { data: MyWords }) {
             <Bee frame="beeRead" width={60} className="review-card__bee" />
             <div>
               <h2 className="review-card__title" id="words-review-title">
-                Повторить {review} {plural(review, ["слово", "слова", "слов"])}
+                {t("Повторить {n} {word}", { n: review, word: plural(review, [t("слово"), t("слова"), t("слов")]) })}
               </h2>
             </div>
           </div>
           <ButtonLink block href={paths.review} icon={<ArrowsClockwise weight="bold" aria-hidden />}>
-            Начать
+            {t("Начать")}
           </ButtonLink>
         </section>
       ) : null}
 
-      {toReview.length ? <WordList title="На повторение" words={toReview} /> : null}
-      {learned.length ? <WordList title="Выучено" words={learned} /> : null}
+      {toReview.length ? <WordList title={t("На повторение")} kind="review" words={toReview} /> : null}
+      {learned.length ? <WordList title={t("Выучено")} kind="learned" words={learned} /> : null}
     </>
   );
 }
 
-function WordList({ title, words }: { title: string; words: MyWord[] }) {
-  const id = `words-${title === "Выучено" ? "learned" : "review"}`;
+function WordList({ title, kind, words }: { title: string; kind: "review" | "learned"; words: MyWord[] }) {
+  const t = useT();
+  const id = `words-${kind}`;
   return (
     <section className="word-list" aria-labelledby={id}>
       <h2 className="word-list__title" id={id}>
@@ -105,7 +109,7 @@ function WordList({ title, words }: { title: string; words: MyWord[] }) {
               <b lang="ba">{w.word.text}</b>
               <span>{w.translationRu}</span>
             </div>
-            <SpeakButton sources={localAudio(w.word.audio)} size="small" label={`Послушать: ${w.word.text}`} />
+            <SpeakButton sources={localAudio(w.word.audio)} size="small" label={t("Послушать: {word}", { word: w.word.text })} />
           </li>
         ))}
       </ul>

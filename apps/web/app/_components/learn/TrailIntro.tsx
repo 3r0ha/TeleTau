@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button, Dialog, Illustration, LinkButton, type IllustrationName } from "@teletau/ui";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 import { plural } from "./format";
 
 /**
@@ -33,17 +35,17 @@ interface Step {
   text: string;
 }
 
-function steps(goal: number): Step[] {
+function steps(goal: number, t: T): Step[] {
   return [
     {
       art: "heroLanding",
-      title: "Привет! Я пчела",
-      text: "Пойдём по тропе через весь Башкортостан.",
+      title: t("Привет! Я пчела"),
+      text: t("Пойдём по тропе через весь Башкортостан."),
     },
     {
       art: "sceneLessonComplete",
-      title: "Урок — сота мёда",
-      text: `Цель дня — ${goal} ${plural(goal, ["сота", "соты", "сот"])}. Заходи каждый день, чтобы не прервать серию.`,
+      title: t("Урок — сота мёда"),
+      text: t("Цель дня — {goal} {word}. Заходи каждый день, чтобы не прервать серию.", { goal, word: plural(goal, [t("сота"), t("соты"), t("сот")]) }),
     },
   ];
 }
@@ -74,8 +76,9 @@ export function TrailIntro({
   onClose: () => void;
   onStart: () => void;
 }) {
+  const t = useT();
   const [i, setI] = useState(0);
-  const list = steps(goal);
+  const list = steps(goal, t);
   const step = list[i]!;
   const last = i === list.length - 1;
   // Лист открывается сам, без нажатия: фокус — на картинке шага (без рамки), а не на кнопке. Иначе браузер считает
@@ -100,19 +103,19 @@ export function TrailIntro({
                 onStart();
               }}
             >
-              Начать урок
+              {t("Начать урок")}
             </Button>
             <LinkButton tone="neutral" onClick={onClose}>
-              Посмотреть тропу
+              {t("Посмотреть тропу")}
             </LinkButton>
           </>
         ) : (
           <>
             <Button block onClick={() => setI(i + 1)}>
-              Дальше
+              {t("Дальше")}
             </Button>
             <LinkButton tone="neutral" onClick={onClose}>
-              Пропустить
+              {t("Пропустить")}
             </LinkButton>
           </>
         )
@@ -125,9 +128,7 @@ export function TrailIntro({
           width={step.art === "heroLanding" ? 320 : 220}
           className={`intro__art intro__art--${step.art}`}
         />
-        <p className="tt-visually-hidden">
-          Шаг {i + 1} из {list.length}
-        </p>
+        <p className="tt-visually-hidden">{t("Шаг {n} из {total}", { n: i + 1, total: list.length })}</p>
         <span className="intro__dots" aria-hidden>
           {list.map((s, k) => (
             <span key={s.art} className={k === i ? "intro__dot intro__dot--on" : "intro__dot"} />
