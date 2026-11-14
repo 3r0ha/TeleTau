@@ -76,9 +76,6 @@ const fmt = (n: number) => n.toLocaleString("ru-RU");
 /** Уроков по-русски: 1 урок, 2 урока, 5 уроков (plural из learn/format — чистая функция, безопасна на сервере). */
 const lessonsRu = (n: number) => plural(n, ["урок", "урока", "уроков"]);
 
-/** Учеников по-русски после «не меньше»: 5 → «учеников», 21 → «ученика». */
-const studentsRu = (n: number) => plural(n, ["ученика", "учеников", "учеников"]);
-
 /** Строка доски почёта: место, группа (школа или класс) и уроки за период — без имён и ников (правило 13). */
 type BoardRow = { rank: number; name: string; sub: string; lessons: number };
 
@@ -240,7 +237,6 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 </p>
               </div>
               <p className="lp-phrase__ru">«{phrase.sourceRu}»</p>
-              <p className="lp-phrase__note">Принятая пара словаря ТелеТау: за перевод проголосовали ученики и взрослые</p>
             </div>
           </section>
         )}
@@ -270,9 +266,6 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 <Link className="lp-board__all-link" href="/board">
                   Вся доска — в приложении
                 </Link>
-                <span className="lp-board__all-note">
-                  в доску попадают группы от {board.smallGroupThreshold} {studentsRu(board.smallGroupThreshold)}
-                </span>
               </p>
             </div>
           </section>

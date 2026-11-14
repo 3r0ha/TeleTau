@@ -275,13 +275,6 @@
   overflow-wrap: anywhere;
 }
 
-.lp-phrase__note {
-  margin: 0;
-  color: var(--tt-color-text-secondary);
-  font-size: var(--tt-font-size-caption);
-  line-height: var(--tt-line-height-snug);
-}
-
 @media (max-width: 30em) {
   .lp-phrase__say {
     flex-direction: column;

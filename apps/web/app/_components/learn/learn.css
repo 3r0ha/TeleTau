@@ -1470,13 +1470,6 @@
   overflow-wrap: anywhere;
 }
 
-.board__note {
-  margin: 0 0 var(--tt-space-s450);
-  color: var(--tt-color-text-secondary);
-  font-size: var(--tt-font-size-label);
-  text-align: center;
-}
-
 /* ───────────── профиль (prototype 18-profile) ───────────── */
 .profile__head {
   display: flex;

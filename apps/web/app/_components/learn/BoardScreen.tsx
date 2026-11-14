@@ -47,7 +47,7 @@ function BoardView({ board, period, onPeriod }: { board: PublicLeaderboard; peri
     <>
       <header className="board__head">
         <h1 className="page-title">Доска почёта</h1>
-        <p className="page-lead">с {boardSince(board.periodStart, board.period === "year")} · время по Уфе</p>
+        <p className="page-lead">с {boardSince(board.periodStart, board.period === "year")}</p>
       </header>
       <div className="board__periods" role="group" aria-label="Период доски почёта">
         {PERIODS.map((p) => (
@@ -66,9 +66,6 @@ function BoardView({ board, period, onPeriod }: { board: PublicLeaderboard; peri
           {board.classes.length > 0 ? <BoardTable id="board-classes" title="Классы" nameHeader="Класс" rows={board.classes.map(classRow)} /> : null}
         </div>
       )}
-      <p className="board__note">
-        В доску попадают школы и классы, где за период занималось не меньше {board.smallGroupThreshold} {genitiveStudents(board.smallGroupThreshold)}.
-      </p>
     </>
   );
 }
@@ -148,6 +145,3 @@ function BoardTable({ id, title, nameHeader, rows }: { id: string; title: string
 
 /** Число с разрядами по-русски: 1234 → «1 234». */
 const fmt = (n: number) => n.toLocaleString("ru-RU");
-
-/** Родительный падеж после «не меньше»: 5 → «учеников», 21 → «ученика» (у лендинга та же форма). */
-const genitiveStudents = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? "ученика" : "учеников");
