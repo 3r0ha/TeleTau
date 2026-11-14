@@ -102,6 +102,9 @@ export function EmailLogin({ demoCode }: { demoCode: string | null }) {
       }
       if (me.nickname) router.replace(paths.learn);
       else {
+        // Новичок без ника: шаг выбора ника. busy обязательно сбросить — иначе «Начать»
+        // останется в состоянии загрузки навсегда (кнопка disabled, PATCH не уходит).
+        setBusy(false);
         setMeKind(me.kind === "child" ? "child" : "adult");
         setPickNickname(true);
       }

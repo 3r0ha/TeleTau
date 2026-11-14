@@ -185,4 +185,41 @@ test.describe("M2: Mini App в Telegram", () => {
     await page.waitForURL("**/miniapp/student");
     await expect(page.getByRole("button", { name: "Загрузить фото" })).toBeVisible();
   });
+
+  test("вход по почте: новый адрес → код → ник → «Начать» ведёт на тропу, чат привязывается (ADR 0020)", async ({ page }) => {
+    await inTelegram(page);
+    const w = await mockBackend(page);
+    const linked: string[] = [];
+    await page.route(`${API}/api/v1/telegram/link`, async (route) => {
+      if (route.request().method() === "OPTIONS") return route.fallback(); // предзапрос CORS — общий мок
+      linked.push(route.request().postData() ?? "");
+      return route.fulfill({
+        status: 200,
+        headers: { "access-control-allow-origin": "*", "content-type": "application/json" },
+        body: JSON.stringify({ reminders: { enabled: false, hour: 18 } }),
+      });
+    });
+    await page.goto(launch(LIGHT));
+    await page.waitForURL("**/miniapp/student");
+    // Кнопка почтового входа — на экране входа Mini App; новая почта — аккаунт создастся после кода.
+    await page.getByRole("link", { name: "Войти по почте" }).click();
+    await page.waitForURL("**/miniapp/student/email");
+    await page.getByLabel("Электронная почта").fill("grown@mail.example");
+    await page.getByRole("button", { name: "Получить код" }).click();
+    await page.getByLabel("Код из письма: символ 1 из 4").fill("0000");
+    await expect(page.getByRole("heading", { name: "Выбери ник" })).toBeVisible();
+    // Взрослому без класса — подпись про дуэли, не «увидят в классе».
+    await expect(page.getByText("Так тебя увидят в дуэлях")).toBeVisible();
+    // Регрессия (кнопка застревала в загрузке): «Начать» доступна сразу после выбора ника.
+    await page.getByRole("radio").first().check();
+    const start = page.getByRole("button", { name: "Начать", exact: true });
+    await expect(start).toBeEnabled();
+    await start.click();
+    await page.waitForURL("**/miniapp/learn");
+    await expect(page.getByRole("button", { name: CURRENT_NODE })).toBeVisible();
+    expect(w.account).toMatchObject({ kind: "adult", ageBand: "adult", dailyGoal: 2, teacherStatus: "none" });
+    // initData ушла в привязку ровно один раз — чат связан, «Задание дня» придёт сюда.
+    expect(linked).toHaveLength(1);
+    expect(linked[0]).toContain("hash=");
+  });
 });
