@@ -226,36 +226,6 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
           </div>
         </section>
 
-        {board && (
-          <section className="lp-board" aria-labelledby="lp-board-title" data-reveal="">
-            <div className="lp-wrap lp-board__in">
-              <div className="lp-board__head">
-                <h2 id="lp-board-title" className="lp-board__title">
-                  {t("Доска почёта")}
-                </h2>
-                {/* Период — обычные ссылки на ту же страницу: серверный компонент, без состояния. */}
-                <nav className="lp-board__periods" aria-label={t("Период доски почёта")}>
-                  {BOARD_PERIODS.map((p) => (
-                    <Link key={p.value} className="lp-board__period" href={`/?period=${p.value}`} aria-current={p.value === period ? "page" : undefined}>
-                      {t(p.label)}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-              {/* На витрине — только призёры; полная доска живёт в приложении, экран /board. */}
-              <div className="lp-board__tops">
-                {board.schools.length > 0 && <BoardTop title={t("Школы")} rows={board.schools.slice(0, 3).map(schoolRow)} t={t} />}
-                {board.classes.length > 0 && <BoardTop title={t("Классы")} rows={board.classes.slice(0, 3).map(classRow)} t={t} />}
-              </div>
-              <p className="lp-board__all">
-                <Link className="lp-board__all-link" href="/board">
-                  {t("Вся доска — в приложении")}
-                </Link>
-              </p>
-            </div>
-          </section>
-        )}
-
         <section className="lp-places" aria-labelledby="lp-places-title">
           <h2 id="lp-places-title" className="tt-visually-hidden">
             {t("Места тропы")}
@@ -397,6 +367,38 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             <Pic src={img.artBeeCheer} className="lp-final__bee lp-final__bee--cheer" />
           </div>
         </section>
+
+        {/* Доска почёта — в самом низу витрины: сначала гость разбирается, как устроено приложение,
+            и доходит до достижений школ и классов в конце пути. */}
+        {board && (
+          <section className="lp-board" aria-labelledby="lp-board-title" data-reveal="">
+            <div className="lp-wrap lp-board__in">
+              <div className="lp-board__head">
+                <h2 id="lp-board-title" className="lp-board__title">
+                  {t("Доска почёта")}
+                </h2>
+                {/* Период — обычные ссылки на ту же страницу: серверный компонент, без состояния. */}
+                <nav className="lp-board__periods" aria-label={t("Период доски почёта")}>
+                  {BOARD_PERIODS.map((p) => (
+                    <Link key={p.value} className="lp-board__period" href={`/?period=${p.value}`} aria-current={p.value === period ? "page" : undefined}>
+                      {t(p.label)}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+              {/* На витрине — только призёры; полная доска живёт в приложении, экран /board. */}
+              <div className="lp-board__tops">
+                {board.schools.length > 0 && <BoardTop title={t("Школы")} rows={board.schools.slice(0, 3).map(schoolRow)} t={t} />}
+                {board.classes.length > 0 && <BoardTop title={t("Классы")} rows={board.classes.slice(0, 3).map(classRow)} t={t} />}
+              </div>
+              <p className="lp-board__all">
+                <Link className="lp-board__all-link" href="/board">
+                  {t("Вся доска — в приложении")}
+                </Link>
+              </p>
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className="lp-foot">
