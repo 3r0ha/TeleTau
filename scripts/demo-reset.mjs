@@ -46,6 +46,9 @@ export function e2eEnv(devEnv) {
   // Снимается всегда — и при повторном вызове: Playwright заново дочитывает недостающие ключи из .env.example.
   const env = { ...devEnv };
   delete env.AUTH_DEMO_CLASS_CODE;
+  // Сквозные тесты входят в консоль с настоящим TOTP (loginStaff): «демо без TOTP» из локального .env
+  // снимаем — на стене флаг включён для показа, а здесь он убирает шаг TOTP, и тесты его не находят.
+  delete env.AUTH_DEMO_STAFF_WITHOUT_TOTP;
   if (env.TELETAU_E2E === "1") return env;
   const databaseUrl = env.DATABASE_URL ?? "postgres://teletau:teletau@localhost:15432/teletau";
   const valkeyUrl = env.VALKEY_URL ?? "redis://localhost:16379";
