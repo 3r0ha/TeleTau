@@ -38,6 +38,9 @@ import ru.teletau.core.network.models.MyWords
 import ru.teletau.core.network.models.NicknameSuggestion
 import ru.teletau.core.network.models.NodeKind
 import ru.teletau.core.network.models.NodeState
+import ru.teletau.core.network.models.PhraseOfDayPair
+import ru.teletau.core.network.models.PublicLeaderboard
+import ru.teletau.core.network.models.PublicLeaderboardPeriod
 import ru.teletau.core.network.models.StartLessonRunRequest
 import ru.teletau.core.network.models.TrailNode
 import ru.teletau.core.network.models.UpdateMeRequest
@@ -91,6 +94,8 @@ sealed interface Route {
     data object LoginCard : Route
     /** «Вступить в класс» — поверх вкладки «Класс». */
     data object JoinClass : Route
+    /** «Доска почёта» — поверх вкладки «Лига» (публичный топ школ и классов, вход с лиги). */
+    data object Board : Route
 }
 
 /** Заявка по коду класса — только в памяти, не дольше срока (контракт: pollToken не хранить дольше заявки). */
@@ -128,6 +133,15 @@ class StudentViewModel(private val env: StudentEnvironment) : ViewModel() {
     /** Сервер завершил сессию — текст для экрана входа. */
     private val _ended = MutableStateFlow<String?>(null)
     val ended: StateFlow<String?> = _ended.asStateFlow()
+
+    // ── фраза дня (старт, публичная витрина без регистрации) ──
+    private val _phrase = MutableStateFlow<PhraseOfDayPair?>(null)
+
+    /** Пара дня для карточки на старте; null — карточки нет (пары нет или API молчит). */
+    val phrase: StateFlow<PhraseOfDayPair?> = _phrase.asStateFlow()
+
+    /** Адрес сервера, для которого фраза уже запрошена; смена адреса — новый запрос. */
+    private var phraseForUrl: String? = null
 
     private val _toast = MutableStateFlow<String?>(null)
     val toast: StateFlow<String?> = _toast.asStateFlow()
@@ -167,6 +181,12 @@ class StudentViewModel(private val env: StudentEnvironment) : ViewModel() {
     val league: StateFlow<Resource<LeagueStanding>> = _league.asStateFlow()
     private val _hive = MutableStateFlow<Resource<ClassHive>>(Resource.Loading)
     val hive: StateFlow<Resource<ClassHive>> = _hive.asStateFlow()
+    // ── доска почёта (публичная, без токена) ──
+    private val _board = MutableStateFlow<Resource<PublicLeaderboard>>(Resource.Loading)
+    val board: StateFlow<Resource<PublicLeaderboard>> = _board.asStateFlow()
+    /** Период доски — состояние экрана; по умолчанию неделя (как в контракте). */
+    private val _boardPeriod = MutableStateFlow(PublicLeaderboardPeriod.week)
+    val boardPeriod: StateFlow<PublicLeaderboardPeriod> = _boardPeriod.asStateFlow()
     private val _cells = MutableStateFlow<Resource<MyCellsPage>>(Resource.Loading)
     val cells: StateFlow<Resource<MyCellsPage>> = _cells.asStateFlow()
     private val _fresh = MutableStateFlow<FreshHoney?>(null)
@@ -264,7 +284,7 @@ class StudentViewModel(private val env: StudentEnvironment) : ViewModel() {
     }
 
     fun selectTab(tab: StudentTab) {
-        if (top == Route.Words || top == Route.LoginCard || top == Route.JoinClass) _routes.update { it.dropLast(1) }
+        if (top == Route.Words || top == Route.LoginCard || top == Route.JoinClass || top == Route.Board) _routes.update { it.dropLast(1) }
         val r = top
         if (r !is Route.Main) return
         // Данные вкладки загружает сам экран вкладки при показе (MainShell).
@@ -312,6 +332,27 @@ class StudentViewModel(private val env: StudentEnvironment) : ViewModel() {
     fun startOver() {
         _startupError.value = null
         replaceAll(Route.Welcome)
+    }
+
+    /**
+     * Фраза дня для карточки на старте: грузится тихо, раз на адрес сервера. API молчит или пары нет — карточки
+     * нет, старт не ломается (как «Сәләм!»/ничего на веб-лендинге).
+     */
+    fun loadPhraseOfDay() {
+        val url = env.apiBaseUrl.value
+        if (phraseForUrl == url) return
+        phraseForUrl = url
+        _phrase.value = null
+        viewModelScope.launch {
+            _phrase.value = try {
+                client.getPhraseOfDay().pair
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Витрина необязательна: без фразы старт выглядит как обычно.
+                null
+            }
+        }
     }
 
     private fun homeOf(me: Me): List<Route> = if (me.nickname == null) listOf(Route.Nickname).also { loadNicks() } else listOf(Route.Main(StudentTab.Path))
@@ -861,6 +902,22 @@ class StudentViewModel(private val env: StudentEnvironment) : ViewModel() {
     }
 
     fun loadLeague() = load(_league) { apiCall { client.competition.getCurrentLeague() } }
+
+    /** «Доска почёта» с вкладки «Лига»: публичный топ школ и классов за период. */
+    fun openBoard() {
+        push(Route.Board)
+        loadBoard()
+    }
+
+    fun loadBoard() = load(_board) { client.getPublicLeaderboard(_boardPeriod.value) }
+
+    /** Сменили период сегментом — грузим доску заново: прошлая неделя на месте месяца ввести в заблуждение. */
+    fun pickBoardPeriod(period: PublicLeaderboardPeriod) {
+        if (_boardPeriod.value == period) return
+        _boardPeriod.value = period
+        _board.value = Resource.Loading
+        loadBoard()
+    }
 
     fun loadHive() {
         val klass = studentClass(_account.value) ?: return

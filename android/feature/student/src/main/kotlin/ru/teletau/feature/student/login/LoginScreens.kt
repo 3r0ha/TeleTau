@@ -109,6 +109,7 @@ import ru.teletau.core.designsystem.avatarFor
 import ru.teletau.core.designsystem.toneFor
 import ru.teletau.core.network.models.Me
 import ru.teletau.core.network.models.NicknameSuggestion
+import ru.teletau.core.network.models.PhraseOfDayPair
 import ru.teletau.feature.student.common.Resource
 import ru.teletau.feature.student.common.describeForChild
 import ru.teletau.feature.student.tabs.studentClass
@@ -164,11 +165,23 @@ private fun StartWay(art: Int, title: String, text: String, onClick: () -> Unit)
 
 /**
  * Старт (веб `/`, self/50-start): пейзаж с пчелой и брендом, два пути ученика — «Я ученик» (класс: карточка или код от
- * учителя) и «Учусь сам» (без школы) — и «Я учитель» (кабинет — на сайте). Внизу — вход для тех, кто уже учится сам:
- * по карточке (сканер) или по почте (на сайте). [ended] — сервер завершил прошлую сессию: объясняем, что делать.
+ * учителя) и «Учусь сам» (без школы) — и «Я учитель» (кабинет — на сайте). Под заголовком — карточка «фразы дня»
+ * ([phrase], веб `.lp-hero__hello`): есть пара — пчела «произносит» её, нет — старт без карточки. Внизу — вход для тех,
+ * кто уже учится сам: по карточке (сканер) или по почте (на сайте). [ended] — сервер завершил прошлую сессию:
+ * объясняем, что делать.
  */
 @Composable
-fun WelcomeScreen(brand: String, ended: String?, onStudent: () -> Unit, onSelf: () -> Unit, onTeacher: () -> Unit, onCard: () -> Unit, onEmail: () -> Unit, onSettings: () -> Unit) {
+fun WelcomeScreen(
+    brand: String,
+    ended: String?,
+    phrase: PhraseOfDayPair?,
+    onStudent: () -> Unit,
+    onSelf: () -> Unit,
+    onTeacher: () -> Unit,
+    onCard: () -> Unit,
+    onEmail: () -> Unit,
+    onSettings: () -> Unit,
+) {
     val c = TeleTauTheme.colors
     Column(Modifier.fillMaxSize().background(c.bg).verticalScroll(rememberScrollState())) {
         // Картинка уходит под строку состояния вместе с надписью: небо слева — всегда над надписью, памятник — ниже.
@@ -245,6 +258,7 @@ fun WelcomeScreen(brand: String, ended: String?, onStudent: () -> Unit, onSelf: 
                 .semantics { contentDescription = "Кто ты?" },
             verticalArrangement = Arrangement.spacedBy(TeleTauSpace.s300),
         ) {
+            if (phrase != null) PhraseOfDayCard(phrase)
             if (ended != null) InlineAlert(ended)
             StartWay(R.drawable.scene_class_hive, "Я ученик", "С классом: карточка или код", onStudent)
             StartWay(R.drawable.bee_read, "Учусь сам", "Без класса, в любом возрасте", onSelf)
@@ -260,6 +274,28 @@ fun WelcomeScreen(brand: String, ended: String?, onStudent: () -> Unit, onSelf: 
                 KText("·", TeleTauText.footnote, color = c.textSecondary)
                 TextLink("по почте", onEmail)
             }
+        }
+    }
+}
+
+/**
+ * Карточка «фразы дня» на старте (веб `/`, ТЗ §3.6): башкирский вариант крупно (Nunito, локаль `ba` — формы Ҫ и Ҙ,
+ * как текст урока), ниже русский исходник мелко в ёлочках. Длинная фраза на узком экране — шрифт уменьшается
+ * ([FitText]), карточка не наезжает на кнопки путей: колонка прокручивается.
+ */
+@Composable
+private fun PhraseOfDayCard(phrase: PhraseOfDayPair) {
+    val c = TeleTauTheme.colors
+    TeleTauCard(Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(TeleTauSpace.s100)) {
+            KText("Фраза дня", TeleTauText.caption, color = c.textSecondary)
+            FitText(
+                phrase.textBa,
+                TeleTauText.bashkir(TeleTauFontSize.headline, ru.teletau.core.designsystem.TeleTauFontWeight.black),
+                color = c.textPrimary,
+                maxLines = 3,
+            )
+            KText("«${phrase.sourceRu}»", TeleTauText.footnote, color = c.textSecondary, maxLines = 3)
         }
     }
 }

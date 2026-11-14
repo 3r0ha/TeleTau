@@ -78,6 +78,21 @@ class ContractJsonTest {
     }
 
     @Test
+    fun leaderboard_decodesPeriodAndRows() {
+        val board = TeleTauJson.decodeFromString(
+            ru.teletau.core.network.models.PublicLeaderboard.serializer(),
+            """
+            {"asOf":"2026-11-14T06:00:00Z","period":"week","periodStart":"2026-11-09","smallGroupThreshold":5,
+             "schools":[{"rank":1,"school":"СОШ №1","district":"г. Уфа","lessons":120,"activeStudents":25,"wordsLearned":900}],
+             "classes":[{"rank":1,"school":"СОШ №1","district":"г. Уфа","classLabel":"5 «Б»","lessons":40,"activeStudents":7,"wordsLearned":210}]}
+            """.trimIndent(),
+        )
+        assertEquals(ru.teletau.core.network.models.PublicLeaderboardPeriod.week, board.period)
+        assertEquals(1, board.schools.single().rank)
+        assertEquals("5 «Б»", board.classes.single().classLabel)
+    }
+
+    @Test
     fun summary_readsNumericMultiplierAndLeagueResult() {
         val summary = TeleTauJson.decodeFromString(
             LessonRunSummary.serializer(),

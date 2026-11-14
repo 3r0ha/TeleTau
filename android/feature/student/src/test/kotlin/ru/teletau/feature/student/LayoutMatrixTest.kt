@@ -123,13 +123,13 @@ class LayoutMatrixTest {
     @Test fun trailTop200() = both("trail_top", 2f, 844.dp) { TrailTop() }
     @Test fun trailVillage130() = both("trail_village", 1.3f, 844.dp) { TrailVillage() }
     @Test fun trailVillage200() = both("trail_village", 2f, 844.dp) { TrailVillage() }
-    @Test fun welcome100() = both("welcome", 1f, 844.dp) { WelcomeScreen("ТелеТау", null, {}, {}, {}, {}, {}, {}) }
-    @Test fun welcome130() = both("welcome", 1.3f, 844.dp) { WelcomeScreen("ТелеТау", null, {}, {}, {}, {}, {}, {}) }
-    @Test fun welcome200() = both("welcome", 2f, 844.dp) { WelcomeScreen("ТелеТау", null, {}, {}, {}, {}, {}, {}) }
+    @Test fun welcome100() = both("welcome", 1f, 844.dp) { WelcomeScreen("ТелеТау", null, null, {}, {}, {}, {}, {}, {}) }
+    @Test fun welcome130() = both("welcome", 1.3f, 844.dp) { WelcomeScreen("ТелеТау", null, null, {}, {}, {}, {}, {}, {}) }
+    @Test fun welcome200() = both("welcome", 2f, 844.dp) { WelcomeScreen("ТелеТау", null, null, {}, {}, {}, {}, {}, {}) }
     @Test fun result130() = both("result", 1.3f, 844.dp) { ResultScreen(Demo.run, Demo.summary, LessonPlace("Знакомство", 3), {}) }
     @Test fun result200() = both("result", 2f, 1100.dp) { ResultScreen(Demo.run, Demo.summary, LessonPlace("Знакомство", 3), {}) }
-    @Test fun league130() = both("league", 1.3f, 1400.dp) { TabScaffold(StudentTab.League, {}) { TabScroll { LeagueView(Demo.league, {}, nowMillis = 1_793_923_200_000) } } }
-    @Test fun league200() = both("league", 2f, 1850.dp) { TabScaffold(StudentTab.League, {}) { TabScroll { LeagueView(Demo.league, {}, nowMillis = 1_793_923_200_000) } } }
+    @Test fun league130() = both("league", 1.3f, 1400.dp) { TabScaffold(StudentTab.League, {}) { TabScroll { LeagueView(Demo.league, {}, {}, nowMillis = 1_793_923_200_000) } } }
+    @Test fun league200() = both("league", 2f, 1850.dp) { TabScaffold(StudentTab.League, {}) { TabScroll { LeagueView(Demo.league, {}, {}, nowMillis = 1_793_923_200_000) } } }
     @Test fun profile130() = both("profile", 1.3f, 2300.dp) { Profile() }
     @Test fun profile200() = both("profile", 2f, 3000.dp) { Profile() }
 }

@@ -19,6 +19,7 @@ import ru.teletau.core.network.apis.ConsensusApi
 import ru.teletau.core.network.apis.IdentityApi
 import ru.teletau.core.network.apis.LearningApi
 import ru.teletau.core.network.apis.ProgressApi
+import ru.teletau.core.network.apis.PublicApi
 import ru.teletau.core.network.apis.SystemApi
 import ru.teletau.core.network.infrastructure.HttpResponse
 import ru.teletau.core.network.models.AgeBand
@@ -28,9 +29,13 @@ import ru.teletau.core.network.models.SelfSignupRequest
 import ru.teletau.core.network.models.ClassCodeLoginStatus
 import ru.teletau.core.network.models.ClassCodeLoginTicket
 import ru.teletau.core.network.models.DeviceInfo
+import ru.teletau.core.network.models.GetPublicLeaderboardPeriodParameter
 import ru.teletau.core.network.models.LogoutRequest
 import ru.teletau.core.network.models.Me
+import ru.teletau.core.network.models.PhraseOfDay
 import ru.teletau.core.network.models.Problem
+import ru.teletau.core.network.models.PublicLeaderboard
+import ru.teletau.core.network.models.PublicLeaderboardPeriod
 import ru.teletau.core.network.models.QrLoginRequest
 import ru.teletau.core.network.models.RefreshRequest
 import java.io.IOException
@@ -123,6 +128,18 @@ public class TeleTauClient(
         }
         session.end()
     }
+
+    // ── фраза дня (публичная витрина без регистрации, ТЗ §3.6) ──
+
+    /** Операции витрины без токена: адрес и движок те же, сессия не нужна. */
+    private val publicShowcase: PublicApi = PublicApi(baseUrl, engine, publicConfig)
+
+    /** Фраза дня (веб `/`): принятая пара «башкирский ← русский». Пар нет — только дата, [PhraseOfDay.pair] пуст. */
+    public suspend fun getPhraseOfDay(): PhraseOfDay = apiCall { publicShowcase.getPhraseOfDay() }
+
+    /** Доска почёта (ТЗ §4.5): топ школ и классов за период. Публичная — без токена, только агрегаты (правило 13). */
+    public suspend fun getPublicLeaderboard(period: PublicLeaderboardPeriod = PublicLeaderboardPeriod.week): PublicLeaderboard =
+        apiCall { publicShowcase.getPublicLeaderboard(GetPublicLeaderboardPeriodParameter.entries.first { it.value == period.value }) }
 
     private fun HttpClientConfig<*>.common() {
         expectSuccess = false

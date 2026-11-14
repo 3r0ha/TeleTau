@@ -79,6 +79,7 @@ import ru.teletau.feature.student.login.WaitScreen
 import ru.teletau.feature.student.login.WelcomeScreen
 import ru.teletau.feature.student.tabs.HiveView
 import ru.teletau.feature.student.tabs.LeagueView
+import ru.teletau.feature.student.tabs.BoardView
 import ru.teletau.feature.student.tabs.ProfileView
 import ru.teletau.feature.student.tabs.studentClass
 import ru.teletau.feature.student.tabs.WordsView
@@ -149,9 +150,12 @@ private fun RouteContent(vm: StudentViewModel, r: Route) {
         }
         Route.Welcome -> {
             val ended by vm.ended.collectAsStateWithLifecycle()
+            // Фраза дня: тихо, раз на адрес сервера; пары нет или API молчит — карточки нет.
+            LaunchedEffect(Unit) { vm.loadPhraseOfDay() }
+            val phrase by vm.phrase.collectAsStateWithLifecycle()
             // Кабинет учителя и вход взрослого по почте — на сайте.
             val site = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(vm.teacherUrl))) }; Unit }
-            WelcomeScreen(brand, ended, onStudent = vm::openScan, onSelf = vm::openSelf, onTeacher = site, onCard = vm::openScan, onEmail = site, onSettings = vm::openSettings)
+            WelcomeScreen(brand, ended, phrase, onStudent = vm::openScan, onSelf = vm::openSelf, onTeacher = site, onCard = vm::openScan, onEmail = site, onSettings = vm::openSettings)
         }
         Route.Settings -> {
             val url by vm.apiBaseUrl.collectAsStateWithLifecycle()
@@ -202,6 +206,17 @@ private fun RouteContent(vm: StudentViewModel, r: Route) {
                     is Resource.Ready -> WordsView(w.data, onBack = { vm.onBack() }, onReview = vm::reviewFromWords, onTrail = { vm.selectTab(StudentTab.Path) })
                     is Resource.Failed -> LoadError(w.error, vm::loadWords)
                     Resource.Loading -> LoadingBlock("Открываем словарь", rows = 5)
+                }
+            }
+        }
+        Route.Board -> TabScaffold(StudentTab.League, vm::selectTab) {
+            val board by vm.board.collectAsStateWithLifecycle()
+            val period by vm.boardPeriod.collectAsStateWithLifecycle()
+            TabScroll {
+                when (val b = board) {
+                    is Resource.Ready -> BoardView(b.data, period, vm::pickBoardPeriod, onBack = { vm.onBack() })
+                    is Resource.Failed -> LoadError(b.error, vm::loadBoard)
+                    Resource.Loading -> LoadingBlock("Открываем доску", rows = 5)
                 }
             }
         }
@@ -333,7 +348,7 @@ private fun IntroOverlay(vm: StudentViewModel) {
 private fun LeagueTab(vm: StudentViewModel) {
     val league by vm.league.collectAsStateWithLifecycle()
     when (val l = league) {
-        is Resource.Ready -> LeagueView(l.data, onTrail = { vm.selectTab(StudentTab.Path) })
+        is Resource.Ready -> LeagueView(l.data, onTrail = { vm.selectTab(StudentTab.Path) }, onBoard = vm::openBoard)
         is Resource.Failed -> LoadError(l.error, vm::loadLeague)
         Resource.Loading -> LoadingBlock("Загружаем лигу", rows = 5)
     }

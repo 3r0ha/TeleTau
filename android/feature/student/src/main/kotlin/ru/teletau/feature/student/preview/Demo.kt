@@ -40,6 +40,10 @@ import ru.teletau.core.network.models.NodeIcon
 import ru.teletau.core.network.models.NodeKind
 import ru.teletau.core.network.models.NodeState
 import ru.teletau.core.network.models.Place
+import ru.teletau.core.network.models.PublicLeaderboard
+import ru.teletau.core.network.models.PublicLeaderboardClass
+import ru.teletau.core.network.models.PublicLeaderboardPeriod
+import ru.teletau.core.network.models.PublicLeaderboardSchool
 import ru.teletau.core.network.models.ReviewStatus
 import ru.teletau.core.network.models.Role
 import ru.teletau.core.network.models.RunExercise
@@ -290,6 +294,24 @@ internal object Demo {
                 },
             )
         },
+    )
+
+    /** Доска почёта (публичная): топ школ и классов недели — место, уроки, район подписью. */
+    val board = PublicLeaderboard(
+        asOf = "2026-11-14T06:00:00Z",
+        period = PublicLeaderboardPeriod.week,
+        periodStart = "2026-11-09",
+        smallGroupThreshold = 5,
+        schools = listOf(
+            PublicLeaderboardSchool(1, "Башкирская гимназия", "г. Уфа", 214, 31, 1580),
+            PublicLeaderboardSchool(2, "СОШ №1", "Ишимбайский район", 158, 26, 940),
+            PublicLeaderboardSchool(3, "Лицей №3", "г. Стерлитамак", 131, 22, 760),
+        ),
+        classes = listOf(
+            PublicLeaderboardClass(1, "Башкирская гимназия", "г. Уфа", "5 «Б»", 64, 7, 410),
+            PublicLeaderboardClass(2, "СОШ №1", "Ишимбайский район", "6 «А»", 51, 8, 330),
+            PublicLeaderboardClass(3, "Лицей №3", "г. Стерлитамак", "4 «В»", 47, 6, 250),
+        ),
     )
 
     val hive = ClassHive(

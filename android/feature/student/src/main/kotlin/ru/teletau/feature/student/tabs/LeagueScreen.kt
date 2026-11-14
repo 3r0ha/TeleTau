@@ -27,6 +27,7 @@ import ru.teletau.core.designsystem.EmptyState
 import ru.teletau.core.designsystem.Illustration
 import ru.teletau.core.designsystem.KHeading
 import ru.teletau.core.designsystem.KText
+import ru.teletau.core.designsystem.LinkButton
 import ru.teletau.core.designsystem.TeleTauButton
 import ru.teletau.core.designsystem.TeleTauRadius
 import ru.teletau.core.designsystem.TeleTauSpace
@@ -45,7 +46,7 @@ import ru.teletau.feature.student.learn.leagueBadge
 
 /** Вкладка «Лига» (prototype 16-league): лиги медоносов, таблица недели с зонами повышения и понижения. */
 @Composable
-fun LeagueView(league: LeagueStanding, onTrail: () -> Unit, nowMillis: Long = System.currentTimeMillis()) {
+fun LeagueView(league: LeagueStanding, onTrail: () -> Unit, onBoard: () -> Unit, nowMillis: Long = System.currentTimeMillis()) {
     val c = TeleTauTheme.colors
     val tierIndex = LEAGUE_TIERS.indexOf(league.tier)
     val next = LEAGUE_TIERS.getOrNull(tierIndex + 1)
@@ -73,7 +74,7 @@ fun LeagueView(league: LeagueStanding, onTrail: () -> Unit, nowMillis: Long = Sy
             val first = if (next != null && league.zones.promote > 0) "Первые ${league.zones.promote} перейдут в Лигу ${TIER_NAMES.getValue(next).gen}." else "Это высшая лига."
             KText("$first\nИтоги ${weekEndsIn(league.endsAt, nowMillis)}.", TeleTauText.callout, Modifier.padding(top = TeleTauSpace.s100), color = c.textSecondary, align = TextAlign.Center)
         }
-        if (climbing && next != null) {
+        if (climbing) {
             val shape = RoundedCornerShape(TeleTauRadius.panel)
             Row(
                 Modifier.fillMaxWidth().padding(top = TeleTauSpace.s200).background(c.successSoft, shape).padding(TeleTauSpace.s300),
@@ -99,6 +100,10 @@ fun LeagueView(league: LeagueStanding, onTrail: () -> Unit, nowMillis: Long = Sy
             EmptyState(R.drawable.bee_idle, "Лига ждёт тебя", text = "Пройди урок, чтобы попасть в таблицу.", compact = true) {
                 TeleTauButton("На тропу", onTrail, Modifier.fillMaxWidth())
             }
+        }
+        // Доска почёта школ и классов — отдельный экран; на телефоне вход с лиги (в нижних вкладках её нет).
+        Row(Modifier.fillMaxWidth().padding(top = TeleTauSpace.s200, bottom = TeleTauSpace.s200), horizontalArrangement = Arrangement.Center) {
+            LinkButton("Доска почёта школ", onBoard)
         }
     }
 }

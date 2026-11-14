@@ -31,6 +31,7 @@ import ru.teletau.core.network.models.DevicePlatform
 import ru.teletau.core.network.models.LessonRun
 import ru.teletau.core.network.models.LessonRunSummary
 import ru.teletau.core.network.models.MyProgress
+import ru.teletau.core.network.models.PublicLeaderboardPeriod
 import ru.teletau.core.network.models.TilesAnswer
 import ru.teletau.core.network.models.TilesAnswerType
 import ru.teletau.core.session.InMemoryTokenStore
@@ -98,6 +99,19 @@ class StudentViewModelTest {
             "/api/v1/me/class-join" -> ok("""{"requestId":"0190a8c0-0000-7000-8000-00000000c001","status":"pending","expiresAt":"2099-01-01T00:00:00Z","pollIntervalSeconds":1,"class":{"title":"5 «Б»","grade":5,"letter":"Б"}}""")
             "/api/v1/me/class-join/0190a8c0-0000-7000-8000-00000000c001" -> ok("""{"requestId":"0190a8c0-0000-7000-8000-00000000c001","status":"approved","expiresAt":"2099-01-01T00:00:00Z","pollIntervalSeconds":1,"class":{"title":"5 «Б»","grade":5,"letter":"Б"}}""")
             "/api/v1/me" -> ok(TeleTauJson.encodeToString(ru.teletau.core.network.models.Me.serializer(), Demo.selfMe.copy(classes = Demo.me.classes)))
+            "/api/v1/public/leaderboard" -> {
+                // Доска почёта публичная: без токена, период — в запросе (нет параметра — неделя по умолчанию).
+                assertTrue("доска почёта — без токена", req.headers[HttpHeaders.Authorization] == null)
+                val period = req.url.parameters["period"] ?: "week"
+                requests += "GET /api/v1/public/leaderboard?period=$period"
+                ok(
+                    """
+                    {"asOf":"2026-11-14T06:00:00Z","period":"$period","periodStart":"2026-11-09","smallGroupThreshold":5,
+                     "schools":[{"rank":1,"school":"СОШ №1","district":"г. Уфа","lessons":120,"activeStudents":25,"wordsLearned":900}],
+                     "classes":[{"rank":1,"school":"СОШ №1","district":"г. Уфа","classLabel":"5 «Б»","lessons":40,"activeStudents":7,"wordsLearned":210}]}
+                    """.trimIndent(),
+                )
+            }
             else -> respond("""{"type":"about:blank","title":"нет","status":404}""", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/problem+json"))
         }
     }
@@ -341,5 +355,29 @@ class StudentViewModelTest {
         vm.onScanned("https://example.com/other")
         assertTrue(vm.scan.value is ru.teletau.feature.student.login.ScanState.Error)
         assertTrue(requests.none { it.contains("/auth/qr") })
+    }
+
+    @Test
+    fun board_publicWeekByDefault_periodSwitch_backToLeague() = runTest {
+        val vm = StudentViewModel(env)
+        advanceUntilIdle()
+        vm.openScan()
+        vm.onScanned("https://teletau.study/q#tt1.0123456789.abcdefghjkmnpqrstvwxyz0123.6v")
+        await("вход") { vm.routes.value.last() is Route.Main }
+        vm.selectTab(StudentTab.League)
+        vm.openBoard()
+        await("доска недели") { vm.board.value is ru.teletau.feature.student.common.Resource.Ready }
+        assertEquals(listOf(Route.Main(StudentTab.League), Route.Board), vm.routes.value)
+        assertEquals(PublicLeaderboardPeriod.week, vm.boardPeriod.value)
+        assertEquals("5 «Б»", (vm.board.value as ru.teletau.feature.student.common.Resource.Ready).data.classes.single().classLabel)
+        assertTrue(requests.contains("GET /api/v1/public/leaderboard?period=week"))
+
+        vm.pickBoardPeriod(PublicLeaderboardPeriod.year)
+        await("доска за год") { requests.contains("GET /api/v1/public/leaderboard?period=year") && vm.board.value is ru.teletau.feature.student.common.Resource.Ready }
+        assertEquals(PublicLeaderboardPeriod.year, vm.boardPeriod.value)
+        assertEquals(ru.teletau.core.network.models.PublicLeaderboardPeriod.year, (vm.board.value as ru.teletau.feature.student.common.Resource.Ready).data.period)
+
+        assertTrue("«Назад» — на лигу", vm.onBack())
+        assertEquals(Route.Main(StudentTab.League), vm.routes.value.last())
     }
 }

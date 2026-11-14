@@ -60,6 +60,7 @@ import ru.teletau.feature.student.login.WaitScreen
 import ru.teletau.feature.student.login.WaitState
 import ru.teletau.feature.student.login.WelcomeScreen
 import ru.teletau.feature.student.preview.Demo
+import ru.teletau.feature.student.tabs.BoardView
 import ru.teletau.feature.student.tabs.HiveView
 import ru.teletau.feature.student.tabs.LeagueView
 import ru.teletau.feature.student.tabs.ProfileView
@@ -341,7 +342,12 @@ class ScreensScreenshotTest {
 
     @Test
     @Config(qualifiers = "w390dp-h1300dp-xhdpi")
-    fun league() { show { TabScaffold(StudentTab.League, {}) { TabScroll { LeagueView(Demo.league, {}, nowMillis = 1_793_923_200_000) } } }; snap("league") }
+    fun league() { show { TabScaffold(StudentTab.League, {}) { TabScroll { LeagueView(Demo.league, {}, {}, nowMillis = 1_793_923_200_000) } } }; snap("league") }
+
+    /** Доска почёта с лиги: периоды, топ школ и классов недели. */
+    @Test
+    @Config(qualifiers = "w390dp-h1300dp-xhdpi")
+    fun board() { show { TabScaffold(StudentTab.League, {}) { TabScroll { BoardView(Demo.board, Demo.board.period, {}, onBack = {}) } } }; snap("board") }
 
     @Test fun hive() { show { TabScaffold(StudentTab.Hive, {}) { TabScroll { HiveView(Demo.hive, "5 «Б»", "Демо-школа № 1") } } }; snap("hive") }
 
@@ -385,7 +391,7 @@ class ScreensScreenshotTest {
         captureScreenRoboImage("goal_dialog.png")
     }
 
-    @Test fun welcome() { show(mode = UiMode.Bee) { WelcomeScreen("ТелеТау", null, {}, {}, {}, {}, {}, {}) }; snap("welcome") }
+    @Test fun welcome() { show(mode = UiMode.Bee) { WelcomeScreen("ТелеТау", null, null, {}, {}, {}, {}, {}, {}) }; snap("welcome") }
 
     @Test fun splash() { show { Splash("ТелеТау") }; snap("splash") }
 
@@ -460,7 +466,7 @@ class ScreensScreenshotTest {
         snap("lesson_choice_listen")
     }
 
-    @Test fun welcome_dark() { show(dark = true, mode = UiMode.Bee) { WelcomeScreen("ТелеТау", null, {}, {}, {}, {}, {}, {}) }; snap("welcome_dark") }
+    @Test fun welcome_dark() { show(dark = true, mode = UiMode.Bee) { WelcomeScreen("ТелеТау", null, null, {}, {}, {}, {}, {}, {}) }; snap("welcome_dark") }
 
     private val selfNicks = Resource.Ready(listOf(NicknameSuggestion("n1", "Смелая пчела"), NicknameSuggestion("n2", "Ловкий шмель"), NicknameSuggestion("n3", "Тихая липа")))
 
