@@ -106,8 +106,14 @@ export function useResource<T>(load: () => Promise<T>, deps: DependencyList, opt
       }
     };
     void run();
-    document.addEventListener("visibilitychange", onWake);
-    window.addEventListener("online", onWake);
+    // Пробуждение вкладки перечитывает только опрашиваемые данные (pollMs): в webview Telegram
+    // visibilitychange стреляет регулярно, и разовая загрузка не должна молча меняться под
+    // пользователем (случайные варианты ников перечитывались и сбрасывали выбор). Разовые
+    // данные перечитываются навигацией.
+    if (pollMs) {
+      document.addEventListener("visibilitychange", onWake);
+      window.addEventListener("online", onWake);
+    }
     return () => {
       cancelled = true;
       clearTimeout(timer);

@@ -29,11 +29,13 @@ export function NicknamePicker({
   onPick: (nick: PickedNickname) => void;
 }) {
   const [round, setRound] = useState(0);
-  const [picked, setPicked] = useState<string | null>(null);
+  // Выбранный ник — объектом, а не только id: даже если список под рукой перечитается (webview
+  // Telegram периодически «просыпает» вкладку), выбор не теряется и кнопка не гаснет.
+  const [picked, setPicked] = useState<PickedNickname | null>(null);
   const t = useT();
   const suggestions = useResource(() => unwrap(api.GET("/api/v1/nicknames/suggest", { params: { query: { count: 3 } } })), [round]);
   const items = suggestions.data?.items ?? [];
-  const chosen = items.find((n) => n.id === picked);
+  const chosen = picked;
 
   return (
     <div className="tt-stack">
@@ -55,8 +57,8 @@ export function NicknamePicker({
         <ChoiceGroup
           legend={t("Варианты ника")}
           hideLegend
-          value={picked}
-          onChange={setPicked}
+          value={picked?.id ?? null}
+          onChange={(id: string) => setPicked(items.find((n) => n.id === id) ?? null)}
           options={items.map((n) => ({ value: n.id, label: n.text, mark: <HexAvatar size={36} tone={toneFor(n.text)} art={avatarFor(n.text)} /> }))}
         />
       )}
@@ -73,7 +75,7 @@ export function NicknamePicker({
         </LinkButton>
       ) : null}
       {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
-      <Button block disabled={!chosen} loading={submitting} onClick={() => chosen && onPick({ id: chosen.id, text: chosen.text })}>
+      <Button block disabled={!chosen} loading={submitting} onClick={() => chosen && onPick(chosen)}>
         {submitLabel}
       </Button>
     </div>
