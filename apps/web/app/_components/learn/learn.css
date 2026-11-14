@@ -175,7 +175,7 @@
 
 .unit-head__title {
   font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-title3);
+  font-size: var(--tt-font-size-headline);
   font-weight: var(--tt-font-weight-black);
   line-height: var(--tt-line-height-tight);
   letter-spacing: -0.01em;
@@ -531,7 +531,7 @@
   line-height: var(--tt-line-height-tight);
   letter-spacing: -0.01em;
   /* Слово не рвётся посередине («Башкирска / я»): шрифт уменьшается под ширину вывески, переносы — только между словами. */
-  font-size: clamp(var(--tt-font-size-callout), 5.6cqi, var(--tt-font-size-title3));
+  font-size: clamp(var(--tt-font-size-callout), 5.6cqi, var(--tt-font-size-headline));
   overflow-wrap: normal;
   word-break: normal;
   hyphens: manual;
@@ -1097,7 +1097,7 @@
   background: transparent;
   color: var(--tt-color-text-primary);
   font-family: var(--tt-font-family-text);
-  font-size: var(--tt-font-size-title3);
+  font-size: var(--tt-font-size-headline);
   font-weight: var(--tt-font-weight-medium);
   line-height: var(--tt-line-height-snug);
 }
@@ -1462,6 +1462,95 @@
 }
 
 .board__sub {
+  display: block;
+  margin-top: var(--tt-space-s050);
+  color: var(--tt-color-text-secondary);
+  font-size: var(--tt-font-size-caption);
+  line-height: var(--tt-line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+/* ───────────── публичный словарь (ТЗ §5) ───────────── */
+/* Витрина принятых пар на /dictionary: шапка с числом пар по языковым парам, поиск и две секции
+   «башкирское слово — исходник»; источник пары — мелкой подписью в ячейке исходника. */
+.dict__head {
+  padding: var(--tt-space-s150) 0 var(--tt-space-s200);
+  text-align: center;
+}
+
+.dict__search {
+  margin-bottom: var(--tt-space-s350);
+}
+
+.dict__none {
+  margin: 0 0 var(--tt-space-s350);
+  color: var(--tt-color-text-secondary);
+  text-align: center;
+}
+
+.dict__group {
+  margin-bottom: var(--tt-space-s400);
+}
+
+.dict__group-title {
+  margin: 0 0 var(--tt-space-s200);
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-black);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* «Лист» пар, как у доски почёта: рамка со скруглением, строки не вылезают за угол. */
+.dict__sheet {
+  overflow: clip;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-panel);
+  background: var(--tt-color-surface);
+}
+
+.dict__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dict__th {
+  padding: var(--tt-space-s200) var(--tt-space-s300) var(--tt-space-s150);
+  border-bottom: 2px solid var(--tt-color-border-subtle);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-caption);
+  font-weight: var(--tt-font-weight-extrabold);
+  letter-spacing: 0.04em;
+  text-align: start;
+  text-transform: uppercase;
+}
+
+.dict__td {
+  padding: var(--tt-space-s250) var(--tt-space-s300);
+  border-top: 2px solid var(--tt-color-border-subtle);
+  vertical-align: top;
+}
+
+.dict__row:first-child .dict__td {
+  border-top: 0;
+}
+
+.dict__td--ba {
+  width: 40%;
+}
+
+.dict__ba {
+  font-weight: var(--tt-font-weight-extrabold);
+  overflow-wrap: anywhere;
+}
+
+.dict__ru {
+  overflow-wrap: anywhere;
+}
+
+.dict__src {
   display: block;
   margin-top: var(--tt-space-s050);
   color: var(--tt-color-text-secondary);
@@ -2604,7 +2693,7 @@
   margin-bottom: var(--tt-space-s100);
   font-family: var(--tt-font-family-display);
   font-weight: var(--tt-font-weight-bold);
-  font-size: var(--tt-font-size-title3);
+  font-size: var(--tt-font-size-headline);
   line-height: var(--tt-line-height-snug);
 }
 
@@ -2629,7 +2718,7 @@
 }
 
 :root[data-mode="bee"] .prompt__bubble {
-  font-size: var(--tt-font-size-title3);
+  font-size: var(--tt-font-size-headline);
   font-weight: var(--tt-font-weight-semibold);
 }
 
@@ -2941,4 +3030,23 @@
   .track__deco--shrink {
     scale: 0.78;
   }
+}
+
+/* ── привязка Telegram (профиль): код в диалоге крупно, легко читается с телефона ── */
+.tg-link-code {
+  margin: 0;
+  padding: var(--tt-space-s300) var(--tt-space-s200);
+  border: 2px dashed var(--tt-color-border-default);
+  border-radius: var(--tt-radius-card);
+  font-size: var(--tt-font-size-headline);
+  font-weight: var(--tt-font-weight-bold);
+  letter-spacing: 0.35em;
+  text-align: center;
+}
+
+.tg-link-code__hint {
+  margin: 0;
+  font-size: var(--tt-font-size-footnote);
+  color: var(--tt-color-text-secondary);
+  text-align: center;
 }

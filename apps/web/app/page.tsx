@@ -413,6 +413,9 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 <li>
                   <Link href="/student">{t("Войти по карточке")}</Link>
                 </li>
+                <li>
+                  <Link href="/dictionary">{t("Словарь")}</Link>
+                </li>
               </ul>
             </div>
             <div className="lp-foot__col">

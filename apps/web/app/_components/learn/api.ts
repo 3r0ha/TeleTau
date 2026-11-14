@@ -2,6 +2,7 @@
 // Problem Details) по сгенерированным путям контракта — типы запросов и ответов только оттуда (CLAUDE.md, правило 1).
 import { api, unwrap } from "@teletau/session/api";
 import type { Schema } from "@teletau/contracts";
+import type { PublicDictionary } from "./model";
 
 export const learnApi = {
   course: () => unwrap(api.GET("/api/v1/course")),
@@ -15,6 +16,12 @@ export const learnApi = {
   leagueResultSeen: (weekStart: string) => unwrap(api.POST("/api/v1/leagues/result-seen", { body: { weekStart } })),
   // Доска почёта (ТЗ §4.5): публичный топ школ и классов за период — агрегаты без имён и ников.
   leaderboard: (period: "day" | "week" | "month" | "year") => unwrap(api.GET("/api/v1/public/leaderboard", { params: { query: { period } } })),
+  // Публичный словарь (ТЗ §5): витрина принятых пар на /dictionary — анонимно, без токена. CSV (format=csv)
+  // витрина не запрашивает, но контракт допускает строку в ответе — неожиданную форму читаем как пустой словарь.
+  dictionary: async (): Promise<PublicDictionary> => {
+    const data = await unwrap(api.GET("/api/v1/public/dictionary"));
+    return typeof data === "string" ? { generatedAt: "", langPair: "ba-ru", items: [] } : data;
+  },
   hive: (classId: string) => unwrap(api.GET("/api/v1/classes/{id}/hive", { params: { path: { id: classId } } })),
   myCells: () => unwrap(api.GET("/api/v1/corpus/my-cells", { params: { query: { limit: 1 } } })),
   startReview: (runId: string) => unwrap(api.POST("/api/v1/reviews/runs", { body: { runId } })),
