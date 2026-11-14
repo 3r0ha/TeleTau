@@ -349,7 +349,9 @@ test.describe("M2: урок", () => {
     await mockBackend(page, { account: childMe() });
     await openTrail(page);
     await page.getByRole("button", { name: CURRENT_NODE }).click();
-    await expect(page.getByRole("heading", { name: "Новое слово" })).toBeVisible();
+    // Фокус (не просто видимость): заголовок в SSR-разметке есть и до гидратации, а фокус эффект ставит уже
+    // после — запись истории листа («Назад» = «Уже уходишь?») к этому моменту точно запушена.
+    await expect(page.getByRole("heading", { name: "Новое слово" })).toBeFocused();
     await page.goBack();
     const dialog = page.getByRole("dialog", { name: "Уже уходишь?" });
     await expect(dialog).toBeVisible();
