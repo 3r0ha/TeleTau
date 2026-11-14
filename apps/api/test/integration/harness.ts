@@ -162,6 +162,9 @@ export const testConfig = (): AppConfig =>
     ...process.env,
     AUTH_DEMO_OTP: process.env["AUTH_DEMO_OTP"] || DEMO_CODE,
     AUTH_DEMO_STAFF: process.env["AUTH_DEMO_STAFF"] || "1",
+    // Герметичность: «демо без TOTP» включается только своим файлом (demo-staff-totp.test.ts) — иначе флаг
+    // из локального .env (на стене он =1 для показа) протекает сюда, и TOTP-шаг пропускается везде.
+    AUTH_DEMO_STAFF_WITHOUT_TOTP: undefined,
     AUTH_DEMO_CLASS_CODE: "",
     BOT_SERVICE_TOKEN: process.env["BOT_SERVICE_TOKEN"] || TEST_BOT_SERVICE_TOKEN,
   });

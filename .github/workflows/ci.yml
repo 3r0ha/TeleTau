@@ -66,8 +66,21 @@ jobs:
         working-directory: ios
         run: |
           xcodegen generate
-          xcodebuild build -project TeleTau.xcodeproj -target TeleTau -sdk iphonesimulator \
-            -configuration Debug ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO
+          # Xcode 26 при сборке по -target не прокидывает пути модулей между SPM-пакетами («no such module:
+          # 'HTTPTypes'» и т.п.) и не переносит бандл ресурсов пакета в каталог продуктов. Обход:
+          # SWIFT_INCLUDE_PATHS с корнями модулей всех пакетов + доустановка бандла и второй проход.
+          # Сборка по scheme это делает сама, но ей нужен установленный рантайм симулятора.
+          SP="$PWD/.spm-checkouts/checkouts"
+          CORE="$PWD/Packages/TeleTauCore/build/Debug-iphonesimulator"
+          INC="$SP/swift-http-types/build/Debug-iphonesimulator $SP/swift-openapi-runtime/build/Debug-iphonesimulator $SP/swift-openapi-urlsession/build/Debug-iphonesimulator $SP/swift-collections/build/Debug-iphonesimulator $CORE"
+          XCARGS=(-project TeleTau.xcodeproj -target TeleTau -sdk iphonesimulator -configuration Debug
+            ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO -clonedSourcePackagesDirPath "$PWD/.spm-checkouts"
+            "SWIFT_INCLUDE_PATHS=$INC")
+          # Первый проход компилирует все пакеты и падает на переносе бандла; второй — завершает сборку.
+          xcodebuild build "${XCARGS[@]}" || {
+            cp -R Packages/TeleTauCore/build/Debug-iphonesimulator/TeleTauCore_DesignSystem.bundle build/Debug-iphonesimulator/
+            xcodebuild build "${XCARGS[@]}"
+          }
 
   android:
     name: Android — векторы и сборка

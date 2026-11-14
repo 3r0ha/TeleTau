@@ -91,7 +91,8 @@ describe("long input (200 000 code points)", () => {
 // Квадратичное удаление ZWJ/ZWNJ на 40 000 соединителей заняло бы секунды.
 // Линейность проверяется отношением времени t(4n)/t(n), а не абсолютными миллисекундами —
 // равномерное замедление машины (загруженный CI) отношение не меняет. Линейный алгоритм даёт ≈4,
-// квадратичный ≈16; порог 8 — посередине в логарифмической шкале.
+// квадратичный ≈16; порог 12 — с запасом на кеш-эффекты общего CI-раннера (замерялись и ≈9–10 при
+// переходе L1→L2), квадратичный алгоритм всё равно ловится с запасом.
 // Время вызова — минимум по многим одиночным замерам, малый и большой вход чередуются: вытеснение потока
 // и сборка мусора время только увеличивают, поэтому минимум устойчив к нагрузке на машину.
 const growthRatio = (make: (n: number) => string, run: (s: string) => unknown, n: number, samples = 25, budgetMs = 3_000): number => {
@@ -123,8 +124,8 @@ describe("joiner chains are processed in linear time", () => {
     ["ZWJ chain between emoji (normalize, toComparable, fold)", (n) => "🐝" + ZWJ.repeat(n) + "🍯", (s) => [normalize(s), toComparable(s), fold(s)]],
   ];
   for (const [name, make, run] of chains) {
-    it(`${name}: t(4n)/t(n) < 8`, { timeout: 30_000 }, () => {
-      expect(growthRatio(make, run, N)).toBeLessThan(8);
+    it(`${name}: t(4n)/t(n) < 12`, { timeout: 30_000 }, () => {
+      expect(growthRatio(make, run, N)).toBeLessThan(12);
     });
   }
 
