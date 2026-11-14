@@ -10,6 +10,8 @@ import { ApiProblem, describeProblem, fieldErrors } from "@teletau/session/probl
 import { useCursorList, useResource } from "@teletau/session/react";
 import { BackButton, LoadError, LoadingBlock, Screen, SignOutAction, SimpleTop, useDocumentTitle } from "../../_components/screens";
 import { useFlowSteps } from "../../_components/steps";
+import { useT } from "../../../i18n/client";
+import type { T } from "../../../i18n/core";
 import { clearApplyDraft, loadDraft, saveDraft, type Draft } from "../applyDraft";
 import { OnboardLayout } from "../Journey";
 import { useTeacherGate } from "../useTeacher";
@@ -17,12 +19,18 @@ import { useTeacherGate } from "../useTeacher";
 type School = Schema<"School">;
 type Step = "1" | "2" | "3";
 
-const KIND_LABEL: Record<Schema<"DistrictKind">, string> = {
-  municipal_district: "муниципальный район",
-  urban_okrug: "городской округ",
-};
+/** Подписи видов районов — фабрика от переводчика (строки зависят от языка интерфейса). */
+function districtKindLabels(t: T): Record<Schema<"DistrictKind">, string> {
+  return {
+    municipal_district: t("муниципальный район"),
+    urban_okrug: t("городской округ"),
+  };
+}
 
-const TITLES: Record<Step, string> = { "1": "Расскажите о себе", "2": "Выберите район", "3": "Выберите школу" };
+/** Заголовки шагов заявки — фабрика от переводчика. */
+function titlesFor(t: T): Record<Step, string> {
+  return { "1": t("Расскажите о себе"), "2": t("Выберите район"), "3": t("Выберите школу") };
+}
 
 const fold = (s: string) => s.toLocaleLowerCase("ru").replace(/ё/g, "е");
 
@@ -36,6 +44,7 @@ export default function ApplyPage() {
   const { me, resource } = useTeacherGate("apply");
   const router = useRouter();
   const params = useSearchParams();
+  const t = useT();
   const flow = useFlowSteps<Step>("1");
   const raw = params.get("step");
   const step: Step = raw === "2" || raw === "3" ? raw : "1";
@@ -53,6 +62,7 @@ export default function ApplyPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
   const invalid = useInvalidFocus();
+  const TITLES = titlesFor(t);
 
   useDocumentTitle(TITLES[step]);
 
@@ -112,8 +122,8 @@ export default function ApplyPage() {
 
   const goStep2 = () => {
     const e: typeof errors = {};
-    if (fullName.trim().length < 3) e.fullName = "Укажите фамилию, имя и отчество.";
-    if (position.trim().length < 2) e.position = "Укажите должность.";
+    if (fullName.trim().length < 3) e.fullName = t("Укажите фамилию, имя и отчество.");
+    if (position.trim().length < 2) e.position = t("Укажите должность.");
     setErrors(e);
     if (!e.fullName && !e.position) flow.go("2");
     else invalid.request();
@@ -163,8 +173,8 @@ export default function ApplyPage() {
       top={
         <SimpleTop
           wide
-          start={prev ? <BackButton label="Предыдущий шаг" onClick={() => flow.back(prev)} /> : undefined}
-          title="Заявка учителя"
+          start={prev ? <BackButton label={t("Предыдущий шаг")} onClick={() => flow.back(prev)} /> : undefined}
+          title={t("Заявка учителя")}
           end={<SignOutAction onBeforeLogout={clearApplyDraft} />}
         />
       }
@@ -178,20 +188,20 @@ export default function ApplyPage() {
       ) : (
         <Card roomy className="auth__card">
           <div className="tt-stack tt-stack--loose">
-            <ProgressBar value={stepNo} max={3} label="Шаг заявки" valueText={`Шаг ${stepNo} из 3`} showValue />
+            <ProgressBar value={stepNo} max={3} label={t("Шаг заявки")} valueText={t("Шаг {n} из 3", { n: stepNo })} showValue />
             <header className="tt-stack tt-stack--tight">
               <StepHeading focusKey={step}>{TITLES[step]}</StepHeading>
               {step === "3" && district ? <p className="tt-lead">{district.nameRu}</p> : null}
             </header>
 
             {me.teacherStatus === "rejected" && step === "1" ? (
-              <InlineAlert tone="honey">Прошлую заявку не подтвердили. Проверьте данные.</InlineAlert>
+              <InlineAlert tone="honey">{t("Прошлую заявку не подтвердили. Проверьте данные.")}</InlineAlert>
             ) : null}
 
             {step === "1" ? (
               <Form className="tt-stack tt-stack--loose" invalidFocus={invalid} onSubmit={goStep2}>
                 <TextField
-                  label="Фамилия, имя, отчество"
+                  label={t("Фамилия, имя, отчество")}
                   name="fullName"
                   autoComplete="name"
                   value={fullName}
@@ -201,10 +211,10 @@ export default function ApplyPage() {
                   required
                 />
                 <TextField
-                  label="Должность"
+                  label={t("Должность")}
                   name="position"
                   autoComplete="organization-title"
-                  hint="Например, учитель башкирского языка"
+                  hint={t("Например, учитель башкирского языка")}
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
                   error={errors.position}
@@ -212,23 +222,23 @@ export default function ApplyPage() {
                   required
                 />
                 <Button type="submit" block>
-                  Дальше
+                  {t("Дальше")}
                 </Button>
               </Form>
             ) : step === "2" ? (
               <div className="tt-stack">
                 <TextField
-                  label="Найти район или город"
+                  label={t("Найти район или город")}
                   type="search"
                   icon={<MagnifyingGlass weight="bold" aria-hidden />}
                   value={districtQuery}
                   onChange={(e) => setDistrictQuery(e.target.value)}
-                  placeholder="Уфа, Бурзянский…"
+                  placeholder={t("Уфа, Бурзянский…")}
                 />
                 {districts.error && !districts.data ? (
                   <RetryAlert error={districts.error} onRetry={districts.reload} busy={districts.loading} />
                 ) : !districts.data ? (
-                  <SkeletonGroup label="Загружаем районы" className="tt-stack tt-stack--tight">
+                  <SkeletonGroup label={t("Загружаем районы")} className="tt-stack tt-stack--tight">
                     {[0, 1, 2, 3].map((i) => (
                       <Skeleton key={i} height={56} radius="button" />
                     ))}
@@ -236,26 +246,26 @@ export default function ApplyPage() {
                 ) : (
                   <div className="pick-list">
                     <ChoiceGroup
-                      legend="Район"
+                      legend={t("Район")}
                       hideLegend
                       value={districtId}
                       onChange={(id) => {
                         setDistrictId(id);
                         setSchoolId(null);
                       }}
-                      options={filteredDistricts.map((d) => ({ value: d.id, label: d.nameRu, description: KIND_LABEL[d.kind] }))}
+                      options={filteredDistricts.map((d) => ({ value: d.id, label: d.nameRu, description: districtKindLabels(t)[d.kind] }))}
                     />
-                    {filteredDistricts.length === 0 ? <p className="tt-muted">Ничего не нашлось.</p> : null}
+                    {filteredDistricts.length === 0 ? <p className="tt-muted">{t("Ничего не нашлось.")}</p> : null}
                   </div>
                 )}
                 <Button block disabled={!districtId} onClick={() => flow.go("3")}>
-                  Дальше
+                  {t("Дальше")}
                 </Button>
               </div>
             ) : (
               <div className="tt-stack">
                 <TextField
-                  label="Название или номер школы"
+                  label={t("Название или номер школы")}
                   type="search"
                   icon={<MagnifyingGlass weight="bold" aria-hidden />}
                   value={schoolQuery}
@@ -265,7 +275,7 @@ export default function ApplyPage() {
                 {schoolPage.error && !schools.length ? (
                   <RetryAlert error={schoolPage.error} onRetry={schoolPage.reload} busy={schoolPage.loading} />
                 ) : schoolPage.loading && !schools.length ? (
-                  <SkeletonGroup label="Ищем школы" className="tt-stack tt-stack--tight">
+                  <SkeletonGroup label={t("Ищем школы")} className="tt-stack tt-stack--tight">
                     {[0, 1, 2].map((i) => (
                       <Skeleton key={i} height={64} radius="button" />
                     ))}
@@ -273,7 +283,7 @@ export default function ApplyPage() {
                 ) : (
                   <div className="pick-list" aria-busy={schoolPage.loading}>
                     <ChoiceGroup
-                      legend="Школа"
+                      legend={t("Школа")}
                       hideLegend
                       value={schoolId}
                       onChange={setSchoolId}
@@ -285,7 +295,7 @@ export default function ApplyPage() {
                             {s.isDemo ? (
                               <>
                                 {" "}
-                                <Chip tone="violet">демо</Chip>
+                                <Chip tone="violet">{t("демо")}</Chip>
                               </>
                             ) : null}
                           </>
@@ -294,20 +304,18 @@ export default function ApplyPage() {
                       }))}
                     />
                     {schools.length === 0 ? (
-                      <p className="tt-muted">
-                        {deferredSchoolQuery.length >= 2 ? "Ничего не нашлось." : "В этом районе пока нет школ."}
-                      </p>
+                      <p className="tt-muted">{deferredSchoolQuery.length >= 2 ? t("Ничего не нашлось.") : t("В этом районе пока нет школ.")}</p>
                     ) : null}
                     {schoolList.hasMore && !schoolPage.loading ? (
                       <LinkButton loading={schoolList.loadingMore} onClick={() => void loadMore()}>
-                        Показать ещё
+                        {t("Показать ещё")}
                       </LinkButton>
                     ) : null}
                   </div>
                 )}
                 {submitError ? <InlineAlert tone="danger">{submitError}</InlineAlert> : null}
                 <Button block disabled={!schoolId} loading={busy} onClick={() => void submit()}>
-                  Отправить заявку
+                  {t("Отправить заявку")}
                 </Button>
               </div>
             )}
@@ -321,11 +329,12 @@ export default function ApplyPage() {
 
 /** Список не загрузился: текст ошибки и повтор рядом с ней — без перезагрузки страницы и потери введённого. */
 function RetryAlert({ error, onRetry, busy }: { error: unknown; onRetry: () => void; busy: boolean }) {
+  const t = useT();
   return (
     <div className="tt-stack tt-stack--tight">
       <InlineAlert tone="danger">{describeProblem(error)}</InlineAlert>
       <Button variant="secondary" icon={<ArrowsClockwise weight="bold" />} loading={busy} onClick={onRetry}>
-        Попробовать снова
+        {t("Попробовать снова")}
       </Button>
     </div>
   );

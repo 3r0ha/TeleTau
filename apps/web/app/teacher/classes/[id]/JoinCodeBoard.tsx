@@ -10,6 +10,7 @@ import { msUntil } from "@teletau/session/clock";
 import { ApiProblem, describeProblem } from "@teletau/session/problem";
 import { ClassTitle } from "../../../_components/screens";
 import { SiteQr } from "../../../_components/SiteQr";
+import { useT } from "../../../../i18n/client";
 import { RequestsBadge } from "./Overview";
 
 /**
@@ -190,6 +191,7 @@ export function JoinCodeBoard({
   onOpenRequests: () => void;
 }) {
   const { code, error, busy, issue } = joinCode;
+  const t = useT();
   const permanent = Boolean(code?.permanent);
   const now = useNow(open && Boolean(code) && !permanent);
   const site = useSite();
@@ -209,10 +211,10 @@ export function JoinCodeBoard({
       variant="board"
       title={
         <>
-          Код класса <ClassTitle title={classTitle} />
+          {t("Код класса")} <ClassTitle title={classTitle} />
         </>
       }
-      closeLabel="Закрыть код класса"
+      closeLabel={t("Закрыть код класса")}
     >
       <div className="board">
         {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
@@ -228,41 +230,44 @@ export function JoinCodeBoard({
           ) : (
             <>
               <span aria-hidden="true">···-···</span>
-              <span className="tt-visually-hidden">Выпускаем код</span>
+              <span className="tt-visually-hidden">{t("Выпускаем код")}</span>
             </>
           )}
         </p>
-        <p className="board__timer">{code ? (permanent ? "Код постоянный" : expired ? "Код истёк — покажите новый" : `Действует ещё ${mmss(left)}`) : "Выпускаем код…"}</p>
+        <p className="board__timer">
+          {code ? (permanent ? t("Код постоянный") : expired ? t("Код истёк — покажите новый") : t("Действует ещё {time}", { time: mmss(left) })) : t("Выпускаем код…")}
+        </p>
         <div className="board__how">
           <ol className="board__steps">
             <li>
-              Открой сайт{site ? (
+              {t("Открой сайт")}
+              {site ? (
                 <>
                   {" "}
                   <b className="board__site tt-break-anywhere">{site.host}</b>
                 </>
               ) : null}{" "}
-              и нажми «У меня есть карточка или код»
+              {t("и нажми «У меня есть карточка или код»")}
             </li>
-            <li>Выбери «Ввести код класса»</li>
-            <li>Введи код и выбери ник — учитель подтвердит</li>
+            <li>{t("Выбери «Ввести код класса»")}</li>
+            <li>{t("Введи код и выбери ник — учитель подтвердит")}</li>
           </ol>
           {site ? (
             <figure className="board__qr">
-              <SiteQr url={site.root} label={`QR-код: ссылка на сайт ${site.host}`} />
-              <figcaption>Наведи камеру телефона — откроется сайт</figcaption>
+              <SiteQr url={site.root} label={t("QR-код: ссылка на сайт {host}", { host: site.host })} />
+              <figcaption>{t("Наведи камеру телефона — откроется сайт")}</figcaption>
             </figure>
           ) : null}
         </div>
         <div className="board__actions">
           {permanent ? null : (
             <Button variant="secondary" icon={<ArrowsClockwise weight="bold" />} onClick={() => void issue()} loading={busy}>
-              {expired ? "Показать новый код" : "Новый код"}
+              {expired ? t("Показать новый код") : t("Новый код")}
             </Button>
           )}
           {/* Пришли заявки — кнопка зелёная: учитель замечает её, не отходя от доски. */}
           <Button variant={pendingRequests ? "success" : "secondary"} icon={<UserPlus weight="fill" />} onClick={onOpenRequests}>
-            Заявки на вход
+            {t("Заявки на вход")}
             <RequestsBadge count={pendingRequests} />
           </Button>
         </div>

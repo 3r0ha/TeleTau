@@ -10,6 +10,7 @@ import { serverNow } from "@teletau/session/clock";
 import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
 import { LoadError, isForbidden, isNotFound, useDocumentTitle } from "../../../../_components/screens";
+import { useT } from "../../../../../i18n/client";
 import { TeacherShell } from "../../../TeacherShell";
 import { useTeacherGate } from "../../../useTeacher";
 import { BackToClasses, ClassHeader, ClassTabs, ClassUnavailable } from "../ClassFrame";
@@ -50,12 +51,13 @@ const ATTENTION: Record<Activity, number> = { never: 0, idle: 1, week: 2, today:
 export default function ClassProgressPage() {
   const { id } = useParams<{ id: string }>();
   const { me } = useTeacherGate("verified");
+  const t = useT();
   const toast = useToast();
   const validId = isUuid(id);
   const enabled = Boolean(me) && validId;
   const klass = useResource(() => unwrap(api.GET("/api/v1/classes/{id}", { params: { path: { id } } })), [id], { enabled });
   const progress = useResource(() => unwrap(api.GET("/api/v1/classes/{id}/progress", { params: { path: { id } } })), [id], { enabled, pollMs: POLL_MS });
-  useDocumentTitle(klass.data ? `Прогресс · ${klass.data.title}` : undefined);
+  useDocumentTitle(klass.data ? t("Прогресс · {title}", { title: klass.data.title }) : undefined);
   usePrintInLight();
   const [saving, setSaving] = useState(false);
 
@@ -79,7 +81,7 @@ export default function ClassProgressPage() {
     setSaving(true);
     try {
       const tasks = await unwrap(api.GET("/api/v1/classes/{id}/assignments", { params: { path: { id: c.id } } }));
-      saveTextFile(reportFileName(c.title, p.week), classReportCsv({ classTitle: c.title, week: p.week, rows, assignments: [...tasks.active, ...tasks.past] }));
+      saveTextFile(reportFileName(c.title, p.week), classReportCsv({ classTitle: c.title, week: p.week, rows, assignments: [...tasks.active, ...tasks.past] }, t));
     } catch (e) {
       toast(describeProblem(e), "error");
     } finally {
@@ -91,10 +93,10 @@ export default function ClassProgressPage() {
     rows && rows.length ? (
       <>
         <Button variant="secondary" icon={<DownloadSimple weight="bold" />} loading={saving} onClick={() => void download()}>
-          Скачать отчёт
+          {t("Скачать отчёт")}
         </Button>
         <Button variant="secondary" icon={<Printer weight="fill" />} onClick={() => window.print()} className="print-action">
-          Распечатать
+          {t("Распечатать")}
         </Button>
       </>
     ) : undefined;
@@ -104,7 +106,7 @@ export default function ClassProgressPage() {
       <div className="tt-stack tt-stack--loose class-page">
         <BackToClasses />
         {!c ? (
-          <SkeletonGroup label="Загружаем класс" className="tt-stack">
+          <SkeletonGroup label={t("Загружаем класс")} className="tt-stack">
             <Skeleton width="40%" height={34} />
             <Skeleton width="70%" height={18} />
           </SkeletonGroup>
@@ -122,7 +124,7 @@ export default function ClassProgressPage() {
             <LoadError error={progress.error} onRetry={progress.reload} />
           )
         ) : !c || !p || !rows ? (
-          <SkeletonGroup label="Загружаем прогресс" className="tt-stack">
+          <SkeletonGroup label={t("Загружаем прогресс")} className="tt-stack">
             <div className="progress-top">
               <Skeleton height={240} radius="card" />
               <Skeleton height={240} radius="card" />
@@ -138,6 +140,7 @@ export default function ClassProgressPage() {
 }
 
 function ProgressView({ progress, rows, classId, classTitle, staleError }: { progress: ClassProgress; rows: StudentRow[]; classId: string; classTitle: string; staleError: unknown }) {
+  const t = useT();
   const today = ufaToday(serverNow());
   if (rows.length === 0) {
     return (
@@ -145,14 +148,14 @@ function ProgressView({ progress, rows, classId, classTitle, staleError }: { pro
         art="emptyNoStudents"
         headingAs="h2"
         compact
-        title="Учеников пока нет"
+        title={t("Учеников пока нет")}
         actions={
           <ButtonLink href={`/teacher/classes/${classId}`} block>
-            К обзору класса
+            {t("К обзору класса")}
           </ButtonLink>
         }
       >
-        Раздайте карточки или покажите код на доске.
+        {t("Раздайте карточки или покажите код на доске.")}
       </EmptyState>
     );
   }
@@ -161,12 +164,12 @@ function ProgressView({ progress, rows, classId, classTitle, staleError }: { pro
       {staleError ? (
         <div aria-live="polite">
           <InlineAlert tone={isNetworkError(staleError) ? "honey" : "danger"}>
-            {isNetworkError(staleError) ? "Нет связи. Цифры обновятся, когда сеть вернётся." : describeProblem(staleError)}
+            {isNetworkError(staleError) ? t("Нет связи. Цифры обновятся, когда сеть вернётся.") : describeProblem(staleError)}
           </InlineAlert>
         </div>
       ) : null}
       <p className="print-only print-note">
-        Отчёт по классу {classTitle} · неделя {weekLabel(progress.week)} · {printDate(today)}
+        {t("Отчёт по классу {title} · неделя {week} · {date}", { title: classTitle, week: weekLabel(progress.week), date: printDate(today) })}
       </p>
       <div className="progress-top">
         <WeekCard progress={progress} />
@@ -178,27 +181,27 @@ function ProgressView({ progress, rows, classId, classTitle, staleError }: { pro
 }
 
 function WeekCard({ progress }: { progress: ClassProgress }) {
+  const t = useT();
   // «Занимались N из M»: M — ученики с аккаунтом (studentsTotal), как во вкладке «Класс» у ученика, а не все места.
   const { studentsTotal, activeSeats, lessonsCompleted, honeyEarned, votes } = progress.summary;
   return (
     <Card as="section" className="tab-card week-card" aria-labelledby="week-title">
-      <CardTitle id="week-title">Неделя {weekLabel(progress.week)}</CardTitle>
-      <CardSub>
-        Занимались {activeSeats} из {studentsTotal}
-      </CardSub>
+      <CardTitle id="week-title">{t("Неделя {week}", { week: weekLabel(progress.week) })}</CardTitle>
+      <CardSub>{t("Занимались {done} из {total}", { done: activeSeats, total: studentsTotal })}</CardSub>
       <div className="tab-card__comb">
-        <HoneyComb total={studentsTotal} filled={Math.min(activeSeats, studentsTotal)} perRow={COMB_PER_ROW} label={`Занимались ${activeSeats} из ${studentsTotal}`} />
+        <HoneyComb total={studentsTotal} filled={Math.min(activeSeats, studentsTotal)} perRow={COMB_PER_ROW} label={t("Занимались {done} из {total}", { done: activeSeats, total: studentsTotal })} />
       </div>
-      <StatTiles label="Итоги недели">
-        <StatTile label="Уроков" value={lessonsCompleted} icon={<BookOpen weight="fill" />} />
-        <StatTile label="Мёда" value={honeyEarned} icon={<Drop weight="fill" />} />
-        <StatTile label="Голосов" value={votes} icon={<Scales weight="fill" />} />
+      <StatTiles label={t("Итоги недели")}>
+        <StatTile label={t("Уроков")} value={lessonsCompleted} icon={<BookOpen weight="fill" />} />
+        <StatTile label={t("Мёда")} value={honeyEarned} icon={<Drop weight="fill" />} />
+        <StatTile label={t("Голосов")} value={votes} icon={<Scales weight="fill" />} />
       </StatTiles>
     </Card>
   );
 }
 
 function StudentsCard({ rows, today, classId }: { rows: StudentRow[]; today: string; classId: string }) {
+  const t = useT();
   // `?order=attention` — пришли из «Не занимались на неделе» («Ещё N», «Кто отстаёт»): сразу этот порядок и список на виду.
   const params = useSearchParams();
   const behind = params.get("order") === "attention";
@@ -220,45 +223,45 @@ function StudentsCard({ rows, today, classId }: { rows: StudentRow[]; today: str
     <Card as="section" className="tab-card pupils-card" aria-labelledby="pupils-title">
       <header className="section-head pupils-card__head">
         <CardTitle id="pupils-title">
-          Ученики <span className="pupils-card__count">{rows.length}</span>
+          {t("Ученики")} <span className="pupils-card__count">{rows.length}</span>
         </CardTitle>
-        <div className="segmented no-print" role="group" aria-label="Порядок учеников">
+        <div className="segmented no-print" role="group" aria-label={t("Порядок учеников")}>
           <button type="button" className="segmented__item" aria-pressed={sort === "seat"} onClick={() => setSort("seat")}>
-            По номеру
+            {t("По номеру")}
           </button>
           <button type="button" className="segmented__item" aria-pressed={sort === "attention"} onClick={() => setSort("attention")}>
-            Кто отстаёт
+            {t("Кто отстаёт")}
           </button>
         </div>
       </header>
       {/* Роли заданы явно: на телефоне строки таблицы — карточки (CSS), а читалка видит таблицу. */}
       <div className="pupils-scroll">
-      <table className="pupils-table" role="table" aria-label="Прогресс учеников">
+      <table className="pupils-table" role="table" aria-label={t("Прогресс учеников")}>
         <thead role="rowgroup">
           <tr role="row">
             <th role="columnheader" scope="col">
-              Ученик
+              {t("Ученик")}
             </th>
             <th role="columnheader" scope="col" className="pupils-table__sum">
-              Прогресс
+              {t("Прогресс")}
             </th>
             <th role="columnheader" scope="col">
-              Последнее занятие
+              {t("Последнее занятие")}
             </th>
             <th role="columnheader" scope="col" className="pupils-table__num">
-              Уроков всего
+              {t("Уроков всего")}
             </th>
             <th role="columnheader" scope="col" className="pupils-table__num">
-              За неделю
+              {t("За неделю")}
             </th>
             <th role="columnheader" scope="col" className="pupils-table__num">
-              Мёд за неделю
+              {t("Мёд за неделю")}
             </th>
             <th role="columnheader" scope="col" className="pupils-table__num">
-              Точность
+              {t("Точность")}
             </th>
             <th role="columnheader" scope="col" className="pupils-table__num">
-              Серия
+              {t("Серия")}
             </th>
           </tr>
         </thead>
@@ -275,6 +278,7 @@ function StudentsCard({ rows, today, classId }: { rows: StudentRow[]; today: str
 
 /** Строка ученика; вся строка — ссылка на карточку ученика (ссылка — ник, растянутая на строку CSS). */
 function PupilRow({ row, today, href }: { row: StudentRow; today: string; href: string }) {
+  const t = useT();
   const p = row.progress;
   const streak = p?.streak ?? 0;
   const activity = activityOf(p, today);
@@ -286,22 +290,22 @@ function PupilRow({ row, today, href }: { row: StudentRow; today: string; href: 
           {seatNo(row.seatNumber)}
         </HexAvatar>
         <Link href={href} className="pupil__link">
-          {seatLabel(row.seatNumber)} · {row.nickname ?? "Ник ещё не выбран"}
+          {seatLabel(row.seatNumber)} · {row.nickname ?? t("Ник ещё не выбран")}
         </Link>
       </td>
       <td role="cell" className="pupils-table__sum">
-        <span className="pupil__meta">{studentSummary(p, today)}</span>
-        <span className="pupil__week">{weekSummary(p)}</span>
+        <span className="pupil__meta">{studentSummary(p, today, t)}</span>
+        <span className="pupil__week">{weekSummary(p, t)}</span>
       </td>
       <td role="cell" className="pupil-row__last">
         <span className="pupil-row__dot" aria-hidden />
-        {activity === "never" ? "пока без уроков" : lastActiveLabel(p?.lastActiveOn, today)}
+        {activity === "never" ? t("пока без уроков") : lastActiveLabel(p?.lastActiveOn, today, t)}
       </td>
       <td role="cell" className="pupils-table__num">
         {p?.lessonsCompleted ?? 0}
       </td>
       <td role="cell" className="pupils-table__num">
-        {week ? `${week} ${lessonsWord(week)}` : <span className="pupil-row__none">нет</span>}
+        {week ? `${week} ${lessonsWord(week, t)}` : <span className="pupil-row__none">{t("нет")}</span>}
       </td>
       <td role="cell" className="pupils-table__num">
         {p?.honeyThisWeek ?? 0}
@@ -313,9 +317,7 @@ function PupilRow({ row, today, href }: { row: StudentRow; today: string; href: 
         <span className="pupil__streak" data-on={streak > 0 || undefined}>
           <Fire weight="fill" aria-hidden />
           <span aria-hidden>{streak}</span>
-          <span className="tt-visually-hidden">
-            Серия: {streak} {daysWord(streak)}
-          </span>
+          <span className="tt-visually-hidden">{t("Серия: {n} {word}", { n: streak, word: daysWord(streak, t) })}</span>
         </span>
       </td>
     </tr>

@@ -7,6 +7,7 @@ import { Button, ButtonLink, Illustration, Skeleton, SkeletonGroup } from "@tele
 import { api, unwrap } from "@teletau/session/api";
 import { useResource } from "@teletau/session/react";
 import type { Me } from "@teletau/session/types";
+import { useT } from "../../i18n/client";
 import { LoadError } from "../_components/screens";
 import { ClassBoardCard } from "./ClassBoard";
 import { CreateClassDialog } from "./CreateClassDialog";
@@ -21,6 +22,7 @@ import { useTeacherGate } from "./useTeacher";
 export default function TeacherHomePage() {
   const { me } = useTeacherGate("verified");
   const router = useRouter();
+  const t = useT();
   const [creating, setCreating] = useState(false);
   const classes = useResource(() => unwrap(api.GET("/api/v1/classes")), [me?.id], { enabled: Boolean(me) });
   const items = (classes.data?.items ?? []).filter((c) => c.myRole === "teacher");
@@ -29,10 +31,10 @@ export default function TeacherHomePage() {
     <TeacherShell>
       <div className="tt-stack tt-stack--loose teacher-home">
         <header className="page-head">
-          <h1 className="tt-title1">Мои классы</h1>
+          <h1 className="tt-title1">{t("Мои классы")}</h1>
           {items.length ? (
             <Button icon={<Plus weight="bold" />} onClick={() => setCreating(true)}>
-              Создать класс
+              {t("Создать класс")}
             </Button>
           ) : null}
         </header>
@@ -40,7 +42,7 @@ export default function TeacherHomePage() {
         {classes.error && !classes.data ? (
           <LoadError error={classes.error} onRetry={classes.reload} />
         ) : !me || !classes.data ? (
-          <SkeletonGroup label="Загружаем классы" className="class-board">
+          <SkeletonGroup label={t("Загружаем классы")} className="class-board">
             {[0, 1].map((i) => (
               <Skeleton key={i} height={320} radius="card" />
             ))}
@@ -49,7 +51,7 @@ export default function TeacherHomePage() {
           <FirstClass me={me} onCreate={() => setCreating(true)} />
         ) : (
           <>
-            <ul className="class-board" data-solo={items.length === 1 || undefined} aria-label="Классы">
+            <ul className="class-board" data-solo={items.length === 1 || undefined} aria-label={t("Классы")}>
               {items.map((c) => (
                 <li key={c.id}>
                   <ClassBoardCard c={c} solo={items.length === 1} />
@@ -74,15 +76,16 @@ function addressOf(me: Me): string | null {
 /** Первый вход после одобрения: путь из трёх шагов — класс, карточки, код на доске. */
 function FirstClass({ me, onCreate }: { me: Me; onCreate: () => void }) {
   const name = addressOf(me);
+  const t = useT();
   return (
     <section className="tt-card first-class" aria-labelledby="first-class-title">
       <div className="first-class__main">
         <div className="tt-stack tt-stack--tight">
           <p className="first-class__hello">
-            <Check weight="bold" aria-hidden /> {name ? `${name}, кабинет открыт` : "Кабинет открыт"}
+            <Check weight="bold" aria-hidden /> {name ? t("{name}, кабинет открыт", { name }) : t("Кабинет открыт")}
           </p>
           <h2 id="first-class-title" className="tt-title1">
-            Первый урок
+            {t("Первый урок")}
           </h2>
         </div>
         <ol className="first-class__steps">
@@ -90,27 +93,25 @@ function FirstClass({ me, onCreate }: { me: Me; onCreate: () => void }) {
             <span className="first-class__icon" aria-hidden>
               <UsersThree weight="fill" />
             </span>
-            <b>Создайте класс</b>
+            <b>{t("Создайте класс")}</b>
           </li>
           <li>
             <span className="first-class__icon" aria-hidden>
               <Cards weight="fill" />
             </span>
-            <b>Раздайте карточки</b>
+            <b>{t("Раздайте карточки")}</b>
           </li>
           <li>
             <span className="first-class__icon" aria-hidden>
               <ProjectorScreen weight="fill" />
             </span>
-            <b>Покажите код на доске</b>
+            <b>{t("Покажите код на доске")}</b>
           </li>
         </ol>
-        <p className="tt-muted">
-          Уже вели классы в ТелеТау? Проверьте адрес почты, с которым вы вошли.
-        </p>
+        <p className="tt-muted">{t("Уже вели классы в ТелеТау? Проверьте адрес почты, с которым вы вошли.")}</p>
         <div className="first-class__actions">
           <Button icon={<Plus weight="bold" />} onClick={onCreate}>
-            Создать класс
+            {t("Создать класс")}
           </Button>
         </div>
       </div>
@@ -121,6 +122,7 @@ function FirstClass({ me, onCreate }: { me: Me; onCreate: () => void }) {
 
 /** «Помогите языку» на главной — только когда есть пары, за которые учитель ещё не голосовал. */
 function DuelsTeaser() {
+  const t = useT();
   const duels = useResource(() => unwrap(api.GET("/api/v1/corpus/duels", { params: { query: { limit: 1 } } })), []);
   if (!duels.data?.items.length) return null;
   return (
@@ -128,12 +130,12 @@ function DuelsTeaser() {
       <Illustration name="sceneDuel" width={112} className="duels-teaser__art" />
       <div className="duels-teaser__text">
         <h2 id="duels-teaser-title" className="tt-title3">
-          Помогите языку
+          {t("Помогите языку")}
         </h2>
-        <p className="tt-muted">Новые пары переводов ждут вашего голоса.</p>
+        <p className="tt-muted">{t("Новые пары переводов ждут вашего голоса.")}</p>
       </div>
       <ButtonLink href="/teacher/duels" variant="violet" className="duels-teaser__go">
-        Оценить пары
+        {t("Оценить пары")}
       </ButtonLink>
     </section>
   );

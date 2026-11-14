@@ -1,7 +1,9 @@
 // Вкладка «Прогресс» класса — данные getClassProgress (packages/contracts/openapi.yaml): прогресс идёт по номерам мест
 // без ников и ПДн, ники учитель берёт из GET /classes/{id} (ADR 0009). Здесь — склейка и подписи, без запросов.
+// Подписи зависят от языка интерфейса: функции берут переводчик t (T из i18n/core).
 import type { Schema } from "@teletau/contracts";
 import { plural } from "../../../../_components/learn/format";
+import type { T } from "../../../../../i18n/core";
 import type { Seat } from "../format";
 
 export type ClassProgress = Schema<"ClassProgress">;
@@ -46,11 +48,11 @@ const dayOnly = new Intl.DateTimeFormat("ru-RU", { day: "numeric", timeZone: "UT
 const noon = (date: string) => new Date(`${date}T12:00:00Z`);
 
 /** Когда ученик занимался последний раз: «сегодня», «вчера», «12 ноября»; ещё ни разу — null. */
-export function lastActiveLabel(lastActiveOn: string | undefined, today: string): string | null {
+export function lastActiveLabel(lastActiveOn: string | undefined, today: string, t: T): string | null {
   if (!lastActiveOn) return null;
   const days = dayNumber(today) - dayNumber(lastActiveOn);
-  if (days <= 0) return "сегодня";
-  if (days === 1) return "вчера";
+  if (days <= 0) return t("сегодня");
+  if (days === 1) return t("вчера");
   return dayMonth.format(noon(lastActiveOn));
 }
 
@@ -62,10 +64,10 @@ export function weekLabel(week: Week): string {
   return `${dayMonth.format(start)} – ${dayMonth.format(end)}`;
 }
 
-export const lessonsWord = (n: number) => plural(n, ["урок", "урока", "уроков"]);
-export const daysWord = (n: number) => plural(n, ["день", "дня", "дней"]);
-export const studentsWord = (n: number) => plural(n, ["ученик", "ученика", "учеников"]);
-export const votesWord = (n: number) => plural(n, ["голос", "голоса", "голосов"]);
+export const lessonsWord = (n: number, t: T) => plural(n, [t("урок"), t("урока"), t("уроков")]);
+export const daysWord = (n: number, t: T) => plural(n, [t("день"), t("дня"), t("дней")]);
+export const studentsWord = (n: number, t: T) => plural(n, [t("ученик"), t("ученика"), t("учеников")]);
+export const votesWord = (n: number, t: T) => plural(n, [t("голос"), t("голоса"), t("голосов")]);
 
 /** Точность ответов — целые проценты: 0.857 → «86%». */
 export function percent(x: number): string {
@@ -73,21 +75,21 @@ export function percent(x: number): string {
 }
 
 /** Главная строка ученика: «3 урока · сегодня»; ещё не занимался — «Уроков пока нет». */
-export function studentSummary(p: SeatProgress | null, today: string): string {
-  if (!p || (p.lessonsCompleted === 0 && !p.lastActiveOn)) return "Уроков пока нет";
-  const last = lastActiveLabel(p.lastActiveOn, today);
-  return [`${p.lessonsCompleted} ${lessonsWord(p.lessonsCompleted)}`, last].filter(Boolean).join(" · ");
+export function studentSummary(p: SeatProgress | null, today: string, t: T): string {
+  if (!p || (p.lessonsCompleted === 0 && !p.lastActiveOn)) return t("Уроков пока нет");
+  const last = lastActiveLabel(p.lastActiveOn, today, t);
+  return [`${p.lessonsCompleted} ${lessonsWord(p.lessonsCompleted, t)}`, last].filter(Boolean).join(" · ");
 }
 
 /** Строка недели: «На неделе: 2 урока · 24 мёда · точность 86%»; без занятий — «На неделе без уроков». */
-export function weekSummary(p: SeatProgress | null): string {
-  if (!p || p.lessonsThisWeek === 0) return "На неделе без уроков";
-  const parts = [`${p.lessonsThisWeek} ${lessonsWord(p.lessonsThisWeek)}`, `${p.honeyThisWeek} мёда`];
-  if (p.accuracy !== undefined) parts.push(`точность ${percent(p.accuracy)}`);
-  return `На неделе: ${parts.join(" · ")}`;
+export function weekSummary(p: SeatProgress | null, t: T): string {
+  if (!p || p.lessonsThisWeek === 0) return t("На неделе без уроков");
+  const parts = [`${p.lessonsThisWeek} ${lessonsWord(p.lessonsThisWeek, t)}`, `${p.honeyThisWeek} ${t("мёда")}`];
+  if (p.accuracy !== undefined) parts.push(t("точность {value}", { value: percent(p.accuracy) }));
+  return t("На неделе: {list}", { list: parts.join(" · ") });
 }
-export const timesWord = (n: number) => plural(n, ["раз", "раза", "раз"]);
-export const placesWord = (n: number) => plural(n, ["место", "места", "мест"]);
+export const timesWord = (n: number, t: T) => plural(n, [t("раз"), t("раза"), t("раз")]);
+export const placesWord = (n: number, t: T) => plural(n, [t("место"), t("места"), t("мест")]);
 
 /** Как давно ученик занимался: сегодня, на этой неделе, на этой неделе — ни одного урока, ещё ни разу. */
 export type Activity = "today" | "week" | "idle" | "never";

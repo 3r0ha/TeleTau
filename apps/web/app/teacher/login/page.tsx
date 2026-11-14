@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { getT } from "../../../i18n/server";
 import { OtpLogin } from "./OtpLogin";
 
-export const metadata: Metadata = { title: "Вход по почте" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Вход по почте") };
+}
 
 /**
  * Вход и регистрация по почте: e-mail → одноразовый код (аккаунт создаётся сам, если адрес новый). Подсказка про

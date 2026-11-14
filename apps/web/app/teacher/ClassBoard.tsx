@@ -8,11 +8,13 @@ import { ButtonLink, HexAvatar, Illustration, LinkButton, ProgressBar, Skeleton,
 import { api, unwrap } from "@teletau/session/api";
 import { serverNow } from "@teletau/session/clock";
 import { useResource } from "@teletau/session/react";
+import { useT } from "../../i18n/client";
+import type { T } from "../../i18n/core";
 import { assignmentTitle, dueForTeacher } from "../_components/assignments";
 import { ClassTitle } from "../_components/screens";
 import { seatLabel } from "./classes/[id]/format";
 import { IDLE_SHOWN, behindHref, classToday, studentRows, studentsWord, ufaToday, type StudentRow } from "./classes/[id]/progress/model";
-import { PROGRAM_LABEL } from "./CreateClassDialog";
+import { programLabels } from "./CreateClassDialog";
 
 type ClassSummary = Schema<"ClassSummary">;
 type Assignment = Schema<"ClassAssignment">;
@@ -22,7 +24,7 @@ const CLASS_POLL_MS = 15_000;
 const PROGRESS_POLL_MS = 30_000;
 
 /** «из 1 ученика», «из 22 учеников». */
-const ofStudents = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? "ученика" : "учеников");
+const ofStudents = (n: number, t: T) => (n % 10 === 1 && n % 100 !== 11 ? t("ученика") : t("учеников"));
 
 /**
  * Класс на главной кабинета: кто занимался сегодня, активное задание с выполнением, кто не занимался на неделе и заявки
@@ -31,6 +33,7 @@ const ofStudents = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? "учени�
  * всю ширину, блоки в ряд; несколько — сетка, блоки друг под другом (container query в teacher.css).
  */
 export function ClassBoardCard({ c, solo }: { c: ClassSummary; solo: boolean }) {
+  const t = useT();
   const path = { params: { path: { id: c.id } } };
   const detail = useResource(() => unwrap(api.GET("/api/v1/classes/{id}", path)), [c.id], { pollMs: CLASS_POLL_MS });
   const seats = detail.data?.seats;
@@ -71,12 +74,12 @@ export function ClassBoardCard({ c, solo }: { c: ClassSummary; solo: boolean }) 
           </h2>
           <p className="klass__meta">
             <span>{c.school.shortNameRu}</span>
-            <span>{PROGRAM_LABEL[c.program]}</span>
+            <span>{programLabels(t)[c.program]}</span>
           </p>
         </div>
         {/* В узкой карточке — только стрелка (текст скрыт в teacher.css), имя ссылки — то же; какой класс — из карточки (WCAG 2.4.4). */}
-        <ButtonLink href={href} variant="secondary" small className="klass__open" aria-label="Открыть класс">
-          <span className="klass__open-text">Открыть класс</span>
+        <ButtonLink href={href} variant="secondary" small className="klass__open" aria-label={t("Открыть класс")}>
+          <span className="klass__open-text">{t("Открыть класс")}</span>
           <CaretRight weight="bold" aria-hidden className="klass__open-icon" />
         </ButtonLink>
       </header>
@@ -86,7 +89,7 @@ export function ClassBoardCard({ c, solo }: { c: ClassSummary; solo: boolean }) 
       {!working ? (
         <SetupHint href={href} hasCards={seatCount > 0} />
       ) : (
-        <div className="pulse-grid" role="group" aria-label={`Сводка ${c.title}`}>
+        <div className="pulse-grid" role="group" aria-label={t("Сводка {title}", { title: c.title })}>
           <TodayTile id={titleId} classId={c.id} rows={rows} today={today} failed={failed} onRetry={reload} shown={solo ? 6 : 7} />
           <TaskTile id={titleId} classId={c.id} active={tasks.data?.active ?? null} today={today} failed={Boolean(tasks.error) && !tasks.data} onRetry={tasks.reload} />
           <IdleTile id={titleId} classId={c.id} rows={rows} today={today} failed={failed} onRetry={reload} />
@@ -98,19 +101,18 @@ export function ClassBoardCard({ c, solo }: { c: ClassSummary; solo: boolean }) 
 
 /** Заявки на вход по коду класса — заметно, с никами: кого подтвердить. «Посмотреть» открывает лист заявок класса. */
 function RequestsStrip({ href, count, names }: { href: string; count: number; names: string[] }) {
+  const t = useT();
   return (
     <div className="requests-banner klass__requests" role="status">
       <span className="requests-banner__icon" aria-hidden>
         <BellRinging weight="fill" />
       </span>
       <p className="requests-banner__text">
-        <b>
-          {count} {studentsWord(count)} {count === 1 ? "ждёт" : "ждут"} подтверждения
-        </b>
+        <b>{count === 1 ? t("{count} {word} ждёт подтверждения", { count, word: studentsWord(count, t) }) : t("{count} {word} ждут подтверждения", { count, word: studentsWord(count, t) })}</b>
         {names.length ? <span className="requests-banner__names">{names.join(", ")}</span> : null}
       </p>
       <ButtonLink href={href} small>
-        Посмотреть
+        {t("Посмотреть")}
       </ButtonLink>
     </div>
   );
@@ -118,10 +120,11 @@ function RequestsStrip({ href, count, names }: { href: string; count: number; na
 
 /** Класс без учеников: три шага к первому уроку и кнопка следующего шага (на странице класса — то же с действиями). */
 function SetupHint({ href, hasCards }: { href: string; hasCards: boolean }) {
+  const t = useT();
   const steps: { title: string; state: "done" | "current" | "todo" }[] = [
-    { title: "Класс создан", state: "done" },
-    { title: hasCards ? "Карточки выпущены" : "Выпустите карточки", state: hasCards ? "done" : "current" },
-    { title: "Покажите код на доске", state: hasCards ? "current" : "todo" },
+    { title: t("Класс создан"), state: "done" },
+    { title: hasCards ? t("Карточки выпущены") : t("Выпустите карточки"), state: hasCards ? "done" : "current" },
+    { title: t("Покажите код на доске"), state: hasCards ? "current" : "todo" },
   ];
   return (
     <div className="klass__setup">
@@ -135,7 +138,7 @@ function SetupHint({ href, hasCards }: { href: string; hasCards: boolean }) {
               </span>
               <div className="step__body">
                 <p className="step__title">
-                  <span className="tt-visually-hidden">{st.state === "done" ? "Готово: " : `Шаг ${i + 1}: `}</span>
+                  <span className="tt-visually-hidden">{st.state === "done" ? t("Готово:") : t("Шаг {n}:", { n: i + 1 })}{" "}</span>
                   {st.title}
                 </p>
               </div>
@@ -143,7 +146,7 @@ function SetupHint({ href, hasCards }: { href: string; hasCards: boolean }) {
           ))}
         </ol>
         <ButtonLink href={`${href}?open=${hasCards ? "board" : "cards"}`} icon={hasCards ? <ProjectorScreen weight="fill" /> : <Cards weight="fill" />}>
-          {hasCards ? "Показать код класса" : "Выпустить карточки"}
+          {hasCards ? t("Показать код класса") : t("Выпустить карточки")}
         </ButtonLink>
       </div>
     </div>
@@ -172,22 +175,23 @@ function Tile({ id, kind, icon, title, big, children, attention, more }: { id: s
   );
 }
 
-const nick = (r: StudentRow) => r.nickname ?? "ник не выбран";
+const nick = (r: StudentRow, t: T) => r.nickname ?? t("ник не выбран");
 
 function TodayTile({ id, classId, rows, today, failed, onRetry, shown }: { id: string; classId: string; rows: StudentRow[] | null; today: string; failed: boolean; onRetry: () => void; shown: number }) {
+  const t = useT();
   const split = rows ? classToday(rows, today) : null;
   return (
     <Tile
       id={id}
       kind="today"
       icon={<Sun weight="fill" />}
-      title="Занимались сегодня"
-      more={{ href: `/teacher/classes/${classId}/progress`, label: "Прогресс класса" }}
+      title={t("Занимались сегодня")}
+      more={{ href: `/teacher/classes/${classId}/progress`, label: t("Прогресс класса") }}
       big={
         split ? (
           <>
-            <b>{split.today.length}</b> из {rows!.length}
-            <span className="pulse__unit"> {ofStudents(rows!.length)}</span>
+            <b>{split.today.length}</b> {t("из")} {rows!.length}
+            <span className="pulse__unit"> {ofStudents(rows!.length, t)}</span>
           </>
         ) : undefined
       }
@@ -199,11 +203,11 @@ function TodayTile({ id, classId, rows, today, failed, onRetry, shown }: { id: s
           <Skeleton height={44} />
         )
       ) : split.today.length ? (
-        <ul className="avatars" aria-label="Занимались сегодня">
+        <ul className="avatars" aria-label={t("Занимались сегодня")}>
           {split.today.slice(0, shown).map((r) => (
             <li key={r.seatNumber}>
-              <Link href={`/teacher/classes/${classId}/seats/${r.seatNumber}`} className="avatars__item" title={`${seatLabel(r.seatNumber)} · ${nick(r)}`}>
-                <HexAvatar size={40} tone={toneFor(r.toneKey)} art={avatarFor(r.nickname)} lip label={`${seatLabel(r.seatNumber)} · ${nick(r)}`}>
+              <Link href={`/teacher/classes/${classId}/seats/${r.seatNumber}`} className="avatars__item" title={`${seatLabel(r.seatNumber)} · ${nick(r, t)}`}>
+                <HexAvatar size={40} tone={toneFor(r.toneKey)} art={avatarFor(r.nickname)} lip label={`${seatLabel(r.seatNumber)} · ${nick(r, t)}`}>
                   {String(r.seatNumber).padStart(2, "0")}
                 </HexAvatar>
               </Link>
@@ -212,13 +216,14 @@ function TodayTile({ id, classId, rows, today, failed, onRetry, shown }: { id: s
           {split.today.length > shown ? <li className="avatars__more">+{split.today.length - shown}</li> : null}
         </ul>
       ) : (
-        <p className="tt-muted">Пока никто.</p>
+        <p className="tt-muted">{t("Пока никто.")}</p>
       )}
     </Tile>
   );
 }
 
 function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string; classId: string; active: Assignment[] | null; today: string; failed: boolean; onRetry: () => void }) {
+  const t = useT();
   // Одно задание — «9 из 22 сделали» крупно, как «Занимались сегодня»; два — по полосе на каждое.
   const single = active?.length === 1 ? active[0]! : null;
   const singleDone = single ? single.summary.done + single.summary.late : 0;
@@ -227,13 +232,13 @@ function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string;
       id={id}
       kind="task"
       icon={<ClipboardText weight="fill" />}
-      title={active && active.length > 1 ? "Задания" : "Задание"}
-      more={active?.length ? { href: `/teacher/classes/${classId}/assignments`, label: "Все задания" } : undefined}
+      title={active && active.length > 1 ? t("Задания") : t("Задание")}
+      more={active?.length ? { href: `/teacher/classes/${classId}/assignments`, label: t("Все задания") } : undefined}
       big={
         single ? (
           <>
-            <b>{singleDone}</b> из {single.summary.total}
-            <span className="pulse__unit"> сделали</span>
+            <b>{singleDone}</b> {t("из")} {single.summary.total}
+            <span className="pulse__unit"> {t("сделали")}</span>
           </>
         ) : undefined
       }
@@ -246,9 +251,9 @@ function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string;
         )
       ) : active.length === 0 ? (
         <div className="pulse__empty">
-          <span className="tt-muted">Заданий нет.</span>
+          <span className="tt-muted">{t("Заданий нет.")}</span>
           <ButtonLink href={`/teacher/classes/${classId}/assignments?new=1`} variant="secondary" small>
-            Дать задание
+            {t("Дать задание")}
           </ButtonLink>
         </div>
       ) : (
@@ -259,11 +264,11 @@ function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string;
               <li key={a.id} className="today-task">
                 <p className="today-task__title">
                   <Link href={`/teacher/classes/${classId}/assignments`} className="pulse__link">
-                    {assignmentTitle(a)}
+                    {assignmentTitle(a, t)}
                   </Link>
-                  <span className="tt-muted">{dueForTeacher(a.dueOn, today)}</span>
+                  <span className="tt-muted">{dueForTeacher(a.dueOn, today, t)}</span>
                 </p>
-                <ProgressBar value={done} max={a.summary.total} label={`Сделали: ${assignmentTitle(a)}`} valueText={`${done} из ${a.summary.total}`} showValue={!single} />
+                <ProgressBar value={done} max={a.summary.total} label={t("Сделали: {title}", { title: assignmentTitle(a, t) })} valueText={t("{done} из {total}", { done, total: a.summary.total })} showValue={!single} />
               </li>
             );
           })}
@@ -274,6 +279,7 @@ function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string;
 }
 
 function IdleTile({ id, classId, rows, today, failed, onRetry }: { id: string; classId: string; rows: StudentRow[] | null; today: string; failed: boolean; onRetry: () => void }) {
+  const t = useT();
   const idle = rows ? classToday(rows, today).idle : null;
   const shown = IDLE_SHOWN;
   const rest = idle ? idle.length - shown : 0;
@@ -282,14 +288,14 @@ function IdleTile({ id, classId, rows, today, failed, onRetry }: { id: string; c
       id={id}
       kind="idle"
       icon={idle && !idle.length ? <CheckCircle weight="fill" /> : <Warning weight="fill" />}
-      title="Не занимались на неделе"
+      title={t("Не занимались на неделе")}
       attention={Boolean(idle?.length)}
-      more={idle?.length ? { href: behindHref(classId), label: rest > 0 ? `Ещё ${rest} ${studentsWord(rest)}` : "Кто отстаёт" } : undefined}
+      more={idle?.length ? { href: behindHref(classId), label: rest > 0 ? `${t("Ещё")} ${rest} ${studentsWord(rest, t)}` : t("Кто отстаёт") } : undefined}
       big={
         idle?.length ? (
           <>
             <b>{idle.length}</b>
-            <span className="pulse__unit"> {studentsWord(idle.length)}</span>
+            <span className="pulse__unit"> {studentsWord(idle.length, t)}</span>
           </>
         ) : undefined
       }
@@ -301,11 +307,11 @@ function IdleTile({ id, classId, rows, today, failed, onRetry }: { id: string; c
           <Skeleton height={44} />
         )
       ) : idle.length ? (
-        <ul className="seat-chips seat-chips--compact" aria-label={`Не занимались на этой неделе: ${idle.length}`}>
+        <ul className="seat-chips seat-chips--compact" aria-label={t("Не занимались на этой неделе: {n}", { n: idle.length })}>
           {idle.slice(0, shown).map((r) => (
             <li key={r.seatNumber}>
               <Link href={`/teacher/classes/${classId}/seats/${r.seatNumber}`} className="seat-chip seat-chip--overdue">
-                <b>{seatLabel(r.seatNumber)}</b> {nick(r)}
+                <b>{seatLabel(r.seatNumber)}</b> {nick(r, t)}
               </Link>
             </li>
           ))}
@@ -313,22 +319,23 @@ function IdleTile({ id, classId, rows, today, failed, onRetry }: { id: string; c
             // В узкой карточке ссылки внизу блока нет — «ещё N» чипом (в широкой он скрыт, teacher.css).
             <li>
               <Link href={behindHref(classId)} className="seat-chip seat-chip--more">
-                ещё {rest}
+                {t("ещё")} {rest}
               </Link>
             </li>
           ) : null}
         </ul>
       ) : (
-        <p className="today-card__ok">Все занимались.</p>
+        <p className="today-card__ok">{t("Все занимались.")}</p>
       )}
     </Tile>
   );
 }
 
 function Retry({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
   return (
     <p className="tt-muted">
-      Не получилось загрузить. <LinkButton onClick={onRetry}>Обновить</LinkButton>
+      {t("Не получилось загрузить.")} <LinkButton onClick={onRetry}>{t("Обновить")}</LinkButton>
     </p>
   );
 }

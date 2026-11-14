@@ -8,6 +8,7 @@ import { api, unwrap } from "@teletau/session/api";
 import { describeProblem } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
 import { seatLabel, time } from "./format";
+import { useT } from "../../../../i18n/client";
 
 type JoinRequest = Schema<"JoinRequest">;
 /** Решение учителя по заявке в этом листе: заявка остаётся в списке с итогом, а не пропадает. */
@@ -32,6 +33,7 @@ export function JoinRequestsDialog({
   onShowCode: () => void;
 }) {
   const toast = useToast();
+  const t = useT();
   const [busy, setBusy] = useState<string | null>(null);
   const [decided, setDecided] = useState<ReadonlyMap<string, Decision>>(new Map());
   // Порядок заявок, увиденных за это открытие листа: решённая заявка не прыгает в начало или конец списка.
@@ -63,7 +65,14 @@ export function JoinRequestsDialog({
         : await unwrap(api.POST("/api/v1/classes/{id}/join-requests/{rid}/reject", params));
       setDecided((prev) => new Map(prev).set(r.id, { approved: approve, ...(res.seatNumber ? { seatNumber: res.seatNumber } : {}) }));
       // Тост остаётся и после закрытия листа: учитель видит итог на странице класса.
-      toast(approve ? `${res.nickname} — в классе${res.seatNumber ? `, место ${seatLabel(res.seatNumber)}` : ""}` : `Заявка «${res.nickname}» отклонена`, approve ? "success" : "info");
+      toast(
+        approve
+          ? res.seatNumber
+            ? t("{nick} — в классе, место {seat}", { nick: res.nickname, seat: seatLabel(res.seatNumber) })
+            : t("{nick} — в классе", { nick: res.nickname })
+          : t("Заявка «{nick}» отклонена", { nick: res.nickname }),
+        approve ? "success" : "info",
+      );
       list.setData((d) => (d ? { ...d, items: d.items.filter((x) => x.id !== r.id) } : d));
       onChanged();
     } catch (e) {
@@ -75,11 +84,11 @@ export function JoinRequestsDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="Заявки на вход" description={rows.length ? "Примите тех, кто у вас на уроке." : undefined} wide>
+    <Dialog open={open} onClose={onClose} title={t("Заявки на вход")} description={rows.length ? t("Примите тех, кто у вас на уроке.") : undefined} wide>
       {list.error && !list.data ? (
         <InlineAlert tone="danger">{describeProblem(list.error)}</InlineAlert>
       ) : !list.data ? (
-        <SkeletonGroup label="Загружаем заявки" className="tt-stack tt-stack--tight">
+        <SkeletonGroup label={t("Загружаем заявки")} className="tt-stack tt-stack--tight">
           {[0, 1].map((i) => (
             <Skeleton key={i} height={64} radius="panel" />
           ))}
@@ -89,14 +98,14 @@ export function JoinRequestsDialog({
           art="emptyAllDone"
           headingAs="h3"
           compact
-          title="Заявок нет"
+          title={t("Заявок нет")}
           actions={
             <Button variant="secondary" block icon={<ProjectorScreen weight="fill" />} onClick={onShowCode}>
-              Показать код класса
+              {t("Показать код класса")}
             </Button>
           }
         >
-          Новые появятся здесь сами.
+          {t("Новые появятся здесь сами.")}
         </EmptyState>
       ) : (
         <div className="tt-stack">
@@ -108,20 +117,20 @@ export function JoinRequestsDialog({
                   <HexAvatar size={40} tone={toneFor(r.nickname)} art={avatarFor(r.nickname)} />
                   <span className="request__body">
                     <b>{r.nickname}</b>
-                    <span className="tt-muted">в {time(r.createdAt)}</span>
+                    <span className="tt-muted">{t("в {time}", { time: time(r.createdAt) })}</span>
                   </span>
                   {d ? (
                     <span className="request__done" data-tone={d.approved ? "approved" : "rejected"}>
                       {d.approved ? <Check weight="bold" aria-hidden /> : <X weight="bold" aria-hidden />}
-                      {d.approved ? `В классе${d.seatNumber ? ` · ${seatLabel(d.seatNumber)}` : ""}` : "Отклонена"}
+                      {d.approved ? (d.seatNumber ? t("В классе · {seat}", { seat: seatLabel(d.seatNumber) }) : t("В классе")) : t("Отклонена")}
                     </span>
                   ) : (
                     <span className="request__actions">
-                      <Button small variant="success" icon={<Check weight="bold" />} loading={busy === r.id} disabled={Boolean(busy)} onClick={() => void decide(r, true)} aria-label={`Принять: ${r.nickname}`}>
-                        Принять
+                      <Button small variant="success" icon={<Check weight="bold" />} loading={busy === r.id} disabled={Boolean(busy)} onClick={() => void decide(r, true)} aria-label={t("Принять: {nick}", { nick: r.nickname })}>
+                        {t("Принять")}
                       </Button>
-                      <Button small variant="secondary" icon={<X weight="bold" />} disabled={Boolean(busy)} onClick={() => void decide(r, false)} aria-label={`Отклонить: ${r.nickname}`}>
-                        Отклонить
+                      <Button small variant="secondary" icon={<X weight="bold" />} disabled={Boolean(busy)} onClick={() => void decide(r, false)} aria-label={t("Отклонить: {nick}", { nick: r.nickname })}>
+                        {t("Отклонить")}
                       </Button>
                     </span>
                   )}
@@ -132,10 +141,10 @@ export function JoinRequestsDialog({
           {waiting === 0 ? (
             <div className="tt-dialog__actions">
               <Button block onClick={onClose}>
-                Готово
+                {t("Готово")}
               </Button>
               <Button block variant="secondary" icon={<ProjectorScreen weight="fill" />} onClick={onShowCode}>
-                Показать код класса
+                {t("Показать код класса")}
               </Button>
             </div>
           ) : null}

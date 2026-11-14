@@ -9,6 +9,7 @@ import { session } from "@teletau/session/client";
 import { describeProblem } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
 import { LoadError, LoadingBlock, Screen, SignOutAction, SimpleTop } from "../../_components/screens";
+import { useT } from "../../../i18n/client";
 import { clearApplyDraft } from "../applyDraft";
 import { OnboardLayout } from "../Journey";
 import { nextTeacherStep, useTeacherGate } from "../useTeacher";
@@ -17,6 +18,7 @@ import { nextTeacherStep, useTeacherGate } from "../useTeacher";
 export default function TermsPage() {
   const { me, resource } = useTeacherGate("terms");
   const router = useRouter();
+  const t = useT();
   const docs = useResource(() => unwrap(api.GET("/api/v1/legal-documents/current")), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function TermsPage() {
 
   const error0 = resource.error ?? docs.error;
   return (
-    <Screen wide top={<SimpleTop wide title="Условия" end={<SignOutAction onBeforeLogout={clearApplyDraft} />} />} className="auth">
+    <Screen wide top={<SimpleTop wide title={t("Условия")} end={<SignOutAction onBeforeLogout={clearApplyDraft} />} />} className="auth">
       <OnboardLayout step="terms">
         {error0 && !(me && docs.data) ? (
           <LoadError
@@ -60,7 +62,7 @@ export default function TermsPage() {
                 void accept();
               }}
             >
-              <h1 className="tt-title2">Примите условия</h1>
+              <h1 className="tt-title2">{t("Примите условия")}</h1>
               <ul className="doc-list">
                 {pending.map((d) => (
                   <li key={d.id}>
@@ -70,17 +72,17 @@ export default function TermsPage() {
                     </span>
                     {d.url ? (
                       <a href={d.url} target="_blank" rel="noreferrer" className="tt-link-btn">
-                        Читать <ArrowSquareOut weight="bold" aria-hidden />
-                        <span className="tt-visually-hidden">(откроется в новой вкладке)</span>
+                        {t("Читать")} <ArrowSquareOut weight="bold" aria-hidden />
+                        <span className="tt-visually-hidden">{t("(откроется в новой вкладке)")}</span>
                       </a>
                     ) : null}
                   </li>
                 ))}
               </ul>
-              {pending.length === 0 ? <InlineAlert>Документов пока нет. Обновите страницу позже.</InlineAlert> : null}
+              {pending.length === 0 ? <InlineAlert>{t("Документов пока нет. Обновите страницу позже.")}</InlineAlert> : null}
               {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
               <Button type="submit" block loading={busy} disabled={pending.length === 0}>
-                Принять
+                {t("Принять")}
               </Button>
             </form>
           </Card>

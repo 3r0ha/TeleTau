@@ -5,6 +5,7 @@ import { CaretDown, ListBullets, MapPin, Trophy } from "@phosphor-icons/react/ss
 import { Card, CardTitle, Chip, Illustration, ProgressBar } from "@teletau/ui";
 import { placeArt } from "../../../../_components/learn/places";
 import { LessonPreviewDialog, type PreviewTarget } from "../../../LessonPreview";
+import { useT } from "../../../../../i18n/client";
 import { currentPlaceIndex, lessonsWord, placeGroups, type ClassProgress, type LessonCompletion, type PlaceGroup } from "./model";
 
 
@@ -14,6 +15,7 @@ import { currentPlaceIndex, lessonsWord, placeGroups, type ClassProgress, type L
  * «Что в уроке» у урока открывает лист со словами, фразами и заданиями (LessonPreview.tsx).
  */
 export function PlacesCard({ progress, students }: { progress: ClassProgress; students: number }) {
+  const t = useT();
   const groups = placeGroups(progress, students);
   const current = currentPlaceIndex(groups, students);
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(groups[current] ? [groups[current].key] : []));
@@ -28,7 +30,7 @@ export function PlacesCard({ progress, students }: { progress: ClassProgress; st
 
   return (
     <Card as="section" className="tab-card places-card" aria-labelledby="lessons-title">
-      <CardTitle id="lessons-title">Прохождение уроков</CardTitle>
+      <CardTitle id="lessons-title">{t("Прохождение уроков")}</CardTitle>
       {groups.length ? (
         <ul className="places">
           {groups.map((g, i) => (
@@ -44,7 +46,7 @@ export function PlacesCard({ progress, students }: { progress: ClassProgress; st
           ))}
         </ul>
       ) : (
-        <p className="tt-muted">Уроков пока нет.</p>
+        <p className="tt-muted">{t("Уроков пока нет.")}</p>
       )}
       <LessonPreviewDialog lesson={peek} onClose={() => setPeek(null)} />
     </Card>
@@ -66,6 +68,7 @@ function Place({
   onToggle?: () => void;
   onPeek: (p: PreviewTarget) => void;
 }) {
+  const t = useT();
   const { unit, lessons } = group;
   const pct = Math.round(group.share * 100);
   const listId = `place-${group.key}`;
@@ -80,7 +83,7 @@ function Place({
   if (!unit) return <li className="place place--plain">{lessonList}</li>;
 
   const hero = placeArt(unit.place.slug).hero;
-  const sub = [unit.place.titleBa ? unit.place.titleRu : null, unit.topicRu, `${lessons.length} ${lessonsWord(lessons.length)}`].filter(Boolean).join(" · ");
+  const sub = [unit.place.titleBa ? unit.place.titleRu : null, unit.topicRu, `${lessons.length} ${lessonsWord(lessons.length, t)}`].filter(Boolean).join(" · ");
   const head = (
     <>
       <span className="place__thumb" aria-hidden>
@@ -91,7 +94,7 @@ function Place({
           {unit.place.titleBa ? <span lang="ba">{unit.place.titleBa.text}</span> : unit.place.titleRu}
           {current ? (
             <Chip tone="green" className="place__now">
-              Класс здесь
+              {t("Класс здесь")}
             </Chip>
           ) : null}
         </span>
@@ -105,7 +108,7 @@ function Place({
         </span>
       </span>
       <span className="place__share">
-        {pct}%<span className="tt-visually-hidden"> пройдено классом</span>
+        {pct}%<span className="tt-visually-hidden"> {t("пройдено классом")}</span>
       </span>
       {onToggle ? <CaretDown weight="bold" className="place__caret" aria-hidden /> : null}
     </>
@@ -128,10 +131,11 @@ function Place({
 }
 
 function LessonRow({ lesson: l, students, placeRu, onPeek }: { lesson: LessonCompletion; students: number; placeRu?: string; onPeek: (p: PreviewTarget) => void }) {
+  const t = useT();
   const test = l.kind === "place_test";
-  const name = test && placeRu ? `Испытание места «${placeRu}»` : `Урок «${l.titleRu}»`;
-  const peek = test ? "Что внутри" : "Что в уроке";
-  const done = `Прошли ${l.completedSeats} из ${students}`;
+  const name = test && placeRu ? t("Испытание места «{place}»", { place: placeRu }) : t("Урок «{title}»", { title: l.titleRu });
+  const peek = test ? t("Что внутри") : t("Что в уроке");
+  const done = t("Прошли {done} из {total}", { done: l.completedSeats, total: students });
   return (
     <li className="lesson-done__item" data-kind={l.kind}>
       <span className="lesson-done__head">
@@ -143,8 +147,14 @@ function LessonRow({ lesson: l, students, placeRu, onPeek }: { lesson: LessonCom
           type="button"
           className="lesson-done__peek no-print"
           aria-haspopup="dialog"
-          aria-label={test && placeRu ? `Что внутри: испытание места «${placeRu}»` : `${peek} «${l.titleRu}»`}
-          onClick={() => onPeek({ lessonId: l.lessonId, titleRu: test && placeRu ? `Испытание места «${placeRu}»` : l.titleRu, sub: [placeRu, done].filter(Boolean).join(" · ") })}
+          aria-label={test && placeRu ? t("Что внутри: испытание места «{place}»", { place: placeRu }) : t("{peek} «{title}»", { peek, title: l.titleRu })}
+          onClick={() =>
+            onPeek({
+              lessonId: l.lessonId,
+              titleRu: test && placeRu ? t("Испытание места «{place}»", { place: placeRu }) : l.titleRu,
+              sub: [placeRu, done].filter(Boolean).join(" · "),
+            })
+          }
         >
           <ListBullets weight="bold" aria-hidden />
           <span aria-hidden>{peek}</span>
@@ -154,7 +164,7 @@ function LessonRow({ lesson: l, students, placeRu, onPeek }: { lesson: LessonCom
         value={Math.min(l.completedSeats, students)}
         max={students}
         label={name}
-        valueText={`${l.completedSeats} из ${students}`}
+        valueText={t("{done} из {total}", { done: l.completedSeats, total: students })}
         showValue
       />
     </li>

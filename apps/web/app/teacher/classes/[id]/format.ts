@@ -1,5 +1,6 @@
 import type { Schema } from "@teletau/contracts";
 import { msUntil } from "@teletau/session/clock";
+import type { T } from "../../../../i18n/core";
 
 export type ClassDetail = Schema<"ClassDetail">;
 export type Seat = Schema<"Seat">;
@@ -24,12 +25,12 @@ export function seatRange(numbers: number[]): string {
   return first === last ? seatLabel(first) : `${seatLabel(first)}–${seatLabel(last)}`;
 }
 
-export function cardsWord(n: number): string {
+export function cardsWord(n: number, t: T): string {
   const mod10 = n % 10;
   const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "карточка";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "карточки";
-  return "карточек";
+  if (mod10 === 1 && mod100 !== 11) return t("карточка");
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return t("карточки");
+  return t("карточек");
 }
 
 /** Имя файла PDF: «teletau-cards-5B.pdf» (без кавычек и пробелов). */

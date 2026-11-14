@@ -4,6 +4,9 @@ import type { Schema } from "@teletau/contracts";
 import { backAction, isSheetEntry } from "../app/_components/telegram/miniapp-nav";
 import { currentPlaceIndex, lastActiveLabel, percent, placeGroups, studentRows, studentSummary, ufaToday, weekLabel, weekSummary } from "../app/teacher/classes/[id]/progress/model";
 import { barPieces, letterOf, segmentsOf, statusText } from "../app/teacher/duels/votes";
+import { tFor } from "../i18n/registry";
+
+const t = tFor("ru");
 
 const seat = (number: number, nickname?: string): Schema<"Seat"> => ({
   number,
@@ -33,16 +36,16 @@ describe("«Прогресс»: склейка мест и прогресса", 
   });
 
   it("«3 урока · сегодня», «вчера», дата; ещё не занимался — «Уроков пока нет»", () => {
-    expect(studentSummary(progress(7), "2026-11-14")).toBe("3 урока · сегодня");
-    expect(studentSummary(progress(7, { lessonsCompleted: 1, lastActiveOn: "2026-11-13" }), "2026-11-14")).toBe("1 урок · вчера");
-    expect(studentSummary(progress(7, { lessonsCompleted: 5, lastActiveOn: "2026-11-02" }), "2026-11-14")).toBe("5 уроков · 2 ноября");
-    expect(studentSummary(null, "2026-11-14")).toBe("Уроков пока нет");
-    expect(lastActiveLabel(undefined, "2026-11-14")).toBeNull();
+    expect(studentSummary(progress(7), "2026-11-14", t)).toBe("3 урока · сегодня");
+    expect(studentSummary(progress(7, { lessonsCompleted: 1, lastActiveOn: "2026-11-13" }), "2026-11-14", t)).toBe("1 урок · вчера");
+    expect(studentSummary(progress(7, { lessonsCompleted: 5, lastActiveOn: "2026-11-02" }), "2026-11-14", t)).toBe("5 уроков · 2 ноября");
+    expect(studentSummary(null, "2026-11-14", t)).toBe("Уроков пока нет");
+    expect(lastActiveLabel(undefined, "2026-11-14", t)).toBeNull();
   });
 
   it("неделя ученика и класса", () => {
-    expect(weekSummary(progress(7, { lessonsThisWeek: 3, honeyThisWeek: 36, accuracy: 0.857 }))).toBe("На неделе: 3 урока · 36 мёда · точность 86%");
-    expect(weekSummary(progress(7, { lessonsThisWeek: 0 }))).toBe("На неделе без уроков");
+    expect(weekSummary(progress(7, { lessonsThisWeek: 3, honeyThisWeek: 36, accuracy: 0.857 }), t)).toBe("На неделе: 3 урока · 36 мёда · точность 86%");
+    expect(weekSummary(progress(7, { lessonsThisWeek: 0 }), t)).toBe("На неделе без уроков");
     expect(weekLabel({ start: "2026-11-09", end: "2026-11-15" })).toBe("9–15 ноября");
     expect(weekLabel({ start: "2026-11-30", end: "2026-12-06" })).toBe("30 ноября – 6 декабря");
     expect(percent(1.2)).toBe("100%");
@@ -102,7 +105,7 @@ const tally = (a: number, b: number, both = 0, skip = 0): Schema<"GroupTally"> =
 
 describe("«Помогите языку»: голоса по группам", () => {
   it("счёт в порядке показа A, B, «оба», «не знаю» — по variantId, а не по порядку в ответе", () => {
-    expect(segmentsOf(tally(6, 2, 1, 1), ["va", "vb"]).map((s) => [s.label, s.count])).toEqual([
+    expect(segmentsOf(tally(6, 2, 1, 1), ["va", "vb"], t).map((s) => [s.label, s.count])).toEqual([
       ["A", 6],
       ["B", 2],
       ["оба", 1],
@@ -112,13 +115,13 @@ describe("«Помогите языку»: голоса по группам", ()
   });
 
   it("полоса: доли без пустых кусков, сумма — 100%; голосов нет — пусто", () => {
-    const pieces = barPieces(segmentsOf(tally(6, 2, 0, 2), ["va", "vb"]));
+    const pieces = barPieces(segmentsOf(tally(6, 2, 0, 2), ["va", "vb"], t));
     expect(pieces.map((p) => [p.key, p.x, p.width])).toEqual([
       ["a", 0, 60],
       ["b", 60, 20],
       ["skip", 80, 20],
     ]);
-    expect(barPieces(segmentsOf(tally(0, 0), ["va", "vb"]))).toEqual([]);
+    expect(barPieces(segmentsOf(tally(0, 0), ["va", "vb"], t))).toEqual([]);
   });
 
   it("пояснение статуса словами продукта — без правил подсчёта и «эксперта»", () => {
@@ -134,12 +137,12 @@ describe("«Помогите языку»: голоса по группам", ()
       groups: { child: tally(1, 0), adult: tally(1, 0), teacher: tally(1, 0) },
       rulesVersion: "duel-v0",
     };
-    expect(statusText(base, ["va", "vb"])).toBe("Вариант A вошёл в словарь.");
-    expect(statusText({ ...base, decidedBy: "expert" }, ["vb", "va"])).toBe("Вариант B вошёл в словарь.");
-    expect(statusText({ ...base, status: "escalated" }, ["va", "vb"])).toBe("Голоса разделились — пару посмотрят ещё раз.");
-    expect(statusText({ ...base, status: "voting" }, ["va", "vb"])).toBe("Итог появится, когда проголосуют другие.");
+    expect(statusText(base, ["va", "vb"], t)).toBe("Вариант A вошёл в словарь.");
+    expect(statusText({ ...base, decidedBy: "expert" }, ["vb", "va"], t)).toBe("Вариант B вошёл в словарь.");
+    expect(statusText({ ...base, status: "escalated" }, ["va", "vb"], t)).toBe("Голоса разделились — пару посмотрят ещё раз.");
+    expect(statusText({ ...base, status: "voting" }, ["va", "vb"], t)).toBe("Итог появится, когда проголосуют другие.");
     for (const status of ["accepted", "escalated", "voting"] as const) {
-      expect(statusText({ ...base, status }, ["va", "vb"])).not.toMatch(/эксперт|правил|duel-v0|основн/i);
+      expect(statusText({ ...base, status }, ["va", "vb"], t)).not.toMatch(/эксперт|правил|duel-v0|основн/i);
     }
   });
 });

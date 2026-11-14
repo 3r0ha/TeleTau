@@ -12,6 +12,8 @@ import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/pr
 import { useResource } from "@teletau/session/react";
 import { assignmentTitle, dueForTeacher, ufaDay, type SeatStatus } from "../../../../_components/assignments";
 import { LoadError, isForbidden, isNotFound, useDocumentTitle } from "../../../../_components/screens";
+import { useT } from "../../../../../i18n/client";
+import type { T } from "../../../../../i18n/core";
 import { TeacherShell } from "../../../TeacherShell";
 import { useTeacherGate } from "../../../useTeacher";
 import { BackToClasses, ClassHeader, ClassTabs, ClassUnavailable } from "../ClassFrame";
@@ -33,12 +35,13 @@ export default function ClassAssignmentsPage() {
   const { id } = useParams<{ id: string }>();
   const params = useSearchParams();
   const { me } = useTeacherGate("verified");
+  const t = useT();
   const toast = useToast();
   const validId = isUuid(id);
   const enabled = Boolean(me) && validId;
   const klass = useResource(() => unwrap(api.GET("/api/v1/classes/{id}", { params: { path: { id } } })), [id], { enabled });
   const tasks = useResource(() => unwrap(api.GET("/api/v1/classes/{id}/assignments", { params: { path: { id } } })), [id], { enabled, pollMs: POLL_MS });
-  useDocumentTitle(klass.data ? `Задания · ${klass.data.title}` : undefined);
+  useDocumentTitle(klass.data ? t("Задания · {title}", { title: klass.data.title }) : undefined);
   const [giving, setGiving] = useState(false);
   const [cancelling, setCancelling] = useState<Assignment | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,23 +57,24 @@ export default function ClassAssignmentsPage() {
     const onPop = () => requestAnimationFrame(reveal);
     window.addEventListener("popstate", onPop, { once: true });
     const late = setTimeout(reveal, 400);
-    const t = setTimeout(() => setFreshId(null), 6000);
+    const timer = setTimeout(() => setFreshId(null), 6000);
     return () => {
       window.removeEventListener("popstate", onPop);
       clearTimeout(late);
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [freshId]);
 
-  const t = tasks.data;
-  const full = t ? t.active.length >= t.maxActive : false;
+  // Данные заданий (t — переводчик).
+  const data = tasks.data;
+  const full = data ? data.active.length >= data.maxActive : false;
 
   // Пришли с «Дать задание» на обзоре — лист открывается, как только известны уроки (один раз).
   useEffect(() => {
-    if (!asked.current || !t || !klass.data) return;
+    if (!asked.current || !data || !klass.data) return;
     asked.current = false;
-    if (!full && t.options.length > 0) setGiving(true);
-  }, [t, klass.data, full]);
+    if (!full && data.options.length > 0) setGiving(true);
+  }, [data, klass.data, full]);
 
   const classError = klass.error && !klass.data ? klass.error : null;
   const missing = !validId || (classError && (isNotFound(classError) || (classError instanceof ApiProblem && classError.status === 422)));
@@ -91,7 +95,7 @@ export default function ClassAssignmentsPage() {
     setBusy(true);
     try {
       await unwrap(api.DELETE("/api/v1/classes/{id}/assignments/{assignmentId}", { params: { path: { id: c.id, assignmentId: cancelling.id } } }));
-      toast(`${cancelling.active ? "Задание снято" : "Задание убрано"}: ${assignmentTitle(cancelling)}`);
+      toast(cancelling.active ? t("Задание снято: {title}", { title: assignmentTitle(cancelling, t) }) : t("Задание убрано: {title}", { title: assignmentTitle(cancelling, t) }));
       setCancelling(null);
       tasks.reload();
     } catch (e) {
@@ -102,9 +106,9 @@ export default function ClassAssignmentsPage() {
   };
 
   const give =
-    t && t.active.length > 0 ? (
+    data && data.active.length > 0 ? (
       <Button icon={<Plus weight="bold" />} onClick={() => setGiving(true)} disabled={full} aria-describedby={full ? "tasks-full" : undefined}>
-        Дать задание
+        {t("Дать задание")}
       </Button>
     ) : undefined;
 
@@ -113,7 +117,7 @@ export default function ClassAssignmentsPage() {
       <div className="tt-stack tt-stack--loose class-page">
         <BackToClasses />
         {!c ? (
-          <SkeletonGroup label="Загружаем класс" className="tt-stack">
+          <SkeletonGroup label={t("Загружаем класс")} className="tt-stack">
             <Skeleton width="40%" height={34} />
             <Skeleton width="70%" height={18} />
           </SkeletonGroup>
@@ -124,14 +128,14 @@ export default function ClassAssignmentsPage() {
           </>
         )}
 
-        {tasks.error && !t ? (
+        {tasks.error && !data ? (
           isForbidden(tasks.error) ? (
             <ClassUnavailable forbidden />
           ) : (
             <LoadError error={tasks.error} onRetry={tasks.reload} />
           )
-        ) : !c || !t ? (
-          <SkeletonGroup label="Загружаем задания" className="tt-stack">
+        ) : !c || !data ? (
+          <SkeletonGroup label={t("Загружаем задания")} className="tt-stack">
             <Skeleton height={56} radius="button" width="40%" />
             <Skeleton height={280} radius="card" />
           </SkeletonGroup>
@@ -140,52 +144,52 @@ export default function ClassAssignmentsPage() {
             {tasks.error ? (
               <div aria-live="polite">
                 <InlineAlert tone={isNetworkError(tasks.error) ? "honey" : "danger"}>
-                  {isNetworkError(tasks.error) ? "Нет связи. Цифры обновятся, когда сеть вернётся." : describeProblem(tasks.error)}
+                  {isNetworkError(tasks.error) ? t("Нет связи. Цифры обновятся, когда сеть вернётся.") : describeProblem(tasks.error)}
                 </InlineAlert>
               </div>
             ) : null}
-            {t.active.length === 0 ? (
+            {data.active.length === 0 ? (
               <EmptyState
                 art="beeTeacher"
                 headingAs="h2"
                 compact
-                title={t.past.length ? "Сейчас заданий нет" : "Заданий пока нет"}
+                title={data.past.length ? t("Сейчас заданий нет") : t("Заданий пока нет")}
                 actions={
-                  <Button block icon={<Plus weight="bold" />} onClick={() => setGiving(true)} disabled={t.options.length === 0}>
-                    Дать задание
+                  <Button block icon={<Plus weight="bold" />} onClick={() => setGiving(true)} disabled={data.options.length === 0}>
+                    {t("Дать задание")}
                   </Button>
                 }
               >
-                Ученики увидят задание на своей тропе.
+                {t("Ученики увидят задание на своей тропе.")}
               </EmptyState>
             ) : (
               <section className="tt-stack" aria-labelledby="active-title">
                 <header className="section-head">
                   <div className="tt-stack tt-stack--tight">
                     <h2 id="active-title" className="tt-title3">
-                      Сейчас
+                      {t("Сейчас")}
                     </h2>
                     {full ? (
                       <p className="tt-muted" id="tasks-full">
-                        Не больше {t.maxActive} заданий сразу. Снимите одно, чтобы дать новое.
+                        {t("Не больше {n} заданий сразу. Снимите одно, чтобы дать новое.", { n: data.maxActive })}
                       </p>
                     ) : null}
                   </div>
                 </header>
                 <div className="tasks-list">
-                  {t.active.map((a) => (
+                  {data.active.map((a) => (
                     <AssignmentCard key={a.id} a={a} today={today} classId={c.id} nicknames={nicknames} fresh={a.id === freshId} onCancel={() => setCancelling(a)} />
                   ))}
                 </div>
               </section>
             )}
-            {t.past.length > 0 ? (
+            {data.past.length > 0 ? (
               <section className="tt-stack" aria-labelledby="past-title">
                 <h2 id="past-title" className="tt-title3">
-                  Завершённые
+                  {t("Завершённые")}
                 </h2>
                 <div className="tasks-list">
-                  {t.past.map((a) => (
+                  {data.past.map((a) => (
                     <AssignmentCard key={a.id} a={a} today={today} classId={c.id} nicknames={nicknames} onCancel={() => setCancelling(a)} />
                   ))}
                 </div>
@@ -195,12 +199,12 @@ export default function ClassAssignmentsPage() {
         )}
       </div>
 
-      {c && t ? (
+      {c && data ? (
         <GiveAssignmentDialog
           open={giving}
           onClose={() => setGiving(false)}
           classId={c.id}
-          options={t.options}
+          options={data.options}
           today={today}
           onGiven={(a) => {
             tasks.setData((prev) => (prev ? { ...prev, active: [...prev.active, a].sort((x, y) => (x.dueOn < y.dueOn ? -1 : 1)) } : prev));
@@ -211,15 +215,15 @@ export default function ClassAssignmentsPage() {
       <Dialog
         open={Boolean(cancelling)}
         onClose={() => setCancelling(null)}
-        title={cancelling ? `${cancelling.active ? "Снять" : "Убрать"} задание ${assignmentTitle(cancelling)}?` : ""}
-        description="Пройденное останется в прогрессе учеников."
+        title={cancelling ? (cancelling.active ? t("Снять задание {title}?", { title: assignmentTitle(cancelling, t) }) : t("Убрать задание {title}?", { title: assignmentTitle(cancelling, t) })) : ""}
+        description={t("Пройденное останется в прогрессе учеников.")}
         actions={
           <>
             <Button variant="danger" block loading={busy} onClick={() => void cancel()}>
-              {cancelling?.active === false ? "Убрать задание" : "Снять задание"}
+              {cancelling?.active === false ? t("Убрать задание") : t("Снять задание")}
             </Button>
             <Button variant="secondary" block onClick={() => setCancelling(null)}>
-              Оставить
+              {t("Оставить")}
             </Button>
           </>
         }
@@ -230,13 +234,15 @@ export default function ClassAssignmentsPage() {
 
 const ICON = { lesson: BookOpen, place_test: Trophy, review: ArrowsClockwise } as const;
 
-/** Группы мест: активное задание — «Сделали» и «Ещё нет»; завершённое — «Сделали», «Сделали после срока», «Просрочили». */
-const GROUPS: { key: string; title: string; statuses: SeatStatus[]; tone: "done" | "late" | "todo" | "overdue" }[] = [
-  { key: "done", title: "Сделали", statuses: ["done"], tone: "done" },
-  { key: "late", title: "Сделали после срока", statuses: ["done_late"], tone: "late" },
-  { key: "todo", title: "Ещё нет", statuses: ["todo"], tone: "todo" },
-  { key: "overdue", title: "Просрочили", statuses: ["overdue"], tone: "overdue" },
-];
+/** Группы мест: активное задание — «Сделали» и «Ещё нет»; завершённое — «Сделали», «Сделали после срока», «Просрочили». Фабрика от переводчика. */
+function groupsFor(t: T): { key: string; title: string; statuses: SeatStatus[]; tone: "done" | "late" | "todo" | "overdue" }[] {
+  return [
+    { key: "done", title: t("Сделали"), statuses: ["done"], tone: "done" },
+    { key: "late", title: t("Сделали после срока"), statuses: ["done_late"], tone: "late" },
+    { key: "todo", title: t("Ещё нет"), statuses: ["todo"], tone: "todo" },
+    { key: "overdue", title: t("Просрочили"), statuses: ["overdue"], tone: "overdue" },
+  ];
+}
 
 function AssignmentCard({
   a,
@@ -254,9 +260,11 @@ function AssignmentCard({
   onCancel: () => void;
 }) {
   const Icon = ICON[a.kind];
+  const t = useT();
+  const GROUPS = groupsFor(t);
   const done = a.summary.done + a.summary.late;
   const titleId = `task-${a.id}`;
-  const where = a.kind === "lesson" && a.placeRu ? `Урок · ${a.placeRu}` : a.kind === "place_test" ? "Испытание места" : "Слова из пройденных уроков";
+  const where = a.kind === "lesson" && a.placeRu ? t("Урок · {place}", { place: a.placeRu }) : a.kind === "place_test" ? t("Испытание места") : t("Слова из пройденных уроков");
   return (
     <Card as="section" className="tab-card task" aria-labelledby={titleId} data-active={a.active || undefined} data-fresh={fresh || undefined}>
       <div className="task__head">
@@ -264,19 +272,19 @@ function AssignmentCard({
           <Icon weight="fill" />
         </span>
         <div className="task__titles">
-          <CardTitle id={titleId}>{assignmentTitle(a)}</CardTitle>
+          <CardTitle id={titleId}>{assignmentTitle(a, t)}</CardTitle>
           <CardSub>{where}</CardSub>
         </div>
-        <Chip tone={a.active ? "water" : "neutral"}>{dueForTeacher(a.dueOn, today)}</Chip>
+        <Chip tone={a.active ? "water" : "neutral"}>{dueForTeacher(a.dueOn, today, t)}</Chip>
         <LinkButton tone="neutral" onClick={onCancel} className="task__cancel">
-          {a.active ? "Снять задание" : "Убрать"}
+          {a.active ? t("Снять задание") : t("Убрать")}
         </LinkButton>
       </div>
       <div className="task__progress">
-        <ProgressBar value={done} max={a.summary.total} label="Сделали" valueText={`${done} из ${a.summary.total}`} showValue />
+        <ProgressBar value={done} max={a.summary.total} label={t("Сделали")} valueText={t("{done} из {total}", { done, total: a.summary.total })} showValue />
       </div>
       {a.summary.total === 0 ? (
-        <p className="tt-muted">В классе пока нет учеников.</p>
+        <p className="tt-muted">{t("В классе пока нет учеников.")}</p>
       ) : (
         <div className={GROUPS.filter((g) => a.seats.some((s) => g.statuses.includes(s.status))).length > 2 ? "task__groups task__groups--many" : "task__groups"}>
           {GROUPS.map((g) => {
@@ -287,11 +295,11 @@ function AssignmentCard({
                 <h3 className="task__group-title">
                   {g.title} · {seats.length}
                 </h3>
-                <ul className="seat-chips" aria-label={`${g.title}: ${seats.length} ${studentsWord(seats.length)}`}>
+                <ul className="seat-chips" aria-label={t("{title}: {n} {word}", { title: g.title, n: seats.length, word: studentsWord(seats.length, t) })}>
                   {seats.map((s) => (
                     <li key={s.seatNumber}>
                       <Link href={`/teacher/classes/${classId}/seats/${s.seatNumber}`} className={`seat-chip seat-chip--${g.tone}`}>
-                        <b>{seatLabel(s.seatNumber)}</b> {nicknames.get(s.seatNumber) ?? "ник не выбран"}
+                        <b>{seatLabel(s.seatNumber)}</b> {nicknames.get(s.seatNumber) ?? t("ник не выбран")}
                       </Link>
                     </li>
                   ))}

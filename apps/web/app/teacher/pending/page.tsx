@@ -6,6 +6,7 @@ import { ButtonLink, Card, Illustration, InlineAlert } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { useResource } from "@teletau/session/react";
 import { LoadError, LoadingBlock, Screen, SignOutAction, SimpleTop, isNotFound } from "../../_components/screens";
+import { useT } from "../../../i18n/client";
 import { clearApplyDraft } from "../applyDraft";
 import { OnboardLayout } from "../Journey";
 import { useTeacherGate } from "../useTeacher";
@@ -20,6 +21,7 @@ const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long"
 export default function PendingPage() {
   const { me, resource } = useTeacherGate("pending", { pollMs: 10_000 });
   const router = useRouter();
+  const t = useT();
   const verification = useResource(() => unwrap(api.GET("/api/v1/teacher/verification")), [me?.teacherStatus], { enabled: Boolean(me) });
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function PendingPage() {
   const verificationFailed = Boolean(verification.error) && !v && !isNotFound(verification.error);
 
   return (
-    <Screen wide top={<SimpleTop wide title="Заявка учителя" end={<SignOutAction onBeforeLogout={clearApplyDraft} />} />} className="auth">
+    <Screen wide top={<SimpleTop wide title={t("Заявка учителя")} end={<SignOutAction onBeforeLogout={clearApplyDraft} />} />} className="auth">
       <OnboardLayout step={rejected ? "apply" : "pending"}>
         {resource.error && !me ? (
           <LoadError error={resource.error} onRetry={resource.reload} />
@@ -46,17 +48,17 @@ export default function PendingPage() {
             <div className="wait__head">
               <Illustration name="beeSympathy" width={96} className="wait__art" />
               <div className="tt-stack tt-stack--tight">
-                <h1 className="tt-title2">Заявку не подтвердили</h1>
-                <p className="tt-lead">Проверьте данные и отправьте заявку снова.</p>
+                <h1 className="tt-title2">{t("Заявку не подтвердили")}</h1>
+                <p className="tt-lead">{t("Проверьте данные и отправьте заявку снова.")}</p>
               </div>
             </div>
             {v?.decisionReason ? (
               <InlineAlert tone="danger">
-                <b>Причина:</b> {v.decisionReason}
+                <b>{t("Причина:")}</b> {v.decisionReason}
               </InlineAlert>
             ) : null}
             <ButtonLink href="/teacher/apply" block>
-              Подать заявку заново
+              {t("Подать заявку заново")}
             </ButtonLink>
           </Card>
         ) : (
@@ -64,22 +66,22 @@ export default function PendingPage() {
             <div className="wait__head" role="status">
               <Illustration name="beeIdle" width={96} className="wait__art" />
               <div className="tt-stack tt-stack--tight">
-                <h1 className="tt-title2">Заявка на проверке</h1>
-                <p className="tt-lead">Обычно до одного рабочего дня. Страницу можно закрыть.</p>
+                <h1 className="tt-title2">{t("Заявка на проверке")}</h1>
+                <p className="tt-lead">{t("Обычно до одного рабочего дня. Страницу можно закрыть.")}</p>
               </div>
             </div>
             {v ? (
               <dl className="facts-list">
                 <div>
-                  <dt>Школа</dt>
+                  <dt>{t("Школа")}</dt>
                   <dd>{v.school.shortNameRu}</dd>
                 </div>
                 <div>
-                  <dt>Должность</dt>
+                  <dt>{t("Должность")}</dt>
                   <dd>{v.position}</dd>
                 </div>
                 <div>
-                  <dt>Отправлена</dt>
+                  <dt>{t("Отправлена")}</dt>
                   <dd>{dateFmt.format(new Date(v.createdAt))}</dd>
                 </div>
               </dl>

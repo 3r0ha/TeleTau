@@ -10,6 +10,7 @@ import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem, fieldErrors } from "@teletau/session/problem";
 import { Screen, SimpleTop, useDocumentTitle } from "../../_components/screens";
 import { homeOf } from "../../_components/home";
+import { useT } from "../../../i18n/client";
 import { OnboardLayout } from "../Journey";
 import { nextTeacherStep } from "../useTeacher";
 
@@ -30,6 +31,7 @@ function useCountdown(until: number | null): number {
 /** Вход по почте: e-mail → код (в демо-режиме — фиксированный). Ребёнок с почтой — сразу на тропу, взрослый — выбор «Учиться / Я учитель» или дальше по этапам. */
 export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demoCode: string | null; teacherIntent?: boolean; consoleUrl?: string }) {
   const router = useRouter();
+  const t = useT();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<Challenge | null>(null);
@@ -43,11 +45,11 @@ export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demo
   const wait = useCountdown(resendAt);
   const invalid = useInvalidFocus();
   // У шага ввода кода — свой заголовок вкладки, как у шагов заявки и кода класса.
-  useDocumentTitle(challenge ? "Введите код" : teacherIntent ? "Вход для учителя" : "Вход по почте");
+  useDocumentTitle(challenge ? t("Введите код") : teacherIntent ? t("Вход для учителя") : t("Вход по почте"));
 
   const requestCode = async () => {
     if (!EMAIL_RE.test(email.trim())) {
-      setEmailError("Проверьте адрес почты");
+      setEmailError(t("Проверьте адрес почты"));
       invalid.request();
       return;
     }
@@ -103,17 +105,17 @@ export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demo
   };
 
   return (
-    <Screen wide top={<SimpleTop wide back="/" title={teacherIntent ? "Вход для учителя" : "Вход по почте"} />} className="auth">
+    <Screen wide top={<SimpleTop wide back="/" title={teacherIntent ? t("Вход для учителя") : t("Вход по почте")} />} className="auth">
       <OnboardLayout step="login">
       <Card roomy className="auth__card">
         {!challenge ? (
           <Form className="tt-stack tt-stack--loose" invalidFocus={invalid} onSubmit={() => void requestCode()}>
             <header className="tt-stack tt-stack--tight">
-              <h1 className="tt-title2">Вход по почте</h1>
-              <p className="tt-lead">Пришлём код, пароль не нужен. Новичку аккаунт создастся сам.</p>
+              <h1 className="tt-title2">{t("Вход по почте")}</h1>
+              <p className="tt-lead">{t("Пришлём код, пароль не нужен. Новичку аккаунт создастся сам.")}</p>
             </header>
             <TextField
-              label="Электронная почта"
+              label={t("Электронная почта")}
               type="email"
               name="email"
               autoComplete="email"
@@ -128,7 +130,7 @@ export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demo
             />
             {formError ? <InlineAlert tone="danger">{formError}</InlineAlert> : null}
             <Button type="submit" block loading={busy}>
-              Получить код
+              {t("Получить код")}
             </Button>
           </Form>
         ) : (
@@ -140,19 +142,19 @@ export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demo
             }}
           >
             <header className="tt-stack tt-stack--tight">
-              <h1 className="tt-title2">Введите код</h1>
+              <h1 className="tt-title2">{t("Введите код")}</h1>
               <p className="tt-lead">
-                Отправили на <b className="tt-break-anywhere">{email.trim()}</b>
+                {t("Отправили на")} <b className="tt-break-anywhere">{email.trim()}</b>
               </p>
             </header>
             {demoCode ? (
               <InlineAlert tone="honey">
-                Демо: код <b className="tt-num">{demoCode}</b>
+                {t("Демо: код")} <b className="tt-num">{demoCode}</b>
               </InlineAlert>
             ) : null}
             <CodeInput
               length={challenge.codeLength}
-              label="Код из письма"
+              label={t("Код из письма")}
               value={code}
               onChange={(v) => {
                 setCode(v);
@@ -166,22 +168,22 @@ export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demo
             {formError ? <InlineAlert tone="danger">{formError}</InlineAlert> : null}
             {staff ? (
               <InlineAlert live>
-                Это вход сотрудника. Войдите через консоль.
+                {t("Это вход сотрудника. Войдите через консоль.")}
                 {consoleUrl ? (
                   <p>
                     <ButtonLink href={consoleUrl} small>
-                      Открыть консоль
+                      {t("Открыть консоль")}
                     </ButtonLink>
                   </p>
                 ) : null}
               </InlineAlert>
             ) : null}
             <Button type="submit" block loading={busy} disabled={code.length < challenge.codeLength}>
-              Войти
+              {t("Войти")}
             </Button>
             <div className="tt-row tt-row--wrap auth__links">
               <LinkButton onClick={() => void requestCode()} disabled={wait > 0 || busy}>
-                {wait > 0 ? `Новый код через ${wait} с` : "Отправить новый код"}
+                {wait > 0 ? t("Новый код через {n} с", { n: wait }) : t("Отправить новый код")}
               </LinkButton>
               <LinkButton
                 tone="neutral"
@@ -190,7 +192,7 @@ export function OtpLogin({ demoCode, teacherIntent = false, consoleUrl }: { demo
                   setChallenge(null);
                 }}
               >
-                Изменить адрес
+                {t("Изменить адрес")}
               </LinkButton>
             </div>
           </form>

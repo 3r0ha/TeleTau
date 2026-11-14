@@ -2,6 +2,9 @@
 import { describe, expect, it } from "vitest";
 import { addDays, assignmentTitle, dueForStudent, dueForTeacher, nextFriday } from "../app/_components/assignments";
 import { classReportCsv, csvCell, reportFileName } from "../app/teacher/classes/[id]/progress/report";
+import { tFor } from "../i18n/registry";
+
+const t = tFor("ru");
 
 describe("отчёт по классу (CSV)", () => {
   it("ячейки: «;», кавычки и переводы строк — в кавычках; формулы Excel не исполняются", () => {
@@ -24,7 +27,7 @@ describe("отчёт по классу (CSV)", () => {
         { id: "a", kind: "lesson", lessonId: "x", titleRu: "Моя школа", placeRu: "Уфа", dueOn: "2026-11-06", createdAt: "", active: true, summary: { total: 2, done: 1, late: 0, todo: 1, overdue: 0 }, seats: [{ seatNumber: 7, status: "done" }, { seatNumber: 8, status: "todo" }] },
         { id: "b", kind: "review", titleRu: "Повторить слова", dueOn: "2026-11-03", createdAt: "", active: false, summary: { total: 2, done: 0, late: 1, todo: 0, overdue: 1 }, seats: [{ seatNumber: 7, status: "done_late" }, { seatNumber: 8, status: "overdue" }] },
       ],
-    });
+    }, t);
     expect(csv.startsWith("﻿")).toBe(true);
     const lines = csv.slice(1).split("\r\n");
     expect(lines[0]).toBe(

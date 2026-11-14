@@ -8,6 +8,7 @@ import { useResource } from "@teletau/session/react";
 import { Duel } from "../../_components/learn/Duel";
 import { uuidv7 } from "../../_components/learn/ids";
 import { LoadError } from "../../_components/screens";
+import { useT } from "../../../i18n/client";
 import { TeacherShell } from "../TeacherShell";
 import { useTeacherGate } from "../useTeacher";
 import { VoteResults } from "./VoteResults";
@@ -32,6 +33,7 @@ const shownOf = (d: CorpusDuel): [string, string] => [d.variants[0]!.variantId, 
  */
 export default function TeacherDuelsPage() {
   const { me } = useTeacherGate("verified");
+  const t = useT();
   const toast = useToast();
   const [round, setRound] = useState(0);
   const duels = useResource(() => duelsApi.list(), [me?.id, round], { enabled: Boolean(me) });
@@ -71,12 +73,12 @@ export default function TeacherDuelsPage() {
           toast(describeProblem(e2), "error");
         }
       } else {
-        toast(isNetworkError(e) ? "Нет связи. Голос не отправлен, попробуйте ещё раз." : describeProblem(e), "error");
+        toast(isNetworkError(e) ? t("Нет связи. Голос не отправлен, попробуйте ещё раз.") : describeProblem(e), "error");
       }
     } finally {
       setSending(false);
     }
-  }, [duel, choice, sending, result, toast]);
+  }, [duel, choice, sending, result, toast, t]);
 
   const next = useCallback(() => {
     setChoice(null);
@@ -109,8 +111,8 @@ export default function TeacherDuelsPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter" || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
-      const t = e.target as HTMLElement | null;
-      if (t?.closest("button, a, input, textarea, select") || document.querySelector("dialog[open]")) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("button, a, input, textarea, select") || document.querySelector("dialog[open]")) return;
       if (result) next();
       else if (choice) void vote();
       else return;
@@ -125,14 +127,14 @@ export default function TeacherDuelsPage() {
       <div className="tt-stack tt-stack--loose duels-page">
         <header className="duels-page__head">
           {/* Вопрос дуэли — в карточке («Какой перевод лучше?»): подзаголовок его не повторяет. */}
-          <h1 className="tt-title1">Помогите языку</h1>
+          <h1 className="tt-title1">{t("Помогите языку")}</h1>
           <Illustration name="sceneDuel" width={150} className="duels-page__art" />
         </header>
 
         {duels.error && !duels.data ? (
           <LoadError error={duels.error} onRetry={duels.reload} home="/teacher" />
         ) : loading ? (
-          <SkeletonGroup label="Загружаем пары" className="duels-layout">
+          <SkeletonGroup label={t("Загружаем пары")} className="duels-layout">
             <Skeleton height={14} radius="button" />
             <Skeleton height={460} radius="card" />
           </SkeletonGroup>
@@ -140,19 +142,25 @@ export default function TeacherDuelsPage() {
           <EmptyState
             art="emptyAllDone"
             headingAs="h2"
-            title="Все пары оценены"
+            title={t("Все пары оценены")}
             actions={
               <ButtonLink href="/teacher" block>
-                К моим классам
+                {t("К моим классам")}
               </ButtonLink>
             }
           >
-            {votedCount ? `Вы оценили ${votedCount} ${pairsWord(votedCount)}. ` : null}
-            Новые пары появятся позже.
+            {votedCount ? `${t("Вы оценили {n} {word}.", { n: votedCount, word: pairsWord(votedCount, t) })} ` : null}
+            {t("Новые пары появятся позже.")}
           </EmptyState>
         ) : (
           <div ref={layout} className="duels-layout">
-            <ProgressBar value={index + (result ? 1 : 0)} max={items.length} label="Пары этого захода" valueText={`Пара ${index + 1} из ${items.length}`} showValue />
+            <ProgressBar
+              value={index + (result ? 1 : 0)}
+              max={items.length}
+              label={t("Пары этого захода")}
+              valueText={t("Пара {n} из {total}", { n: index + 1, total: items.length })}
+              showValue
+            />
             {result ? (
               <VoteResults votes={result} shown={shownOf(duel)} headingRef={resultHeading} />
             ) : (
@@ -167,18 +175,18 @@ export default function TeacherDuelsPage() {
                   keyboard
                   headingAs="h2"
                   headingRef={duelHeading}
-                  chipLabel="Помогите языку"
+                  chipLabel={t("Помогите языку")}
                   art={false}
                 />
               </Card>
             )}
             {result ? (
               <Button block variant="violet" onClick={next}>
-                {index + 1 < items.length ? "Следующая пара" : "Ещё пары"}
+                {index + 1 < items.length ? t("Следующая пара") : t("Ещё пары")}
               </Button>
             ) : (
               <Button block variant="violet" disabled={!choice} loading={sending} onClick={() => void vote()}>
-                Отдать голос
+                {t("Отдать голос")}
               </Button>
             )}
           </div>

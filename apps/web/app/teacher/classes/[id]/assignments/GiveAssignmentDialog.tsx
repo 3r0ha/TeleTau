@@ -7,20 +7,25 @@ import { api, unwrap } from "@teletau/session/api";
 import { describeProblem, fieldErrors } from "@teletau/session/problem";
 import { addDays, assignmentTitle, dueLong, nextFriday, type AssignmentKind } from "../../../../_components/assignments";
 import { uuidv7 } from "../../../../_components/learn/ids";
+import { useT } from "../../../../../i18n/client";
+import type { T } from "../../../../../i18n/core";
 import { LessonPeek } from "../../../LessonPreview";
 
 type Option = Schema<"AssignmentOption">;
 
-const KIND_LABEL: Record<AssignmentKind, string> = { lesson: "Урок", place_test: "Испытание места", review: "Повторить слова" };
+/** Что задать — фабрика от переводчика. */
+function kindLabels(t: T): Record<AssignmentKind, string> {
+  return { lesson: t("Урок"), place_test: t("Испытание места"), review: t("Повторить слова") };
+}
 
 /** Сроки на выбор: сегодня, завтра, до пятницы, через неделю, через две — без повторов. */
-function dueChoices(today: string): { value: string; label: string; description: string }[] {
+function dueChoices(today: string, t: T): { value: string; label: string; description: string }[] {
   const raw = [
-    { value: today, label: "Сегодня" },
-    { value: addDays(today, 1), label: "Завтра" },
-    { value: nextFriday(today), label: "До пятницы" },
-    { value: addDays(today, 7), label: "Через неделю" },
-    { value: addDays(today, 14), label: "Через две недели" },
+    { value: today, label: t("Сегодня") },
+    { value: addDays(today, 1), label: t("Завтра") },
+    { value: nextFriday(today), label: t("До пятницы") },
+    { value: addDays(today, 7), label: t("Через неделю") },
+    { value: addDays(today, 14), label: t("Через две недели") },
   ];
   const seen = new Set<string>();
   return raw.filter((c) => !seen.has(c.value) && seen.add(c.value)).map((c) => ({ ...c, description: dueLong(c.value) }));
@@ -47,6 +52,8 @@ export function GiveAssignmentDialog({
   onGiven: (a: Schema<"ClassAssignment">) => void;
 }) {
   const toast = useToast();
+  const t = useT();
+  const KIND_LABEL = kindLabels(t);
   const places = useMemo(() => {
     const byOrder = new Map<number, { order: number; placeRu: string; lessons: Option[]; test?: Option }>();
     for (const o of options) {
@@ -57,7 +64,7 @@ export function GiveAssignmentDialog({
     }
     return [...byOrder.values()].sort((a, b) => a.order - b.order);
   }, [options]);
-  const dues = useMemo(() => dueChoices(today), [today]);
+  const dues = useMemo(() => dueChoices(today, t), [today, t]);
 
   const [kind, setKind] = useState<AssignmentKind | null>("lesson");
   const [place, setPlace] = useState<string | null>(null);
@@ -98,7 +105,7 @@ export function GiveAssignmentDialog({
         api.POST("/api/v1/classes/{id}/assignments", { params: { path: { id: classId }, header: { "Idempotency-Key": idempotencyKey.current } }, body }),
       );
       idempotencyKey.current = uuidv7();
-      toast(`Задание выдано: ${assignmentTitle(given)}`);
+      toast(t("Задание выдано: {title}", { title: assignmentTitle(given, t) }));
       onGiven(given);
       onClose();
     } catch (e) {
@@ -110,11 +117,11 @@ export function GiveAssignmentDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="Задание классу" wide>
+    <Dialog open={open} onClose={onClose} title={t("Задание классу")} wide>
       <Form className="tt-stack tt-stack--loose sheet-form" onSubmit={() => void submit()}>
         <div className="give-task__row">
           <ChoiceGroup
-            legend="Что задать"
+            legend={t("Что задать")}
             value={kind}
             onChange={(k) => {
               setKind(k);
@@ -128,12 +135,12 @@ export function GiveAssignmentDialog({
         </div>
         {kind !== "review" && placeOptions.length > 0 ? (
           <div className="give-task__row">
-            <ChoiceGroup legend="Место на тропе" value={place} onChange={choosePlace} options={placeOptions.map((p) => ({ value: String(p.order), label: p.placeRu }))} />
+            <ChoiceGroup legend={t("Место на тропе")} value={place} onChange={choosePlace} options={placeOptions.map((p) => ({ value: String(p.order), label: p.placeRu }))} />
           </div>
         ) : null}
         {kind === "lesson" && current && current.lessons.length > 0 ? (
           <ChoiceGroup
-            legend="Урок"
+            legend={t("Урок")}
             value={lessonId}
             onChange={setLessonId}
             options={current.lessons.map((l, i) => ({ value: l.lessonId, label: l.titleRu, mark: <span className="give-task__num">{i + 1}</span> }))}
@@ -141,7 +148,7 @@ export function GiveAssignmentDialog({
         ) : null}
         {target ? <LessonPeek lessonId={target.lessonId} test={target.kind === "place_test"} /> : null}
         <div className="give-task__dues">
-          <ChoiceGroup legend="Срок" value={due} onChange={setDue} options={dues} />
+          <ChoiceGroup legend={t("Срок")} value={due} onChange={setDue} options={dues} />
         </div>
         {/* Низ листа закреплён (teacher.css .sheet-foot): кнопка видна, пока учитель листает уроки и сроки. */}
         <div className="sheet-foot">
@@ -151,7 +158,7 @@ export function GiveAssignmentDialog({
             </div>
           ) : null}
           <Button type="submit" block loading={busy} disabled={!ready}>
-            Дать задание
+            {t("Дать задание")}
           </Button>
         </div>
       </Form>

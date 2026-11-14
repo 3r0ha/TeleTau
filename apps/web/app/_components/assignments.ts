@@ -1,6 +1,8 @@
 // Задания учителя (ADR 0021): подписи для ученика (карточка на тропе) и учителя (раздел «Задания», отчёт). Типы — из
 // контракта (CLAUDE.md, правило 1). Сроки — даты по Уфе (YYYY-MM-DD), «сегодня» — учебные сутки по часам сервера.
+// Подписи зависят от языка интерфейса: функции берут переводчик t (T из i18n/core); без него — русский (фолбэк).
 import type { Schema } from "@teletau/contracts";
+import { makeT, type T } from "../../i18n/core";
 
 export type AssignmentKind = Schema<"AssignmentKind">;
 export type SeatStatus = Schema<"AssignmentSeatStatus">;
@@ -13,33 +15,36 @@ const weekdayLong = new Intl.DateTimeFormat("ru-RU", { weekday: "long", timeZone
 const dayMonth = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" });
 const ddmm = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
 
+/** Русская строка без перевода — значение t по умолчанию (фолбэк core.ts, подстановки работают). */
+const ru = makeT("ru", null);
+
 /** «пт», «вс» — без точки. */
 const shortDay = (date: string) => weekdayShort.format(noon(date)).replace(".", "");
 
 /** Что задано: «Привет!», «Испытание места «Уфа»» или «Повторить слова». */
-export function assignmentTitle(a: { kind: AssignmentKind; titleRu: string; placeRu?: string }): string {
+export function assignmentTitle(a: { kind: AssignmentKind; titleRu: string; placeRu?: string }, t: T = ru): string {
   if (a.kind === "review") return a.titleRu;
-  if (a.kind === "place_test") return a.placeRu ? `Испытание места «${a.placeRu}»` : a.titleRu;
+  if (a.kind === "place_test") return a.placeRu ? t("Испытание места «{place}»", { place: a.placeRu }) : a.titleRu;
   return `«${a.titleRu}»`;
 }
 
 /** Срок для ученика: «до пт», «до завтра», «сегодня последний день», «до 12 ноября». */
-export function dueForStudent(dueOn: string, today: string): string {
+export function dueForStudent(dueOn: string, today: string, t: T = ru): string {
   const days = dayNumber(dueOn) - dayNumber(today);
-  if (days <= 0) return "сегодня последний день";
-  if (days === 1) return "до завтра";
-  if (days < 7) return `до ${shortDay(dueOn)}`;
-  return `до ${dayMonth.format(noon(dueOn))}`;
+  if (days <= 0) return t("сегодня последний день");
+  if (days === 1) return t("до завтра");
+  if (days < 7) return t("до {day}", { day: shortDay(dueOn) });
+  return t("до {date}", { date: dayMonth.format(noon(dueOn)) });
 }
 
 /** Срок для учителя: «до пт, 7 ноября», «до сегодня, 5 ноября»; прошёл — «срок был 7 ноября». */
-export function dueForTeacher(dueOn: string, today: string): string {
+export function dueForTeacher(dueOn: string, today: string, t: T = ru): string {
   const days = dayNumber(dueOn) - dayNumber(today);
   const date = dayMonth.format(noon(dueOn));
-  if (days < 0) return `срок был ${date}`;
-  if (days === 0) return `до сегодня, ${date}`;
-  if (days === 1) return `до завтра, ${date}`;
-  return `до ${shortDay(dueOn)}, ${date}`;
+  if (days < 0) return t("срок был {date}", { date });
+  if (days === 0) return t("до сегодня, {date}", { date });
+  if (days === 1) return t("до завтра, {date}", { date });
+  return t("до {day}, {date}", { day: shortDay(dueOn), date });
 }
 
 /** Срок полностью: «пятница, 7 ноября» — для выбора срока. */
@@ -50,12 +55,15 @@ export function dueLong(dueOn: string): string {
 /** «07.11» — в заголовке столбца отчёта. */
 export const dueShort = (dueOn: string) => ddmm.format(noon(dueOn));
 
-export const STATUS_LABEL: Record<SeatStatus, string> = {
-  done: "сделано",
-  done_late: "сделано после срока",
-  todo: "ещё нет",
-  overdue: "просрочено",
-};
+/** Статус места в задании — фабрика от переводчика (строки зависят от языка интерфейса). */
+export function statusLabels(t: T): Record<SeatStatus, string> {
+  return {
+    done: t("сделано"),
+    done_late: t("сделано после срока"),
+    todo: t("ещё нет"),
+    overdue: t("просрочено"),
+  };
+}
 
 /** Дата через `n` дней от `date` (YYYY-MM-DD). */
 export function addDays(date: string, n: number): string {

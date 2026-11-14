@@ -8,6 +8,7 @@ import { api, unwrap } from "@teletau/session/api";
 import { session } from "@teletau/session/client";
 import { useResource } from "@teletau/session/react";
 import { LoadError, LoadingBlock } from "../../_components/screens";
+import { useT } from "../../../i18n/client";
 import { clearApplyDraft } from "../applyDraft";
 import { TeacherShell } from "../TeacherShell";
 import { useTeacherGate } from "../useTeacher";
@@ -16,6 +17,7 @@ import { useTeacherGate } from "../useTeacher";
 export default function TeacherProfilePage() {
   const { me, resource } = useTeacherGate("any");
   const router = useRouter();
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const verification = useResource(() => unwrap(api.GET("/api/v1/teacher/verification")), [me?.id], { enabled: Boolean(me) });
 
@@ -33,7 +35,7 @@ export default function TeacherProfilePage() {
   return (
     <TeacherShell>
       <div className="tt-stack tt-stack--loose profile">
-        <h1 className="tt-title2">Профиль</h1>
+        <h1 className="tt-title2">{t("Профиль")}</h1>
         {resource.error && !me ? (
           // Нет связи или ошибка API — текст и повтор, а не бесконечный скелетон.
           <LoadError error={resource.error} onRetry={resource.reload} />
@@ -43,49 +45,49 @@ export default function TeacherProfilePage() {
           <Card roomy>
             <dl className="facts-list">
               <div>
-                <dt>ФИО</dt>
+                <dt>{t("ФИО")}</dt>
                 <dd>{me.profile?.fullName ?? verification.data?.applicant.fullName ?? "—"}</dd>
               </div>
               <div>
-                <dt>Почта</dt>
+                <dt>{t("Почта")}</dt>
                 <dd>{me.profile?.email ?? "—"}</dd>
               </div>
               <div>
-                <dt>Школа</dt>
+                <dt>{t("Школа")}</dt>
                 <dd>{verification.data?.school.shortNameRu ?? "—"}</dd>
               </div>
               <div>
-                <dt>Статус</dt>
+                <dt>{t("Статус")}</dt>
                 <dd>
                   {me.teacherStatus === "verified" ? (
-                    <Chip tone="green">Учитель подтверждён</Chip>
+                    <Chip tone="green">{t("Учитель подтверждён")}</Chip>
                   ) : me.teacherStatus === "pending" ? (
-                    <Chip tone="honey">Заявка на проверке</Chip>
+                    <Chip tone="honey">{t("Заявка на проверке")}</Chip>
                   ) : me.teacherStatus === "rejected" ? (
-                    <Chip tone="coral">Заявка отклонена</Chip>
+                    <Chip tone="coral">{t("Заявка отклонена")}</Chip>
                   ) : (
-                    <Chip tone="neutral">Заявки нет</Chip>
+                    <Chip tone="neutral">{t("Заявки нет")}</Chip>
                   )}
                 </dd>
               </div>
             </dl>
           </Card>
         )}
-        <Card as="section" className="settings" aria-label="Настройки">
+        <Card as="section" className="settings" aria-label={t("Настройки")}>
           <div className="settings__row">
             <Moon weight="fill" aria-hidden />
             <span className="settings__name" id="teacher-theme-label">
-              Тёмная тема
+              {t("Тёмная тема")}
             </span>
             <ThemeSwitch labelledBy="teacher-theme-label" />
           </div>
         </Card>
         <div className="tt-stack tt-stack--tight profile__actions">
           <Button variant="secondary" block icon={<SignOut weight="bold" />} loading={busy} onClick={() => void logout(false)}>
-            Выйти
+            {t("Выйти")}
           </Button>
           <LinkButton tone="danger" onClick={() => void logout(true)} disabled={busy}>
-            Выйти на всех устройствах
+            {t("Выйти на всех устройствах")}
           </LinkButton>
         </div>
       </div>

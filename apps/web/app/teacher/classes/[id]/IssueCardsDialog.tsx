@@ -7,6 +7,7 @@ import { api, unwrap } from "@teletau/session/api";
 import { describeProblem, fieldErrors } from "@teletau/session/problem";
 import { cardsWord, seatRange, time, type PrintJob } from "./format";
 import { uuidv7 } from "../../../_components/learn/ids";
+import { useT } from "../../../../i18n/client";
 
 const MAX_PER_ISSUE = 40;
 
@@ -35,6 +36,7 @@ export function IssueCardsDialog({
   downloading: boolean;
 }) {
   const max = Math.max(0, Math.min(MAX_PER_ISSUE, freeCapacity));
+  const t = useT();
   const [count, setCount] = useState("24");
   const [error, setError] = useState<string | null>(null);
   // Сбой сервера или сети — не ошибка числа: сообщение role="alert", поле без aria-invalid.
@@ -62,7 +64,7 @@ export function IssueCardsDialog({
 
   const submit = async () => {
     if (!valid) {
-      setError(max === 0 ? "В классе уже 99 мест — больше выпустить нельзя." : `Введите число от 1 до ${max}.`);
+      setError(max === 0 ? t("В классе уже 99 мест — больше выпустить нельзя.") : t("Введите число от 1 до {max}.", { max }));
       invalid.request();
       return;
     }
@@ -98,37 +100,37 @@ export function IssueCardsDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={job ? "Карточки готовы" : "Выпустить карточки"}
-      description={job ? undefined : "По одной на ученика."}
+      title={job ? t("Карточки готовы") : t("Выпустить карточки")}
+      description={job ? undefined : t("По одной на ученика.")}
       initialFocusRef={inputRef}
     >
       {job ? (
         <div className="tt-stack" aria-live="polite">
           <InlineAlert tone="success">
-            Выпущено {job.seatNumbers.length} {cardsWord(job.seatNumbers.length)}: {seatRange(job.seatNumbers)}.
+            {t("Выпущено {n} {word}: {seats}.", { n: job.seatNumbers.length, word: cardsWord(job.seatNumbers.length, t), seats: seatRange(job.seatNumbers) })}
           </InlineAlert>
           {saved === "ok" ? (
             <p className="issue-saved">
-              <CheckCircle weight="fill" aria-hidden /> PDF скачан. Распечатайте и раздайте карточки.
+              <CheckCircle weight="fill" aria-hidden /> {t("PDF скачан. Распечатайте и раздайте карточки.")}
             </p>
           ) : saved ? (
             <InlineAlert tone="danger">{saved}</InlineAlert>
           ) : (
-            <p className="tt-muted">PDF можно скачать до {time(job.expiresAt)}.</p>
+            <p className="tt-muted">{t("PDF можно скачать до {time}.", { time: time(job.expiresAt) })}</p>
           )}
           <div className="tt-dialog__actions">
             {saved === "ok" ? (
               <>
                 <Button block onClick={onClose}>
-                  Готово
+                  {t("Готово")}
                 </Button>
                 <Button block variant="secondary" icon={<DownloadSimple weight="bold" />} loading={downloading} onClick={() => void save(job)}>
-                  Скачать ещё раз
+                  {t("Скачать ещё раз")}
                 </Button>
               </>
             ) : (
               <Button block icon={<DownloadSimple weight="bold" />} loading={downloading} onClick={() => void save(job)}>
-                Скачать PDF
+                {t("Скачать PDF")}
               </Button>
             )}
           </div>
@@ -137,7 +139,7 @@ export function IssueCardsDialog({
         <Form className="tt-stack tt-stack--loose" invalidFocus={invalid} onSubmit={() => void submit()}>
           <TextField
             ref={inputRef}
-            label="Сколько карточек"
+            label={t("Сколько карточек")}
             type="number"
             inputMode="numeric"
             min={1}
@@ -148,13 +150,13 @@ export function IssueCardsDialog({
               setError(null);
             }}
             error={error}
-            hint={valid ? `Номера мест: ${seatRange(Array.from({ length: n }, (_, i) => nextSeat + i))}` : `От 1 до ${max} за раз`}
+            hint={valid ? t("Номера мест: {seats}", { seats: seatRange(Array.from({ length: n }, (_, i) => nextSeat + i)) }) : t("От 1 до {max} за раз", { max })}
           />
           {formError ? <InlineAlert tone="danger">{formError}</InlineAlert> : null}
           <Button type="submit" block loading={busy} disabled={max === 0}>
-            {valid ? `Выпустить ${n} ${cardsWord(n)}` : "Выпустить карточки"}
+            {valid ? t("Выпустить {n} {word}", { n, word: cardsWord(n, t) }) : t("Выпустить карточки")}
           </Button>
-          {nextSeat > 1 ? <p className="tt-muted">Старые карточки продолжат работать.</p> : null}
+          {nextSeat > 1 ? <p className="tt-muted">{t("Старые карточки продолжат работать.")}</p> : null}
         </Form>
       )}
     </Dialog>

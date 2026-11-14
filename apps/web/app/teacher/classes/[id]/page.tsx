@@ -9,6 +9,7 @@ import { serverNow } from "@teletau/session/clock";
 import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
 import { useOnline, useResource } from "@teletau/session/react";
 import { LoadError, isForbidden, isNotFound, useDocumentTitle } from "../../../_components/screens";
+import { useT } from "../../../../i18n/client";
 import { TeacherShell } from "../../TeacherShell";
 import { useTeacherGate } from "../../useTeacher";
 import { BackToClasses, ClassHeader, ClassTabs, ClassUnavailable } from "./ClassFrame";
@@ -40,6 +41,7 @@ export default function ClassPage() {
   const { id } = useParams<{ id: string }>();
   const params = useSearchParams();
   const { me } = useTeacherGate("verified");
+  const t = useT();
   const toast = useToast();
   const online = useOnline();
   // Битый идентификатор в адресе — сразу «Класс не найден», без запроса (иначе — текст валидатора API).
@@ -98,12 +100,12 @@ export default function ClassPage() {
       const joined = seats.filter((s) => s.student && known.current!.get(s.number) !== s.student.accountId);
       if (joined.length) {
         setFresh((prev) => new Set([...prev, ...joined.map((s) => s.number)]));
-        for (const s of joined.slice(0, 3)) toast(`${seatLabel(s.number)} · ${s.student!.nickname ?? "новый ученик"} — в классе`, "info");
+        for (const s of joined.slice(0, 3)) toast(t("{seat} · {nick} — в классе", { seat: seatLabel(s.number), nick: s.student!.nickname ?? t("новый ученик") }), "info");
         setTimeout(() => setFresh((prev) => new Set([...prev].filter((n) => !joined.some((s) => s.number === n)))), 15_000);
       }
     }
     known.current = now;
-  }, [klass.data, toast]);
+  }, [klass.data, toast, t]);
 
   const seatProgress = useMemo(() => new Map((progress.data?.seats ?? []).map((p) => [p.seatNumber, p])), [progress.data]);
 
@@ -156,7 +158,7 @@ export default function ClassPage() {
   // Когда ученики уже есть, код на доску — в заголовке класса: с него начинается урок.
   const lessonActions = working ? (
     <Button icon={<ProjectorScreen weight="fill" />} onClick={() => setBoard(true)}>
-      Показать код класса
+      {t("Показать код класса")}
     </Button>
   ) : undefined;
 
@@ -166,7 +168,7 @@ export default function ClassPage() {
         <BackToClasses />
 
         {!c ? (
-          <SkeletonGroup label="Загружаем класс" className="tt-stack">
+          <SkeletonGroup label={t("Загружаем класс")} className="tt-stack">
             <Skeleton width="40%" height={34} />
             <Skeleton width="70%" height={18} />
             <div className="today">
@@ -188,12 +190,15 @@ export default function ClassPage() {
             <div aria-live="polite" className="tt-stack tt-stack--tight class-page__alerts">
               {joinCode.closeFailure ? (
                 <InlineAlert tone="danger">
-                  Не удалось закрыть код класса {joinCode.closeFailure.display}. Он сам перестанет действовать в {time(joinCode.closeFailure.expiresAt)}.{" "}
-                  <LinkButton onClick={joinCode.retryClose}>Закрыть код ещё раз</LinkButton>
+                  {t("Не удалось закрыть код класса {code}. Он сам перестанет действовать в {time}.", {
+                    code: joinCode.closeFailure.display,
+                    time: time(joinCode.closeFailure.expiresAt),
+                  })}{" "}
+                  <LinkButton onClick={joinCode.retryClose}>{t("Закрыть код ещё раз")}</LinkButton>
                 </InlineAlert>
               ) : null}
               {!online || (klass.error && isNetworkError(klass.error)) ? (
-                <InlineAlert tone="honey">Нет связи. Список обновится, когда сеть вернётся.</InlineAlert>
+                <InlineAlert tone="honey">{t("Нет связи. Список обновится, когда сеть вернётся.")}</InlineAlert>
               ) : klass.error ? (
                 <InlineAlert tone="danger">{describeProblem(klass.error)}</InlineAlert>
               ) : null}
@@ -230,30 +235,30 @@ export default function ClassPage() {
                 <header className="section-head">
                   <div className="tt-stack tt-stack--tight">
                     <h2 id="seats-title" className="tt-title3">
-                      Места
+                      {t("Места")}
                     </h2>
                     <p className="tt-muted section-head__sub">
                       <span className="section-head__legend">
-                        <FileText weight="fill" aria-hidden /> согласие родителей: {consents} из {seats.length}
+                        <FileText weight="fill" aria-hidden /> {t("согласие родителей: {done} из {total}", { done: consents, total: seats.length })}
                       </span>
                     </p>
                   </div>
                   {working ? (
-                    <div className="section-head__actions" role="group" aria-label="Карточки">
+                    <div className="section-head__actions" role="group" aria-label={t("Карточки")}>
                       {job ? (
                         <Button small icon={<DownloadSimple weight="bold" />} onClick={() => void download()} loading={downloading} aria-describedby="pdf-note">
-                          Скачать PDF
+                          {t("Скачать PDF")}
                         </Button>
                       ) : null}
                       <Button small variant="secondary" icon={<Cards weight="fill" />} onClick={() => setIssuing(true)}>
-                        Выпустить карточки
+                        {t("Выпустить карточки")}
                       </Button>
                     </div>
                   ) : null}
                 </header>
                 {working && job ? (
                   <p className="tt-muted" id="pdf-note">
-                    PDF {seatRange(job.seatNumbers)} доступен до {time(job.expiresAt)}.
+                    {t("PDF {seats} доступен до {time}.", { seats: seatRange(job.seatNumbers), time: time(job.expiresAt) })}
                   </p>
                 ) : null}
                 <SeatGrid seats={seats} fresh={fresh} onOpen={setOpenSeat} progress={progress.data ? seatProgress : undefined} today={today} />

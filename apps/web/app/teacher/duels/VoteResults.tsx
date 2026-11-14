@@ -3,7 +3,8 @@
 import type { ReactNode, Ref } from "react";
 import { Check, HourglassMedium, SealCheck, SealQuestion, Student, UsersThree, ChalkboardTeacher } from "@phosphor-icons/react/ssr";
 import { Chip, Illustration } from "@teletau/ui";
-import { GROUPS, STATUS_LABEL, barPieces, choiceLabel, letterOf, segmentsOf, statusText, votesWord, type CorpusItemVotes, type ItemStatus, type SegmentKey } from "./votes";
+import { useT } from "../../../i18n/client";
+import { barPieces, choiceLabel, groupsFor, letterOf, segmentsOf, statusLabels, statusText, votesWord, type CorpusItemVotes, type ItemStatus, type SegmentKey } from "./votes";
 
 const STATUS_ICON: Record<ItemStatus, ReactNode> = {
   voting: <HourglassMedium weight="fill" aria-hidden />,
@@ -22,18 +23,19 @@ const GROUP_ICON = {
  * и по каждой группе — полоса долей и счёт текстом (счёт и есть таблица: цвет не единственный носитель смысла).
  */
 export function VoteResults({ votes, shown, headingRef }: { votes: CorpusItemVotes; shown: readonly [string, string]; headingRef?: Ref<HTMLHeadingElement> }) {
+  const t = useT();
   const byId = new Map(votes.variants.map((v) => [v.variantId, v]));
   const ordered = shown.map((id) => byId.get(id)).filter((v): v is NonNullable<typeof v> => Boolean(v));
   const my = votes.myVote;
   return (
     <section className="tt-card votes" aria-labelledby="votes-title">
       <h2 id="votes-title" ref={headingRef} tabIndex={-1} className="votes__title tt-step-heading">
-        Голоса по группам
+        {t("Голоса по группам")}
       </h2>
 
       {/* Дуэль после голоса уходит — фраза остаётся перед глазами (те же стили, что в дуэли). */}
       <div className="duel__source votes__source">
-        <small>По-русски</small>
+        <small>{t("По-русски")}</small>
         <p>{votes.sourceRu}</p>
       </div>
 
@@ -45,12 +47,12 @@ export function VoteResults({ votes, shown, headingRef }: { votes: CorpusItemVot
           <span className="votes__status-icon">{STATUS_ICON[votes.status]}</span>
         )}
         <div>
-          <p className="votes__status-label">{STATUS_LABEL[votes.status]}</p>
-          <p className="votes__status-text">{statusText(votes, shown)}</p>
+          <p className="votes__status-label">{statusLabels(t)[votes.status]}</p>
+          <p className="votes__status-text">{statusText(votes, shown, t)}</p>
         </div>
       </div>
 
-      <ul className="votes__variants" aria-label="Варианты">
+      <ul className="votes__variants" aria-label={t("Варианты")}>
         {ordered.map((v) => {
           const letter = letterOf(v.variantId, shown)!;
           return (
@@ -58,29 +60,29 @@ export function VoteResults({ votes, shown, headingRef }: { votes: CorpusItemVot
               <span className={`votes__mark votes__mark--${letter.toLowerCase()}`} aria-hidden>
                 {letter}
               </span>
-              <span className="tt-visually-hidden">Вариант {letter}: </span>
+              <span className="tt-visually-hidden">{t("Вариант {letter}:", { letter })}{" "}</span>
               <span className="votes__text" lang="ba">
                 {v.text}
               </span>
               <span className="votes__tags">
                 {v.accepted ? (
                   <Chip tone="green" icon={<Check weight="bold" aria-hidden />}>
-                    В словаре
+                    {t("В словаре")}
                   </Chip>
                 ) : null}
-                {v.tags.includes("children_prefer") ? <Chip tone="violet">Так говорят дети</Chip> : null}
-                {my?.variantId === v.variantId ? <Chip tone="neutral">Ваш голос</Chip> : null}
+                {v.tags.includes("children_prefer") ? <Chip tone="violet">{t("Так говорят дети")}</Chip> : null}
+                {my?.variantId === v.variantId ? <Chip tone="neutral">{t("Ваш голос")}</Chip> : null}
               </span>
             </li>
           );
         })}
       </ul>
-      {my && !my.variantId ? <p className="votes__mine">Ваш голос: {choiceLabel(my.choice)}</p> : null}
+      {my && !my.variantId ? <p className="votes__mine">{t("Ваш голос: {choice}", { choice: choiceLabel(my.choice, t) })}</p> : null}
 
-      <ul className="vgroups" aria-label="Голоса по группам">
-        {GROUPS.map((g) => {
+      <ul className="vgroups" aria-label={t("Голоса по группам")}>
+        {groupsFor(t).map((g) => {
           const tally = votes.groups[g.key];
-          const segments = segmentsOf(tally, shown);
+          const segments = segmentsOf(tally, shown, t);
           const pieces = barPieces(segments);
           return (
             <li key={g.key} className="vgroup">
@@ -88,7 +90,7 @@ export function VoteResults({ votes, shown, headingRef }: { votes: CorpusItemVot
                 <span className="vgroup__icon">{GROUP_ICON[g.key]}</span>
                 <span className="vgroup__name">{g.label}</span>
                 <span className="vgroup__total">
-                  {tally.total} {votesWord(tally.total)}
+                  {tally.total} {votesWord(tally.total, t)}
                 </span>
               </p>
               <svg className="vgroup__bar" width="100%" height={14} aria-hidden focusable="false">
@@ -110,7 +112,7 @@ export function VoteResults({ votes, shown, headingRef }: { votes: CorpusItemVot
                   ))}
                 </p>
               ) : (
-                <p className="vgroup__counts vgroup__counts--empty">Пока никто не голосовал</p>
+                <p className="vgroup__counts vgroup__counts--empty">{t("Пока никто не голосовал")}</p>
               )}
             </li>
           );

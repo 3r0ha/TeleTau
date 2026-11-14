@@ -6,6 +6,7 @@ import { Button, ButtonLink, Chip, Dialog, HexAvatar, InlineAlert, LinkButton, a
 import { api, unwrap } from "@teletau/session/api";
 import { describeProblem } from "@teletau/session/problem";
 import { date, seatLabel, seatNo, time, type PrintJob, type Seat } from "./format";
+import { useT } from "../../../../i18n/client";
 
 type Confirm = "reissue" | "revoke" | null;
 
@@ -32,6 +33,7 @@ export function SeatDialog({
   downloading: boolean;
 }) {
   const toast = useToast();
+  const t = useT();
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export function SeatDialog({
 
   // Карточки у места ещё не было (вход по коду класса): первая карточка, а не замена старой.
   const firstCard = seat.cardStatus === "none";
-  const cardAction = firstCard ? "Выпустить карточку" : "Перевыпустить карточку";
+  const cardAction = firstCard ? t("Выпустить карточку") : t("Перевыпустить карточку");
 
   const reissue = () =>
     run(async () => {
@@ -70,13 +72,13 @@ export function SeatDialog({
       setNewJob({ job: res.printJob, first: firstCard });
       setConfirm(null);
       onReissued(res.printJob);
-      toast(firstCard ? `Карточка ${seatLabel(seat.number)} выпущена` : `Карточка ${seatLabel(seat.number)} перевыпущена`);
+      toast(firstCard ? t("Карточка {seat} выпущена", { seat: seatLabel(seat.number) }) : t("Карточка {seat} перевыпущена", { seat: seatLabel(seat.number) }));
     });
 
   const markConsent = () =>
     run(async () => {
       await unwrap(api.POST("/api/v1/classes/{id}/seats/{seat}/paper-consent", { params: { path: { id: classId, seat: seat.number } }, body: {} }));
-      toast(`Согласие ${seatLabel(seat.number)} отмечено`);
+      toast(t("Согласие {seat} отмечено", { seat: seatLabel(seat.number) }));
     });
 
   // Отзыв согласия закрывает вход на место — и по карточке, и по коду класса — и завершает все сессии ученика
@@ -86,74 +88,75 @@ export function SeatDialog({
       if (!seat.consent) return;
       await unwrap(api.POST("/api/v1/consents/{id}/revoke", { params: { path: { id: seat.consent.consentId } } }));
       setConfirm(null);
-      toast(`Согласие ${seatLabel(seat.number)} отозвано`, "info");
+      toast(t("Согласие {seat} отозвано", { seat: seatLabel(seat.number) }), "info");
     });
 
   const consentGiven = seat.consent?.status === "given";
 
   return (
-    <Dialog open onClose={onClose} title={`Место ${seatLabel(seat.number)}`}>
+    <Dialog open onClose={onClose} title={t("Место {n}", { n: seatLabel(seat.number) })}>
       <div className="tt-stack">
         <div className="seat-head">
           <HexAvatar size={56} tone={seat.student ? toneFor(seat.student.accountId) : "empty"} lip={Boolean(seat.student)} art={avatarFor(seat.student?.nickname)}>
             {seatNo(seat.number)}
           </HexAvatar>
           <div className="tt-stack tt-stack--tight">
-            <p className="tt-headline">{seat.student ? (seat.student.nickname ?? "Ник ещё не выбран") : "Ученик ещё не вошёл"}</p>
-            {seat.student ? <p className="tt-muted">В классе с {date(seat.student.joinedAt)}</p> : null}
+            <p className="tt-headline">{seat.student ? (seat.student.nickname ?? t("Ник ещё не выбран")) : t("Ученик ещё не вошёл")}</p>
+            {seat.student ? <p className="tt-muted">{t("В классе с {date}", { date: date(seat.student.joinedAt) })}</p> : null}
           </div>
           {seat.student ? (
             // Переход из открытого листа — replace: «Назад» с карточки ученика ведёт на страницу класса (sheetHistory.ts).
             <ButtonLink href={`/teacher/classes/${classId}/seats/${seat.number}`} replace variant="secondary" small icon={<ChartBar weight="fill" aria-hidden />} className="seat-head__go">
-              Прогресс
+              {t("Прогресс")}
             </ButtonLink>
           ) : null}
         </div>
         <dl className="facts-list">
           <div>
-            <dt>Карточка</dt>
+            <dt>{t("Карточка")}</dt>
             <dd>
               {seat.cardStatus === "active" ? (
-                <Chip tone="green">Действует{seat.cardVersion > 1 ? ` · выпуск ${seat.cardVersion}` : ""}</Chip>
+                <Chip tone="green">{seat.cardVersion > 1 ? t("Действует · выпуск {n}", { n: seat.cardVersion }) : t("Действует")}</Chip>
               ) : seat.cardStatus === "revoked" ? (
-                <Chip tone="coral">Отозвана</Chip>
+                <Chip tone="coral">{t("Отозвана")}</Chip>
               ) : (
-                <Chip tone="neutral">Нет, вход по коду</Chip>
+                <Chip tone="neutral">{t("Нет, вход по коду")}</Chip>
               )}
             </dd>
           </div>
           <div>
-            <dt>Согласие родителя</dt>
+            <dt>{t("Согласие родителя")}</dt>
             <dd>
               {seat.consent ? (
                 consentGiven ? (
-                  <Chip tone="water">Есть, {date(seat.consent.givenAt)}</Chip>
+                  <Chip tone="water">{t("Есть, {date}", { date: date(seat.consent.givenAt) })}</Chip>
                 ) : (
-                  <Chip tone="coral">Отозвано{seat.consent.revokedAt ? ` ${date(seat.consent.revokedAt)}` : ""}</Chip>
+                  <Chip tone="coral">{seat.consent.revokedAt ? t("Отозвано {date}", { date: date(seat.consent.revokedAt) }) : t("Отозвано")}</Chip>
                 )
               ) : (
-                <Chip tone="neutral">Не отмечено</Chip>
+                <Chip tone="neutral">{t("Не отмечено")}</Chip>
               )}
             </dd>
           </div>
         </dl>
 
         {newJob ? (
-          <InlineAlert tone="success">PDF доступен до {time(newJob.job.expiresAt)}.</InlineAlert>
+          <InlineAlert tone="success">{t("PDF доступен до {time}.", { time: time(newJob.job.expiresAt) })}</InlineAlert>
         ) : null}
         {confirm === "reissue" && (!firstCard || seat.student) ? (
           <InlineAlert tone="honey">
-            {firstCard ? null : "Старая карточка перестанет работать. "}
+            {firstCard ? null : <>{t("Старая карточка перестанет работать.")}{" "}</>}
             {seat.student ? (
               <>
-                <b>Ученик выйдет на всех устройствах</b>, прогресс сохранится.
+                <b>{t("Ученик выйдет на всех устройствах")}</b>, {t("прогресс сохранится.")}
               </>
             ) : null}
           </InlineAlert>
         ) : null}
         {confirm === "revoke" ? (
           <InlineAlert tone="danger">
-            Вход на место будет закрыт{seat.student ? <>, <b>ученик выйдет на всех устройствах</b></> : null}.
+            {t("Вход на место будет закрыт")}
+            {seat.student ? <>, <b>{t("ученик выйдет на всех устройствах")}</b></> : null}.
           </InlineAlert>
         ) : null}
         {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
@@ -161,7 +164,7 @@ export function SeatDialog({
         <div className="tt-dialog__actions">
           {newJob ? (
             <Button block icon={<DownloadSimple weight="bold" />} loading={downloading} onClick={() => onDownload(newJob.job)}>
-              Скачать PDF
+              {t("Скачать PDF")}
             </Button>
           ) : null}
           {confirm === "reissue" ? (
@@ -170,16 +173,16 @@ export function SeatDialog({
                 {cardAction}
               </Button>
               <LinkButton tone="neutral" onClick={() => setConfirm(null)}>
-                Отмена
+                {t("Отмена")}
               </LinkButton>
             </>
           ) : confirm === "revoke" ? (
             <>
               <Button block variant="danger" loading={busy} onClick={() => void revokeConsent()}>
-                Отозвать согласие
+                {t("Отозвать согласие")}
               </Button>
               <LinkButton tone="neutral" onClick={() => setConfirm(null)}>
-                Отмена
+                {t("Отмена")}
               </LinkButton>
             </>
           ) : (
@@ -189,11 +192,11 @@ export function SeatDialog({
               </Button>
               {!consentGiven ? (
                 <Button block variant="secondary" icon={<FileText weight="fill" />} loading={busy} onClick={() => void markConsent()}>
-                  Отметить согласие родителя
+                  {t("Отметить согласие родителя")}
                 </Button>
               ) : (
                 <LinkButton tone="danger" onClick={() => setConfirm("revoke")} disabled={busy}>
-                  Отозвать согласие
+                  {t("Отозвать согласие")}
                 </LinkButton>
               )}
             </>

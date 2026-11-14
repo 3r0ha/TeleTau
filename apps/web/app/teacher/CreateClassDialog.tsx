@@ -5,16 +5,21 @@ import type { Schema } from "@teletau/contracts";
 import { Button, ChoiceGroup, Dialog, Form, HexAvatar, InlineAlert, TextField, useInvalidFocus } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { describeProblem, fieldErrors } from "@teletau/session/problem";
+import type { T } from "../../i18n/core";
+import { useT } from "../../i18n/client";
 import { ClassTitle } from "../_components/screens";
 import { uuidv7 } from "../_components/learn/ids";
 
 type Program = Schema<"ClassProgram">;
 
-export const PROGRAM_LABEL: Record<Program, string> = {
-  native: "Родной язык",
-  state: "Государственный язык РБ",
-  elective: "Факультатив",
-};
+/** Подписи программ обучения — фабрика от переводчика (строки зависят от языка интерфейса). */
+export function programLabels(t: T): Record<Program, string> {
+  return {
+    native: t("Родной язык"),
+    state: t("Государственный язык РБ"),
+    elective: t("Факультатив"),
+  };
+}
 
 const GRADES = Array.from({ length: 11 }, (_, i) => String(i + 1));
 
@@ -32,11 +37,13 @@ export function CreateClassDialog({ open, onClose, onCreated }: { open: boolean;
   const [busy, setBusy] = useState(false);
   const idempotencyKey = useRef<string>(uuidv7());
   const invalid = useInvalidFocus();
+  const t = useT();
+  const programs = programLabels(t);
 
   const submit = async () => {
     const l = letter.trim();
     if (!l) {
-      setLetterError("Укажите литеру класса.");
+      setLetterError(t("Укажите литеру класса."));
       invalid.request();
       return;
     }
@@ -67,7 +74,7 @@ export function CreateClassDialog({ open, onClose, onCreated }: { open: boolean;
     <Dialog
       open={open}
       onClose={onClose}
-      title="Новый класс"
+      title={t("Новый класс")}
       wide
     >
       <Form className="tt-stack tt-stack--loose sheet-form" invalidFocus={invalid} onSubmit={() => void submit()}>
@@ -80,12 +87,12 @@ export function CreateClassDialog({ open, onClose, onCreated }: { open: boolean;
             <b>
               <ClassTitle title={`${grade ?? "?"} «${letter.trim().toLocaleUpperCase("ru") || "…"}»`} />
             </b>
-            <span>{program ? PROGRAM_LABEL[program] : null}</span>
+            <span>{program ? programs[program] : null}</span>
           </span>
         </div>
-        <ChoiceGroup legend="Класс" layout="inline" value={grade} onChange={setGrade} options={GRADES.map((g) => ({ value: g, label: g }))} />
+        <ChoiceGroup legend={t("Класс")} layout="inline" value={grade} onChange={setGrade} options={GRADES.map((g) => ({ value: g, label: g }))} />
         <TextField
-          label="Литера"
+          label={t("Литера")}
           name="letter"
           value={letter}
           onChange={(e) => {
@@ -95,19 +102,19 @@ export function CreateClassDialog({ open, onClose, onCreated }: { open: boolean;
           maxLength={3}
           autoComplete="off"
           error={letterError}
-          hint="Например, А или Б"
+          hint={t("Например, А или Б")}
         />
         <ChoiceGroup
-          legend="Программа"
+          legend={t("Программа")}
           value={program}
           onChange={setProgram}
-          options={(Object.keys(PROGRAM_LABEL) as Program[]).map((p) => ({ value: p, label: PROGRAM_LABEL[p] }))}
+          options={(Object.keys(programs) as Program[]).map((p) => ({ value: p, label: programs[p] }))}
         />
         {/* Низ листа закреплён (teacher.css .sheet-foot): на ноутбуке 1280×720 и телефоне кнопка не уходит под край. */}
         <div className="sheet-foot">
           {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
           <Button type="submit" block loading={busy}>
-            Создать класс
+            {t("Создать класс")}
           </Button>
         </div>
       </Form>

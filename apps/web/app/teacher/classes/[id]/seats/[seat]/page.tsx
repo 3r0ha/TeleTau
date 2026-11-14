@@ -9,8 +9,9 @@ import { api, unwrap } from "@teletau/session/api";
 import { serverNow } from "@teletau/session/clock";
 import { ApiProblem } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
-import { STATUS_LABEL, assignmentTitle, dueForTeacher, ufaDay, type SeatStatus } from "../../../../../_components/assignments";
+import { statusLabels, assignmentTitle, dueForTeacher, ufaDay, type SeatStatus } from "../../../../../_components/assignments";
 import { LoadError, isForbidden, isNotFound, useDocumentTitle } from "../../../../../_components/screens";
+import { useT } from "../../../../../../i18n/client";
 import { TeacherShell } from "../../../../TeacherShell";
 import { useTeacherGate } from "../../../../useTeacher";
 import { ClassUnavailable } from "../../ClassFrame";
@@ -29,6 +30,7 @@ const STATUS_TONE: Record<SeatStatus, ChipTone> = { done: "green", done_late: "h
 export default function SeatCardPage() {
   const { id, seat } = useParams<{ id: string; seat: string }>();
   const { me } = useTeacherGate("verified");
+  const t = useT();
   const number = Number(seat);
   const validSeat = /^\d{1,2}$/.test(seat) && number >= 1 && number <= 99;
   const validId = isUuid(id);
@@ -59,7 +61,7 @@ export default function SeatCardPage() {
 
   const back = (
     <Link href={`/teacher/classes/${id}/progress`} className="tt-link-btn tt-link-btn--neutral class-page__back no-print">
-      <ArrowLeft weight="bold" aria-hidden /> Прогресс класса
+      <ArrowLeft weight="bold" aria-hidden /> {t("Прогресс класса")}
     </Link>
   );
   const emptySeat = !validSeat || (card.error && !card.data && (isNotFound(card.error) || (card.error instanceof ApiProblem && card.error.status === 422)));
@@ -70,14 +72,14 @@ export default function SeatCardPage() {
           {back}
           <EmptyState
             art="emptyNoStudents"
-            title="На этом месте нет ученика"
+            title={t("На этом месте нет ученика")}
             actions={
               <ButtonLink href={`/teacher/classes/${id}/progress`} block>
-                К прогрессу класса
+                {t("К прогрессу класса")}
               </ButtonLink>
             }
           >
-            {validSeat ? `Место ${seatLabel(number)} ждёт ученика.` : "Такого места нет."}
+            {validSeat ? t("Место {n} ждёт ученика.", { n: seatLabel(number) }) : t("Такого места нет.")}
           </EmptyState>
         </div>
       </TeacherShell>
@@ -97,7 +99,7 @@ export default function SeatCardPage() {
             <LoadError error={card.error} onRetry={card.reload} />
           )
         ) : !c || !klass.data ? (
-          <SkeletonGroup label="Загружаем ученика" className="tt-stack">
+          <SkeletonGroup label={t("Загружаем ученика")} className="tt-stack">
             <Skeleton width="50%" height={44} />
             <Skeleton height={120} radius="card" />
             <Skeleton height={300} radius="card" />
@@ -110,24 +112,24 @@ export default function SeatCardPage() {
               </HexAvatar>
               <div className="tt-stack tt-stack--tight">
                 <h1 className="tt-title1">
-                  {seatLabel(number)} · {nickname ?? "Ник ещё не выбран"}
+                  {seatLabel(number)} · {nickname ?? t("Ник ещё не выбран")}
                 </h1>
                 <p className="tt-lead">
-                  {klass.data.title} · {c.lastActiveOn ? `последнее занятие — ${lastActiveLabel(c.lastActiveOn, today)}` : "ещё не занимался"}
+                  {klass.data.title} · {c.lastActiveOn ? t("последнее занятие — {label}", { label: lastActiveLabel(c.lastActiveOn, today, t) ?? "" }) : t("ещё не занимался")}
                 </p>
               </div>
               <Button variant="secondary" icon={<Printer weight="fill" />} onClick={() => window.print()} className="no-print seat-card__print">
-                Распечатать
+                {t("Распечатать")}
               </Button>
             </header>
 
-            <StatTiles label="Итоги ученика">
-              <StatTile label="Уроков" value={c.lessonsCompleted} icon={<BookOpen weight="fill" />} />
-              <StatTile label="Точность" value={c.accuracy !== undefined ? percent(c.accuracy) : "—"} icon={<Target weight="fill" />} />
-              <StatTile label="Слов" value={c.wordsLearned} icon={<Translate weight="fill" />} />
-              <StatTile label="Серия" value={c.streak.current} icon={<Fire weight="fill" />} />
-              <StatTile label="Голосов" value={c.votes.total} icon={<Scales weight="fill" />} />
-              <StatTile label="Мёда" value={c.honey} icon={<Drop weight="fill" />} />
+            <StatTiles label={t("Итоги ученика")}>
+              <StatTile label={t("Уроков")} value={c.lessonsCompleted} icon={<BookOpen weight="fill" />} />
+              <StatTile label={t("Точность")} value={c.accuracy !== undefined ? percent(c.accuracy) : "—"} icon={<Target weight="fill" />} />
+              <StatTile label={t("Слов")} value={c.wordsLearned} icon={<Translate weight="fill" />} />
+              <StatTile label={t("Серия")} value={c.streak.current} icon={<Fire weight="fill" />} />
+              <StatTile label={t("Голосов")} value={c.votes.total} icon={<Scales weight="fill" />} />
+              <StatTile label={t("Мёда")} value={c.honey} icon={<Drop weight="fill" />} />
             </StatTiles>
 
             <div className="seat-card__grid">
@@ -145,6 +147,7 @@ export default function SeatCardPage() {
 }
 
 function TasksCard({ number, tasks, today }: { number: number; tasks: Schema<"ClassAssignments"> | undefined; today: string }) {
+  const t = useT();
   const list = tasks ? [...tasks.active, ...tasks.past] : [];
   const mine = list.flatMap((a) => {
     const s = a.seats.find((x) => x.seatNumber === number);
@@ -152,20 +155,20 @@ function TasksCard({ number, tasks, today }: { number: number; tasks: Schema<"Cl
   });
   return (
     <Card as="section" className="tab-card" aria-labelledby="seat-tasks-title">
-      <CardTitle id="seat-tasks-title">Задания</CardTitle>
+      <CardTitle id="seat-tasks-title">{t("Задания")}</CardTitle>
       {!tasks ? (
         <Skeleton height={48} />
       ) : mine.length === 0 ? (
-        <p className="tt-muted">Заданий не было.</p>
+        <p className="tt-muted">{t("Заданий не было.")}</p>
       ) : (
         <ul className="seat-rows">
           {mine.map(({ a, status }) => (
             <li key={a.id} className="seat-rows__item">
               <span className="seat-rows__main">
-                <b>{assignmentTitle(a)}</b>
-                <span className="seat-rows__sub">{dueForTeacher(a.dueOn, today)}</span>
+                <b>{assignmentTitle(a, t)}</b>
+                <span className="seat-rows__sub">{dueForTeacher(a.dueOn, today, t)}</span>
               </span>
-              <Chip tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Chip>
+              <Chip tone={STATUS_TONE[status]}>{statusLabels(t)[status]}</Chip>
             </li>
           ))}
         </ul>
@@ -175,20 +178,21 @@ function TasksCard({ number, tasks, today }: { number: number; tasks: Schema<"Cl
 }
 
 function DaysCard({ card, today }: { card: Card; today: string }) {
+  const t = useT();
   return (
     <Card as="section" className="tab-card" aria-labelledby="seat-days-title">
-      <CardTitle id="seat-days-title">Последние занятия</CardTitle>
+      <CardTitle id="seat-days-title">{t("Последние занятия")}</CardTitle>
       {card.recentDays.length === 0 ? (
-        <p className="tt-muted">Ещё не занимался.</p>
+        <p className="tt-muted">{t("Ещё не занимался.")}</p>
       ) : (
         <ul className="seat-rows">
           {card.recentDays.map((d) => (
             <li key={d.date} className="seat-rows__item">
               <span className="seat-rows__main">
-                <b>{lastActiveLabel(d.date, today)}</b>
+                <b>{lastActiveLabel(d.date, today, t)}</b>
               </span>
               <span className="seat-rows__value">
-                {d.lessons} {lessonsWord(d.lessons)} · {d.honey} мёда
+                {d.lessons} {lessonsWord(d.lessons, t)} · {d.honey} {t("мёда")}
               </span>
             </li>
           ))}
@@ -199,19 +203,20 @@ function DaysCard({ card, today }: { card: Card; today: string }) {
 }
 
 function LessonsDoneCard({ card, today }: { card: Card; today: string }) {
+  const t = useT();
   return (
     <Card as="section" className="tab-card" aria-labelledby="seat-lessons-title">
-      <CardTitle id="seat-lessons-title">Пройденные уроки</CardTitle>
+      <CardTitle id="seat-lessons-title">{t("Пройденные уроки")}</CardTitle>
       {card.lessons.length === 0 ? (
-        <p className="tt-muted">Пока нет.</p>
+        <p className="tt-muted">{t("Пока нет.")}</p>
       ) : (
         <ol className="seat-rows">
           {card.lessons.map((l) => (
             <li key={l.lessonId} className="seat-rows__item">
               <span className="seat-rows__main">
-                <b>{l.kind === "place_test" ? `Испытание места${l.placeRu ? ` «${l.placeRu}»` : ""}` : l.titleRu}</b>
+                <b>{l.kind === "place_test" ? (l.placeRu ? t("Испытание места «{place}»", { place: l.placeRu }) : t("Испытание места")) : l.titleRu}</b>
                 <span className="seat-rows__sub">
-                  {[l.kind === "lesson" ? l.placeRu : undefined, `${l.completions} ${timesWord(l.completions)}`, lastActiveLabel(l.lastCompletedOn, today)].filter(Boolean).join(" · ")}
+                  {[l.kind === "lesson" ? l.placeRu : undefined, `${l.completions} ${timesWord(l.completions, t)}`, lastActiveLabel(l.lastCompletedOn, today, t)].filter(Boolean).join(" · ")}
                 </span>
               </span>
               {l.bestAccuracy !== undefined ? <span className="seat-rows__value">{percent(l.bestAccuracy)}</span> : null}
