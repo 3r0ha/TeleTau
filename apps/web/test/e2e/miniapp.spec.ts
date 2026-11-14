@@ -7,7 +7,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { generateQrCard } from "@teletau/auth-codes";
 import { createRequire } from "node:module";
-import { API, childMe, mockBackend, qrPhoto } from "./mock-api";
+import { API, adultMe, childMe, mockBackend, qrPhoto } from "./mock-api";
 import { CURRENT_NODE } from "./mock-learn";
 import { settleAnimations } from "./settle";
 
@@ -221,5 +221,19 @@ test.describe("M2: Mini App в Telegram", () => {
     // initData ушла в привязку ровно один раз — чат связан, «Задание дня» придёт сюда.
     expect(linked).toHaveLength(1);
     expect(linked[0]).toContain("hash=");
+  });
+
+  test("вошедший без ника: /miniapp ведёт на выбор пути, а не в 404; «Учиться» → ник → тропа", async ({ page }) => {
+    // Регрессия: StudentShell отправляет взрослого без ника на paths.welcome, а маршрута /miniapp/welcome не было.
+    await mockBackend(page, { account: adultMe({ nickname: undefined, teacherStatus: "none", roles: [], classes: [] }) });
+    await page.goto("/miniapp");
+    await page.waitForURL("**/miniapp/welcome");
+    await expect(page.getByRole("heading", { name: "Что дальше?" })).toBeVisible();
+    await page.getByRole("button", { name: "Учиться" }).click();
+    await expect(page.getByRole("heading", { name: "Выбери ник" })).toBeVisible();
+    await page.getByRole("radio").first().check();
+    await page.getByRole("button", { name: "Начать", exact: true }).click();
+    await page.waitForURL("**/miniapp/learn");
+    await expect(page.getByRole("button", { name: CURRENT_NODE })).toBeVisible();
   });
 });

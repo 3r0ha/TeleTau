@@ -13,6 +13,7 @@ import { BackButton, LoadingBlock, Screen, SignOutAction, SimpleTop, useDocument
 import { useFlowSteps } from "../_components/steps";
 import { DEFAULT_GOAL } from "../_components/learn/GoalPicker";
 import { selfApi } from "../_components/learn/self-api";
+import { useStudentPaths } from "../_components/learn/paths";
 import { NicknamePicker } from "../student/NicknamePicker";
 import { nextTeacherStep } from "../teacher/useTeacher";
 
@@ -48,7 +49,8 @@ function Choice({ href, onClick, art, title, text }: { href?: string; onClick?: 
 export default function WelcomePage() {
   const router = useRouter();
   const params = useSearchParams();
-  const me = useRequireAccount("adult", "/teacher/login");
+  const paths = useStudentPaths();
+  const me = useRequireAccount("adult", paths.loginEmail);
   const flow = useFlowSteps<Step>("choose");
   const t = useT();
   // Заголовки шагов на языке интерфейса: t доступен только при рендере, поэтому словарь — внутри компонента.
@@ -64,8 +66,8 @@ export default function WelcomePage() {
   useEffect(() => {
     if (!me) return;
     if (me.teacherStatus !== "none") router.replace(nextTeacherStep(me));
-    else if (me.nickname) router.replace("/learn");
-  }, [me, router]);
+    else if (me.nickname) router.replace(paths.learn);
+  }, [me, router, paths.learn]);
 
   const learn = async (nicknameId: string) => {
     setBusy(true);
@@ -73,7 +75,7 @@ export default function WelcomePage() {
     try {
       const updated = await selfApi.updateMe({ nicknameId, ageBand: "adult", dailyGoal: DEFAULT_GOAL });
       session.updateAccount(updated);
-      router.replace("/learn");
+      router.replace(paths.learn);
     } catch (e) {
       setError(describeProblem(e, "adult"));
       setBusy(false);
