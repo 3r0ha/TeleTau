@@ -316,8 +316,12 @@ function ProfileView({
             <LinkButton
               tone="danger"
               onClick={async () => {
-                await session.logout();
-                router.replace(paths.start);
+                // Ошибка сети не должна оставлять на /me: сессия уже разорвана локально, уводим на старт.
+                await session.logout().catch(() => undefined);
+                // Полная загрузка, а не router.replace: закрытие диалога убирает свою запись истории (history.back
+                // в sheetHistory), и пришедший popstate отменяет клиентский переход — страница оставалась на /me со
+                // скелетом. При выходе и так нужно снести всё состояние вкладки: токены в памяти, кеш экранов.
+                window.location.replace(paths.start);
               }}
             >
               Выйти

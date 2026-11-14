@@ -144,6 +144,18 @@ test.describe("«Учусь сам» — потоки", () => {
     await expect(page.getByRole("dialog").getByRole("heading", { name: "Сначала сделай карточку" })).toBeVisible();
   });
 
+  test("профиль: подтверждение «Выйти» — на стартовую страницу, не застревая на /me", async ({ page }) => {
+    const w = await mockBackend(page, { account: soloMe({ loginCard: "issued" }) });
+    await page.goto("/me");
+    await expect(page.getByRole("heading", { name: "Мудрая сова" })).toBeVisible();
+    await page.getByRole("button", { name: "Выйти" }).click();
+    await page.getByRole("dialog", { name: "Уже уходишь?" }).getByRole("button", { name: "Выйти", exact: true }).click();
+    // Гард useRequireAccount и кнопка «Выйти» реагируют на один выход одновременно: раньше два конкурирующих
+    // router.replace (на /student и на /) взаимно отменяли навигацию, и /me оставался со скелетом загрузки.
+    await page.waitForURL((u) => u.pathname === "/");
+    expect(w.logouts).toBe(1);
+  });
+
   test("взрослый «Учусь сам» сохраняет прогресс по почте; карточки после этого нет", async ({ page }) => {
     const grown = adultMe({ roles: [], teacherStatus: "none", classes: [], profile: undefined, nickname: "Мудрая сова", uiMode: "keeper", ageBand: "adult", loginCard: "none" });
     const w = await mockBackend(page, { account: grown });

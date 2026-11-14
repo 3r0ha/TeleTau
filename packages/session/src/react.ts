@@ -13,6 +13,14 @@ export function useSession(): SessionState {
 type Kind = Me["kind"];
 
 /**
+ * Сколько секунд после logout() этой вкладкой гард не делает свой переход: со страницы уже уводит вызвавший выход.
+ * Два router.replace на разные адреса в один такт (гард и кнопка «Выйти») в Next 16 взаимно отменяют навигацию —
+ * страница остаётся со скелетом загрузки. Прочие пути к «anonymous» (токен отозван, выход в другой вкладке) это окно
+ * не задевают: logoutAt меняет только локальный logout().
+ */
+const LOGOUT_NAV_GRACE_MS = 5_000;
+
+/**
  * Страница только для вошедших: восстанавливает сессию, без неё — переход на `loginHref`.
  * Возвращает аккаунт нужного вида или null, пока идёт проверка.
  */
@@ -26,6 +34,8 @@ export function useRequireAccount(kind: Kind | Kind[], loginHref: string): Me | 
   }, []);
   useEffect(() => {
     if (state.status === "anonymous" || (state.status === "authenticated" && !kinds.includes(state.account.kind))) {
+      // Только что вышли кнопкой — навигацию делает вызвавший logout(); свой replace здесь был бы вторым.
+      if (session.logoutAt !== null && Date.now() - session.logoutAt < LOGOUT_NAV_GRACE_MS) return;
       router.replace(loginHref);
     }
   }, [state, loginHref, router]);

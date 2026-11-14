@@ -89,7 +89,9 @@ export default function StudentClassPage() {
               tone="danger"
               onClick={async () => {
                 await session.logout();
-                router.replace(paths.start);
+                // Полная загрузка, а не router.replace: закрытие диалога убирает свою запись истории (history.back
+                // в sheetHistory), и пришедший popstate отменяет клиентский переход — страница оставалась на месте.
+                window.location.replace(paths.start);
               }}
             >
               Выйти

@@ -195,11 +195,17 @@ class SessionStore {
     if (this.state.status === "authenticated") this.set({ ...this.state, account });
   }
 
+  /** Момент последнего logout() в этой вкладке (мс), null — выхода не было. */
+  logoutAt: number | null = null;
+
   async logout(): Promise<void> {
     const token = this.state.status === "authenticated" ? this.state.accessToken : undefined;
     try {
       await post<void>("logout", {}, token ? { authorization: `Bearer ${token}` } : undefined);
     } finally {
+      // Отмечаем выход ДО уведомления подписчиков: со страницы уже уводит вызвавший (router.replace после logout()),
+      // и гард useRequireAccount по этому моменту не должен конкурировать (см. react.ts).
+      this.logoutAt = Date.now();
       this.set({ status: "anonymous" });
       this.channel?.postMessage("logout");
     }
