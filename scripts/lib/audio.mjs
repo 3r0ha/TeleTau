@@ -50,7 +50,7 @@ export const isOggOriginal = (copy) => /\.(ogg|oga)$/i.test(copy);
  * Слаг башкирской строки — имя TTS-копии в content/audio/tts (синтез речи, не запись носителя):
  * NFC → нижний регистр → краевая пунктуация снята → пробелы в «-» → прочая пунктуация удалена
  * («Сәләм, дус!» → «сәләм-дус»). Тот же алгоритм — ttsSlug в content-import.ts; слаги строк курса собирает
- * scripts/tts/collect-slugs.mjs, файлы синтезирует scripts/tts/generate.py, проверяет check-content.mjs.
+ * scripts/tts/collect-slugs.mjs, файлы синтезирует scripts/tts/generate.mjs, проверяет check-content.mjs.
  */
 export function ttsSlug(text) {
   return text

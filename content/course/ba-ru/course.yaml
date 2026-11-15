@@ -1,6 +1,6 @@
 # Курс «Башкирский язык» для русскоязычных учеников (схема — content/schema/course.schema.json).
 id: ba-ru
-version: 8
+version: 9
 title_ru: Башкирский язык
 direction: ru-ba
 units:

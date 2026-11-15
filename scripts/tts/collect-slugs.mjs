@@ -1,5 +1,5 @@
 // Слаги башкирских строк курса без записи носителя — вход для генерации синтезированной озвучки
-// (scripts/tts/generate.py). Печатает JSON {слаг: текст} в stdout:
+// (scripts/tts/generate.mjs). Печатает JSON {слаг: текст} в stdout:
 //
 //   node scripts/tts/collect-slugs.mjs > manifest.json
 //
