@@ -19,7 +19,7 @@ export const CARDS_PER_PAGE = COLS * ROWS;
 export const CARD = { w: A4.w / COLS, h: A4.h / ROWS };
 /** Сторона QR на бумаге: не меньше 30 мм (ADR 0018). В QR ~42 символа нагрузки — версия 3, модуль ≈ 0,9 мм. */
 export const QR_SIDE_MM = 34;
-/** Размер шагов входа на карточке: 7,5 pt — мелко для ребёнка. */
+/** Размер шагов входа на карточке, pt: мельче ребёнку читать трудно. */
 export const STEPS_FONT_PT = 9;
 
 export interface PdfCard {

@@ -43,6 +43,7 @@ describe("content import — словарь курса, «Пары», запис
     const b = bundle();
     // Копия test/fixtures/content-srs/audio/Synthetic-s1.ogg: id — первые 16 hex SHA-256 файла (как у prepare-audio).
     const audio = {
+      origin: "native",
       url: "/audio/719840da3879d058.m4a",
       files: [
         { url: "/audio/719840da3879d058.m4a", type: 'audio/mp4; codecs="mp4a.40.2"' },

@@ -118,8 +118,19 @@ export class TestApi {
     expectStatus(await this.post("/consents", { token, body: { documentIds: ids } }), 201);
   }
 
+  /**
+   * Демо-школа из справочника. Нечёткий поиск по всему справочнику под нагрузкой полного прогона иногда упирается в
+   * statement_timeout (SQLSTATE 57014 — ответ 5xx): поиск только читает, поэтому 5xx повторяется; любой другой не-200 —
+   * ошибка теста с телом ответа.
+   */
   async demoSchool(token: string, n = 1): Promise<Schema<"School">> {
-    const res = await this.get<Schema<"SchoolPage">>(`/schools?q=${encodeURIComponent(`Демо-школа № ${n}`)}`, { token });
+    const url = `/schools?q=${encodeURIComponent(`Демо-школа № ${n}`)}`;
+    let res = await this.get<Schema<"SchoolPage">>(url, { token });
+    for (let attempt = 1; res.status >= 500 && attempt < 4; attempt++) {
+      await new Promise((r) => setTimeout(r, 500 * attempt));
+      res = await this.get<Schema<"SchoolPage">>(url, { token });
+    }
+    expectStatus(res, 200);
     const school = res.body.items.find((s) => s.isDemo && s.shortNameRu === `Демо-школа № ${n}`);
     if (!school) throw new Error("демо-школа не найдена — импорт справочника не выполнен");
     return school;
@@ -167,6 +178,8 @@ export const testConfig = (): AppConfig =>
     AUTH_DEMO_STAFF_WITHOUT_TOTP: undefined,
     AUTH_DEMO_CLASS_CODE: "",
     BOT_SERVICE_TOKEN: process.env["BOT_SERVICE_TOKEN"] || TEST_BOT_SERVICE_TOKEN,
+    // Публичная витрина без кеша процесса: тесты меняют данные и сразу читают фразу дня, словарь и доску.
+    PUBLIC_CACHE_SECONDS: "0",
   });
 
 /** Поднимает приложение; гарантирует демо-школы (импорт только демо-записей — быстро и идемпотентно). */

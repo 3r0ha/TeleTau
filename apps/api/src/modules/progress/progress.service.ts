@@ -13,6 +13,9 @@ import { ClassesService, ClassPolicy } from "../org/index.js";
 import type { AchievementFacts, LearnerTotals, LessonCompletionInput, LessonCompletionResult, PeriodTotals, ProgressApi, VoteSettlement } from "./progress.api.js";
 import { activityDays, lessonProgress, lessonSkips, progressCounters, streaks, xpLedger } from "./progress.schema.js";
 
+/** Окно истории занятий для «серия под угрозой» (напоминания бота), сутки. */
+export const STREAK_RISK_WINDOW_DAYS = 60;
+
 type CounterDelta = Partial<Record<"lessonsCompleted" | "wordsLearned" | "votesTotal" | "votesMatured", number>>;
 
 /** Серия domain-rules → схема контракта StreakState (даты недели пн–вс). */
@@ -249,14 +252,21 @@ export class ProgressService implements ProgressApi {
 
   // ── мёд за голос: «мёд созревает» (pending) → решение (final) ──
 
+  /**
+   * Аккаунты, чья серия под угрозой: она есть, а сегодня урока ещё не было. Бот спрашивает каждую минуту, поэтому
+   * читается только окно STREAK_RISK_WINDOW_DAYS: серия без занятий дольше запаса заморозок прерывается, а старше окна
+   * история на ответ «есть ли серия» почти не влияет (в окне заморозок не меньше, чем по полной истории — лишним
+   * может быть только напоминание при серии длиннее окна).
+   */
   async streaksAtRisk(accountIds: readonly string[], now: Date): Promise<Set<string>> {
     const at = new Set<string>();
     if (accountIds.length === 0) return at;
     const today = ufaDate(now);
+    const from = dayToDate(dateToDay(today) - STREAK_RISK_WINDOW_DAYS);
     const rows = await this.db
       .select({ accountId: activityDays.accountId, day: activityDays.day })
       .from(activityDays)
-      .where(and(inArray(activityDays.accountId, [...accountIds]), sql`${activityDays.lessons} > 0`, lte(activityDays.day, today)));
+      .where(and(inArray(activityDays.accountId, [...accountIds]), sql`${activityDays.lessons} > 0`, gte(activityDays.day, from), lte(activityDays.day, today)));
     const daysOf = new Map<string, string[]>();
     for (const r of rows) daysOf.set(r.accountId, [...(daysOf.get(r.accountId) ?? []), r.day]);
     for (const [accountId, days] of daysOf) {

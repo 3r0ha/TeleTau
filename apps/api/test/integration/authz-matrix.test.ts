@@ -359,6 +359,12 @@ const MATRIX: Record<OperationId, Row> = {
     wrongRole: { as: "teacher", status: 403 },
     foreign: NA_SERVICE,
   },
+  releaseTelegramReminders: {
+    req: () => ({ path: "/telegram/bot/reminders/release", body: { day: "2026-11-15", chatIds: ["279058397"] } }),
+    anonymous: 401,
+    wrongRole: { as: "student", status: 403, note: "вернуть напоминания может только бот" },
+    foreign: NA_SERVICE,
+  },
   issueTelegramDailyDuel: {
     req: () => ({ path: "/telegram/bot/chats/279058397/daily-duel" }),
     anonymous: 401,
@@ -378,6 +384,12 @@ const MATRIX: Record<OperationId, Row> = {
     foreign: NA_SERVICE,
   },
   // Одноразовый код привязки (свой — политика self) и его погашение ботом (служба).
+  unlinkMyTelegram: {
+    req: () => ({ path: "/me/telegram" }),
+    anonymous: 401,
+    wrongRole: { as: "moderator", status: 403, note: "у сотрудника привязок Telegram нет" },
+    foreign: NA_SELF,
+  },
   issueTelegramLinkCode: {
     req: () => ({ path: "/me/telegram/link-code" }),
     anonymous: 401,

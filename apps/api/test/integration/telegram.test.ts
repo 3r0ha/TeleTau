@@ -17,8 +17,9 @@ import { RateLimiter } from "../../src/infra/rate-limiter.js";
 import { DB, VALKEY } from "../../src/infra/tokens.js";
 import { ConsensusService } from "../../src/modules/consensus/index.js";
 import { importDuels } from "../../src/modules/corpus/duels-import.js";
+import { ClassesService } from "../../src/modules/org/index.js";
 import { ProgressService } from "../../src/modules/progress/index.js";
-import { TelegramService } from "../../src/modules/telegram/index.js";
+import { TelegramLinks, TelegramService } from "../../src/modules/telegram/index.js";
 import { signInitData } from "../../src/modules/telegram/init-data.js";
 import { scanPdf } from "../support/pdf-qr.js";
 import { bootApi, email, expectStatus, newDevice, RUN, testConfig, type AuthSession, type TestApi } from "./harness.js";
@@ -152,7 +153,7 @@ describe("POST /telegram/link — привязка чата по подписи 
 
   it("бот не настроен (нет TELEGRAM_BOT_TOKEN) — 503 telegram_unavailable", async () => {
     const config = { ...testConfig(), TELEGRAM_BOT_TOKEN: undefined };
-    const svc = new TelegramService(db, config, api.app.get<Redis>(VALKEY), api.app.get(RateLimiter), api.app.get(ProgressService), api.app.get(ConsensusService), api.app.get(ACCOUNTS_PORT));
+    const svc = new TelegramService(db, config, api.app.get<Redis>(VALKEY), api.app.get(RateLimiter), api.app.get(ProgressService), api.app.get(ConsensusService), api.app.get(ClassesService), api.app.get(TelegramLinks), api.app.get(ACCOUNTS_PORT));
     const principal: Principal = { accountId: adult.account.id, kind: "adult", roles: [], sessionId: "", deviceId: "" };
     await expect(svc.link(principal, { initData: initData(newChat()) })).rejects.toMatchObject({ status: 503, code: "telegram_unavailable" });
   });
@@ -429,6 +430,8 @@ describe("напоминания о серии: кому и когда (подм
   const chats = {} as Record<keyof typeof who, string>;
 
   beforeAll(async () => {
+    // Напоминания — только действующим аккаунтам: строки аккаунтов нужны и здесь.
+    for (const id of Object.values(who)) await pool.query("INSERT INTO accounts (id, kind) VALUES ($1, 'adult')", [id]);
     await lesson(who.atRisk, "2026-11-03T10:00:00Z");
     await lesson(who.doneToday, "2026-11-03T10:00:00Z");
     await lesson(who.doneToday, "2026-11-04T05:00:00Z");
@@ -695,5 +698,26 @@ describe("ежедневное задание бота (ADR 0024): FSM-диал�
     expect((await pool.query<{ n: number }>("SELECT count(*)::int AS n FROM telegram_dialogs WHERE chat_id = $1", [shared])).rows[0]).toEqual({ n: 0 });
     const gone = await api.post<Schema<"Problem">>(`/telegram/bot/dialogs/${mine.dialogId}/answer`, { headers: service, body: { choice: "a" } });
     expect([gone.status, gone.body.code]).toEqual([404, "dialog_not_found"]);
+  });
+
+  it("аккаунт заблокирован после выдачи: ответ — 409 dialog_closed без голоса в журнале; новая выдача — 404, привязка снята", async () => {
+    const holder = await api.loginAdult(email("tg-blocked-holder"));
+    const own = newChat();
+    await telegram().link(principalOf(holder), { initData: initData(own) });
+    const issued = await telegram().dailyDuel(String(own), new Date("2026-11-11T10:00:00Z"));
+    expect(issued.state).toBe("issued");
+    const judgmentId = await judgmentIdOf(issued.dialogId!);
+    await pool.query("UPDATE accounts SET status = 'blocked' WHERE id = $1", [holder.account.id]);
+    try {
+      const res = await answer(issued.dialogId!, "a");
+      expect([res.status, (res.body as unknown as Schema<"Problem">).code]).toEqual([409, "dialog_closed"]);
+      expect(await dialogStatus(issued.dialogId!)).toBe("cancelled");
+      expect((await pool.query("SELECT 1 FROM judgments WHERE id = $1", [judgmentId])).rowCount).toBe(0);
+      const again = await issue(own);
+      expect([again.status, (again.body as unknown as Schema<"Problem">).code]).toEqual([404, "chat_not_linked"]);
+      expect(await linkRow(own)).toBeUndefined();
+    } finally {
+      await pool.query("UPDATE accounts SET status = 'active' WHERE id = $1", [holder.account.id]);
+    }
   });
 });

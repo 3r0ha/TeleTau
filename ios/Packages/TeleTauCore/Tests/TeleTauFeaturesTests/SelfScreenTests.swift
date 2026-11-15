@@ -106,7 +106,7 @@ struct SelfLogicTests {
 
     @Test("«Послушать»: запись из ответа API (относительный /audio/<id>.m4a и files[]) играется с сайта")
     func audioFromContract() throws {
-        let json = #"{"url":"/audio/063d0f07d15ef02e.m4a","files":[{"url":"/audio/063d0f07d15ef02e.m4a","type":"audio/mp4"},{"url":"/audio/063d0f07d15ef02e.ogg","type":"audio/ogg"}]}"#
+        let json = #"{"origin":"native","url":"/audio/063d0f07d15ef02e.m4a","files":[{"url":"/audio/063d0f07d15ef02e.m4a","type":"audio/mp4"},{"url":"/audio/063d0f07d15ef02e.ogg","type":"audio/ogg"}]}"#
         let clip = try JSONDecoder().decode(S.AudioClip.self, from: Data(json.utf8))
         #expect(ClipAddress.resolve(clip.url, webBase: URL(string: "http://192.168.1.5:3000"))?.absoluteString == "http://192.168.1.5:3000/audio/063d0f07d15ef02e.m4a")
     }

@@ -97,9 +97,8 @@ export class AuthController {
   @HttpCode(200)
   @Operation("verifyEmailOtp")
   async otpVerify(@Body() body: Schema<"OtpVerifyRequest">, @ReqMeta() meta: RequestMeta): Promise<AuthSession> {
-    const account = await this.otp.verify(body, meta);
-    const tokens = await this.sessions.start({ accountId: account.id, kind: account.kind, roles: account.roles }, body.device);
-    return this.session(tokens, account.id);
+    const s = await this.otp.login(body, meta);
+    return this.session(s.tokens, s.accountId);
   }
 
   @Post("refresh")

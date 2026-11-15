@@ -1,8 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
-import { and, asc, desc, eq, gt, inArray, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Principal, RequestMeta } from "../../common/auth.js";
-import { decodeCursor, encodeCursor, KeysetCursor } from "../../common/cursor.js";
+import { decodeCursor, encodeCursor, KeysetCursor, microsIso } from "../../common/cursor.js";
 import { ACCOUNTS_PORT, type AccountsPort, type TeacherSchoolPort } from "../../common/ports.js";
 import { conflict, forbidden, notFound } from "../../common/problem.js";
 import { normalizePersonName, normalizePosition, normalizeTextField } from "../../common/text.js";
@@ -36,6 +36,8 @@ export class VerificationService implements TeacherSchoolPort {
     const latest = await this.latest(principal.accountId);
     if (latest?.status === "approved") throw conflict("already_verified");
     if (latest?.status === "pending") throw conflict("verification_pending");
+    // ФИО и должность хранятся в профиле pii рядом с адресом: у взрослого «Учусь сам» без почты профиля нет — сначала почта.
+    if (!(await this.accounts.adultProfiles([principal.accountId])).has(principal.accountId)) throw conflict("email_required");
     if (!(await this.consents.hasAcceptedRequired(principal.accountId))) throw conflict("consent_required");
     if (!(await this.directory.school(body.schoolId))) throw notFound();
     // ФИО и должность могут быть на башкирском: каноническая форма — @teletau/bashkir-text (правило 7).
@@ -89,12 +91,11 @@ export class VerificationService implements TeacherSchoolPort {
 
   /** Очередь модератора: старые заявки сверху, курсор — (created_at, id). */
   async list(q: { status?: Schema<"TeacherVerificationStatus">; cursor?: string; limit: number }): Promise<Schema<"TeacherVerificationPage">> {
+    // Курсор — момент в микросекундах (точность timestamptz) и id: сравнение кортежем в SQL, без округления до мс в JS.
     const cursor = decodeCursor(q.cursor, KeysetCursor);
-    const after = cursor
-      ? or(gt(teacherVerifications.createdAt, new Date(cursor.at)), and(eq(teacherVerifications.createdAt, new Date(cursor.at)), gt(teacherVerifications.id, cursor.id)))
-      : undefined;
+    const after = cursor ? sql`(${teacherVerifications.createdAt}, ${teacherVerifications.id}) > (${cursor.at}::timestamptz, ${cursor.id}::uuid)` : undefined;
     const rows = await this.db
-      .select()
+      .select({ row: teacherVerifications, at: microsIso(teacherVerifications.createdAt) })
       .from(teacherVerifications)
       .where(and(eq(teacherVerifications.status, q.status ?? "pending"), after))
       .orderBy(asc(teacherVerifications.createdAt), asc(teacherVerifications.id))
@@ -102,8 +103,8 @@ export class VerificationService implements TeacherSchoolPort {
     const page = rows.slice(0, q.limit);
     const last = page.at(-1);
     return {
-      items: await this.views(page),
-      ...(rows.length > q.limit && last ? { nextCursor: encodeCursor({ at: last.createdAt.toISOString(), id: last.id }) } : {}),
+      items: await this.views(page.map((r) => r.row)),
+      ...(rows.length > q.limit && last ? { nextCursor: encodeCursor({ at: last.at, id: last.row.id }) } : {}),
     };
   }
 

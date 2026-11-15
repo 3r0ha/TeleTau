@@ -13,9 +13,11 @@ import type { Db } from "../../db/database.js";
 import { RateLimiter, type Limit } from "../../infra/rate-limiter.js";
 import { DB, VALKEY } from "../../infra/tokens.js";
 import { ConsensusService } from "../consensus/index.js";
+import { ClassesService } from "../org/index.js";
 import { ProgressService } from "../progress/index.js";
 import { verifyInitData } from "./init-data.js";
 import { outsideQuietHours, ufaHour } from "./reminders.js";
+import { TelegramLinks } from "./telegram-links.js";
 import { telegramDialogs, telegramLinks } from "./telegram.schema.js";
 
 type LinkRow = typeof telegramLinks.$inferSelect;
@@ -86,8 +88,27 @@ export class TelegramService {
     private readonly limiter: RateLimiter,
     private readonly progress: ProgressService,
     private readonly consensus: ConsensusService,
+    private readonly classes: ClassesService,
+    private readonly links: TelegramLinks,
     @Inject(ACCOUNTS_PORT) private readonly accounts: AccountsPort,
   ) {}
+
+  /**
+   * Аккаунт может пользоваться ботом: действует (не заблокирован и не удалён) и родитель не отозвал бумажное
+   * согласие ни на одном его месте в классе — те же условия, что у входа ученика. `db` — читать в транзакции.
+   */
+  private async admitted(accountId: string, db: Db = this.db): Promise<Awaited<ReturnType<AccountsPort["voterView"]>>> {
+    const voter = await this.accounts.voterView(db, accountId);
+    if (!voter) return undefined;
+    if ((await this.classes.consentBlockedAccounts([accountId], db)).has(accountId)) return undefined;
+    return voter;
+  }
+
+  /** DELETE /me/telegram: все привязки вызывающего снимаются. Повтор — тоже 204. */
+  async unlinkMine(principal: Principal): Promise<void> {
+    if (principal.kind === "staff") throw forbidden();
+    await this.db.transaction((tx) => this.links.unlinkAccount(tx, principal.accountId));
+  }
 
   /** POST /telegram/link: подпись initData → user.id → привязка к вызывающему. Сама строка нигде не сохраняется. */
   async link(principal: Principal, body: Schema<"TelegramLinkRequest">, now: Date = new Date()): Promise<Schema<"TelegramLink">> {
@@ -143,6 +164,8 @@ export class TelegramService {
     if (!accountId) throw notFound("code_not_found");
     // «Аккаунт → код» больше не нужен: код израсходован, следующий выпуск его не увидит.
     await this.kv(() => this.valkey.del(`${LINK_CODE_ACCOUNT_KEY}${accountId}`).catch(() => undefined));
+    // За время жизни кода аккаунт могли заблокировать или отозвать согласие на его месте — такой код не привязывает.
+    if (!(await this.admitted(accountId))) throw notFound("code_not_found");
     const row = await this.bind(chatId, accountId, now);
     return chatOf(row);
   }
@@ -219,6 +242,12 @@ export class TelegramService {
     const id = chatIdOf(chatId);
     const [link] = await this.db.select().from(telegramLinks).where(eq(telegramLinks.chatId, id));
     if (!link) throw notFound("chat_not_linked");
+    const voter = await this.admitted(link.accountId);
+    if (!voter) {
+      // Аккаунт не действует или согласие отозвано: привязка больше не работает — снимаем её, как отвязку чата.
+      await this.unlink(chatId);
+      throw notFound("chat_not_linked");
+    }
 
     // Активный диалог один на аккаунт (частичный уникальный индекс).
     const [active] = await this.db
@@ -243,8 +272,6 @@ export class TelegramService {
       .where(and(eq(telegramDialogs.accountId, link.accountId), eq(telegramDialogs.status, "answered"), gte(telegramDialogs.answeredAt, new Date(now.getTime() - 48 * 3_600_000))));
     if (recent.some((r) => r.answeredAt !== null && ufaDate(r.answeredAt) === day)) return { state: "done" };
 
-    const voter = await this.accounts.voterView(this.db, link.accountId);
-    if (!voter) return { state: "empty" };
     const card = await this.consensus.pickDailyDuel({ accountId: link.accountId, ...voter });
     if (!card) return { state: "empty" };
 
@@ -293,8 +320,9 @@ export class TelegramService {
           throw conflict("already_voted");
         }
 
-        const voter = await this.accounts.voterView(tx, row.accountId);
-        if (!voter) throw forbidden();
+        // Аккаунт не действует или согласие на его месте отозвано — голос не пишется, диалог закрывается.
+        const voter = await this.admitted(row.accountId, tx);
+        if (!voter) throw conflict("dialog_closed");
         // Время от выдачи до ответа: считает API, в запросе только choice. Журнал хранит 0…3600000 — обрезаем.
         const latencyMs = Math.min(3_600_000, Math.max(0, now.getTime() - row.createdAt.getTime()));
         const receipt = await this.consensus.recordVote(tx, {
@@ -314,9 +342,9 @@ export class TelegramService {
         return { replay: receipt.replay, status: receipt.status };
       });
     } catch (e) {
-      // За этот исходник уже голосовали другим путём (веб/урок) между выдачей и нажатием: транзакция откатилась,
-      // диалог закрываем отдельным UPDATE — кнопка больше не отвечает, свежую дуэль бот выдаст по /daily.
-      if (e instanceof ApiError && e.code === "already_voted") {
+      // За этот исходник уже голосовали другим путём (веб/урок) между выдачей и нажатием или аккаунт больше не
+      // допущен: транзакция откатилась, диалог закрываем отдельным UPDATE — кнопка больше не отвечает.
+      if (e instanceof ApiError && (e.code === "already_voted" || e.code === "dialog_closed")) {
         await this.db
           .update(telegramDialogs)
           .set({ status: "cancelled", cancelledAt: now })
@@ -354,7 +382,11 @@ export class TelegramService {
       .where(and(eq(telegramLinks.remindersEnabled, true), lte(telegramLinks.reminderHour, hour), notYetToday));
     if (candidates.length === 0) return { day, items: [] };
 
-    const atRisk = await this.progress.streaksAtRisk([...new Set(candidates.map((c) => c.accountId))], now);
+    // Только действующие аккаунты без отозванного согласия (как у входа ученика), и только с серией под угрозой.
+    const ids = [...new Set(candidates.map((c) => c.accountId))];
+    const [active, blocked] = await Promise.all([this.accounts.activeAccounts(ids), this.classes.consentBlockedAccounts(ids)]);
+    const allowed = ids.filter((a) => active.has(a) && !blocked.has(a));
+    const atRisk = await this.progress.streaksAtRisk(allowed, now);
     const due = candidates.filter((c) => atRisk.has(c.accountId)).map((c) => c.chatId);
     if (due.length === 0) return { day, items: [] };
     const claimed = await this.db
@@ -363,6 +395,18 @@ export class TelegramService {
       .where(and(inArray(telegramLinks.chatId, due), eq(telegramLinks.remindersEnabled, true), notYetToday))
       .returning({ chatId: telegramLinks.chatId });
     return { day, items: claimed.map((c) => ({ chatId: String(c.chatId) })).sort((a, b) => a.chatId.localeCompare(b.chatId)) };
+  }
+
+  /**
+   * POST /telegram/bot/reminders/release (бот): Telegram точно не доставил напоминание — отметка суток `day`
+   * снимается, следующая выдача этих суток вернёт чат. Отметки других суток не трогаются.
+   */
+  async releaseReminders(body: Schema<"TelegramReminderRelease">): Promise<void> {
+    const ids = [...new Set(body.chatIds.map(chatIdOf))];
+    await this.db
+      .update(telegramLinks)
+      .set({ lastRemindedOn: null })
+      .where(and(inArray(telegramLinks.chatId, ids), eq(telegramLinks.lastRemindedOn, body.day)));
   }
 }
 

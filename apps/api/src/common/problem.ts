@@ -61,6 +61,10 @@ const TITLES: Record<string, string> = {
   exercise_not_in_run: "Такого задания нет в этом уроке",
   answer_type_mismatch: "Ответ не подходит к заданию",
   already_voted: "Голос за эту пару уже учтён",
+  explanation_not_applicable: "Ответ верный, объяснять нечего",
+  ai_explanation_limit: "На сегодня объяснений больше нет",
+  jump_unavailable: "Это место уже открыто",
+  pairs_incomplete: "Соедини все пары",
   vote_required: "Голоса видны после своего голоса",
   content_unavailable: "Курс ещё не загружен",
   // Задания учителя (ADR 0021)
@@ -80,6 +84,7 @@ const TITLES: Record<string, string> = {
   login_card_unavailable: "Карточка входа для этого аккаунта не нужна",
   email_in_use: "Эта почта уже занята другим аккаунтом",
   email_already_set: "Почта уже привязана",
+  email_required: "Сначала привяжите почту — заявка учителя без неё не подаётся",
   already_in_class: "Ты уже в классе",
 };
 

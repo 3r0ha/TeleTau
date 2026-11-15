@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Query } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
 import { CurrentPrincipal, ReqMeta, type Principal, type RequestMeta } from "../../common/auth.js";
-import { Operation } from "../../common/contract.js";
+import { Operation, type OperationQuery } from "../../common/contract.js";
 import { VerificationService } from "./verification.service.js";
 
 @Controller()
@@ -27,7 +27,7 @@ export class ModerationController {
 
   @Get("moderation/teacher-verifications")
   @Operation("listTeacherVerifications")
-  list(@Query() query: { status?: Schema<"TeacherVerificationStatus">; cursor?: string; limit: number }): Promise<Schema<"TeacherVerificationPage">> {
+  list(@Query() query: OperationQuery<"listTeacherVerifications", "limit">): Promise<Schema<"TeacherVerificationPage">> {
     return this.verifications.list(query);
   }
 

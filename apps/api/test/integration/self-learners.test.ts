@@ -254,7 +254,7 @@ describe("adults: e-mail is optional, the teacher application only by choice (AD
     expect([taken.status, taken.body.code]).toEqual([409, "email_in_use"]);
   });
 
-  it("a blocked adult sees account_blocked — not a «Сессия завершена» loop (M2-UX5)", async () => {
+  it("a blocked adult sees account_blocked — not a «Сессия завершена» loop", async () => {
     const address = email("self-blocked");
     const adult = await api.loginAdult(address);
     expectStatus(await api.get("/me", { token: adult.accessToken }), 200);

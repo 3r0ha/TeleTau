@@ -71,3 +71,12 @@ export function normalizePosition(raw: string, pointer: string): string {
   requireLength(s, pointer, 2);
   return s;
 }
+
+/**
+ * Прямые кавычки названий из справочника (`АНОО "Центр"`) → «ёлочки» для показа: кавычка в начале строки или после
+ * пробела, скобки и открывающей кавычки открывает, остальные закрывают. Без прямых кавычек строка не меняется.
+ */
+export function typographicQuotes(text: string): string {
+  if (!text.includes('"')) return text;
+  return text.replace(/"/g, (_q, offset: number) => (offset === 0 || /[\s([«„]/u.test(text[offset - 1]!) ? "«" : "»"));
+}

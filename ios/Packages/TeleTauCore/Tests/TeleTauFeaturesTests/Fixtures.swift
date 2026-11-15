@@ -67,8 +67,8 @@ enum Fixture {
         .init(id: "t1", text: "мәктәп"), .init(id: "t2", text: "китап"), .init(id: "t3", text: "Урта"), .init(id: "t4", text: "дәрес"),
     ]))
     /// Запись носителя: относительный адрес на сайте (AAC — играет iOS) и ссылка на Ogg (не играет — кнопки нет).
-    static let m4a = S.AudioClip(url: "/audio/063d0f07d15ef02e.m4a")
-    static let ogg = S.AudioClip(url: "https://upload.wikimedia.org/wikipedia/commons/0/02/Ba-example.ogg")
+    static let m4a = S.AudioClip(origin: .native, url: "/audio/063d0f07d15ef02e.m4a")
+    static let ogg = S.AudioClip(origin: .native, url: "https://upload.wikimedia.org/wikipedia/commons/0/02/Ba-example.ogg")
 
     static let choice = S.RunExercise.choiceBaRu(.init(id: "e02", _type: .choiceBaRu, review: .needsNativeReview, prompt: "мәктәп", promptAudio: m4a, options: [
         .init(id: "o1", textRu: "школа"), .init(id: "o2", textRu: "книга"), .init(id: "o3", textRu: "учитель"), .init(id: "o4", textRu: "урок"),

@@ -85,9 +85,10 @@ export const attempts = pgTable(
 );
 
 /**
- * Кеш объяснений ошибок (docs/04-ai-gigachat.md §3 сценарий 1): (упражнение контента, класс ошибки) → текст.
- * Кешируются только ответы GigaChat, прошедшие валидатор закрытого словаря в шлюзе; шаблоны не кешируются —
- * при появлении GigaChat объяснение станет живым. Персональных данных нет: ключи — контент и класс ошибки.
+ * Кеш объяснений ошибок (docs/04-ai-gigachat.md §3 сценарий 1): (упражнение, класс ошибки, версия промпта, хеш
+ * контекста) → текст. Контекст — условие, принятые варианты и буква-подсказка, без ответа ученика: смена контента или
+ * промпта даёт новый ключ. Кешируются только ответы GigaChat, прошедшие валидатор и фильтр безопасности шлюза;
+ * шаблоны и объяснения по ответу ученика не кешируются. Персональных данных нет.
  */
 export const aiExplanations = pgTable(
   "ai_explanations",
@@ -95,11 +96,15 @@ export const aiExplanations = pgTable(
     exerciseId: text("exercise_id").notNull(),
     /** Класс ошибки — вердикт попытки, для которого объясняем: almost / typo / wrong. */
     errorClass: text("error_class").notNull(),
+    /** Промпт реестра шлюза, например explain_error@v1. */
+    promptId: text("prompt_id").notNull(),
+    /** SHA-256 контекста шлюза без ответа ученика (learning.ai.ts, contextHash). */
+    contextHash: text("context_hash").notNull(),
     text: text("text").notNull(),
     createdAt: tstz("created_at").notNull().defaultNow(),
   },
   (t) => [
-    primaryKey({ name: "ai_explanations_pk", columns: [t.exerciseId, t.errorClass] }),
+    primaryKey({ name: "ai_explanations_pk", columns: [t.exerciseId, t.errorClass, t.promptId, t.contextHash] }),
     check("ai_explanations_error_class", sql`${t.errorClass} IN ('almost', 'typo', 'wrong')`),
     check("ai_explanations_text_len", sql`char_length(${t.text}) BETWEEN 1 AND 400`),
   ],

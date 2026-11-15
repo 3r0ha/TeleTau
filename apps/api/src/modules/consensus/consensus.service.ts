@@ -1,11 +1,12 @@
 import { randomInt } from "node:crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
-import { DUEL_RULES_VERSION, ufaDate, ufaWeek } from "@teletau/domain-rules";
+import { DUEL_RULES_VERSION, SMALL_GROUP_THRESHOLD, dateToDay, ufaDate, ufaMidnight, ufaWeek } from "@teletau/domain-rules";
 import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { Principal } from "../../common/auth.js";
 import { decodeCursor, encodeCursor, KeysetCursor } from "../../common/cursor.js";
 import { conflict, forbidden, invalidField, notFound, unprocessable } from "../../common/problem.js";
+import { typographicQuotes } from "../../common/text.js";
 import type { Db } from "../../db/database.js";
 import { DB } from "../../infra/tokens.js";
 import { CorpusService, type DuelItem } from "../corpus/index.js";
@@ -22,11 +23,6 @@ const playable = (v: DuelItem["variants"][number]) => v.review !== "native_rejec
 const reviewOf = (item: DuelItem): Schema<"ReviewStatus"> => (item.variants.every((v) => v.review === "native_approved") ? "native_approved" : "needs_native_review");
 const canonOf = (item: DuelItem): [string, string] => [item.variants[0].id, item.variants[1].id];
 
-/**
- * Порог малых групп доски почёта (ТЗ §4.5): тот же, что SMALL_GROUP_THRESHOLD кабинета министерства
- * (ministry/small-groups.ts, ADR 0023). Продублирован: импорт из ministry закольцевал бы модули (ministry → consensus).
- */
-const LEADERBOARD_SMALL_GROUP = 5;
 
 /** Языковые пары словаря — по языку исходника (source_items.lang): «башкирский ← русский» и «башкирский ← казахский». */
 const LANG_PAIRS = { ru: "ba-ru", kz: "ba-kz" } as const;
@@ -42,6 +38,11 @@ function shuffle<T>(list: T[]): T[] {
     [list[i], list[j]] = [list[j]!, list[i]!];
   }
   return list;
+}
+
+/** Сколько голосующих подтвердили вариант: «за него» и «оба подходят» во всех группах. */
+function confirmations(votes: Schema<"FundPair">["votes"]): number {
+  return [votes.child, votes.adult, votes.teacher].reduce((n, g) => n + g.votesFor + g.both, 0);
 }
 
 /** FNV-1a 32 бит — устойчивый хеш даты YYYY-MM-DD (ASCII), одинаковый на любом сервере и клиенте. */
@@ -353,15 +354,17 @@ export class ConsensusService implements ConsensusApi {
   /**
    * Фраза дня (ТЗ §3.6) — публичная витрина без регистрации: основной принятый вариант исходника.
    * Только пара ba-ru (лендинг показывает русский исходник); принятые пары ba-kz в выбор не входят.
-   * Выбор детерминирован: пары сортируются по variantId (не по моменту решения — он меняется при пересчёте),
-   * индекс — FNV-1a учебных суток по Уфе. В течение суток все клиенты показывают одну и ту же пару.
+   * Выбор детерминирован: пары сортируются по variantId (не по моменту решения — его меняет решение эксперта),
+   * индекс — FNV-1a учебных суток по Уфе. Набор — пары, принятые до начала суток: пара, принятая днём, не сдвигает
+   * индекс до полуночи (пока таких нет совсем — все принятые). В течение суток все клиенты показывают одну пару.
    */
   async phraseOfDay(now: Date = new Date()): Promise<Schema<"PhraseOfDay">> {
     const date = ufaDate(now);
+    const dayStart = ufaMidnight(dateToDay(date)).toISOString();
     const dictionary = await this.fundDictionary(now);
-    const pairs = dictionary.items
-      .filter((row) => row.main && row.langPair === PRIMARY_LANG_PAIR)
-      .sort((a, b) => a.variantId.localeCompare(b.variantId));
+    const all = dictionary.items.filter((row) => row.main && row.langPair === PRIMARY_LANG_PAIR);
+    const before = all.filter((row) => row.decidedAt < dayStart);
+    const pairs = (before.length > 0 ? before : all).sort((a, b) => a.variantId.localeCompare(b.variantId));
     if (pairs.length === 0) return { date };
     const pair = pairs[fnv1a(date) % pairs.length]!;
     return { date, pair: { sourceRu: pair.sourceRu, kind: pair.kind, textBa: pair.textBa, sources: pair.sources } };
@@ -369,11 +372,11 @@ export class ConsensusService implements ConsensusApi {
 
   /**
    * Публичный словарь (ТЗ §5) — принятые пары без регистрации, поверх тех же строк, что для Фонда
-   * (fundDictionary: принятые + без отклонённых носителем), но без голосов групп. Пары обеих языковых пар:
-   * ba-ru и ba-kz — по языку исходника (source_items.lang). `status=expert_review` оставляет только
-   * проверенные носителем (native_approved). Персональных данных нет (правило 13): fragmentId —
-   * идентификатор варианта, не аккаунта. `confirmed=false` — предварительное решение duel-v0 (ADR 0019):
-   * в выпуски датасета входят только подтверждённые.
+   * (fundDictionary: принятые + без отклонённых носителем). Пары обеих языковых пар: ba-ru и ba-kz — по языку
+   * исходника (source_items.lang). `status=expert_review` оставляет только проверенные носителем (native_approved).
+   * `confirmed` — сколько пользователей подтвердили вариант: голоса всех групп за него и «оба подходят» (по одному
+   * голосу на голосующего; «не знаю» и голоса за другой вариант не считаются). Персональных данных нет (правило 13):
+   * fragmentId — идентификатор варианта, не аккаунта; голосов по группам здесь нет (они — в выгрузке Фонда).
    */
   async publicDictionary(status: Schema<"PublicDictionaryEntry">["status"] = "confirmed", now: Date = new Date()): Promise<Schema<"PublicDictionary">> {
     const rows = (await this.fundDictionary(now)).items
@@ -385,7 +388,7 @@ export class ConsensusService implements ConsensusApi {
           langPair: row.langPair ?? LANG_PAIRS.ru,
           translation: row.sourceRu,
           sources: row.sources,
-          confirmed: !row.preliminary,
+          confirmed: confirmations(row.votes),
           status: row.review === "native_approved" ? "expert_review" : "confirmed",
         }),
       );
@@ -397,46 +400,66 @@ export class ConsensusService implements ConsensusApi {
    * Периоды по Уфе: day — сутки, week — неделя пн–вс, month — календарный месяц, year — календарный год.
    * Правило 13: в ответе только школы и классы с числами — ни ников, ни имён, ни идентификаторов учеников;
    * идентификаторы аккаунтов живут только внутри расчёта. Группы с активными учениками меньше порога
-   * малых групп (как в кабинете министерства, ADR 0023) в доску не попадают.
+   * малых групп (как в кабинете министерства, ADR 0023) в доску не попадают. Дополнительное скрытие: школа не
+   * показывается, если её ученики вне показанных классов школы — это 1…порог−1 учеников или активных учеников
+   * (иначе их числа получались бы вычитанием классов из школы). Демо-школы справочника (schools.is_demo — демо-записи
+   * импорта, все школы демо-района такие) — не участники доски; реальные школы справочника остаются, даже если в них
+   * демо-классы. Прямые кавычки названий — «ёлочки».
    */
   async publicLeaderboard(period: Schema<"PublicLeaderboard">["period"] = "week", now: Date = new Date()): Promise<Schema<"PublicLeaderboard">> {
     const day = ufaDate(now);
     const periodStart = period === "day" ? day : period === "week" ? ufaWeek(now).start : period === "month" ? `${day.slice(0, 7)}-01` : `${day.slice(0, 4)}-01-01`;
-    const [schools, classes] = await Promise.all([this.roster.roster(), this.roster.classRoster()]);
-    const districtOf = new Map(schools.districts.map((d) => [d.id, d.nameRu]));
-    const schoolOf = new Map(schools.schools.map((s) => [s.id, s]));
+    const [roster, allClasses] = await Promise.all([this.roster.roster(), this.roster.classRoster()]);
+    const districtOf = new Map(roster.districts.map((d) => [d.id, typographicQuotes(d.nameRu)]));
+    const schools = roster.schools.filter((s) => !s.isDemo);
+    const schoolOf = new Map(schools.map((s) => [s.id, s]));
+    const classes = allClasses.filter((c) => schoolOf.has(c.schoolId));
     // Все ученики школ и классов: словарный запас — у всех, активность — за период.
-    const ids = [...new Set([...schools.schools.flatMap((s) => s.studentIds), ...classes.flatMap((c) => c.studentIds)])];
+    const ids = [...new Set([...schools.flatMap((s) => s.studentIds), ...classes.flatMap((c) => c.studentIds)])];
     const totals = await this.progress.periodTotals(ids, periodStart);
     const of = (id: string) => totals.get(id) ?? { lessons: 0, words: 0 };
+    const group = (studentIds: readonly string[]) => {
+      const rows = studentIds.map(of);
+      return { lessons: rows.reduce((n, t) => n + t.lessons, 0), activeStudents: rows.filter((t) => t.lessons > 0).length, wordsLearned: rows.reduce((n, t) => n + t.words, 0) };
+    };
+    const small = (n: number) => n > 0 && n < SMALL_GROUP_THRESHOLD;
 
-    const schoolRows = schools.schools
-      .map((school) => {
-        const rows = school.studentIds.map(of);
-        return { school: school.shortNameRu, district: districtOf.get(school.districtId) ?? "", lessons: rows.reduce((n, t) => n + t.lessons, 0), activeStudents: rows.filter((t) => t.lessons > 0).length, wordsLearned: rows.reduce((n, t) => n + t.words, 0) };
+    const shownClasses = classes
+      .map((cls) => {
+        const school = schoolOf.get(cls.schoolId)!;
+        return { cls, row: { school: typographicQuotes(school.shortNameRu), district: districtOf.get(school.districtId) ?? "", classLabel: classTitle(cls.grade, cls.letter), ...group(cls.studentIds) } };
       })
-      .filter((r) => r.activeStudents >= LEADERBOARD_SMALL_GROUP)
+      .filter((c) => c.row.activeStudents >= SMALL_GROUP_THRESHOLD)
+      .sort((x, y) => y.row.lessons - x.row.lessons || y.row.wordsLearned - x.row.wordsLearned || x.row.school.localeCompare(y.row.school, "ru") || x.row.classLabel.localeCompare(y.row.classLabel, "ru"))
+      .slice(0, 10);
+    const classRows = shownClasses.map((c, i): Schema<"PublicLeaderboardClass"> => ({ rank: i + 1, ...c.row }));
+
+    // Ученики каждой школы, чьи числа видны в показанных классах: остаток школы не должен быть малой группой.
+    const visible = new Map<string, Set<string>>();
+    for (const { cls } of shownClasses) {
+      const set = visible.get(cls.schoolId) ?? new Set<string>();
+      for (const id of cls.studentIds) set.add(id);
+      visible.set(cls.schoolId, set);
+    }
+    const schoolRows = schools
+      .filter((school) => {
+        const shown = visible.get(school.id);
+        if (!shown) return true;
+        const rest = school.studentIds.filter((id) => !shown.has(id));
+        return !small(rest.length) && !small(rest.filter((id) => of(id).lessons > 0).length);
+      })
+      .map((school) => ({ school: typographicQuotes(school.shortNameRu), district: districtOf.get(school.districtId) ?? "", ...group(school.studentIds) }))
+      .filter((r) => r.activeStudents >= SMALL_GROUP_THRESHOLD)
       .sort((x, y) => y.lessons - x.lessons || y.wordsLearned - x.wordsLearned || x.school.localeCompare(y.school, "ru") || x.district.localeCompare(y.district, "ru"))
       .slice(0, 10)
       .map((r, i): Schema<"PublicLeaderboardSchool"> => ({ rank: i + 1, ...r }));
 
-    const classRows = classes
-      .map((cls) => {
-        const school = schoolOf.get(cls.schoolId);
-        const rows = cls.studentIds.map(of);
-        return { school: school?.shortNameRu ?? "", district: school ? districtOf.get(school.districtId) ?? "" : "", classLabel: classTitle(cls.grade, cls.letter), lessons: rows.reduce((n, t) => n + t.lessons, 0), activeStudents: rows.filter((t) => t.lessons > 0).length, wordsLearned: rows.reduce((n, t) => n + t.words, 0) };
-      })
-      .filter((r) => r.activeStudents >= LEADERBOARD_SMALL_GROUP)
-      .sort((x, y) => y.lessons - x.lessons || y.wordsLearned - x.wordsLearned || x.school.localeCompare(y.school, "ru") || x.classLabel.localeCompare(y.classLabel, "ru"))
-      .slice(0, 10)
-      .map((r, i): Schema<"PublicLeaderboardClass"> => ({ rank: i + 1, ...r }));
-
-    return { asOf: now.toISOString(), period, periodStart, smallGroupThreshold: LEADERBOARD_SMALL_GROUP, schools: schoolRows, classes: classRows };
+    return { asOf: now.toISOString(), period, periodStart, smallGroupThreshold: SMALL_GROUP_THRESHOLD, schools: schoolRows, classes: classRows };
   }
 
   /**
-   * Спорные исходники (status = escalated, отдельный список по ТЗ хакатона §4.4/§5) с голосами групп по вариантам —
-   * для передачи экспертам (УФИЦ РАН); решение эксперта — задел после хакатона. Свежие споры сверху.
+   * Спорные исходники (status = escalated, отдельный список — ТЗ §4.4/§5) с голосами групп по вариантам — для
+   * передачи экспертам (УФИЦ РАН); операции решения эксперта нет. Свежие споры сверху.
    */
   async fundEscalated(now: Date = new Date()): Promise<Schema<"FundEscalated">> {
     const rows = await this.db.select().from(itemState).where(eq(itemState.status, "escalated")).orderBy(desc(itemState.updatedAt));

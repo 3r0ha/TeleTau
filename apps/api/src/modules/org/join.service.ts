@@ -294,17 +294,20 @@ export class JoinService {
   /**
    * Одобрение: детский аккаунт без ПДн с ником из заявки, новое место без карточки, членство; в аудит. Заявка ученика
    * «Учусь сам» (requester_account_id, ADR 0022) аккаунт не создаёт: место привязывается к нему, прогресс остаётся.
-   * Если он уже в этом классе (одобрили вторую заявку) — 409 already_in_class.
+   * Ученик бывает только в одном классе: если он уже учится в этом или другом классе (одобрили вторую заявку, в том
+   * числе параллельно у другого учителя) — 409 already_in_class. Проверка — под блокировкой аккаунта заявителя.
    */
   async approve(principal: Principal, classId: string, requestId: string, meta: RequestMeta): Promise<Schema<"JoinRequest">> {
     return this.db.transaction(async (tx) => {
       await this.classesService.lockTeacherClass(tx, principal, classId);
       const row = await this.openRequest(tx, classId, requestId);
       if (row.requesterAccountId) {
+        // Два учителя одобряют заявки одного ученика в разные классы: блокировка учителя класса их не упорядочивает.
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`teletau:class-join:${row.requesterAccountId}`}, 0))`);
         const [member] = await tx
           .select({ id: memberships.id })
           .from(memberships)
-          .where(and(eq(memberships.classId, classId), eq(memberships.accountId, row.requesterAccountId), isNull(memberships.leftAt)));
+          .where(and(eq(memberships.accountId, row.requesterAccountId), eq(memberships.role, "student"), isNull(memberships.leftAt)));
         if (member) throw conflict("already_in_class");
       }
       const seatNumber = (await this.classesService.lastSeatNumber(tx, classId)) + 1;

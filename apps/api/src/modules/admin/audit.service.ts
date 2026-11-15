@@ -1,9 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
-import { and, desc, eq, gte, lt, lte, or, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
 import { contractRoles, staffRolesOf, type Principal, type RequestMeta, type Role } from "../../common/auth.js";
+import type { OperationQuery } from "../../common/contract.js";
 import { hmacHex } from "../../common/crypto.js";
-import { decodeCursor, encodeCursor, KeysetCursor } from "../../common/cursor.js";
+import { decodeCursor, encodeCursor, KeysetCursor, microsIso } from "../../common/cursor.js";
 import { APP_CONFIG, type AppConfig } from "../../config/config.js";
 import type { Db } from "../../db/database.js";
 import { DB } from "../../infra/tokens.js";
@@ -46,16 +47,8 @@ export interface AuditRecord {
   meta?: RequestMeta;
 }
 
-export interface AuditQuery {
-  action?: string;
-  actorId?: string;
-  targetType?: string;
-  targetId?: string;
-  from?: string;
-  to?: string;
-  cursor?: string;
-  limit: number;
-}
+/** Фильтры журнала — query-параметры операции listAuditLog из контракта. */
+export type AuditQuery = OperationQuery<"listAuditLog", "limit">;
 
 /** Журнал аудита — только вставка (ADR 0017): модули пишут через этот сервис в своей транзакции. */
 @Injectable()
@@ -89,19 +82,18 @@ export class AuditService {
     if (q.targetId) where.push(eq(auditLog.targetId, q.targetId));
     if (q.from) where.push(gte(auditLog.createdAt, new Date(q.from)));
     if (q.to) where.push(lte(auditLog.createdAt, new Date(q.to)));
+    // Курсор — момент в микросекундах (точность timestamptz) и id: сравнение кортежем в SQL, без округления до мс в JS.
     const cursor = decodeCursor(q.cursor, KeysetCursor);
-    if (cursor) {
-      const at = new Date(cursor.at);
-      where.push(or(lt(auditLog.createdAt, at), and(eq(auditLog.createdAt, at), lt(auditLog.id, cursor.id)))!);
-    }
-    const rows = await this.db
-      .select()
+    if (cursor) where.push(sql`(${auditLog.createdAt}, ${auditLog.id}) < (${cursor.at}::timestamptz, ${cursor.id}::uuid)`);
+    const found = await this.db
+      .select({ row: auditLog, at: microsIso(auditLog.createdAt) })
       .from(auditLog)
       .where(where.length ? and(...where) : undefined)
       .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
       .limit(q.limit + 1);
+    const rows = found.map((f) => f.row);
     const page = rows.slice(0, q.limit);
-    const last = page.at(-1);
+    const last = found[page.length - 1];
     return {
       items: page.map((r) => ({
         id: r.id,
@@ -121,7 +113,7 @@ export class AuditService {
         metadata: r.metadata as Record<string, unknown>,
         ...(r.requestId ? { requestId: r.requestId } : {}),
       })),
-      ...(rows.length > q.limit && last ? { nextCursor: encodeCursor({ at: last.createdAt.toISOString(), id: last.id }) } : {}),
+      ...(rows.length > q.limit && last ? { nextCursor: encodeCursor({ at: last.at, id: last.row.id }) } : {}),
     };
   }
 }

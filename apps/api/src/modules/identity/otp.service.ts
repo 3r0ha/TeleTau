@@ -18,8 +18,10 @@ import type { Db } from "../../db/database.js";
 import { RateLimiter } from "../../infra/rate-limiter.js";
 import { DB, VALKEY } from "../../infra/tokens.js";
 import { AuditService } from "../admin/index.js";
+import { ClassesService } from "../org/index.js";
 import { AccountsService, normalizeEmail, type AccountRow } from "./accounts.service.js";
 import { credentials } from "./identity.schema.js";
+import { SessionsService, type DeviceInfo, type SessionTokens } from "./sessions.service.js";
 
 export const OTP_TTL_SECONDS = 10 * 60;
 export const OTP_MAX_ATTEMPTS = 5;
@@ -50,6 +52,8 @@ export class OtpService {
     private readonly limiter: RateLimiter,
     private readonly accounts: AccountsService,
     private readonly audit: AuditService,
+    private readonly sessions: SessionsService,
+    private readonly classes: ClassesService,
   ) {
     this.key = encryptionKey(config);
   }
@@ -108,7 +112,7 @@ export class OtpService {
     const existing = await this.accounts.findByEmailSubject(subject || this.accounts.emailSubject(email));
     if (existing?.kind === "staff" && !demoStaffWithoutTotp(this.config)) {
       // Сотрудник: второй фактор обязателен; без него вызов кода не расходуется до конца — консоль спросит TOTP.
-      // Демо AUTH_DEMO_STAFF_WITHOUT_TOTP: показ жюри без аутентификатора — ветка пропускается целиком.
+      // С AUTH_DEMO_STAFF_WITHOUT_TOTP (демо-стенд без аутентификатора) ветка пропускается целиком.
       await this.assertStaffNotLocked(existing.id);
       if (!body.totp) throw unauthorized("totp_required");
       const totp = await this.checkTotp(existing.id, body.totp);
@@ -123,13 +127,28 @@ export class OtpService {
     // Одноразовость: из параллельных запросов с верным кодом дальше проходит только удаливший вызов.
     if ((await this.kv(() => this.valkey.del(key))) !== 1) throw unauthorized("otp_expired");
     const account = existing ?? (await this.accounts.findOrCreateAdult(email));
-    // Заблокированный аккаунт: причина — прямо, а не «Сессия завершена» по кругу (M2-UX5). Удалённый — как было.
+    // Заблокированный аккаунт: причина — прямо, а не «Сессия завершена» по кругу. Удалённый — session_revoked.
     if (account.status === "blocked") throw unauthorized("account_blocked");
     if (account.status !== "active") throw unauthorized("session_revoked");
     if (account.kind === "staff") {
       await this.audit.record(this.db, { action: "staff.login", actor: { accountId: account.id, kind: "staff", roles: account.roles }, meta });
     }
     return account;
+  }
+
+  /**
+   * Вход по почте (POST /auth/otp/verify): verify и сессия в одной транзакции с проверкой мест ученика — ребёнок
+   * с привязанной почтой (ADR 0022 §10), у которого родитель отозвал бумажное согласие, получает 403 consent_revoked,
+   * как у входа по карточке (ClassesService.admitAccount). Вход по почте детского аккаунта при перевыпуске карточки
+   * снимается (AccountsService.dropSideLogins).
+   */
+  async login(body: Schema<"OtpVerifyRequest">, meta: RequestMeta): Promise<{ tokens: SessionTokens; accountId: string }> {
+    const account = await this.verify(body, meta);
+    return this.db.transaction(async (tx) => {
+      if (account.kind !== "staff") await this.classes.admitAccount(tx, account.id);
+      const tokens = await this.sessions.issue(tx, { accountId: account.id, kind: account.kind, roles: account.roles }, body.device as DeviceInfo);
+      return { tokens, accountId: account.id };
+    });
   }
 
   /**

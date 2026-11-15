@@ -206,7 +206,8 @@ export interface paths {
         put?: never;
         /**
          * Выйти (отозвать сессию)
-         * @description Отзывает семейство текущей сессии (`sid` из access-токена) или, с `allDevices`, все сессии аккаунта.
+         * @description Отзывает семейство текущей сессии (`sid` из access-токена) или, с `allDevices`, все сессии аккаунта — вместе
+         *     с привязками Telegram (вход по привязке — тоже способ входа).
          */
         post: operations["logout"];
         delete?: never;
@@ -338,7 +339,7 @@ export interface paths {
          * Сохранить прогресс по почте (ученик или взрослый «Учусь сам»)
          * @description Аккаунт, начавший без почты, привязывает адрес: сначала `POST /auth/otp/request` с адресом, затем сюда —
          *     `challengeId` и код из письма. Дальше вход по почте и одноразовому коду; личная карточка после привязки
-         *     отзывается (вход по ней раскрывал бы адрес). Взрослым и детям (решение владельца, ADR 0022 §10): у ребёнка
+         *     отзывается (вход по ней раскрывал бы адрес). Взрослым и детям (ADR 0022 §10): у ребёнка
          *     сам адрес не хранится — только ключ входа (HMAC-хеш в `credentials`, строка `pii` не создаётся), адрес в
          *     ответе не возвращается (у ребёнка о привязке говорит `Me.emailLogin`, у взрослого — `profile.email`).
          *     Сотрудникам — 403.
@@ -702,7 +703,9 @@ export interface paths {
          * Подать заявку на подтверждение учителя
          * @description Взрослый указывает школу из справочника, ФИО и должность. ФИО хранится только в схеме `pii` (ADR 0009).
          *     Нужны принятые условия текущей версии — иначе 409 `consent_required`. Уже есть заявка на рассмотрении — 409
-         *     `verification_pending`; аккаунт уже подтверждён — 409 `already_verified`. Детский аккаунт или сотрудник — 403.
+         *     `verification_pending`; аккаунт уже подтверждён — 409 `already_verified`. У аккаунта нет почты (взрослый
+         *     «Учусь сам» без привязанного адреса: ФИО и должность хранятся в профиле `pii` рядом с адресом) — 409
+         *     `email_required`, сначала `POST /me/email`. Детский аккаунт или сотрудник — 403.
          *     Справочник документов недоступен (условия нельзя проверить) — 503 `documents_unavailable`.
          */
         post: operations["submitTeacherVerification"];
@@ -1335,7 +1338,7 @@ export interface paths {
          * @description Урок (`lesson`), «Испытание места» (`place_test`) — по `lessonId` узла тропы открытого юнита, — или
          *     повторение слов (`review`, без `lessonId`) со сроком `dueOn` (дата по Уфе, включительно): от сегодня
          *     до 28 дней вперёд. У класса одновременно не больше двух активных заданий — иначе 409 `assignment_limit`;
-         *     такое же активное задание уже есть — 409 `assignment_exists`. Неизвестный урок, урок закрытого юнита,
+         *     такое же активное задание уже есть — 409 `assignment_exists`; класс в архиве — 409 `class_archived`. Неизвестный урок, урок закрытого юнита,
          *     «Помоги языку» или неподходящий срок — 422 `validation_failed` с указателем на поле. Ученикам класса задание
          *     видно на тропе (`GET /course` → `assignments`), а заданный урок у них открыт.
          *     С `Idempotency-Key` повтор возвращает первый результат.
@@ -1482,6 +1485,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Отвязать Telegram от своего аккаунта
+         * @description Снимает все привязки чатов Telegram аккаунта вызывающего: вход по привязке (`POST /auth/telegram`),
+         *     напоминания и ежедневное задание в боте больше не работают, выданные ботом дуэли отменяются. Привязать снова —
+         *     `POST /telegram/link` или код `POST /me/telegram/link-code`. Нет привязок или повтор — тоже 204. Состояние —
+         *     `Me.telegram`. Привязки снимаются и сами: при отзыве согласия родителем, перевыпуске карточки и
+         *     выходе на всех устройствах.
+         */
+        delete: operations["unlinkMyTelegram"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/telegram/link-code": {
         parameters: {
             query?: never;
@@ -1588,10 +1615,35 @@ export interface paths {
          * @description Только для бота (`X-Service-Token`). Возвращает чаты, которым пора напомнить, и сразу отмечает их
          *     напомненными на эти сутки по Уфе — не больше одного напоминания в день, повтор вызова их уже не вернёт.
          *     Чат попадает в выдачу, если он привязан, напоминания включены, по Уфе уже наступил его час и ещё не
-         *     наступили тихие часы (21:00), а серия аккаунта под угрозой: она есть, но сегодня цель дня ещё не выполнена.
+         *     наступили тихие часы (21:00), аккаунт действует и согласие на его месте не отозвано, а серия аккаунта под
+         *     угрозой: она есть, но сегодня цель дня ещё не выполнена. Telegram точно не доставил сообщение — бот возвращает
+         *     чат операцией `releaseTelegramReminders`.
          *     В ответе только `chat_id` — ни аккаунта, ни серии, ни ника.
          */
         post: operations["claimTelegramReminders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/telegram/bot/reminders/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Вернуть недоставленные напоминания (служебная, для бота)
+         * @description Только для бота (`X-Service-Token`). Чаты из выдачи `claimTelegramReminders`, которым Telegram точно не
+         *     доставил сообщение (Bot API ответил ошибкой и после повторов по `retry_after`): отметка «напомнили в эти
+         *     сутки» снимается, и следующая выдача тех же суток вернёт их снова. Меняются только чаты с отметкой ровно на
+         *     сутки `day`; остальные (другие сутки, отвязанные) — без изменений. Повтор безопасен.
+         */
+        post: operations["releaseTelegramReminders"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1614,7 +1666,8 @@ export interface paths {
          *     на аккаунт, повторный вызов возвращает тот же диалог и тот же порядок сторон (перезапуск бота ничего не
          *     теряет). `state = issued` — выданная дуэль; `done` — голос на эти сутки по Уфе уже учтён (новой дуэли не
          *     будет); `empty` — свежих дуэлей для аккаунта нет. Ответивший или отменённый диалог повторной выдачей не
-         *     возвращается. Чат не привязан — 404 `chat_not_linked`.
+         *     возвращается. Чат не привязан — 404 `chat_not_linked`; так же — если аккаунт привязки не действует
+         *     (заблокирован, удалён) или родитель отозвал согласие на его месте в классе: такие привязки снимаются.
          */
         post: operations["issueTelegramDailyDuel"];
         delete?: never;
@@ -1662,7 +1715,8 @@ export interface paths {
          *     (`a`/`b`), `both` — «Оба подходят», `skip` — «Не знаю» (без мёда). Время от выдачи до ответа API считает
          *     сам. Ответ — только «учтён» и статус исходника: распределение голосов не показывается (защита от
          *     конформизма, docs/03 §4a). Повтор той же кнопки — тот же ответ (`replay: true`), новой записи нет; другой
-         *     выбор по отвеченному диалогу — 409 `already_voted`; диалог отменён — 409 `dialog_closed`; нет диалога — 404
+         *     выбор по отвеченному диалогу — 409 `already_voted`; диалог отменён — 409 `dialog_closed` (так же — если
+         *     аккаунт диалога больше не действует или согласие на его месте отозвано: голос не пишется); нет диалога — 404
          *     `dialog_not_found`.
          */
         post: operations["answerTelegramDailyDuel"];
@@ -1771,8 +1825,8 @@ export interface paths {
         /**
          * Спорные случаи — для передачи экспертам
          * @description Исходники без консенсуса по duel-v0 (`status = escalated`, ADR 0019): оба варианта с голосами по группам и
-         *     временем последнего голоса. Отдельный список по ТЗ хакатона (§4.4, §5) — задел для передачи экспертам
-         *     (УФИЦ РАН); в хакатоне решение эксперта не реализуется. Голосующие не раскрываются — только числа по группам.
+         *     временем последнего голоса. Отдельный список (ТЗ §4.4, §5) для передачи экспертам (УФИЦ РАН); решение
+         *     эксперта этой операцией не принимается. Голосующие не раскрываются — только числа по группам.
          *     Свежие споры сверху.
          */
         get: operations["listEscalatedItems"];
@@ -1797,9 +1851,10 @@ export interface paths {
          *     Выбор детерминирован: из принятых пар «башкирский ← русский» (`item_state.status = accepted`, основной
          *     вариант, без `native_rejected`; пары ba-kz во фразе дня не участвуют — лендинг показывает русский
          *     исходник) индекс — устойчивый хеш учебных суток по Уфе (Asia/Yekaterinburg, UTC+5), поэтому
-         *     в течение суток все клиенты показывают одну и ту же пару, в полночь по Уфе она меняется. Персональных
+         *     в течение суток все клиенты показывают одну и ту же пару, в полночь по Уфе она меняется. Выбор — среди пар,
+         *     принятых до начала учебных суток: пара, принятая днём, во фразу дня попадает со следующих суток. Персональных
          *     данных нет — только тексты пары и источники. Принятых пар ещё нет — поле `pair` отсутствует, блок
-         *     не показывают.
+         *     не показывают. Ответ кешируется до полуночи по Уфе (`Cache-Control: public`).
          */
         get: operations["getPhraseOfDay"];
         put?: never;
@@ -1825,8 +1880,9 @@ export interface paths {
          *     источники и статусы проверки (правило 13). `status=confirmed` — все принятые пары, `status=expert_review`
          *     — только проверенные носителем языка. `format=csv` — те же строки таблицей для Excel: разделитель точка
          *     с запятой, UTF-8 с BOM, столбцы `fragmentId;langPair;translation;textBa;status;confirmed;sources`
-         *     (источники — названия через запятую). Выгрузка для Фонда с голосами по группам — отдельная операция
-         *     `getFundDictionary`.
+         *     (источники — названия через запятую). `confirmed` — число пользователей, подтвердивших вариант. Ответ
+         *     кешируется на минуту (`Cache-Control: public, max-age=60`). Выгрузка для Фонда с голосами по группам —
+         *     отдельная операция `getFundDictionary`.
          */
         get: operations["getPublicDictionary"];
         put?: never;
@@ -1851,7 +1907,10 @@ export interface paths {
          *     (docs/02 §6). Школы и классы с активными учениками меньше `smallGroupThreshold` в доску не попадают
          *     (ADR 0023). Периоды по Уфе (Asia/Yekaterinburg): `day` — учебные сутки, `week` — неделя пн–вс
          *     (по умолчанию), `month` — календарный месяц, `year` — календарный год. Пустые списки — данные ещё
-         *     не накоплены, блок на витрине не показывают.
+         *     не накоплены, блок на витрине не показывают. Школа не попадает в доску и тогда, когда по её классам из доски
+         *     можно вычислить числа скрытой малой группы (дополнительное скрытие, как в кабинете министерства). Демо-школы
+         *     справочника (`School.isDemo`) на доску не попадают. Ответ
+         *     кешируется на минуту (`Cache-Control: public, max-age=60`).
          */
         get: operations["getPublicLeaderboard"];
         put?: never;
@@ -1899,11 +1958,12 @@ export interface components {
          *     (409 — узел тропы закрыт), `run_conflict` (409 — `runId` уже занят другим уроком или аккаунтом), `run_completed`
          *     (409 — забег завершён), `run_incomplete` (409 — не на все упражнения есть ответ), `exercise_not_in_run` (422),
          *     `explanation_not_applicable` (409 — у попытки вердикт `correct`/`recorded`: объяснять нечего),
-         *     `ai_explanation_limit` (429 — больше 10 объяснений ошибок в сутки на аккаунт), `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
+         *     `ai_explanation_limit` (429 — больше 10 объяснений ошибок в сутки на аккаунт), `jump_unavailable` (409 — место
+         *     тропы уже открыто, прыгать некуда), `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
          *     `answer_type_mismatch` (422 — вид ответа не подходит к упражнению), `already_voted` (409), `vote_required`
          *     (403 — голоса видны после своего голоса), `content_unavailable` (503 — контент курса не импортирован).
          *     Значения заданий (ADR 0021): `assignment_limit` (409 — у класса уже два активных задания), `assignment_exists`
-         *     (409 — такое же задание уже активно).
+         *     (409 — такое же задание уже активно), `class_archived` (409 — класс в архиве: заданий ему не дают).
          *     Значения Telegram (ADR 0020): `init_data_invalid` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`),
          *     `init_data_expired` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`), `telegram_unavailable`
          *     (503 — бот не настроен), `chat_not_linked` (404 — чат не привязан), `telegram_login_forbidden`
@@ -1912,6 +1972,7 @@ export interface components {
          *     (404 — диалога нет), `dialog_closed` (409 — диалог отменён или закрыт).
          *     Значения самостоятельного обучения (ADR 0022): `login_card_unavailable` (403 — личная карточка аккаунту
          *     не положена), `email_in_use` (409 — адрес уже у другого аккаунта), `email_already_set` (409),
+         *     `email_required` (409 — для заявки учителя нужна привязанная почта),
          *     `already_in_class` (409 — ученик уже в классе). Список открыт: неизвестный `code`
          *     клиент обрабатывает по `status`. `title` и `errors[].detail` — понятный человеку текст на русском.
          */
@@ -2101,12 +2162,23 @@ export interface components {
              *     только ключ входа, поэтому адрес в ответе не возвращается. У взрослого о привязке говорит `profile.email`.
              */
             emailLogin?: boolean;
+            telegram?: components["schemas"]["MeTelegram"];
             locale: components["schemas"]["Locale"];
             teacherStatus: components["schemas"]["TeacherStatus"];
             classes: components["schemas"]["MyClass"][];
             profile?: components["schemas"]["AdultProfile"];
             /** @description Виды документов, действующую версию которых аккаунт должен принять (взрослым) */
             pendingConsents: components["schemas"]["LegalDocumentKind"][];
+        };
+        /**
+         * @description Привязка Telegram аккаунта (ADR 0020) — у учеников и взрослых, у сотрудников поля нет. Только факт привязки
+         *     и число чатов: ни `chat_id`, ни данных профиля Telegram. Отвязать — `DELETE /me/telegram`.
+         */
+        MeTelegram: {
+            /** @description Хотя бы один чат привязан — вход через Telegram, напоминания и задание дня в боте работают */
+            linked: boolean;
+            /** @description Сколько личных чатов Telegram привязано к аккаунту */
+            chats: number;
         };
         /** @description ПДн взрослого — только ему самому (схема `pii`). У детских аккаунтов отсутствует. */
         AdultProfile: {
@@ -2616,13 +2688,15 @@ export interface components {
             audio?: components["schemas"]["AudioClip"];
         };
         /**
-         * @description Запись произношения носителем (кнопка «Послушать»). Только записи из контента с источником — файлы Wikimedia
-         *     Commons (туда выкладывает записи Lingua Libre); синтеза речи нет. Нет записи — нет поля и нет кнопки.
-         *     Запись отдаёт наш сайт, а не Commons: копии лежат на сайте под `/audio/` (`scripts/prepare-audio.mjs`), пути
+         * @description Озвучка строки (кнопка «Послушать»): запись носителя или синтез речи — различает `origin`. Запись носителя —
+         *     файл Wikimedia Commons (туда выкладывает записи Lingua Libre); синтез — только для строк без записи носителя
+         *     (модель и диктор — в `source`), клиент показывает его с пометкой «синтез речи». Нет озвучки — нет поля и нет
+         *     кнопки. Файлы отдаёт наш сайт: копии лежат на сайте под `/audio/` (`scripts/prepare-audio.mjs`), пути
          *     относительные — клиент дополняет их адресом сайта (веб — свой origin). Откуда запись — `source` (страница файла
-         *     Commons, диктор, лицензия).
+         *     Commons, диктор, лицензия или модель синтеза).
          */
         AudioClip: {
+            origin: components["schemas"]["AudioOrigin"];
             /**
              * Format: uri-reference
              * @description Путь к копии записи на сайте в AAC (`/audio/<id>.m4a`) — её играют все платформы: iOS, Android, Safari,
@@ -2637,6 +2711,11 @@ export interface components {
             files?: components["schemas"]["AudioFile"][];
             source?: components["schemas"]["SourceCitation"];
         };
+        /**
+         * @description Происхождение озвучки: `native` — запись носителя языка, `tts` — синтез речи (не запись носителя)
+         * @enum {string}
+         */
+        AudioOrigin: "native" | "tts";
         /** @description Копия записи на сайте */
         AudioFile: {
             /**
@@ -3826,6 +3905,14 @@ export interface components {
             day: string;
             items: components["schemas"]["TelegramReminderTarget"][];
         };
+        TelegramReminderRelease: {
+            /**
+             * Format: date
+             * @description Сутки по Уфе из ответа `claimTelegramReminders`
+             */
+            day: string;
+            chatIds: components["schemas"]["TelegramChatIdValue"][];
+        };
         /** @description Вариант дуэли в порядке показа этому диалогу (A, B) — `choice` ответа относительно него */
         TelegramDuelSide: {
             /** Format: uuid */
@@ -4102,8 +4189,11 @@ export interface components {
             translation: string;
             /** @description Источники фрагмента (у вариантов из источников — всегда) */
             sources: components["schemas"]["SourceCitation"][];
-            /** @description `true` — подтверждено и входит в выпуски датасета; `false` — предварительное решение голосования (duel-v0, ADR 0019), может уточниться */
-            confirmed: boolean;
+            /**
+             * @description Сколько пользователей подтвердили вариант: голоса всех групп (ученики, взрослые, учителя) за этот вариант
+             *     и «оба подходят». Без «не знаю» и без голосов за другой вариант. У решения эксперта без голосования — 0
+             */
+            confirmed: number;
             /**
              * @description `confirmed` — принято голосованием, `expert_review` — проверено носителем языка
              * @enum {string}
@@ -4189,7 +4279,7 @@ export interface components {
         };
         /**
          * @description Спорный исходник — нет консенсуса по duel-v0 (ADR 0019). Кандидат на решение эксперта (УФИЦ РАН, ТЗ §4.4):
-         *     в хакатоне список только формируется, решение эксперта — задел на развитие.
+         *     список только формируется, операции решения эксперта нет.
          */
         EscalatedItem: {
             /** Format: uuid */
@@ -6346,6 +6436,27 @@ export interface operations {
             default: components["responses"]["Unexpected"];
         };
     };
+    unlinkMyTelegram: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Привязок Telegram у аккаунта нет */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
     issueTelegramLinkCode: {
         parameters: {
             query?: never;
@@ -6509,6 +6620,33 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            default: components["responses"]["Unexpected"];
+        };
+    };
+    releaseTelegramReminders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramReminderRelease"];
+            };
+        };
+        responses: {
+            /** @description Отметки сняты */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationFailed"];
             default: components["responses"]["Unexpected"];
         };
     };
@@ -6740,6 +6878,7 @@ export interface operations {
                     "application/json": components["schemas"]["PhraseOfDay"];
                 };
             };
+            429: components["responses"]["TooManyRequests"];
             503: components["responses"]["ServiceUnavailable"];
             default: components["responses"]["Unexpected"];
         };
@@ -6768,6 +6907,7 @@ export interface operations {
                     "text/csv": string;
                 };
             };
+            429: components["responses"]["TooManyRequests"];
             503: components["responses"]["ServiceUnavailable"];
             default: components["responses"]["Unexpected"];
         };
@@ -6793,6 +6933,7 @@ export interface operations {
                     "application/json": components["schemas"]["PublicLeaderboard"];
                 };
             };
+            429: components["responses"]["TooManyRequests"];
             503: components["responses"]["ServiceUnavailable"];
             default: components["responses"]["Unexpected"];
         };

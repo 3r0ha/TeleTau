@@ -1,9 +1,10 @@
 // Скрытие малых групп в кабинете министерства (ADR 0023): числа группы меньше порога не показываются, чтобы их
 // нельзя было связать с конкретным ребёнком. Чистые функции — без ввода-вывода (тесты: test/ministry-small-groups.test.ts).
 import type { Schema } from "@teletau/contracts";
+import { SMALL_GROUP_THRESHOLD } from "@teletau/domain-rules";
 
-/** Порог малой группы: меньше 5 учеников — числа скрыты. */
-export const SMALL_GROUP_THRESHOLD = 5;
+/** Порог малой группы — общий с доской почёта (@teletau/domain-rules). */
+export { SMALL_GROUP_THRESHOLD };
 
 /** Числа группы учеников до скрытия. */
 export interface GroupCounts {

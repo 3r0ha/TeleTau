@@ -20,6 +20,14 @@ export class TelegramController {
     return this.telegram.link(principal, body);
   }
 
+  /** Отвязка всех чатов Telegram своего аккаунта из профиля. */
+  @Delete("me/telegram")
+  @HttpCode(204)
+  @Operation("unlinkMyTelegram")
+  unlinkMine(@CurrentPrincipal() principal: Principal): Promise<void> {
+    return this.telegram.unlinkMine(principal);
+  }
+
   /** Одноразовый код привязки без Mini App (ADR 0020): ученик или взрослый берёт на сайте, шлёт боту /start <код>. */
   @Post("me/telegram/link-code")
   @HttpCode(200)
@@ -81,5 +89,12 @@ export class TelegramController {
   @Operation("claimTelegramReminders")
   claim(): Promise<Schema<"TelegramReminderBatch">> {
     return this.telegram.claimReminders();
+  }
+
+  @Post("telegram/bot/reminders/release")
+  @HttpCode(204)
+  @Operation("releaseTelegramReminders")
+  release(@Body() body: Schema<"TelegramReminderRelease">): Promise<void> {
+    return this.telegram.releaseReminders(body);
   }
 }

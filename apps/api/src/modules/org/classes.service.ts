@@ -376,6 +376,28 @@ export class ClassesService {
   }
 
   /**
+   * Аккаунты, у которых родитель отозвал бумажное согласие хотя бы на одном действующем месте в классе — то же
+   * условие, что у admitAccount, но без блокировок и пачкой: для бота (выдача дуэлей и напоминаний), который
+   * сессий не выдаёт.
+   */
+  async consentBlockedAccounts(accountIds: readonly string[], db: Db = this.db): Promise<Set<string>> {
+    const out = new Set<string>();
+    if (accountIds.length === 0) return out;
+    const seats = await db
+      .select({ accountId: memberships.accountId, seatId: classSeats.id })
+      .from(memberships)
+      .innerJoin(classSeats, eq(classSeats.id, memberships.seatId))
+      .where(and(inArray(memberships.accountId, [...new Set(accountIds)]), eq(memberships.role, "student"), isNull(memberships.leftAt)));
+    if (seats.length === 0) return out;
+    const consents = await this.consents.seatConsents(
+      seats.map((s) => s.seatId),
+      db,
+    );
+    for (const s of seats) if (consents.get(s.seatId)?.status === "revoked") out.add(s.accountId);
+    return out;
+  }
+
+  /**
    * Первый вход по карточке: место блокируется (FOR UPDATE), при пустом месте создаётся аккаунт (колбэк identity)
    * и членство в классе. Возвращает аккаунт места.
    */

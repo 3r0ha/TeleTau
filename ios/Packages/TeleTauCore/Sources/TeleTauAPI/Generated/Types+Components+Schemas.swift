@@ -22,7 +22,8 @@ extension Components {
         /// Значения: `unauthenticated`, `token_expired`, `forbidden`, `not_found`, `validation_failed`, `bad_request`,
         /// `rate_limited`, `card_invalid`, `card_revoked`, `consent_revoked`, `class_archived`, `payload_invalid`,
         /// `class_code_not_found`, `otp_invalid`, `otp_expired`, `otp_attempts_exceeded`, `totp_required`, `totp_invalid`,
-        /// `email_login_unavailable`, `refresh_invalid`, `refresh_reused`, `session_revoked`, `nickname_not_allowed`,
+        /// `email_login_unavailable`, `refresh_invalid`, `refresh_reused`, `session_revoked`, `account_blocked`
+        /// (401 — аккаунт заблокирован, вход невозможен до разблокировки), `nickname_not_allowed`,
         /// `teacher_not_verified`, `school_not_allowed`, `class_exists`, `seat_limit_exceeded`, `print_job_expired`,
         /// `print_job_replaced` (410 — карточки задания печати уже заменены новым выпуском),
         /// `join_request_closed`, `consent_required`, `verification_pending`, `already_verified`, `already_decided`,
@@ -34,16 +35,22 @@ extension Components {
         /// `internal`. Уроки, мотивация, дуэли: `not_implemented` (501 — операция контракта ещё не реализована), `lesson_locked`
         /// (409 — узел тропы закрыт), `run_conflict` (409 — `runId` уже занят другим уроком или аккаунтом), `run_completed`
         /// (409 — забег завершён), `run_incomplete` (409 — не на все упражнения есть ответ), `exercise_not_in_run` (422),
-        /// `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
+        /// `explanation_not_applicable` (409 — у попытки вердикт `correct`/`recorded`: объяснять нечего),
+        /// `ai_explanation_limit` (429 — больше 10 объяснений ошибок в сутки на аккаунт), `jump_unavailable` (409 — место
+        /// тропы уже открыто, прыгать некуда), `pairs_incomplete` (422 — в ответе «Пары» соединены не все пары или одна сторона повторяется),
         /// `answer_type_mismatch` (422 — вид ответа не подходит к упражнению), `already_voted` (409), `vote_required`
         /// (403 — голоса видны после своего голоса), `content_unavailable` (503 — контент курса не импортирован).
         /// Значения заданий (ADR 0021): `assignment_limit` (409 — у класса уже два активных задания), `assignment_exists`
-        /// (409 — такое же задание уже активно).
-        /// Значения Telegram (ADR 0020): `init_data_invalid` (422 — подпись `initData` не сошлась или строка не разобрана),
-        /// `init_data_expired` (422 — `initData` старше суток), `telegram_unavailable` (503 — бот не настроен),
-        /// `chat_not_linked` (404 — чат не привязан).
+        /// (409 — такое же задание уже активно), `class_archived` (409 — класс в архиве: заданий ему не дают).
+        /// Значения Telegram (ADR 0020): `init_data_invalid` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`),
+        /// `init_data_expired` (422 — у `POST /telegram/link`; 401 — у `POST /auth/telegram`), `telegram_unavailable`
+        /// (503 — бот не настроен), `chat_not_linked` (404 — чат не привязан), `telegram_login_forbidden`
+        /// (403 — аккаунт сотрудника: вход в консоль по e-mail с TOTP, не через Telegram), `code_not_found`
+        /// (404 — код привязки не найден, истёк или уже использован). Ежедневное задание бота (ADR 0024): `dialog_not_found`
+        /// (404 — диалога нет), `dialog_closed` (409 — диалог отменён или закрыт).
         /// Значения самостоятельного обучения (ADR 0022): `login_card_unavailable` (403 — личная карточка аккаунту
         /// не положена), `email_in_use` (409 — адрес уже у другого аккаунта), `email_already_set` (409),
+        /// `email_required` (409 — для заявки учителя нужна привязанная почта),
         /// `already_in_class` (409 — ученик уже в классе). Список открыт: неизвестный `code`
         /// клиент обрабатывает по `status`. `title` и `errors[].detail` — понятный человеку текст на русском.
         ///
@@ -608,6 +615,14 @@ extension Components {
             public var dailyGoal: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Me/loginCard`.
             public var loginCard: Components.Schemas.LoginCardStatus?
+            /// Вход по почте привязан (ADR 0022 §10). Поле бывает только у детских аккаунтов: сам адрес не хранится —
+            /// только ключ входа, поэтому адрес в ответе не возвращается. У взрослого о привязке говорит `profile.email`.
+            ///
+            ///
+            /// - Remark: Generated from `#/components/schemas/Me/emailLogin`.
+            public var emailLogin: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/Me/telegram`.
+            public var telegram: Components.Schemas.MeTelegram?
             /// - Remark: Generated from `#/components/schemas/Me/locale`.
             public var locale: Components.Schemas.Locale
             /// - Remark: Generated from `#/components/schemas/Me/teacherStatus`.
@@ -632,6 +647,8 @@ extension Components {
             ///   - ageBand:
             ///   - dailyGoal: Цель дня, выбранная самим учеником (соты в сутки). Нет — по умолчанию 2 (`DailyGoal`)
             ///   - loginCard:
+            ///   - emailLogin: Вход по почте привязан (ADR 0022 §10). Поле бывает только у детских аккаунтов: сам адрес не хранится —
+            ///   - telegram:
             ///   - locale:
             ///   - teacherStatus:
             ///   - classes:
@@ -647,6 +664,8 @@ extension Components {
                 ageBand: Components.Schemas.AgeBand? = nil,
                 dailyGoal: Swift.Int? = nil,
                 loginCard: Components.Schemas.LoginCardStatus? = nil,
+                emailLogin: Swift.Bool? = nil,
+                telegram: Components.Schemas.MeTelegram? = nil,
                 locale: Components.Schemas.Locale,
                 teacherStatus: Components.Schemas.TeacherStatus,
                 classes: [Components.Schemas.MyClass],
@@ -662,6 +681,8 @@ extension Components {
                 self.ageBand = ageBand
                 self.dailyGoal = dailyGoal
                 self.loginCard = loginCard
+                self.emailLogin = emailLogin
+                self.telegram = telegram
                 self.locale = locale
                 self.teacherStatus = teacherStatus
                 self.classes = classes
@@ -678,11 +699,44 @@ extension Components {
                 case ageBand
                 case dailyGoal
                 case loginCard
+                case emailLogin
+                case telegram
                 case locale
                 case teacherStatus
                 case classes
                 case profile
                 case pendingConsents
+            }
+        }
+        /// Привязка Telegram аккаунта (ADR 0020) — у учеников и взрослых, у сотрудников поля нет. Только факт привязки
+        /// и число чатов: ни `chat_id`, ни данных профиля Telegram. Отвязать — `DELETE /me/telegram`.
+        ///
+        ///
+        /// - Remark: Generated from `#/components/schemas/MeTelegram`.
+        public struct MeTelegram: Codable, Hashable, Sendable {
+            /// Хотя бы один чат привязан — вход через Telegram, напоминания и задание дня в боте работают
+            ///
+            /// - Remark: Generated from `#/components/schemas/MeTelegram/linked`.
+            public var linked: Swift.Bool
+            /// Сколько личных чатов Telegram привязано к аккаунту
+            ///
+            /// - Remark: Generated from `#/components/schemas/MeTelegram/chats`.
+            public var chats: Swift.Int
+            /// Creates a new `MeTelegram`.
+            ///
+            /// - Parameters:
+            ///   - linked: Хотя бы один чат привязан — вход через Telegram, напоминания и задание дня в боте работают
+            ///   - chats: Сколько личных чатов Telegram привязано к аккаунту
+            public init(
+                linked: Swift.Bool,
+                chats: Swift.Int
+            ) {
+                self.linked = linked
+                self.chats = chats
+            }
+            public enum CodingKeys: String, CodingKey {
+                case linked
+                case chats
             }
         }
         /// ПДн взрослого — только ему самому (схема `pii`). У детских аккаунтов отсутствует.
@@ -1167,15 +1221,18 @@ extension Components {
                 case audio
             }
         }
-        /// Запись произношения носителем (кнопка «Послушать»). Только записи из контента с источником — файлы Wikimedia
-        /// Commons (туда выкладывает записи Lingua Libre); синтеза речи нет. Нет записи — нет поля и нет кнопки.
-        /// Запись отдаёт наш сайт, а не Commons: копии лежат на сайте под `/audio/` (`scripts/prepare-audio.mjs`), пути
+        /// Озвучка строки (кнопка «Послушать»): запись носителя или синтез речи — различает `origin`. Запись носителя —
+        /// файл Wikimedia Commons (туда выкладывает записи Lingua Libre); синтез — только для строк без записи носителя
+        /// (модель и диктор — в `source`), клиент показывает его с пометкой «синтез речи». Нет озвучки — нет поля и нет
+        /// кнопки. Файлы отдаёт наш сайт: копии лежат на сайте под `/audio/` (`scripts/prepare-audio.mjs`), пути
         /// относительные — клиент дополняет их адресом сайта (веб — свой origin). Откуда запись — `source` (страница файла
-        /// Commons, диктор, лицензия).
+        /// Commons, диктор, лицензия или модель синтеза).
         ///
         ///
         /// - Remark: Generated from `#/components/schemas/AudioClip`.
         public struct AudioClip: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AudioClip/origin`.
+            public var origin: Components.Schemas.AudioOrigin
             /// Путь к копии записи на сайте в AAC (`/audio/<id>.m4a`) — её играют все платформы: iOS, Android, Safari,
             /// Chrome, Firefox. `<id>` — первые 16 hex SHA-256 копии записи.
             ///
@@ -1193,23 +1250,34 @@ extension Components {
             /// Creates a new `AudioClip`.
             ///
             /// - Parameters:
+            ///   - origin:
             ///   - url: Путь к копии записи на сайте в AAC (`/audio/<id>.m4a`) — её играют все платформы: iOS, Android, Safari,
             ///   - files: Все копии записи на сайте по порядку предпочтения — AAC (как `url`), затем Ogg: оригинал Ogg Vorbis с Commons
             ///   - source:
             public init(
+                origin: Components.Schemas.AudioOrigin,
                 url: Swift.String,
                 files: [Components.Schemas.AudioFile]? = nil,
                 source: Components.Schemas.SourceCitation? = nil
             ) {
+                self.origin = origin
                 self.url = url
                 self.files = files
                 self.source = source
             }
             public enum CodingKeys: String, CodingKey {
+                case origin
                 case url
                 case files
                 case source
             }
+        }
+        /// Происхождение озвучки: `native` — запись носителя языка, `tts` — синтез речи (не запись носителя)
+        ///
+        /// - Remark: Generated from `#/components/schemas/AudioOrigin`.
+        @frozen public enum AudioOrigin: String, Codable, Hashable, Sendable, CaseIterable {
+            case native = "native"
+            case tts = "tts"
         }
         /// Копия записи на сайте
         ///

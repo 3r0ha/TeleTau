@@ -110,7 +110,8 @@ export class SelfLearnerService {
   /**
    * POST /me/login-card: выпуск или перевыпуск. Под блокировкой строки аккаунта (FOR UPDATE) — два нажатия подряд
    * дают два выпуска по очереди, а не два действующих. Прежняя карточка отзывается, сессии аккаунта на других
-   * устройствах завершаются (тот, кто вошёл потерянной карточкой, выходит сразу), текущая остаётся.
+   * устройствах завершаются (тот, кто вошёл потерянной карточкой, выходит сразу), текущая остаётся; привязки
+   * Telegram снимаются — их мог завести тот же человек (владелец привяжет чат снова).
    */
   async issueCard(principal: Principal, meta: RequestMeta): Promise<Schema<"LoginCard">> {
     await this.requireCardAccount(principal.accountId);
@@ -131,6 +132,7 @@ export class SelfLearnerService {
       if (previous) {
         await tx.update(loginCards).set({ revokedAt: now, updatedAt: now }).where(eq(loginCards.id, previous.id));
         revoked = await this.sessions.revokeAccountExcept(tx, account.id, principal.sessionId, "card_reissued");
+        await this.accounts.dropSideLogins(tx, account.id, "card_reissued");
       }
       const id = uuidv7();
       const [inserted] = await tx
@@ -224,7 +226,7 @@ export class SelfLearnerService {
   // ── привязка почты (взрослым и детям) ──
 
   /**
-   * POST /me/email: аккаунт без почты привязывает подтверждённый адрес (детям — по решению владельца, ADR 0022 §10).
+   * POST /me/email: аккаунт без почты привязывает подтверждённый адрес (детям тоже — ADR 0022 §10).
    * Адрес другого аккаунта — 409 email_in_use (код из письма при этом израсходован: он подтверждает только владение
    * адресом). Личная карточка отзывается — дальше вход по почте. У ребёнка сам адрес не хранится: только ключ
    * входа (HMAC-хеш в credentials, строка pii не создаётся).

@@ -5,10 +5,19 @@
 import { createRequire } from "node:module";
 import { applyDecorators, SetMetadata } from "@nestjs/common";
 import { RouteConfig, RouteSchema } from "@nestjs/platform-fastify";
-import type { OperationId } from "@teletau/contracts";
+import type { OperationId, operations } from "@teletau/contracts";
 import type { FastifySchema } from "fastify";
 
 type JsonSchema = Record<string, unknown>;
+
+/**
+ * Query-параметры операции — типом из контракта, без ручных DTO. `Defaults` — параметры со значением по умолчанию
+ * в контракте: ajv подставляет их до обработчика (useDefaults), поэтому в обработчике они всегда есть.
+ */
+export type OperationQuery<Op extends OperationId, Defaults extends keyof NonNullable<operations[Op]["parameters"]["query"]> = never> = NonNullable<
+  operations[Op]["parameters"]["query"]
+> &
+  Required<Pick<NonNullable<operations[Op]["parameters"]["query"]>, Defaults>>;
 
 /** Роли x-access (packages/contracts/scripts/access-rules.mjs). */
 export type AccessRole = "anonymous" | "any" | "student" | "adult" | "teacher" | "moderator" | "admin" | "ministry" | "fund" | "service";

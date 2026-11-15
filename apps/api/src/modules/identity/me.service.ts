@@ -1,4 +1,4 @@
-// GET/PATCH /me: аккаунт с ролями из базы (свежее токена), классы, статус учителя и непринятые документы.
+// GET/PATCH /me: аккаунт с ролями из базы (свежее токена), классы, статус учителя, непринятые документы и привязка Telegram.
 import { Injectable } from "@nestjs/common";
 import type { Schema } from "@teletau/contracts";
 import { contractRoles, staffRolesOf, type Principal } from "../../common/auth.js";
@@ -6,6 +6,7 @@ import { forbidden, invalidField, unauthorized } from "../../common/problem.js";
 import { ConsentService } from "../consent/index.js";
 import { VerificationService } from "../moderation/index.js";
 import { ClassesService } from "../org/index.js";
+import { TelegramLinks } from "../telegram/index.js";
 import { AccountsService, UI_MODE_BY_BAND, ageBandOf } from "./accounts.service.js";
 import { nicknameById } from "./nicknames.js";
 import { SelfLearnerService } from "./self-learner.service.js";
@@ -20,14 +21,15 @@ export class MeService {
     private readonly verifications: VerificationService,
     private readonly consents: ConsentService,
     private readonly selfLearners: SelfLearnerService,
+    private readonly telegramLinks: TelegramLinks,
   ) {}
 
   async me(accountId: string): Promise<Me> {
     const account = await this.accounts.get(accountId);
-    // Заблокированный аккаунт узнаёт причину, а не беззвучный «Сессия завершена» (M2-UX5); удалённый — как было.
+    // Заблокированный аккаунт узнаёт причину, а не беззвучный «Сессия завершена»; удалённый — session_revoked.
     if (account?.status === "blocked") throw unauthorized("account_blocked");
     if (!account || account.status !== "active") throw unauthorized("session_revoked");
-    const [classes, teacherStatus, pendingConsents, profile, loginCard, emailLogin] = await Promise.all([
+    const [classes, teacherStatus, pendingConsents, profile, loginCard, emailLogin, telegram] = await Promise.all([
       this.classes.myClasses({ accountId, roles: account.roles }),
       account.kind === "adult" ? this.verifications.teacherStatus(accountId) : Promise.resolve("none" as const),
       this.consents.pendingKinds(accountId, account.kind),
@@ -35,6 +37,8 @@ export class MeService {
       this.selfLearners.cardStatus(account),
       // Вход по почте у ребёнка (ADR 0022 §10): адрес не хранится, поэтому только флаг — без AdultProfile.
       account.kind === "child" ? this.accounts.hasEmail(accountId) : Promise.resolve(false),
+      // Сотруднику Telegram не привязывается — поля нет.
+      account.kind === "staff" ? Promise.resolve(undefined) : this.telegramLinks.status(accountId),
     ]);
     // Возрастной диапазон (ADR 0022): у ребёнка — по режиму, у взрослого — только если он учится (выбрал ник).
     const staff = staffRolesOf(account.kind, account.roles);
@@ -50,6 +54,7 @@ export class MeService {
       ...(account.dailyGoal ? { dailyGoal: account.dailyGoal } : {}),
       ...(loginCard ? { loginCard } : {}),
       ...(emailLogin ? { emailLogin: true } : {}),
+      ...(telegram ? { telegram } : {}),
       locale: account.locale,
       teacherStatus,
       classes,

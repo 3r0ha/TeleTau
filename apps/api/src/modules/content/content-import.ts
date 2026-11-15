@@ -46,6 +46,8 @@ export interface AudioFileValue {
  * Копии кладёт scripts/prepare-audio.mjs в apps/web/public/audio; <id> — первые 16 hex SHA-256 копии из content/audio.
  */
 export interface AudioValue {
+  /** native — запись носителя (Commons), tts — синтез речи (content/audio/tts). */
+  origin: "native" | "tts";
   url: string;
   files: AudioFileValue[];
   source: Citation;
@@ -96,16 +98,16 @@ export function ttsSlug(text: string): string {
 /** Источник синтезированной озвучки в content/sources.yaml (модель Silero v5_cis_base_nostress, диктор bak_aigul). */
 const TTS_SOURCE_REF = "silero-tts-v5-cis";
 
-/** Локальная запись по id копии: AAC — основной адрес, затем Ogg (oggType — audioOggType). */
-export function localAudio(id: string, source: Citation, oggType: string = AUDIO_OGG_TYPE): AudioValue {
+/** Локальная копия по id: AAC — основной адрес, затем Ogg (oggType — audioOggType); origin — запись носителя или синтез. */
+export function localAudio(id: string, source: Citation, oggType: string = AUDIO_OGG_TYPE, origin: AudioValue["origin"] = "native"): AudioValue {
   const m4a = `/audio/${id}.m4a`;
-  return { url: m4a, files: [{ url: m4a, type: AUDIO_M4A_TYPE }, { url: `/audio/${id}.ogg`, type: oggType }], source };
+  return { origin, url: m4a, files: [{ url: m4a, type: AUDIO_M4A_TYPE }, { url: `/audio/${id}.ogg`, type: oggType }], source };
 }
 
 export interface BaValue {
   text: string;
   review: ShownReview;
-  /** Запись произношения носителем — тогда в уроке и словаре есть «Послушать». */
+  /** Озвучка — запись носителя или синтез (origin); тогда в уроке и словаре есть «Послушать». */
   audio?: AudioValue;
 }
 
@@ -287,8 +289,8 @@ function audioOf(raw: unknown, sources: Sources, where: string): AudioValue | un
 
 /**
  * Синтезированная озвучка строки (фолбэк, когда записи носителя нет): копия content/audio/tts/<слаг>.ogg
- * (Silero, scripts/tts). Происхождение честно видно в источнике (silero-tts-v5-cis в sources.yaml):
- * синтез — не запись носителя. Строки с записью носителя синтезом не подменяются.
+ * (Silero, scripts/tts). Происхождение — origin: "tts" (клиент помечает «синтез речи») и источник silero-tts-v5-cis
+ * в sources.yaml. Строки с записью носителя синтезом не подменяются.
  */
 function ttsAudio(text: string, sources: Sources, where: string): AudioValue | undefined {
   const id = sources.tts?.get(ttsSlug(text));
@@ -300,7 +302,7 @@ function ttsAudio(text: string, sources: Sources, where: string): AudioValue | u
     ...(src.url ? { url: src.url } : {}),
     ...(src.license ? { license: src.license } : {}),
   };
-  return localAudio(id, source, AUDIO_OGG_TYPE);
+  return localAudio(id, source, AUDIO_OGG_TYPE, "tts");
 }
 
 function baText(raw: unknown, sources: Sources, where: string): BaParsed {

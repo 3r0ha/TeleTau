@@ -1173,7 +1173,9 @@ public enum Operations {
     }
     /// Выйти (отозвать сессию)
     ///
-    /// Отзывает семейство текущей сессии (`sid` из access-токена) или, с `allDevices`, все сессии аккаунта.
+    /// Отзывает семейство текущей сессии (`sid` из access-токена) или, с `allDevices`, все сессии аккаунта — вместе
+    /// с привязками Telegram (вход по привязке — тоже способ входа).
+    ///
     ///
     /// - Remark: HTTP `POST /api/v1/auth/logout`.
     /// - Remark: Generated from `#/paths//api/v1/auth/logout/post(logout)`.

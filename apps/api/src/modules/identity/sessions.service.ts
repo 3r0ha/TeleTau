@@ -13,6 +13,7 @@ import type { Db } from "../../db/database.js";
 import { RateLimiter, type Limit } from "../../infra/rate-limiter.js";
 import { DB, VALKEY } from "../../infra/tokens.js";
 import { AuditService } from "../admin/index.js";
+import { TelegramLinks } from "../telegram/index.js";
 import { accounts, devices, sessions } from "./identity.schema.js";
 import { ACCESS_TOKEN_TTL_SECONDS, TokenService } from "./token.service.js";
 
@@ -51,6 +52,7 @@ export class SessionsService {
     private readonly tokens: TokenService,
     private readonly audit: AuditService,
     private readonly limiter: RateLimiter,
+    private readonly telegramLinks: TelegramLinks,
   ) {}
 
   /** Новое семейство сессии на устройстве (строка devices — на пару «аккаунт + установка»). */
@@ -67,11 +69,6 @@ export class SessionsService {
     const life = account.kind === "staff" ? LIFETIME.staff : LIFETIME.default;
     const familyId = uuidv7();
     return this.mint(db, account, { familyId, deviceId: dev!.id, familyExpiresAt: new Date(now.getTime() + life.absolute) }, life.sliding, now);
-  }
-
-  /** Новое семейство вне транзакции вызывающего (вход по e-mail). */
-  start(account: AccountRef, device: DeviceInfo): Promise<SessionTokens> {
-    return this.db.transaction((tx) => this.issue(tx, account, device));
   }
 
   /** Ротация refresh-токена: старый помечается использованным, выпускается новый в том же семействе. */
@@ -114,7 +111,7 @@ export class SessionsService {
     if (account!.status === "blocked") {
       await this.revokeFamilyRows(this.db, row.familyId, "account_blocked");
       await this.blockFamilies([row.familyId]);
-      // Заблокированный аккаунт не «заходит по кругу» со «Сессия завершена»: причина названа прямо (M2-UX5).
+      // Заблокированный аккаунт не «заходит по кругу» со «Сессия завершена»: причина названа прямо.
       throw unauthorized("account_blocked");
     }
     if (account!.status !== "active") {
@@ -143,9 +140,14 @@ export class SessionsService {
     return this.reuseDetected(fresh ?? row, ref, meta);
   }
 
-  /** Выход: семейство текущей сессии или (allDevices) все сессии аккаунта. */
+  /** Выход: семейство текущей сессии или (allDevices) все сессии аккаунта вместе с привязками Telegram (вход по ним). */
   async logout(principal: Principal, allDevices: boolean): Promise<void> {
-    const families = allDevices ? await this.revokeAccount(this.db, principal.accountId, "logout_all") : [];
+    const families = allDevices
+      ? await this.db.transaction(async (tx) => {
+          await this.telegramLinks.unlinkAccount(tx, principal.accountId);
+          return this.revokeAccount(tx, principal.accountId, "logout_all");
+        })
+      : [];
     if (!allDevices) await this.revokeFamilyRows(this.db, principal.sessionId, "logout");
     // Даже если строк уже нет, текущий access-токен должен перестать работать сразу.
     await this.blockFamilies([...new Set([...families, principal.sessionId])]);

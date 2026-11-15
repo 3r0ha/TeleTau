@@ -268,8 +268,10 @@ export class ConsentService implements OnApplicationBootstrap, OnApplicationShut
       [doc] = (await this.currentDocumentsEnsured()).filter((d) => d.kind === "consent_child");
       if (!doc) throw unavailable("documents_unavailable");
     }
-    const signedOn = body.signedOn ?? ufaToday();
-    if (signedOn > ufaToday(new Date(Date.now() + 24 * 3600_000))) throw invalidField("/signedOn", "Дата подписи не может быть в будущем");
+    // Даты — учебные сутки по Уфе (вся республика в UTC+5): подпись позже сегодняшних суток — в будущем.
+    const today = ufaToday();
+    const signedOn = body.signedOn ?? today;
+    if (signedOn > today) throw invalidField("/signedOn", "Дата подписи не может быть в будущем");
     try {
       return await this.db.transaction(async (tx) => {
         const [row] = await tx

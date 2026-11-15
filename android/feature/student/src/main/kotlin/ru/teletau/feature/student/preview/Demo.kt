@@ -70,7 +70,7 @@ import ru.teletau.core.network.models.Week
  */
 internal object Demo {
     private val review = ReviewStatus.needsNativeReview
-    private fun ba(text: String, audio: String? = null) = BaString(text = text, review = review, audio = audio?.let { ru.teletau.core.network.models.AudioClip(url = it) })
+    private fun ba(text: String, audio: String? = null) = BaString(text = text, review = review, audio = audio?.let { ru.teletau.core.network.models.AudioClip(origin = ru.teletau.core.network.models.AudioOrigin.native, url = it) })
 
     /** Запись носителя — относительный адрес на сайте (как будут отдавать записи после переноса с Commons). */
     const val AUDIO = "/audio/da06a402759ce347.m4a"
@@ -199,7 +199,7 @@ internal object Demo {
     )
     val choice = ChoiceExercise(
         id = "e2", type = ChoiceExerciseType.choiceBaRu, review = review, prompt = "мәктәп",
-        promptAudio = ru.teletau.core.network.models.AudioClip(url = AUDIO),
+        promptAudio = ru.teletau.core.network.models.AudioClip(origin = ru.teletau.core.network.models.AudioOrigin.native, url = AUDIO),
         options = listOf(ChoiceOption("o1", "книга"), ChoiceOption("o2", "школа"), ChoiceOption("o3", "урок"), ChoiceOption("o4", "учитель")),
     )
     val free = FreeInputExercise(

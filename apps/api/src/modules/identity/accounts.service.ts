@@ -10,6 +10,7 @@ import { APP_CONFIG, type AppConfig } from "../../config/config.js";
 import { pgErrorCode, type Db } from "../../db/database.js";
 import { DB } from "../../infra/tokens.js";
 import { JoinGrants } from "../org/index.js";
+import { TelegramLinks } from "../telegram/index.js";
 import { accounts, adultProfiles, credentials } from "./identity.schema.js";
 import { SessionsService } from "./sessions.service.js";
 
@@ -46,6 +47,7 @@ export class AccountsService implements AccountsPort {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     private readonly sessions: SessionsService,
     private readonly joinGrants: JoinGrants,
+    private readonly telegramLinks: TelegramLinks,
   ) {}
 
   /** Ключ поиска e-mail: HMAC-SHA-256 с перцем; сам адрес — только в pii.adult_profiles. */
@@ -195,10 +197,26 @@ export class AccountsService implements AccountsPort {
    * Все сессии аккаунта — и выдача сессий по его заявкам кода класса: иначе повторный опрос одобренной заявки
    * вернул бы отозванный доступ. Сначала закрываются заявки (их строки блокируются до конца транзакции), потом
    * отзываются сессии: опрос, успевший выдать сессию раньше, её и потеряет, а опрос после — увидит закрытую заявку.
+   * Другие способы входа, кроме карточки, снимаются вместе с сессиями (dropSideLogins).
    */
   async revokeAllSessions(db: Db, accountId: string, reason: "consent_revoked" | "account_blocked" | "card_reissued"): Promise<string[]> {
     await this.joinGrants.close(db, accountId);
+    await this.dropSideLogins(db, accountId, reason);
     return this.sessions.revokeAccount(db, accountId, reason);
+  }
+
+  /**
+   * Способы входа в обход карточки, которые мог завести тот, кто вошёл чужой (потерянной) карточкой: привязки
+   * Telegram — всегда; вход по почте детского аккаунта — при перевыпуске карточки (адреса у ребёнка нет, только
+   * ключ входа: законный ученик привяжет почту снова, войдя по новой карточке). Согласие и блокировка почту не
+   * снимают — вход по ней их проверяет сам.
+   */
+  async dropSideLogins(db: Db, accountId: string, reason: "consent_revoked" | "account_blocked" | "card_reissued" | "logout_all"): Promise<void> {
+    await this.telegramLinks.unlinkAccount(db, accountId);
+    if (reason !== "card_reissued") return;
+    await db
+      .delete(credentials)
+      .where(and(eq(credentials.accountId, accountId), eq(credentials.type, "email"), sql`${credentials.accountId} IN (SELECT ${accounts.id} FROM ${accounts} WHERE ${accounts.kind} = 'child')`));
   }
 
   blockSessions(familyIds: readonly string[]): Promise<void> {
@@ -216,8 +234,20 @@ export class AccountsService implements AccountsPort {
   }
 
   async voterView(db: Db, accountId: string): Promise<Pick<Principal, "kind" | "roles"> | undefined> {
-    const [row] = await db.select({ kind: accounts.kind, roles: accounts.roles }).from(accounts).where(eq(accounts.id, accountId));
+    const [row] = await db
+      .select({ kind: accounts.kind, roles: accounts.roles })
+      .from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.status, "active")));
     return row ?? undefined;
+  }
+
+  async activeAccounts(accountIds: readonly string[]): Promise<Set<string>> {
+    if (accountIds.length === 0) return new Set();
+    const rows = await this.db
+      .select({ id: accounts.id })
+      .from(accounts)
+      .where(and(inArray(accounts.id, [...new Set(accountIds)]), eq(accounts.status, "active"), sql`${accounts.kind} <> 'staff'`));
+    return new Set(rows.map((r) => r.id));
   }
 
   async republicAccounts(): Promise<{ selfLearnerIds: string[]; teachersVerified: number }> {

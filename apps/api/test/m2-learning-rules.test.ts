@@ -97,6 +97,7 @@ describe("content:import — разбор курса (content-import.ts)", () =>
     const tiles = b.exercises.find((e) => e.id === "t-l1-tiles")!;
     const accepted = (tiles.answerKey as { kind: "accepted"; accepted: { audio?: AudioValue }[] }).accepted[0]!;
     expect(accepted.audio).toEqual({
+      origin: "tts",
       url: "/audio/0123456789abcdef.m4a",
       files: [
         { url: "/audio/0123456789abcdef.m4a", type: AUDIO_M4A_TYPE },

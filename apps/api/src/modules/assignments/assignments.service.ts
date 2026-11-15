@@ -75,7 +75,9 @@ export class AssignmentsService implements AssignmentsApi {
 
   async create(principal: Principal, classId: string, body: Schema<"CreateAssignmentRequest">, idempotencyKey?: string, now: Date = new Date()): Promise<Schema<"ClassAssignment">> {
     return this.idempotency.run(`createClassAssignment:${classId}`, principal.accountId, idempotencyKey, requestFingerprint(body), async () => {
-      await this.policy.requireTeacher(principal, classId);
+      const cls = await this.policy.requireTeacher(principal, classId);
+      // Класс в архиве учебного года уже не учится: задание ему некому выполнять.
+      if (cls.status === "archived") throw conflict("class_archived");
       const today = ufaDate(now);
       const due = dueOnProblem(body.dueOn, today);
       if (due) throw invalidField("/dueOn", due);

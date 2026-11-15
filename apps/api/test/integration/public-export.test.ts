@@ -1,9 +1,11 @@
 // Публичный словарь и доска почёта (ТЗ §5, §4.5): анонимные выгрузки без регистрации против Docker-стека.
 // Словарь: принятые пары корпуса с источниками и статусами проверки — JSON и CSV (разделитель «;», BOM, CRLF),
 // ?status=expert_review — только проверенные носителем. Пары обеих языковых пар: ba-ru и ba-kz (казахские исходники
-// грузятся importDuels с lang = kz) — строки kz-пар помечены langPair, фраза дня остаётся парой ba-ru. Доска: топ школ
-// и классов по урокам за период, порог малых групп (группа < 5 активных не показана), ?period=day; мусорный период —
-// 422 проверки схемы. ПДн (правило 13): в ответах только тексты пар и агрегаты школ/классов — ни аккаунтов, ни ников.
+// грузятся importDuels с lang = kz) — строки kz-пар помечены langPair, фраза дня остаётся парой ba-ru; `confirmed` —
+// число подтвердивших вариант. Доска: топ школ и классов по урокам за период, порог малых групп (группа < 5 активных не
+// показана) и дополнительное скрытие школы, чей остаток вне показанных классов — малая группа; демо-школы и демо-районы
+// справочника — не на доске; прямые кавычки названий — «ёлочки»; ?period=day; мусорный период — 422 проверки схемы.
+// ПДн (правило 13): в ответах только тексты пар и агрегаты школ/классов — ни аккаунтов, ни ников.
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -41,22 +43,32 @@ const kzPairs = [
   { kz: "бір", ba: "бер", alt: "берәү" },
 ];
 const kzSources = new Map<string, string>();
-/** Школы доски: большая (5 активных из 6) и малая (2 из 3 — ниже порога). */
-const ids = { district: "", big: "", small: "" };
+/**
+ * Школы доски — не демо-записи справочника: большая (5 активных из 6, название с прямыми кавычками), малая (2 из 3 —
+ * ниже порога), смешанная (класс 5 из 5 на доске и класс 2 из 3 — его числа получались бы вычитанием); демо-школа
+ * (is_demo, 5 из 5) — не на доске. Район — демо-запись теста: районы справочника РБ в общей базе прогона считает
+ * m1-edges.test.ts. Уроки смешанной и демо-школы — в начале года (доска за год): лиги текущей недели других файлов
+ * они не задевают.
+ */
+const ids = { district: "", big: "", small: "", mixed: "", demo: "" };
+const BIG_SCHOOL = `Публичная школа "Большая" ${RUN}`;
+const BIG_SCHOOL_SHOWN = `Публичная школа «Большая» ${RUN}`;
+const MIXED_SCHOOL = `Публичная школа смешанная ${RUN}`;
+const DEMO_SCHOOL = `Публичная демо-школа ${RUN}`;
 const studentIds: string[] = [];
 const nicknames: string[] = [];
 const BIG_CLASS_LETTER = "П";
 
 const principalOf = (s: AuthSession): Principal => ({ accountId: s.account.id, kind: s.account.kind, roles: s.account.roles, sessionId: "", deviceId: "" });
 
-/** Демо-район теста с двумя школами (как insertDistrict в ministry-fund.test.ts). */
-async function insertDistrict(name: string, schools: string[]): Promise<{ id: string; schools: string[] }> {
+/** Демо-район теста со школами (как insertDistrict в ministry-fund.test.ts); `demo` — признак is_demo каждой школы. */
+async function insertDistrict(name: string, schools: { name: string; demo: boolean }[]): Promise<{ id: string; schools: string[] }> {
   const id = randomUUID();
   await pool.query("INSERT INTO districts (id, oktmo, name_ru, kind, source, is_demo) VALUES ($1, $2, $3, 'municipal_district', 'it', true)", [id, `demo-it-${RUN}-${name.length}`, `${name} ${RUN}`]);
   const out: string[] = [];
   for (const school of schools) {
     const sid = randomUUID();
-    await pool.query("INSERT INTO schools (id, district_id, name_ru, short_name_ru, source, is_demo) VALUES ($1, $2, $3, $3, 'it', true)", [sid, id, `${school} ${RUN}`]);
+    await pool.query("INSERT INTO schools (id, district_id, name_ru, short_name_ru, source, is_demo) VALUES ($1, $2, $3, $3, 'it', $4)", [sid, id, school.name, school.demo]);
     out.push(sid);
   }
   return { id, schools: out };
@@ -80,7 +92,12 @@ async function schoolWithStudents(who: string, schoolId: string, letter: string,
   for (const card of cards) {
     const kid = await api.post<AuthSession>("/auth/qr", { body: { payload: card.payload, device: newDevice() } });
     expectStatus(kid, 200);
-    const me = await api.patch<Schema<"Me">>("/me", { token: kid.body.accessToken, body: { nicknameId: `a${String(kids.length % 30).padStart(2, "0")}.n${String((n * 5 + kids.length) % 30).padStart(2, "0")}` } });
+    // Возрастной диапазон 15–17: очки уроков этих учеников идут в свою группу лиги, а не в группу 11–14, где лигу
+    // текущей недели проверяет m2-learning.test.ts (база прогона общая).
+    const me = await api.patch<Schema<"Me">>("/me", {
+      token: kid.body.accessToken,
+      body: { nicknameId: `a${String(kids.length % 30).padStart(2, "0")}.n${String((n * 5 + kids.length) % 30).padStart(2, "0")}`, ageBand: "age_15_17" },
+    });
     expectStatus(me, 200);
     if (me.body.nickname) nicknames.push(me.body.nickname);
     studentIds.push(kid.body.account.id);
@@ -160,15 +177,27 @@ beforeAll(async () => {
     }
   }
 
-  // ── доска: большая школа (5 из 6 занимались по 3 урока) и малая (2 из 3 — скрыта) ──
-  const d = await insertDistrict("Демо-волость доски", ["Публичная школа большая", "Публичная школа малая"]);
+  // ── доска: большая школа (5 из 6 занимались по 3 урока), малая (2 из 3 — скрыта), смешанная и демо-школа ──
+  const d = await insertDistrict("Демо-волость доски", [
+    { name: BIG_SCHOOL, demo: false },
+    { name: `Публичная школа малая ${RUN}`, demo: false },
+    { name: MIXED_SCHOOL, demo: false },
+    { name: DEMO_SCHOOL, demo: true },
+  ]);
   ids.district = d.id;
-  [ids.big, ids.small] = d.schools as [string, string];
+  [ids.big, ids.small, ids.mixed, ids.demo] = d.schools as [string, string, string, string];
   const big = await schoolWithStudents("pub-big", ids.big, BIG_CLASS_LETTER, 6);
   const small = await schoolWithStudents("pub-small", ids.small, "М", 3);
+  const mixedShown = await schoolWithStudents("pub-mixed-a", ids.mixed, "А", 5);
+  const mixedHidden = await schoolWithStudents("pub-mixed-b", ids.mixed, "Б", 3);
+  const demoKids = await schoolWithStudents("pub-demo", ids.demo, "Д", 5);
   const now = Date.now();
   for (const kid of big.slice(0, 5)) for (let k = 0; k < 3; k++) await lessonDone(kid, new Date(now - 60_000));
   for (const kid of small.slice(0, 2)) await lessonDone(kid, new Date(now - 30_000));
+  const yearStart = new Date(Date.UTC(new Date(now).getUTCFullYear(), 0, 1, 6));
+  for (const kid of mixedShown) await lessonDone(kid, yearStart);
+  for (const kid of mixedHidden.slice(0, 2)) for (let k = 0; k < 2; k++) await lessonDone(kid, yearStart);
+  for (const kid of demoKids) for (let k = 0; k < 4; k++) await lessonDone(kid, yearStart);
 });
 
 afterAll(async () => {
@@ -177,7 +206,7 @@ afterAll(async () => {
 });
 
 describe("GET /public/dictionary (ТЗ §5)", () => {
-  it("анониму — JSON: принятые пары с источниками и статусами; предварительные решения — не подтверждены", async () => {
+  it("анониму — JSON: принятые пары с источниками и статусами; confirmed — сколько пользователей подтвердили вариант", async () => {
     const res = await api.get<Schema<"PublicDictionary">>("/public/dictionary");
     expectStatus(res, 200);
     const body = res.body;
@@ -186,10 +215,14 @@ describe("GET /public/dictionary (ТЗ §5)", () => {
     const byText = new Map(body.items.map((i) => [i.textBa, i]));
     const voted = byText.get(votedText)!;
     expect(voted).toBeDefined();
-    expect(voted).toMatchObject({ langPair: "ba-ru", translation: `${VOTED} ${RUN}`, confirmed: false, status: "confirmed" });
+    // Трое взрослых выбрали «икс»: confirmed — число голосов за вариант во всех группах (целое, не флаг).
+    expect(voted).toMatchObject({ langPair: "ba-ru", translation: `${VOTED} ${RUN}`, confirmed: 3, status: "confirmed" });
+    expect(Number.isInteger(voted.confirmed)).toBe(true);
     expect(voted.fragmentId).toMatch(/^[0-9a-f-]{36}$/);
     expect(voted.sources[0]).toMatchObject({ title: "Синтетика публичного словаря", license: "CC0" });
-    expect(byText.get(nativeText)).toMatchObject({ translation: `${NATIVE} ${RUN}`, status: "expert_review" });
+    expect(byText.get(nativeText)).toMatchObject({ translation: `${NATIVE} ${RUN}`, status: "expert_review", confirmed: 3 });
+    // Публичная операция кешируется: Cache-Control public (в тестах кеш процесса выключен — max-age из PUBLIC_CACHE_SECONDS).
+    expect(res.headers["cache-control"]).toMatch(/^public, max-age=\d+$/);
     // Правило 13: ни голосовавших, ни их групп — только тексты и статусы.
     const text = JSON.stringify(body);
     for (const id of studentIds) expect(text).not.toContain(id);
@@ -218,7 +251,9 @@ describe("GET /public/dictionary (ТЗ §5)", () => {
     expect(native).toBeDefined();
     expect(native).toContain(`${NATIVE} ${RUN}`);
     expect(native).toContain("expert_review");
-    expect(native).toContain("false");
+    // Колонка confirmed — число подтвердивших (3 голоса за «икс»), а не true/false.
+    expect(native.split(";")[5]).toBe("3");
+    expect(native).not.toMatch(/;(true|false);/);
     expect(native).toContain("Синтетика публичного словаря");
     expect(native).not.toContain("https://example.org");
   });
@@ -284,12 +319,14 @@ describe("GET /public/leaderboard (ТЗ §4.5)", () => {
     expect(body.periodStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(body.smallGroupThreshold).toBe(5);
 
-    const school = body.schools.find((s) => s.school === `Публичная школа большая ${RUN}`)!;
+    // Название из справочника с прямыми кавычками — «ёлочками».
+    const school = body.schools.find((s) => s.school === BIG_SCHOOL_SHOWN)!;
     expect(school).toBeDefined();
     expect(school).toMatchObject({ district: `Демо-волость доски ${RUN}`, lessons: 15, activeStudents: 5, wordsLearned: 20 });
+    expect(body.schools.find((s) => s.school === BIG_SCHOOL)).toBeUndefined();
     expect(body.schools.find((s) => s.school === `Публичная школа малая ${RUN}`)).toBeUndefined();
 
-    const cls = body.classes.find((c) => c.classLabel === `6 «${BIG_CLASS_LETTER}»` && c.school === `Публичная школа большая ${RUN}`)!;
+    const cls = body.classes.find((c) => c.classLabel === `6 «${BIG_CLASS_LETTER}»` && c.school === BIG_SCHOOL_SHOWN)!;
     expect(cls).toBeDefined();
     expect(cls).toMatchObject({ district: `Демо-волость доски ${RUN}`, lessons: 15, activeStudents: 5, wordsLearned: 20 });
     expect(body.classes.find((c) => c.school === `Публичная школа малая ${RUN}`)).toBeUndefined();
@@ -306,12 +343,30 @@ describe("GET /public/leaderboard (ТЗ §4.5)", () => {
     expect(text).not.toMatch(/nickname|email|accountId/i);
   });
 
+  it("дополнительное скрытие: школа, чей остаток вне показанных классов — малая группа, не показывается (класс — да)", async () => {
+    const res = await api.get<Schema<"PublicLeaderboard">>("/public/leaderboard?period=year");
+    expectStatus(res, 200);
+    // Класс «А» (5 из 5) на доске; класс «Б» (2 активных из 3) — нет. Школа целиком дала бы «Б» вычитанием: 5 + 4 урока − 5.
+    expect(res.body.classes.find((c) => c.school === MIXED_SCHOOL && c.classLabel === "6 «А»")).toMatchObject({ lessons: 5, activeStudents: 5 });
+    expect(res.body.classes.find((c) => c.school === MIXED_SCHOOL && c.classLabel === "6 «Б»")).toBeUndefined();
+    expect(res.body.schools.find((s) => s.school === MIXED_SCHOOL)).toBeUndefined();
+  });
+
+  it("демо-школы справочника — не на доске (ни школой, ни классом), даже с активностью выше порога", async () => {
+    const res = await api.get<Schema<"PublicLeaderboard">>("/public/leaderboard?period=year");
+    expectStatus(res, 200);
+    expect(res.body.schools.find((s) => s.school === DEMO_SCHOOL)).toBeUndefined();
+    expect(res.body.classes.find((c) => c.school === DEMO_SCHOOL)).toBeUndefined();
+    // Не демо-школа того же района на доске — скрывается сама демо-запись, а не район целиком.
+    expect(res.body.schools.find((s) => s.school === BIG_SCHOOL_SHOWN)).toBeDefined();
+  });
+
   it("?period=day — учебные сутки по Уфе: та же активность сегодняшнего дня", async () => {
     const res = await api.get<Schema<"PublicLeaderboard">>("/public/leaderboard?period=day");
     expectStatus(res, 200);
     expect(res.body.period).toBe("day");
     expect(res.body.periodStart).toBe(ufaDate(new Date()));
-    const school = res.body.schools.find((s) => s.school === `Публичная школа большая ${RUN}`)!;
+    const school = res.body.schools.find((s) => s.school === BIG_SCHOOL_SHOWN)!;
     expect(school).toMatchObject({ lessons: 15, activeStudents: 5 });
   });
 
@@ -321,5 +376,7 @@ describe("GET /public/leaderboard (ТЗ §4.5)", () => {
     expect(res.headers["content-type"]).toContain("application/problem+json");
     expect(res.body).toMatchObject({ code: "validation_failed" });
     expect(res.body.errors?.[0]?.pointer).toBe("#/query/period");
+    // Ошибка публичной операции не кешируется.
+    expect(res.headers["cache-control"]).toBe("no-store");
   });
 });

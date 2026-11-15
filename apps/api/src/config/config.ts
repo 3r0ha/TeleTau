@@ -68,8 +68,8 @@ const ConfigSchema = z
       .preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.union([z.literal(""), z.enum(["0", "1", "true", "false"]), z.boolean()]).optional())
       .transform((v) => v === true || v === "1" || v === "true"),
     /**
-     * Демо-сотрудники без второго фактора — для показа жюри (аутентификатор неудобен). Только вместе с
-     * AUTH_DEMO_STAFF и не в production: вход сотрудника становится «почта → код» в один TOTP-шаг меньше.
+     * Демо-сотрудники без второго фактора — для демо-стенда без аутентификатора. Только вместе с AUTH_DEMO_STAFF
+     * и не в production: вход сотрудника становится «почта → код» без шага TOTP.
      */
     AUTH_DEMO_STAFF_WITHOUT_TOTP: z
       .preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.union([z.literal(""), z.enum(["0", "1", "true", "false"]), z.boolean()]).optional())
@@ -118,6 +118,15 @@ const ConfigSchema = z
     AI_GATEWAY_TOKEN: optionalString.pipe(z.string().trim().min(16).optional()),
     /** Лимит объяснений ошибок на аккаунт в учебные сутки (docs/04 §5.5). */
     AI_EXPLANATION_LIMIT: z.coerce.number().int().min(0).max(100).default(10),
+    /**
+     * Таймаут вызова ai-gateway, мс. Больше общего дедлайна шлюза к GigaChat (GIGACHAT_TIMEOUT_MS, 10 с): шлюз успевает
+     * ответить отказом сам, а не обрывается на полуслове.
+     */
+    AI_GATEWAY_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60000).default(12000),
+
+    // Публичная витрина без входа (фраза дня, словарь, доска почёта).
+    /** Сколько секунд ответ публичной операции живёт в кеше процесса и в Cache-Control (0 — без кеша процесса). */
+    PUBLIC_CACHE_SECONDS: z.coerce.number().int().min(0).max(3600).default(60),
 
     // Telegram (ADR 0020).
     /**
