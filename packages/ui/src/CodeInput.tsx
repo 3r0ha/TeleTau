@@ -2,6 +2,8 @@
 
 import { Fragment, useEffect, useId, useRef, type ClipboardEvent, type KeyboardEvent, type ReactNode } from "react";
 import { WarningCircle } from "@phosphor-icons/react/ssr";
+import { fillUi } from "./strings";
+import { useUiStrings } from "./UiStrings";
 
 export interface CodeInputProps {
   /** Число ячеек: 4 — код из письма (0000), 6 — TOTP или код класса. */
@@ -53,6 +55,7 @@ export function CodeInput({
   autoFocus,
   compact,
 }: CodeInputProps) {
+  const s = useUiStrings();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   // Последнее значение — сразу, не дожидаясь перерисовки: быстрый ввод и автозаполнение не теряют символы.
   const valueRef = useRef(value);
@@ -153,7 +156,7 @@ export function CodeInput({
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint={i === length - 1 ? "done" : "next"}
-              aria-label={`${label}: символ ${i + 1} из ${length}`}
+              aria-label={fillUi(s.codeCell, { label, n: i + 1, length })}
               aria-invalid={error ? true : undefined}
               aria-describedby={describedBy}
               disabled={disabled}

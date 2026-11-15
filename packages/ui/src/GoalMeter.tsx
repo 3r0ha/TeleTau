@@ -1,5 +1,9 @@
+"use client";
+
 import { useId } from "react";
 import { hexPath } from "./hex";
+import { fillUi } from "./strings";
+import { useUiStrings } from "./UiStrings";
 
 export interface GoalMeterProps {
   done: number;
@@ -18,7 +22,8 @@ const H = 26;
  * Цель дня (prototype .goal): сота наполняется мёдом по доле выполненного, рядом — «1 из 2 сот». Выполнено —
  * сота полная и с галочкой-штампом. Для читалки — одна фраза «Цель дня: 1 из 2».
  */
-export function GoalMeter({ done, target, celebrate, unit = "сот", className }: GoalMeterProps) {
+export function GoalMeter({ done, target, celebrate, unit, className }: GoalMeterProps) {
+  const s = useUiStrings();
   const clip = `goal-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const shown = Math.min(done, target);
   const share = target > 0 ? shown / target : 0;
@@ -26,7 +31,7 @@ export function GoalMeter({ done, target, celebrate, unit = "сот", className 
   const fillH = H * share;
   return (
     <p className={["tt-goal", met && "tt-goal--met", celebrate && "tt-goal--celebrate", className].filter(Boolean).join(" ")}>
-      <span className="tt-visually-hidden">{`Цель дня: ${shown} из ${target}${met ? ", выполнена" : ""}`}</span>
+      <span className="tt-visually-hidden">{fillUi(met ? s.goalLabelMet : s.goalLabel, { done: shown, target })}</span>
       <svg className="tt-goal__hex" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden focusable="false">
         <defs>
           <clipPath id={clip}>
@@ -39,9 +44,9 @@ export function GoalMeter({ done, target, celebrate, unit = "сот", className 
         {met ? <path className="tt-goal__check" d="M9.5 13.5l4 4 7-8" /> : null}
       </svg>
       <span className="tt-goal__text" aria-hidden>
-        {shown} из {target}
+        {fillUi(s.goalOf, { done: shown, target })}
         <br />
-        {unit}
+        {unit ?? s.goalUnit}
       </span>
     </p>
   );

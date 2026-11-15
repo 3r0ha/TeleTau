@@ -2,7 +2,7 @@
 // с галочкой, шаговый заголовок фокусируемый.
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { LinkButton } from "../src/Button";
+import { Button, LinkButton } from "../src/Button";
 import { ChoiceGroup } from "../src/ChoiceGroup";
 import { CodeInput } from "../src/CodeInput";
 import { HexAvatar } from "../src/HexAvatar";
@@ -44,7 +44,7 @@ describe("серверная разметка компонентов", () => {
     expect(html).toMatch(/checked="" value="5"/);
   });
 
-  it("LinkButton в загрузке («Показать ещё», M1-50): aria-busy и aria-disabled, индикатор, но не disabled — фокус остаётся", () => {
+  it("LinkButton в загрузке («Показать ещё»): aria-busy и aria-disabled, индикатор, но не disabled — фокус остаётся", () => {
     const busy = renderToStaticMarkup(
       <LinkButton loading onClick={noop}>
         Показать ещё
@@ -59,13 +59,29 @@ describe("серверная разметка компонентов", () => {
     expect(idle).not.toContain("aria-disabled");
   });
 
+  it("Button в загрузке: aria-busy и aria-disabled без disabled — фокус остаётся на нажатой кнопке", () => {
+    const busy = renderToStaticMarkup(
+      <Button loading disabled type="submit" onClick={noop}>
+        Выпустить
+      </Button>,
+    );
+    expect(busy).toContain('aria-busy="true"');
+    expect(busy).toContain('aria-disabled="true"');
+    expect(busy).toContain("tt-spin");
+    expect(busy).not.toMatch(/\sdisabled=""/);
+    expect(renderToStaticMarkup(<Button disabled>Выпустить</Button>)).toMatch(/\sdisabled=""/);
+    const idle = renderToStaticMarkup(<Button onClick={noop}>Выпустить</Button>);
+    expect(idle).not.toContain("aria-busy");
+    expect(idle).not.toContain("aria-disabled");
+  });
+
   it("StepHeading — h1 с tabIndex=-1: на него переносится фокус при смене шага", () => {
     const html = renderToStaticMarkup(<StepHeading focusKey="nick">Выбери ник</StepHeading>);
     expect(html).toBe('<h1 tabindex="-1" class="tt-title2 tt-step-heading">Выбери ник</h1>');
   });
 });
 
-describe("примитивы M2: тропа, урок, мотивация", () => {
+describe("примитивы тропы, урока и мотивации", () => {
   it("узел тропы: закрытый — картинка с подписью, текущий — кнопка с кольцом; без атрибутов style", () => {
     const html = renderToStaticMarkup(
       <>
@@ -122,5 +138,19 @@ describe("примитивы M2: тропа, урок, мотивация", () =
     expect(html.match(/tt-comb__cell--nectar/g)).toHaveLength(5);
     expect(html).toContain('aria-current="true"');
     expect(html).not.toMatch(/\sstyle="/);
+  });
+});
+
+describe("ProgressBar — картинка без роли", () => {
+  it("decorative: строчная разметка без role=progressbar, скрыта от читалок, заливка по доле", () => {
+    const html = renderToStaticMarkup(
+      <button type="button">
+        <ProgressBar decorative value={40} max={100} className="place__bar" />
+      </button>,
+    );
+    expect(html).not.toContain("progressbar");
+    expect(html).not.toContain("<div");
+    expect(html).toContain('<span class="tt-progress place__bar" aria-hidden="true">');
+    expect(html).toContain('width="40%"');
   });
 });

@@ -11,21 +11,24 @@ export interface InvalidFocus {
   request(): void;
   /** Запрос ещё не выполнен (читает <Form>). */
   readonly pending: { current: boolean };
+  /** Номер запроса: новый объект на каждый request() — форма проверяет поля после этой перерисовки. */
+  readonly attempt: number;
 }
 
 export function useInvalidFocus(): InvalidFocus {
   const pending = useRef(false);
   // Перерисовка, даже если текст ошибки не изменился (повторная отправка с той же ошибкой).
-  const [, setAttempt] = useState(0);
+  const [attempt, setAttempt] = useState(0);
   return useMemo(
     () => ({
       pending,
+      attempt,
       request() {
         pending.current = true;
         setAttempt((n) => n + 1);
       },
     }),
-    [],
+    [attempt],
   );
 }
 
@@ -58,7 +61,7 @@ export function Form({ onSubmit, invalidFocus, children, ...rest }: FormProps) {
   const [announcement, setAnnouncement] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // После каждой перерисовки: есть запрос и в форме есть неверное поле — выполнить запрос.
+  // После запроса (и при появлении формы): есть запрос и в форме есть неверное поле — выполнить запрос.
   useEffect(() => {
     if (!invalidFocus?.pending.current) return;
     const field = ref.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
@@ -74,7 +77,7 @@ export function Form({ onSubmit, invalidFocus, children, ...rest }: FormProps) {
       setAnnouncement("");
       field.focus();
     }
-  });
+  }, [invalidFocus]);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 

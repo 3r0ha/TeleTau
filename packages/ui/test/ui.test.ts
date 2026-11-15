@@ -32,7 +32,7 @@ describe("@teletau/ui: стили на дизайн-токенах", () => {
     }
   });
 
-  it("font sizes come from the tokens in rem — they follow the browser font-size setting (M1-32)", () => {
+  it("font sizes come from the tokens in rem — they follow the browser font-size setting", () => {
     const fontSize = [...uiCss.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/font-size:\s*([^;]+);/g)].map((m) => m[1]!.trim());
     expect(fontSize.length).toBeGreaterThan(20);
     for (const v of fontSize) expect(v, v).not.toMatch(/\d(px|pt)\b/);
@@ -40,7 +40,7 @@ describe("@teletau/ui: стили на дизайн-токенах", () => {
     expect(tokensCss).not.toMatch(/--tt-font-size-[a-z0-9-]+:\s*[\d.]+px;/);
   });
 
-  it("режим «Пчёлка» (data-mode=bee) поднимает цели нажатия до size.touchChild и увеличивает текст (M1-16)", () => {
+  it("режим «Пчёлка» (data-mode=bee) поднимает цели нажатия до size.touchChild и увеличивает текст", () => {
     const bee = /:root\[data-mode="bee"\]\s*\{([^}]*)\}/.exec(uiCss)?.[1] ?? "";
     expect(bee).toMatch(/--tt-size-touch-min:\s*var\(--tt-size-touch-child\)/);
     expect(bee).toMatch(/--tt-size-button:\s*var\(--tt-size-touch-child\)/);
@@ -48,7 +48,7 @@ describe("@teletau/ui: стили на дизайн-токенах", () => {
     expect(tokensCss).toMatch(/--tt-size-touch-child:\s*56px;/);
   });
 
-  it("выбранное состояние и фокус на мёде — контрастными токенами (M1-12)", () => {
+  it("выбранное состояние и фокус на мёде — контрастными токенами", () => {
     expect(uiCss).toMatch(/input:checked \+ \.tt-choice__box \{[^}]*border-color: var\(--tt-color-accent-text\)/);
     expect(uiCss).toMatch(/\.tt-tab\[aria-current="page"\] \{[^}]*border-color: var\(--tt-color-accent-text\)/);
     expect(uiCss).toMatch(/\.tt-topnav a\[aria-current="page"\] \{[^}]*border-color: var\(--tt-color-accent-text\)/);
@@ -66,7 +66,7 @@ describe("@teletau/ui самодостаточен", () => {
     }
   });
 
-  it("компоненты не рисуют атрибут style: строгая CSP без 'unsafe-inline' его не применит (M1-11)", () => {
+  it("компоненты не рисуют атрибут style: строгая CSP без 'unsafe-inline' его не применит", () => {
     for (const file of walk(src)) {
       if (!/\.tsx$/.test(file)) continue;
       expect(readFileSync(file, "utf8"), file).not.toMatch(/\sstyle=\{/);

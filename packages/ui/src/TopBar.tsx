@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { illustrations } from "./illustrations";
+import { useUiStrings } from "./UiStrings";
 
 export interface TopBarProps {
   /** Слева: кнопка «назад» или бренд. */
@@ -39,8 +40,9 @@ export function TopBar({ start, title, end, nav, wide }: TopBarProps) {
 /** Бренд: иконка приложения и «ТелеТау» (needs_native_review: docs/native-review-queue.md, №1). */
 export function Brand({ href = "/", subtitle }: { href?: string; subtitle?: ReactNode }) {
   const icon = illustrations.appIcon;
+  const s = useUiStrings();
   return (
-    <Link href={href} className="tt-brand" aria-label={subtitle ? undefined : "ТелеТау — на главную"}>
+    <Link href={href} className="tt-brand" aria-label={subtitle ? undefined : s.brandHome}>
       <img src={icon.src} width={36} height={36} alt="" />
       <span>
         <span lang="ba">ТелеТау</span>

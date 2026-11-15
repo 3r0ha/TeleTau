@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import { hexPath } from "./hex";
 import { illustrations } from "./illustrations";
 import type { NavItem } from "./BottomNav";
+import { useUiStrings } from "./UiStrings";
 
 /**
  * Точки раскладки оболочки (shell.css — те же числа): с 768 px нижние вкладки уступают боковой навигации, с 1024 px
@@ -38,12 +39,13 @@ const LIP = 4;
  * в соте с «губой», текущий раздел — медовая сота, подложка и граница accent.text (≥ 3:1, как у нижних вкладок).
  * На 768–1199 px — узкая колонка (подпись под значком), с 1200 px — подпись справа. На телефоне скрыта (shell.css).
  */
-export function SideNav({ items, home, label = "Разделы" }: { items: NavItem[]; home: string; label?: string }) {
+export function SideNav({ items, home, label }: { items: NavItem[]; home: string; label?: string }) {
   const icon = illustrations.appIcon;
+  const s = useUiStrings();
   return (
-    <nav className="tt-sidenav" aria-label={label}>
+    <nav className="tt-sidenav" aria-label={label ?? s.navLabel}>
       {/* «ТелеТау» — имя бренда, needs_native_review (docs/native-review-queue.md, №1) */}
-      <Link href={home} className="tt-sidenav__brand" aria-label="ТелеТау — на главную">
+      <Link href={home} className="tt-sidenav__brand" aria-label={s.brandHome}>
         <img src={icon.src} width={44} height={44} alt="" />
         <span className="tt-sidenav__word" lang="ba">
           ТелеТау

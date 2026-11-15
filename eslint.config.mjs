@@ -2,6 +2,7 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
   {
@@ -33,6 +34,26 @@ export default tseslint.config(
     ignores: ["**/*.config.ts"],
     languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
     rules: {
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+    },
+  },
+  {
+    // Клиенты веба и консоли и их общие пакеты: правила хуков React и необработанные промисы в обработчиках
+    // (onClick={async …} без catch, забытый await) — без них сбой сети молча оставляет экран в «загрузке».
+    files: [
+      "apps/web/{app,i18n,test}/**/*.{ts,tsx}",
+      "apps/web/{proxy,instrumentation}.ts",
+      "apps/console/{app,test}/**/*.{ts,tsx}",
+      "apps/console/{proxy,instrumentation}.ts",
+      "packages/ui/{src,test}/**/*.{ts,tsx}",
+      "packages/session/{src,test}/**/*.{ts,tsx}",
+    ],
+    plugins: { "react-hooks": reactHooks },
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "error",
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
     },

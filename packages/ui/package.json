@@ -9,7 +9,8 @@
     "./ui.css": "./src/ui.css",
     "./shell.css": "./src/shell.css",
     "./files": "./src/files.ts",
-    "./theme-cookie": "./src/theme-cookie.ts"
+    "./theme-cookie": "./src/theme-cookie.ts",
+    "./strings": "./src/strings.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",

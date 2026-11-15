@@ -29,11 +29,13 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "7.1.1",
     "globals": "^16.0.0",
     "prettier": "^3.9.10",
     "turbo": "^2.11.10",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.72.1",
+    "wasm-media-encoders": "^0.7.0",
     "yaml": "^2.8.0"
   },
   "pnpm": {

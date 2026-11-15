@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useUiStrings } from "./UiStrings";
 
 /** Радиус скелетона — по роли элемента, который он заменяет (токены radius.*). */
 export type SkeletonRadius = "tile" | "button" | "panel" | "card";
@@ -12,9 +15,10 @@ export function Skeleton({ width = "100%", height = 16, radius = "tile" }: { wid
 }
 
 /** Группа скелетонов: role="status" с подписью, чтобы читалка сообщила о загрузке один раз. */
-export function SkeletonGroup({ label = "Загрузка", children, className }: { label?: string; children: ReactNode; className?: string }) {
+export function SkeletonGroup({ label, children, className }: { label?: string; children: ReactNode; className?: string }) {
+  const s = useUiStrings();
   return (
-    <div role="status" aria-label={label} aria-busy="true" className={className}>
+    <div role="status" aria-label={label ?? s.loading} aria-busy="true" className={className}>
       {children}
     </div>
   );

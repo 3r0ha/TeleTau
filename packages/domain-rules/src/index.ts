@@ -4,6 +4,7 @@ export * from "./achievements.js";
 export * from "./calendar.js";
 export * from "./duel-v0.js";
 export * from "./league.js";
+export * from "./privacy.js";
 export * from "./srs.js";
 export * from "./streak.js";
 export * from "./xp.js";

@@ -13,6 +13,7 @@ import {
 import { createPortal } from "react-dom";
 import { CheckCircle, Info, WarningCircle, X } from "@phosphor-icons/react/ssr";
 import { IconButton } from "./Button";
+import { useUiStrings } from "./UiStrings";
 
 export type ToastTone = "success" | "error" | "info";
 
@@ -50,12 +51,13 @@ function topModalDialog(): HTMLDialogElement | null {
 /**
  * Куда рисовать тосты. Модальный лист (showModal) лежит в верхнем слое браузера: тост снаружи оказывается под ним
  * при любом z-index, а остальная страница инертна — тост не видно и читалка его не объявляет. Поэтому, пока лист
- * открыт, область тостов переносится внутрь него; лист закрылся — обратно на страницу.
+ * открыт, область тостов переносится внутрь него; лист закрылся — обратно на страницу. Переносится и пустая область:
+ * к первому тосту она уже лежит в листе, и его текст — добавление в живую область, которое читалка объявляет
+ * (область, созданная сразу с текстом, не объявляется).
  */
-function useToastHost(active: boolean): HTMLElement | null {
+function useToastHost(): HTMLElement | null {
   const [host, setHost] = useState<HTMLElement | null>(null);
   useEffect(() => {
-    if (!active) return;
     const pick = () => setHost(topModalDialog());
     pick();
     const watch = new MutationObserver(pick);
@@ -66,8 +68,8 @@ function useToastHost(active: boolean): HTMLElement | null {
       childList: true,
     });
     return () => watch.disconnect();
-  }, [active]);
-  return active ? host : null;
+  }, []);
+  return host;
 }
 const LIFETIME_MS = 5000;
 
@@ -76,6 +78,7 @@ const LIFETIME_MS = 5000;
  * Тост можно закрыть; он исчезает сам через 5 с.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const s = useUiStrings();
   const [items, setItems] = useState<ToastItem[]>([]);
   const next = useRef(1);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
@@ -105,14 +108,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(() => show, [show]);
-  const host = useToastHost(items.length > 0);
+  const host = useToastHost();
   const region = (
     <div
       className="tt-toasts"
       aria-live="polite"
       aria-relevant="additions"
       role="region"
-      aria-label="Уведомления"
+      aria-label={s.toasts}
     >
       {items.map((t) => {
         const Icon = ICONS[t.tone];
@@ -127,7 +130,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             </span>
             <span className="tt-toast__text">{t.text}</span>
             <IconButton
-              label="Скрыть уведомление"
+              label={s.toastHide}
               icon={<X weight="bold" />}
               onClick={() => dismiss(t.id)}
             />

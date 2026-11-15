@@ -9,6 +9,7 @@ export { CodeInput } from "./CodeInput";
 export { Dialog } from "./Dialog";
 export { EmptyState, Illustration } from "./EmptyState";
 export { Form, useInvalidFocus, type FormProps, type InvalidFocus } from "./Form";
+export { useFocusRescue } from "./focusRescue";
 export { HEX_TONES, HexAvatar, toneFor, type HexTone } from "./HexAvatar";
 export { LEAGUE_TIERS, avatarFor, avatars, beeFrames, illustrations, leagueBadges, type IllustrationName, type LeagueTier } from "./illustrations";
 export { AVATAR_NOUNS, avatarSlugFor, type AvatarSlug } from "./avatars";
@@ -45,3 +46,7 @@ export { motionEasing, motionMs, useCountUp, useReducedMotion } from "./motion";
 export { THEME_COOKIE, parseTheme, type Theme } from "./theme-cookie";
 export { setTheme, useTheme } from "./theme";
 export { ThemeSwitch, ThemeToggleButton } from "./ThemeSwitch";
+export { Switch } from "./Switch";
+// Строки компонентов на языке приложения: провайдер и русские значения по умолчанию.
+export { RU_UI_STRINGS, fillUi, uiStringsFrom, type UiStringKey, type UiStrings } from "./strings";
+export { UiStringsProvider, useUiStrings } from "./UiStrings";

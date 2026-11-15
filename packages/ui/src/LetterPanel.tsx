@@ -1,6 +1,7 @@
 "use client";
 
 import type { PointerEvent, MouseEvent } from "react";
+import { useUiStrings } from "./UiStrings";
 
 /**
  * Особые буквы башкирского алфавита в порядке прототипа: ә ө ү ғ ҡ ң ҙ ҫ һ. Только правильные кодовые точки
@@ -26,9 +27,10 @@ const keepFocus = (e: PointerEvent | MouseEvent) => e.preventDefault();
  * башкирской раскладки не введёт ҡ, ғ, ҙ. В режиме «Пчёлка» кнопки 56 px и переносятся в два ряда.
  */
 export function LetterPanel({ letters = BASHKIR_LETTERS, onInsert, disabled, hint }: LetterPanelProps) {
+  const s = useUiStrings();
   return (
     <div className="tt-letters">
-      <div className="tt-letters__grid" role="group" aria-label="Башкирские буквы">
+      <div className="tt-letters__grid" role="group" aria-label={s.letters}>
         {letters.map((l) => (
           <button
             key={l}

@@ -5,6 +5,7 @@ import { X } from "@phosphor-icons/react/ssr";
 import type { StaticImageData } from "next/image";
 import { IconButton } from "./Button";
 import { openSheetEntry } from "./sheetHistory";
+import { useUiStrings } from "./UiStrings";
 
 export interface DialogProps {
   open: boolean;
@@ -53,8 +54,9 @@ export function Dialog({
   centered,
   initialFocusRef,
   hideClose,
-  closeLabel = "Закрыть",
+  closeLabel,
 }: DialogProps) {
+  const s = useUiStrings();
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
   const titleId = `${id}-title`;
@@ -134,7 +136,7 @@ export function Dialog({
             <h2 className="tt-dialog__title" id={titleId}>
               {title}
             </h2>
-            {hideClose ? null : <IconButton label={closeLabel} icon={<X weight="bold" />} onClick={onClose} />}
+            {hideClose ? null : <IconButton label={closeLabel ?? s.close} icon={<X weight="bold" />} onClick={onClose} />}
           </div>
           {description ? (
             <p className="tt-dialog__desc" id={descId}>

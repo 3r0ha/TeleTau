@@ -2,6 +2,7 @@
 
 import { useRef, type KeyboardEvent, type ReactNode } from "react";
 import { Check, X } from "@phosphor-icons/react/ssr";
+import { useUiStrings } from "./UiStrings";
 
 export type OptionTone = "honey" | "violet";
 
@@ -40,6 +41,7 @@ export interface AnswerOptionsProps<V extends string> {
  * вариант (roving tabindex); клавиши 1–4 обрабатывает экран упражнения.
  */
 export function AnswerOptions<V extends string>({ label, options, value, onChange, tone = "honey", disabled, verdicts }: AnswerOptionsProps<V>) {
+  const s = useUiStrings();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const selectedIndex = options.findIndex((o) => o.value === value);
   const focusable = selectedIndex >= 0 ? selectedIndex : 0;
@@ -84,7 +86,7 @@ export function AnswerOptions<V extends string>({ label, options, value, onChang
         <span className="tt-option__text" lang={o.lang}>
           {o.label}
         </span>
-        {verdict ? <span className="tt-visually-hidden">{verdict === "ok" ? ", верный ответ" : ", не так"}</span> : null}
+        {verdict ? <span className="tt-visually-hidden">{`, ${verdict === "ok" ? s.answerOk : s.answerNo}`}</span> : null}
       </button>
     );
   };

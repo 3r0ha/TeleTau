@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type DependencyList } from "react";
 import { session } from "./client";
 import { appendUnique, type CursorPage } from "./paging";
+import { browserLoopEnv, sameDeps, startResourceLoop } from "./resource";
 import type { Me, SessionState } from "./types";
 
 export function useSession(): SessionState {
@@ -27,19 +28,32 @@ const LOGOUT_NAV_GRACE_MS = 5_000;
 export function useRequireAccount(kind: Kind | Kind[], loginHref: string): Me | null {
   const state = useSession();
   const router = useRouter();
-  const kinds = Array.isArray(kind) ? kind : [kind];
-  const ok = state.status === "authenticated" && kinds.includes(state.account.kind);
+  // Список видов — строкой: массив из вызова новый на каждый рендер, а эффект зависит от содержимого.
+  const kindKey = (Array.isArray(kind) ? kind : [kind]).join(",");
+  const ok = state.status === "authenticated" && kindKey.split(",").includes(state.account.kind);
   useEffect(() => {
     void session.restore();
   }, []);
   useEffect(() => {
-    if (state.status === "anonymous" || (state.status === "authenticated" && !kinds.includes(state.account.kind))) {
+    if (state.status === "anonymous" || (state.status === "authenticated" && !kindKey.split(",").includes(state.account.kind))) {
       // Только что вышли кнопкой — навигацию делает вызвавший logout(); свой replace здесь был бы вторым.
       if (session.logoutAt !== null && Date.now() - session.logoutAt < LOGOUT_NAV_GRACE_MS) return;
       router.replace(loginHref);
     }
-  }, [state, loginHref, router]);
+  }, [state, kindKey, loginHref, router]);
   return ok ? state.account : null;
+}
+
+/** Сколько целых секунд осталось до момента `until` (мс, часы устройства); 0 — уже наступил или не задан. */
+export function useCountdown(until: number | null): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!until) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [until]);
+  return until ? Math.max(0, Math.ceil((until - now) / 1000)) : 0;
 }
 
 /** Сеть есть? (navigator.onLine + события online/offline.) */
@@ -61,67 +75,66 @@ export function useOnline(): boolean {
 export interface Resource<T> {
   data: T | undefined;
   error: unknown;
+  /** Идёт загрузка: первая, после смены зависимостей или reload(). */
   loading: boolean;
   reload: () => void;
   setData: (fn: (prev: T | undefined) => T | undefined) => void;
 }
 
+export interface ResourceOptions {
+  /** Период опроса, мс. Опрос встаёт на паузу в скрытой вкладке и без сети и сразу повторяется при возвращении. */
+  pollMs?: number;
+  enabled?: boolean;
+  /**
+   * При смене зависимостей оставить прежние данные на экране, пока грузятся новые (зависимость — повод обновить тот же
+   * список, например счётчик заявок). По умолчанию данные сбрасываются: они относятся к прежним зависимостям.
+   */
+  keepPrevious?: boolean;
+}
+
 /**
- * Загрузка данных с опросом. Опрос приостанавливается, когда вкладка скрыта или нет сети, и сразу
- * повторяется при возвращении. При ошибке опроса последние данные остаются на экране.
+ * Загрузка данных (startResourceLoop, resource.ts). Смена `deps` — новая загрузка: `loading` сразу true, прежние
+ * данные и ошибка сброшены (кроме `keepPrevious`). Ошибка опроса оставляет последние данные на экране.
  */
-export function useResource<T>(load: () => Promise<T>, deps: DependencyList, opts: { pollMs?: number; enabled?: boolean } = {}): Resource<T> {
-  const { pollMs, enabled = true } = opts;
+export function useResource<T>(load: () => Promise<T>, deps: DependencyList, opts: ResourceOptions = {}): Resource<T> {
+  const { pollMs, enabled = true, keepPrevious = false } = opts;
   const [data, setDataState] = useState<T | undefined>(undefined);
   const [error, setError] = useState<unknown>(undefined);
   const [loading, setLoading] = useState(enabled);
   const [tick, setTick] = useState(0);
+  // Версия зависимостей: меняется в том же рендере, что и deps, — экран не видит данных прежних зависимостей.
+  const [seen, setSeen] = useState<{ deps: DependencyList; enabled: boolean; version: number }>({ deps, enabled, version: 0 });
+  if (!sameDeps(seen.deps, deps) || seen.enabled !== enabled) {
+    const depsChanged = !sameDeps(seen.deps, deps);
+    setSeen({ deps, enabled, version: seen.version + (depsChanged ? 1 : 0) });
+    if (depsChanged && !keepPrevious) {
+      setDataState(undefined);
+      setError(undefined);
+    }
+    setLoading(enabled);
+  }
+  const version = seen.version;
   const loadRef = useRef(load);
-  loadRef.current = load;
+  useEffect(() => {
+    loadRef.current = load;
+  });
 
   useEffect(() => {
     if (!enabled) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const run = async () => {
-      if (typeof document !== "undefined" && document.hidden) return;
-      try {
-        const value = await loadRef.current();
-        if (cancelled) return;
-        setDataState(value);
-        setError(undefined);
-      } catch (e) {
-        if (!cancelled) setError(e);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-          if (pollMs) timer = setTimeout(run, pollMs);
+    return startResourceLoop(
+      () => loadRef.current(),
+      (result) => {
+        if (result.ok) {
+          setDataState(result.value);
+          setError(undefined);
+        } else {
+          setError(result.error);
         }
-      }
-    };
-    const onWake = () => {
-      if (!document.hidden && navigator.onLine) {
-        clearTimeout(timer);
-        void run();
-      }
-    };
-    void run();
-    // Пробуждение вкладки перечитывает только опрашиваемые данные (pollMs): в webview Telegram
-    // visibilitychange стреляет регулярно, и разовая загрузка не должна молча меняться под
-    // пользователем (случайные варианты ников перечитывались и сбрасывали выбор). Разовые
-    // данные перечитываются навигацией.
-    if (pollMs) {
-      document.addEventListener("visibilitychange", onWake);
-      window.addEventListener("online", onWake);
-    }
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onWake);
-      window.removeEventListener("online", onWake);
-    };
-    // deps задаёт вызывающий (как у useEffect)
-  }, [...deps, tick, enabled, pollMs]);
+        setLoading(false);
+      },
+      { pollMs, env: browserLoopEnv },
+    );
+  }, [version, tick, enabled, pollMs]);
 
   const reload = useCallback(() => {
     setLoading(true);

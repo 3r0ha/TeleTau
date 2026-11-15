@@ -5,12 +5,12 @@
 // атрибутов style — тоже: `unsafe-inline` не нужен ни для скриптов, ни для стилей.
 // Встраивание во фрейм запрещено всем страницам (frame-ancestors 'none' + X-Frame-Options: DENY), кроме Telegram Mini App
 // веба: страницы под префиксом miniApp.prefix (/miniapp и /miniapp/*) может встраивать только Telegram Web
-// (https://web.telegram.org) — так он открывает Mini App на компьютере (docs/plans/M2.md §3 «Ч5»). В мобильных клиентах
+// (https://web.telegram.org) — так он открывает Mini App на компьютере. В мобильных клиентах
 // Telegram Mini App открывается во встроенном браузере верхним окном, фрейма там нет.
 import { NextResponse, type NextRequest } from "next/server";
+import { TELEGRAM_WEB_ORIGIN } from "./telegram";
 
-/** Telegram Web (web.telegram.org/k и /a): единственный, кому разрешено встраивать Mini App. */
-export const TELEGRAM_WEB_ORIGIN = "https://web.telegram.org";
+export { TELEGRAM_WEB_ORIGIN };
 
 export interface SecurityOptions {
   /** Доступ к камере (сканер QR-карточки в вебе). В консоли камера запрещена. */

@@ -42,7 +42,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("BFF: IP браузера для лимитов частоты API (M1-05)", () => {
+describe("BFF: IP браузера для лимитов частоты API", () => {
   it("X-Forwarded-For, присланный клиентом, не пересылается — в API уходит адрес сокета", async () => {
     const seen = fakeApi();
     const route = createSessionRoute({ cookiePrefix: "t", appVersion: "test", trustProxy: "" });
@@ -113,7 +113,7 @@ describe("BFF: опрос заявки по коду класса", () => {
   });
 });
 
-describe("BFF: Retry-After от API доходит до браузера (M1-55)", () => {
+describe("BFF: Retry-After от API доходит до браузера", () => {
   const limited = (code: string, retryAfter: string) => () =>
     new Response(JSON.stringify({ type: "about:blank", title: "Слишком много запросов", status: 429, code }), {
       status: 429,
@@ -144,7 +144,7 @@ describe("BFF: Retry-After от API доходит до браузера (M1-55)
   });
 });
 
-describe("BFF: таймаут вызова API (M1-24)", () => {
+describe("BFF: таймаут вызова API", () => {
   it("API не ответил вовремя — 503 api_unavailable, а не зависший запрос", async () => {
     fakeApi(
       (req) =>

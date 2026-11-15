@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SpeakerHigh } from "@phosphor-icons/react/ssr";
+import { useUiStrings } from "./UiStrings";
 
 /** Файл записи и его тип (MIME с кодеком) — для выбора того, что браузер умеет играть. */
 export interface AudioSource {
@@ -38,7 +39,8 @@ function speech(playing: boolean) {
  * «Послушать» (prototype .speak): медовая кнопка со значком динамика. Запись грузится только по нажатию; пока играет,
  * значок «звучит». Не загрузилась — кнопка просто перестаёт звучать (ребёнку не показываем технических ошибок).
  */
-export function SpeakButton({ sources, label = "Послушать", size = "large", className }: SpeakButtonProps) {
+export function SpeakButton({ sources, label, size = "large", className }: SpeakButtonProps) {
+  const s = useUiStrings();
   const audio = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const key = sources.map((s) => s.src).join(" ");
@@ -82,7 +84,7 @@ export function SpeakButton({ sources, label = "Послушать", size = "lar
     <button
       type="button"
       className={["tt-speak", size === "small" && "tt-speak--small", className].filter(Boolean).join(" ")}
-      aria-label={label}
+      aria-label={label ?? s.speak}
       data-playing={playing || undefined}
       onClick={play}
     >

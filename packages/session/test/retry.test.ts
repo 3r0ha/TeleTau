@@ -66,7 +66,7 @@ describe("текст 429 зависит от Retry-After", () => {
     expect(describeProblem(new ApiProblem(429, { code: "rate_limited" }), "child")).toMatch(/Подожди минуту/);
   });
 
-  it("join_queue_full (M1-49) — свой текст для ребёнка, даже с коротким Retry-After", () => {
+  it("join_queue_full — свой текст для ребёнка, даже с коротким Retry-After", () => {
     const full = new ApiProblem(429, { code: "join_queue_full" }, { retryAfter: 1 });
     expect(describeProblem(full, "child")).toBe("У учителя много заявок. Попробуй чуть позже.");
   });

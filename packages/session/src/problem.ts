@@ -89,7 +89,7 @@ const CHILD: Record<string, string> = {
   run_completed: "Этот урок уже пройден.",
   run_incomplete: "Ответь на все задания урока.",
   already_voted: "Твой голос за эту пару уже учтён.",
-  vote_required: "Сначала проголосуй сам — потом увидишь голоса других.",
+  vote_required: "Сначала проголосуй сам. Потом увидишь голоса других.",
   content_unavailable: "Уроки ещё не загрузились. Попробуй позже.",
   not_implemented: "Эта возможность ещё не готова.",
   // Telegram (ADR 0020; аудитория «child» — Mini App и бот)
@@ -100,6 +100,12 @@ const CHILD: Record<string, string> = {
   // «Учусь сам» (ADR 0022)
   already_in_class: "Ты уже в классе.",
   login_card_unavailable: "Входи по карточке от учителя.",
+  // Почта ученика «Учусь сам»: экран сохранения почты открывают дети
+  otp_invalid: "Неверный код. Проверь цифры.",
+  otp_expired: "Код устарел. Запроси новый.",
+  otp_attempts_exceeded: "Попытки закончились. Запроси новый код.",
+  email_in_use: "Эта почта уже занята. Укажи другую.",
+  email_already_set: "Почта уже сохранена.",
 };
 
 const ADULT: Record<string, string> = {
@@ -136,7 +142,7 @@ const ADULT: Record<string, string> = {
   assignment_limit: "У класса уже два задания. Снимите одно или дождитесь срока.",
   assignment_exists: "Такое задание уже есть.",
   // Уроки, мотивация, дуэли (коды — в описании схемы Problem в openapi.yaml)
-  lesson_locked: "Этот урок пока закрыт — сначала пройдите предыдущий.",
+  lesson_locked: "Этот урок пока закрыт. Сначала пройдите предыдущий.",
   run_completed: "Урок уже завершён.",
   run_incomplete: "Ответьте на все задания урока.",
   already_voted: "Ваш голос за эту пару уже учтён.",
@@ -148,45 +154,83 @@ const ADULT: Record<string, string> = {
   email_already_set: "Почта уже сохранена.",
 };
 
-/** Понятный текст ошибки API на русском. Неизвестный `code` обрабатывается по статусу (контракт: список открыт). */
-export function describeProblem(e: unknown, audience: Audience = "adult"): string {
-  const you = audience === "child";
+/**
+ * Переводчик приложения: русская строка → строка на языке интерфейса, `{name}` — подстановки. Без него тексты
+ * остаются русскими (консоль).
+ */
+export type Translate = (ru: string, vars?: Record<string, string | number>) => string;
+
+const asIs: Translate = (ru, vars) => (vars ? ru.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m)) : ru);
+
+const GENERIC_CHILD = "Что-то пошло не так. Попробуй ещё раз.";
+const GENERIC_ADULT = "Что-то пошло не так. Попробуйте ещё раз.";
+
+/** Тексты по статусу и общие: [ребёнку, взрослому]. */
+const BY_STATUS: Record<number, readonly [string, string]> = {
+  401: ["Нужно войти заново.", "Сессия истекла. Войдите снова."],
+  403: ["Сюда нельзя.", "Нет доступа."],
+  404: ["Ничего не нашлось.", "Не найдено."],
+  409: ["Так сделать сейчас нельзя.", "Действие уже выполнено или сейчас недоступно."],
+  410: ["Это больше недоступно.", "Срок действия истёк."],
+};
+const OFFLINE = ["Нет связи. Проверь интернет.", "Нет связи. Проверьте интернет."] as const;
+const SHORT_WAIT = ["Подожди секунду и попробуй ещё раз.", "Подождите секунду и попробуйте ещё раз."] as const;
+const UNAVAILABLE = ["ТелеТау временно недоступен. Попробуй через минуту.", "Сервис временно недоступен. Попробуйте через минуту."] as const;
+const INVALID = ["Проверь, что всё заполнено.", "Проверьте введённые данные."] as const;
+const FIELD_DETAIL = "Проверьте поле: {detail}";
+const FIELD_GENERIC = "Проверьте это поле.";
+
+/** Все русские тексты ошибок — ключи переводов: тест каталогов веба проверяет, что у каждого есть перевод. */
+export const PROBLEM_TEXTS: readonly string[] = [
+  ...Object.values(CHILD),
+  ...Object.values(ADULT),
+  ...Object.values(BY_STATUS).flat(),
+  ...OFFLINE,
+  ...SHORT_WAIT,
+  ...UNAVAILABLE,
+  ...INVALID,
+  GENERIC_CHILD,
+  GENERIC_ADULT,
+  FIELD_DETAIL,
+  FIELD_GENERIC,
+];
+
+/**
+ * Ошибка без своего текста: не сеть, без известного `code` и разобранного статуса — describeProblem отвечает общим
+ * «Что-то пошло не так. Попробуйте ещё раз.». Экран ошибки с заголовком «Что-то пошло не так» и кнопкой повтора текст не повторяет.
+ */
+export function isGenericProblem(e: unknown): boolean {
+  return describeProblem(e, "adult") === GENERIC_ADULT;
+}
+
+/**
+ * Понятный текст ошибки API на языке интерфейса (`t` — переводчик приложения, без него — русский). Неизвестный
+ * `code` обрабатывается по статусу (контракт: список открыт).
+ */
+export function describeProblem(e: unknown, audience: Audience = "adult", t: Translate = asIs): string {
+  const you = audience === "child" ? 0 : 1;
   if (!(e instanceof ApiProblem)) {
     // fetch не дошёл до сервера или истёк таймаут — сети нет, остальное отдаёт ApiProblem.
-    return isNetworkError(e) ? (you ? "Нет связи. Проверь интернет." : "Нет связи. Проверьте интернет.") : you ? "Что-то пошло не так. Попробуй ещё раз." : "Что-то пошло не так. Попробуйте ещё раз.";
+    return t(isNetworkError(e) ? OFFLINE[you] : you ? GENERIC_ADULT : GENERIC_CHILD);
   }
   // Короткий 429 — очередь, а не блокировка: хватит секунды, а не минуты (важнее словаря кодов).
-  if (isShortRateLimit(e)) return you ? "Подожди секунду и попробуй ещё раз." : "Подождите секунду и попробуйте ещё раз.";
-  const byCode = e.code ? (you ? CHILD[e.code] : ADULT[e.code]) : undefined;
-  if (byCode) return byCode;
+  if (isShortRateLimit(e)) return t(SHORT_WAIT[you]);
+  const byCode = e.code ? (you ? ADULT[e.code] : CHILD[e.code]) : undefined;
+  if (byCode) return t(byCode);
   // Сервис недоступен — не «проверьте интернет»: с сетью у человека всё в порядке, лежит наша сторона
   // (BFF не дождался API: 503 api_unavailable, 502 upstream_error; сам API: 503 service_unavailable).
-  if (e.status === 502 || e.status === 503) {
-    return you ? "ТелеТау временно недоступен. Попробуй через минуту." : "Сервис временно недоступен. Попробуйте через минуту.";
+  if (e.status === 502 || e.status === 503) return t(UNAVAILABLE[you]);
+  const byStatus = BY_STATUS[e.status];
+  if (byStatus) return t(byStatus[you]);
+  if (e.status === 422) {
+    // `errors[].detail` API пишет по-русски (контракт, Problem); текст не на русском (старый сервер, валидатор
+    // без перевода) пользователю не показываем.
+    const first = e.problem.errors?.[0]?.detail;
+    if (first && /[А-Яа-яЁё]/.test(first)) return you ? t(FIELD_DETAIL, { detail: first }) : first;
+    return t(INVALID[you]);
   }
-  switch (e.status) {
-    case 401:
-      return you ? "Нужно войти заново." : "Сессия истекла. Войдите снова.";
-    case 403:
-      return you ? "Сюда нельзя." : "Нет доступа.";
-    case 404:
-      return you ? "Ничего не нашлось." : "Не найдено.";
-    case 409:
-      return you ? "Так сделать сейчас нельзя." : "Действие уже выполнено или сейчас недоступно.";
-    case 410:
-      return you ? "Это больше недоступно." : "Срок действия истёк.";
-    case 422: {
-      // `errors[].detail` API пишет по-русски (контракт, Problem); текст не на русском (старый сервер, валидатор
-      // без перевода) пользователю не показываем.
-      const first = e.problem.errors?.[0]?.detail;
-      if (first && /[А-Яа-яЁё]/.test(first)) return you ? first : `Проверьте поле: ${first}`;
-      return you ? "Проверь, что всё заполнено." : "Проверьте введённые данные.";
-    }
-    case 429:
-      return you ? CHILD.rate_limited! : ADULT.rate_limited!;
-    default:
-      return you ? "Что-то пошло не так. Попробуй ещё раз." : "Что-то пошло не так. Попробуйте ещё раз.";
-  }
+  if (e.status === 429) return t(you ? ADULT.rate_limited! : CHILD.rate_limited!);
+  return t(you ? GENERIC_ADULT : GENERIC_CHILD);
 }
 
 /**
@@ -194,12 +238,12 @@ export function describeProblem(e: unknown, audience: Audience = "adult"): strin
  * у своих полей и переносит фокус на первое неверное. Параметры (`#/query/…`) и вложенные поля сюда не
  * попадают — их показывает describeProblem. Текст не на русском заменяется общим.
  */
-export function fieldErrors(e: unknown): Record<string, string> {
+export function fieldErrors(e: unknown, t: Translate = asIs): Record<string, string> {
   const out: Record<string, string> = {};
   if (!(e instanceof ApiProblem) || e.status !== 422) return out;
   for (const { pointer, detail } of e.problem.errors ?? []) {
     const name = /^\/([A-Za-z][A-Za-z0-9_]*)$/.exec(pointer)?.[1];
-    if (name && !(name in out)) out[name] = /[А-Яа-яЁё]/.test(detail) ? detail : "Проверьте это поле.";
+    if (name && !(name in out)) out[name] = /[А-Яа-яЁё]/.test(detail) ? detail : t(FIELD_GENERIC);
   }
   return out;
 }

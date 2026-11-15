@@ -208,10 +208,17 @@ class SessionStore {
   /** Момент последнего logout() в этой вкладке (мс), null — выхода не было. */
   logoutAt: number | null = null;
 
-  async logout(): Promise<void> {
+  /**
+   * Выйти: вкладка забывает сессию всегда, даже без сети, — вызывающий сразу уводит со страницы. Не бросает;
+   * false — сервер выход не подтвердил (refresh-cookie могла остаться до следующего выхода или истечения срока).
+   */
+  async logout(): Promise<boolean> {
     const token = this.state.status === "authenticated" ? this.state.accessToken : undefined;
     try {
       await post<void>("logout", {}, token ? { authorization: `Bearer ${token}` } : undefined);
+      return true;
+    } catch {
+      return false;
     } finally {
       // Отмечаем выход ДО уведомления подписчиков: со страницы уже уводит вызвавший (router.replace после logout()),
       // и гард useRequireAccount по этому моменту не должен конкурировать (см. react.ts).

@@ -6,7 +6,7 @@ export type ButtonVariant = "primary" | "secondary" | "danger" | "success" | "vi
 
 interface ButtonLook {
   variant?: ButtonVariant;
-  /** На всю ширину контейнера (как в прототипе на телефоне). */
+  /** На всю ширину контейнера. */
   block?: boolean;
   /** 44 px вместо 52 px — для панелей инструментов и строк таблиц. */
   small?: boolean;
@@ -21,7 +21,11 @@ export function buttonClass({ variant = "primary", block, small }: ButtonLook = 
 
 export interface ButtonProps extends ButtonLook, ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
-  /** Идёт действие: кнопка недоступна, показывает индикатор, для читалок — aria-busy. */
+  /**
+   * Идёт действие: нажатие и отправка формы (Enter в поле — тоже click по кнопке отправки) гасятся, вместо значка —
+   * индикатор, для читалок — aria-busy и aria-disabled. Атрибут disabled не ставится: он выбросил бы фокус с кнопки
+   * на начало страницы.
+   */
   loading?: boolean;
   ref?: React.Ref<HTMLButtonElement>;
 }
@@ -30,14 +34,16 @@ export interface ButtonProps extends ButtonLook, ButtonHTMLAttributes<HTMLButton
  * Кнопка действия с «губой» (prototype .btn): на ярких заливках — тёмный текст (text.onFill), белый — только на фиолетовой.
  * Одна основная кнопка на экран; вторичная — белая с границей.
  */
-export function Button({ variant, block, small, icon, loading, disabled, children, className, type = "button", ...rest }: ButtonProps) {
+export function Button({ variant, block, small, icon, loading, disabled, children, className, type = "button", onClick, ...rest }: ButtonProps) {
   return (
     <button
       {...rest}
       type={type}
       className={buttonClass({ variant, block, small }, className)}
-      disabled={disabled || loading}
+      disabled={disabled && !loading}
+      aria-disabled={loading || rest["aria-disabled"]}
       aria-busy={loading || undefined}
+      onClick={loading ? (e) => e.preventDefault() : onClick}
     >
       {loading ? <CircleNotch weight="bold" className="tt-spin" aria-hidden /> : icon}
       {children}

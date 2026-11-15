@@ -31,6 +31,14 @@ export function observeServerDate(response: Pick<Response, "headers">, sentAt: n
   }
 }
 
+/** Сутки, мс. */
+export const DAY_MS = 86_400_000;
+
+/** Номер суток с эпохи для даты YYYY-MM-DD (по UTC): разность номеров — число дней между датами. */
+export function dayNumber(date: string): number {
+  return Math.round(Date.parse(`${date}T00:00:00Z`) / DAY_MS);
+}
+
 /** Текущее время по часам сервера (мс с эпохи). */
 export function serverNow(): number {
   return Date.now() + (best?.offsetMs ?? 0);

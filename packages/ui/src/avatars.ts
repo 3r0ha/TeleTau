@@ -1,4 +1,4 @@
-// Аватары ников (design/assets/approved/avatar-*.webp, docs/plans/M2.md): ник — «прилагательное + существительное»
+// Аватары ников (design/assets/approved/avatar-*.webp): ник — «прилагательное + существительное»
 // (ADR 0009), аватар выбирается по существительному. Порядок — как NOUNS в apps/api/src/modules/identity/nicknames.ts
 // (словарь только дополняется в конец) и как AVATAR_SHEETS в design/scripts/process-assets.mjs; соответствие проверяет
 // test/avatars.test.ts. Модуль без картинок: сами файлы подключает illustrations.ts.
