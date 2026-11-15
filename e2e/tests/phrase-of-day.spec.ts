@@ -13,6 +13,6 @@ test("фраза дня на лендинге: пчела произносит �
   await expect(bubble.locator(".lp-hero__hello-ru")).not.toBeEmpty();
   // Отдельной секции фразы больше нет; остальная страница цела: герой и места тропы на месте, h1 один.
   await expect(page.getByRole("region", { name: "Фраза дня" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Учи башкирский — легко и каждый день");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Учи башкирский каждый день");
   await expect(page.getByRole("region", { name: "Места тропы" })).toBeVisible();
 });

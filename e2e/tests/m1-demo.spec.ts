@@ -168,7 +168,7 @@ test("демо M1 целиком: учитель → модератор → кл
     seat = /Место №(\d{2})/.exec((await row.textContent()) ?? "")![1]!;
     // Экран «Ты в классе»: ник и номер места (вёрстка подписи меняется — проверяем сами значения).
     await expect(student.getByText(nickname).first()).toBeVisible();
-    await expect(student.getByText(new RegExp(`№${seat}(?!\\d)`)).first()).toBeVisible();
+    await expect(student.getByText(new RegExp(`Номер ${seat}(?!\\d)`)).first()).toBeVisible();
     await expectAccessible(student, "ученик в классе");
     await expectNoCardSecret(student, studentUrls);
   });
@@ -280,7 +280,7 @@ test("демо M1 целиком: учитель → модератор → кл
     await again.goto("/student/class");
     await expect(heading(again, "Ты в классе 5 «Б»")).toBeVisible();
     await expect(again.getByText(nickname).first()).toBeVisible();
-    await expect(again.getByText(new RegExp(`№${seat}(?!\\d)`)).first()).toBeVisible();
+    await expect(again.getByText(new RegExp(`Номер ${seat}(?!\\d)`)).first()).toBeVisible();
     return { payload: reissued[0]!, page: again };
   });
 
