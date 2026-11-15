@@ -120,7 +120,7 @@ async function cardPng(t: T, card: LoginCard, nickname: string): Promise<Blob> {
   const steps = [t("1. Открой {host}", { host: window.location.host }), t("2. Нажми «У меня есть карточка или код»"), t("3. «Сканировать карточку» и наведи на этот код")];
   steps.forEach((line, i) => ctx.fillText(line, W / 2, 1065 + i * 52));
   ctx.font = `600 28px ${text}`;
-  ctx.fillText(t("Выпуск {n} · не показывай карточку чужим", { n: card.version }), W / 2, 1230);
+  ctx.fillText(t("Не показывай карточку чужим."), W / 2, 1230);
 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas"))), "image/png"));
 }
@@ -162,7 +162,7 @@ export function LoginCardScreen() {
       card.setData(() => fresh);
       if (me && me.loginCard !== "issued") session.updateAccount({ ...me, loginCard: "issued" });
     } catch (e) {
-      setError(describeProblem(e, "child"));
+      setError(describeProblem(e, "child", t));
     } finally {
       setBusy(false);
     }
@@ -198,7 +198,6 @@ export function LoginCardScreen() {
               <p className="tt-headline">{me.nickname}</p>
             </div>
             <CardQr payload={card.data.payload} />
-            <p className="login-card__meta">{t("Выпуск {n}", { n: card.data.version })}</p>
           </Card>
           <p className="login-card__warn">
             <IdentificationCard weight="fill" aria-hidden />
@@ -210,10 +209,11 @@ export function LoginCardScreen() {
               block
               icon={<DownloadSimple weight="bold" />}
               loading={saving}
-              onClick={async () => {
+              onClick={() => {
                 setSaving(true);
-                await download(t, card.data!, me.nickname ?? "").catch(() => setError(t("Не получилось сохранить картинку. Сделай снимок экрана.")));
-                setSaving(false);
+                void download(t, card.data!, me.nickname ?? "")
+                  .catch(() => setError(t("Не получилось сохранить картинку. Сделай снимок экрана.")))
+                  .finally(() => setSaving(false));
               }}
             >
               {t("Сохранить картинку")}

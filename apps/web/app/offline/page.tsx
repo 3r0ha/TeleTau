@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * «Нет связи» для service worker (public/sw.js): он кладёт эту страницу в кеш и показывает её без сети по тому адресу,
- * который открывали. Работает без скриптов: «Попробовать снова» — ссылка на текущий адрес.
+ * который открывали. Работает без скриптов: «Попробовать ещё раз» — ссылка на текущий адрес.
  */
 export default async function OfflinePage() {
   const t = await getT();
@@ -21,7 +21,7 @@ export default async function OfflinePage() {
         title={t("Нет связи")}
         actions={
           <a href="" className={buttonClass({ block: true })}>
-            {t("Попробовать снова")}
+            {t("Попробовать ещё раз")}
           </a>
         }
       />

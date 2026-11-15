@@ -12,6 +12,7 @@ import { useResource } from "@teletau/session/react";
 import { statusLabels, assignmentTitle, dueForTeacher, ufaDay, type SeatStatus } from "../../../../../_components/assignments";
 import { LoadError, isForbidden, isNotFound, useDocumentTitle } from "../../../../../_components/screens";
 import { useT } from "../../../../../../i18n/client";
+import { PulseRetry } from "../../../../ClassPulse";
 import { TeacherShell } from "../../../../TeacherShell";
 import { useTeacherGate } from "../../../../useTeacher";
 import { ClassUnavailable } from "../../ClassFrame";
@@ -124,17 +125,17 @@ export default function SeatCardPage() {
             </header>
 
             <StatTiles label={t("Итоги ученика")}>
-              <StatTile label={t("Уроков")} value={c.lessonsCompleted} icon={<BookOpen weight="fill" />} />
+              <StatTile label={t("Уроки")} value={c.lessonsCompleted} icon={<BookOpen weight="fill" />} />
               <StatTile label={t("Точность")} value={c.accuracy !== undefined ? percent(c.accuracy) : "—"} icon={<Target weight="fill" />} />
-              <StatTile label={t("Слов")} value={c.wordsLearned} icon={<Translate weight="fill" />} />
+              <StatTile label={t("Слова")} value={c.wordsLearned} icon={<Translate weight="fill" />} />
               <StatTile label={t("Серия")} value={c.streak.current} icon={<Fire weight="fill" />} />
-              <StatTile label={t("Голосов")} value={c.votes.total} icon={<Scales weight="fill" />} />
-              <StatTile label={t("Мёда")} value={c.honey} icon={<Drop weight="fill" />} />
+              <StatTile label={t("Голоса")} value={c.votes.total} icon={<Scales weight="fill" />} />
+              <StatTile label={t("Мёд")} value={c.honey} icon={<Drop weight="fill" />} />
             </StatTiles>
 
             <div className="seat-card__grid">
               <div className="tt-stack seat-card__side">
-                <TasksCard number={number} tasks={tasks.data} today={today} />
+                <TasksCard number={number} tasks={tasks.data} today={today} failed={Boolean(tasks.error) && !tasks.data} onRetry={tasks.reload} />
                 <DaysCard card={c} today={today} />
               </div>
               <LessonsDoneCard card={c} today={today} />
@@ -146,7 +147,7 @@ export default function SeatCardPage() {
   );
 }
 
-function TasksCard({ number, tasks, today }: { number: number; tasks: Schema<"ClassAssignments"> | undefined; today: string }) {
+function TasksCard({ number, tasks, today, failed, onRetry }: { number: number; tasks: Schema<"ClassAssignments"> | undefined; today: string; failed: boolean; onRetry: () => void }) {
   const t = useT();
   const list = tasks ? [...tasks.active, ...tasks.past] : [];
   const mine = list.flatMap((a) => {
@@ -157,7 +158,11 @@ function TasksCard({ number, tasks, today }: { number: number; tasks: Schema<"Cl
     <Card as="section" className="tab-card" aria-labelledby="seat-tasks-title">
       <CardTitle id="seat-tasks-title">{t("Задания")}</CardTitle>
       {!tasks ? (
-        <Skeleton height={48} />
+        failed ? (
+          <PulseRetry onRetry={onRetry} />
+        ) : (
+          <Skeleton height={48} />
+        )
       ) : mine.length === 0 ? (
         <p className="tt-muted">{t("Заданий не было.")}</p>
       ) : (

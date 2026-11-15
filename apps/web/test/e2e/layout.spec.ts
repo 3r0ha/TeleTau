@@ -177,3 +177,93 @@ test.describe("телефон, 390 px", () => {
     await expect(page.locator(".place-sign__name [lang=ba]").first()).toHaveText("Өфө");
   });
 });
+
+/** Ширина прокрутки страницы больше видимой — экран уезжает вбок. */
+const sideScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+
+test.describe("узкий телефон: доска почёта, профиль, лига, шапка лендинга", () => {
+  for (const width of [320, 390]) {
+    for (const locale of ["ru", "ba", "kk"]) {
+      test(`доска почёта ${width} px, ${locale}: без прокрутки вбок, таблица в подложке, слова и ученики видны`, async ({ page, baseURL }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await page.context().addCookies([{ name: "tt_locale", value: locale, url: baseURL! }]);
+        await mockBackend(page, { account: childMe() });
+        await page.goto("/board");
+        const schools = page.locator("#board-schools").locator("xpath=..");
+        await expect(schools.locator(".board__row")).toHaveCount(10);
+        expect(await sideScroll(page)).toBeLessThanOrEqual(0);
+        for (const sheet of await page.locator(".board__sheet").all()) {
+          const { table, box } = await sheet.evaluate((el) => ({ table: el.querySelector("table")!.getBoundingClientRect().width, box: el.clientWidth }));
+          expect(table).toBeLessThanOrEqual(box + 0.5);
+        }
+        // На телефоне ученики и слова — подписью под названием, целиком внутри строки.
+        const meta = schools.locator(".board__meta").first();
+        await expect(meta).toBeVisible();
+        await expect(meta).toContainText("4 120");
+        const row = (await schools.locator(".board__row").first().boundingBox())!;
+        const m = (await meta.boundingBox())!;
+        expect(m.x + m.width).toBeLessThanOrEqual(row.x + row.width + 0.5);
+        // Название не рвётся посреди короткого слова: «Школа» и «Гимназия» — целиком в одной строке.
+        const who = schools.locator(".board__who").nth(1);
+        const lines = await who.evaluate((el) => {
+          const r = document.createRange();
+          r.selectNodeContents(el);
+          return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+        });
+        expect(lines).toBeLessThanOrEqual(2);
+      });
+    }
+  }
+
+  test("профиль 320 px: строка «Язык» без прокрутки вбок, кнопки языка не ниже 44 px и внутри карточки", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await mockBackend(page, { account: childMe() });
+    await page.goto("/me");
+    const group = page.getByRole("group", { name: "Язык" });
+    await group.scrollIntoViewIfNeeded();
+    await expect(group.getByRole("button")).toHaveCount(3);
+    expect(await sideScroll(page)).toBeLessThanOrEqual(0);
+    const card = (await page.locator(".settings__row--stack").boundingBox())!;
+    for (const b of await group.getByRole("button").all()) {
+      const box = (await b.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.x).toBeGreaterThanOrEqual(card.x - 0.5);
+      expect(box.x + box.width).toBeLessThanOrEqual(card.x + card.width + 0.5);
+    }
+    await expect(group.getByRole("button", { name: "Башҡортса" })).toHaveAttribute("lang", "ba");
+  });
+
+  test("лига 320 px: значки лиг сжимаются, без прокрутки вбок", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await mockBackend(page, { account: childMe() });
+    await page.goto("/league");
+    await expect(page.getByRole("heading", { name: "Лига Донника", level: 1 })).toBeVisible();
+    expect(await sideScroll(page)).toBeLessThanOrEqual(0);
+  });
+
+  for (const width of [320, 390]) {
+    test(`шапка лендинга ${width} px: один ряд «логотип, настройки, Войти»; язык и тема — в меню настроек`, async ({ page, baseURL }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await mockBackend(page);
+      await page.goto("/");
+      const head = page.getByRole("banner");
+      const box = (await head.boundingBox())!;
+      expect(box.height).toBeLessThanOrEqual(80);
+      const brand = (await head.getByRole("link", { name: /ТелеТау/ }).boundingBox())!;
+      expect(brand.y).toBeGreaterThanOrEqual(4);
+      expect(await sideScroll(page)).toBeLessThanOrEqual(0);
+      await expect(head.getByRole("group", { name: "Язык интерфейса" })).toHaveCount(0);
+      const toggle = head.getByRole("button", { name: "Настройки" });
+      await toggle.click();
+      const group = head.getByRole("group", { name: "Язык интерфейса" });
+      await expect(group.getByRole("button")).toHaveCount(3);
+      for (const b of await group.getByRole("button").all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      await expect(head.getByRole("switch", { name: "Тёмная тема" })).toBeVisible();
+      await group.getByRole("button", { name: "Башҡортса" }).click();
+      await expect(page.locator("html")).toHaveAttribute("lang", "ba");
+      const cookie = (await page.context().cookies(baseURL!)).find((c) => c.name === "tt_locale");
+      expect(cookie?.value).toBe("ba");
+      await page.keyboard.press("Escape");
+    });
+  }
+});

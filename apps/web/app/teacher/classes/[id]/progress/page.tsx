@@ -10,7 +10,9 @@ import { serverNow } from "@teletau/session/clock";
 import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
 import { LoadError, isForbidden, isNotFound, useDocumentTitle } from "../../../../_components/screens";
+import type { T } from "../../../../../i18n/core";
 import { useT } from "../../../../../i18n/client";
+import { dayMonth } from "../../../../_components/dates";
 import { TeacherShell } from "../../../TeacherShell";
 import { useTeacherGate } from "../../../useTeacher";
 import { BackToClasses, ClassHeader, ClassTabs, ClassUnavailable } from "../ClassFrame";
@@ -81,9 +83,9 @@ export default function ClassProgressPage() {
     setSaving(true);
     try {
       const tasks = await unwrap(api.GET("/api/v1/classes/{id}/assignments", { params: { path: { id: c.id } } }));
-      saveTextFile(reportFileName(c.title, p.week), classReportCsv({ classTitle: c.title, week: p.week, rows, assignments: [...tasks.active, ...tasks.past] }, t));
+      saveTextFile(reportFileName(c.title, p.week), classReportCsv({ rows, assignments: [...tasks.active, ...tasks.past] }, t));
     } catch (e) {
-      toast(describeProblem(e), "error");
+      toast(describeProblem(e, "adult", t), "error");
     } finally {
       setSaving(false);
     }
@@ -164,12 +166,12 @@ function ProgressView({ progress, rows, classId, classTitle, staleError }: { pro
       {staleError ? (
         <div aria-live="polite">
           <InlineAlert tone={isNetworkError(staleError) ? "honey" : "danger"}>
-            {isNetworkError(staleError) ? t("Нет связи. Цифры обновятся, когда сеть вернётся.") : describeProblem(staleError)}
+            {isNetworkError(staleError) ? t("Нет связи. Цифры обновятся, когда сеть вернётся.") : describeProblem(staleError, "adult", t)}
           </InlineAlert>
         </div>
       ) : null}
       <p className="print-only print-note">
-        {t("Отчёт по классу {title} · неделя {week} · {date}", { title: classTitle, week: weekLabel(progress.week), date: printDate(today) })}
+        {t("Отчёт по классу {title} · неделя {week} · {date}", { title: classTitle, week: weekLabel(progress.week, t), date: printDate(today, t) })}
       </p>
       <div className="progress-top">
         <WeekCard progress={progress} />
@@ -186,15 +188,15 @@ function WeekCard({ progress }: { progress: ClassProgress }) {
   const { studentsTotal, activeSeats, lessonsCompleted, honeyEarned, votes } = progress.summary;
   return (
     <Card as="section" className="tab-card week-card" aria-labelledby="week-title">
-      <CardTitle id="week-title">{t("Неделя {week}", { week: weekLabel(progress.week) })}</CardTitle>
+      <CardTitle id="week-title">{t("Неделя {week}", { week: weekLabel(progress.week, t) })}</CardTitle>
       <CardSub>{t("Занимались {done} из {total}", { done: activeSeats, total: studentsTotal })}</CardSub>
       <div className="tab-card__comb">
         <HoneyComb total={studentsTotal} filled={Math.min(activeSeats, studentsTotal)} perRow={COMB_PER_ROW} label={t("Занимались {done} из {total}", { done: activeSeats, total: studentsTotal })} />
       </div>
       <StatTiles label={t("Итоги недели")}>
-        <StatTile label={t("Уроков")} value={lessonsCompleted} icon={<BookOpen weight="fill" />} />
-        <StatTile label={t("Мёда")} value={honeyEarned} icon={<Drop weight="fill" />} />
-        <StatTile label={t("Голосов")} value={votes} icon={<Scales weight="fill" />} />
+        <StatTile label={t("Уроки")} value={lessonsCompleted} icon={<BookOpen weight="fill" />} />
+        <StatTile label={t("Мёд")} value={honeyEarned} icon={<Drop weight="fill" />} />
+        <StatTile label={t("Голоса")} value={votes} icon={<Scales weight="fill" />} />
       </StatTiles>
     </Card>
   );
@@ -208,8 +210,7 @@ function StudentsCard({ rows, today, classId }: { rows: StudentRow[]; today: str
   const [sort, setSort] = useState<Sort>(behind ? "attention" : "seat");
   useEffect(() => {
     if (behind) document.getElementById("pupils-title")?.scrollIntoView({ block: "start" });
-    // Только при первом показе списка.
-  }, []);
+  }, [behind]);
   const sorted = useMemo(() => {
     if (sort === "seat") return rows;
     return [...rows].sort(
@@ -225,11 +226,11 @@ function StudentsCard({ rows, today, classId }: { rows: StudentRow[]; today: str
         <CardTitle id="pupils-title">
           {t("Ученики")} <span className="pupils-card__count">{rows.length}</span>
         </CardTitle>
-        <div className="segmented no-print" role="group" aria-label={t("Порядок учеников")}>
-          <button type="button" className="segmented__item" aria-pressed={sort === "seat"} onClick={() => setSort("seat")}>
+        <div className="tt-segmented no-print" role="group" aria-label={t("Порядок учеников")}>
+          <button type="button" className="tt-segmented__item" aria-pressed={sort === "seat"} onClick={() => setSort("seat")}>
             {t("По номеру")}
           </button>
-          <button type="button" className="segmented__item" aria-pressed={sort === "attention"} onClick={() => setSort("attention")}>
+          <button type="button" className="tt-segmented__item" aria-pressed={sort === "attention"} onClick={() => setSort("attention")}>
             {t("Кто отстаёт")}
           </button>
         </div>
@@ -324,6 +325,5 @@ function PupilRow({ row, today, href }: { row: StudentRow; today: string; href: 
   );
 }
 
-const printDay = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-/** «5 ноября 2026 г.» — дата отчёта на печати. */
-const printDate = (date: string) => printDay.format(new Date(`${date}T12:00:00Z`));
+/** «5 ноября 2026» — дата отчёта на печати. */
+const printDate = (date: string, t: T) => dayMonth(date, t, { year: true });

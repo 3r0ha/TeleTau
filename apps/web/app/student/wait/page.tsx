@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Schema } from "@teletau/contracts";
-import { SignOut, CircleNotch } from "@phosphor-icons/react/ssr";
+import { SignOut } from "@phosphor-icons/react/ssr";
 import { ButtonLink, EmptyState, InlineAlert, LinkButton } from "@teletau/ui";
 import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
@@ -26,7 +26,7 @@ interface Closed {
  * общий с входом по QR (describeProblem); про согласие — без слова «карточка»: ученик входил по коду класса.
  */
 function closedBy(t: T, e: ApiProblem): Closed {
-  if (e.code === "class_archived") return { title: t("Класс закрыт"), text: describeProblem(e, "child") };
+  if (e.code === "class_archived") return { title: t("Класс закрыт"), text: describeProblem(e, "child", t) };
   return { title: t("Вход закрыт"), text: t("Подойди к учителю.") };
 }
 
@@ -64,7 +64,7 @@ export default function WaitPage() {
           router.replace(paths.joined);
           return;
         }
-        if (res.status === "pending") timer.current = setTimeout(poll, Math.max(1, res.pollIntervalSeconds) * 1000);
+        if (res.status === "pending") timer.current = setTimeout(() => void poll(), Math.max(1, res.pollIntervalSeconds) * 1000);
         else clearTicket();
       } catch (e) {
         if (stopped) return;
@@ -83,8 +83,8 @@ export default function WaitPage() {
           return;
         }
         setOffline(isNetworkError(e));
-        if (!isNetworkError(e)) setError(describeProblem(e, "child"));
-        timer.current = setTimeout(poll, Math.max(3, saved.pollIntervalSeconds) * 1000);
+        if (!isNetworkError(e)) setError(describeProblem(e, "child", t));
+        timer.current = setTimeout(() => void poll(), Math.max(3, saved.pollIntervalSeconds) * 1000);
       }
     };
     void poll();
@@ -92,7 +92,7 @@ export default function WaitPage() {
       stopped = true;
       clearTimeout(timer.current);
     };
-  }, [router, paths.joined]);
+  }, [router, paths.joined, t]);
 
   const again = (
     <ButtonLink href={paths.code} block>
@@ -164,21 +164,13 @@ export default function WaitPage() {
       >
         {ticket ? (
           <>
-            {t("Класс")} <ClassTitle title={ticket.classTitle} />. {t("Скажи учителю свой ник:")} <b>«{ticket.nickname}»</b>.
-            {t("Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.")}
-            <p className="tt-pulse">
-              <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
-              {t("Проверяем каждые несколько секунд")}
+            <p>
+              {t("Класс")} <ClassTitle title={ticket.classTitle} />. {t("Скажи учителю свой ник:")} <b>«{ticket.nickname}»</b>.
             </p>
+            <p>{t("Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.")}</p>
           </>
         ) : (
-          <>
-            {t("Учитель скоро пустит тебя в класс. Как только он примет, эта страница сама обновится.")}
-            <p className="tt-pulse">
-              <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
-              {t("Проверяем каждые несколько секунд")}
-            </p>
-          </>
+          t("Учитель скоро пустит тебя в класс. Как только он примет, эта страница сама обновится.")
         )}
       </EmptyState>
     );

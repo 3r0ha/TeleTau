@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import { ArrowRight } from "@phosphor-icons/react/ssr";
 import { ButtonLink, EmptyState, GlintBadge, Illustration, LEAGUE_TIERS, LeagueBoard, LeagueRow, LeagueZone, TextLink, leagueBadges } from "@teletau/ui";
+import { DAY_MS } from "@teletau/session/clock";
 import { useResource } from "@teletau/session/react";
 import { useT } from "../../../i18n/client";
 import type { T } from "../../../i18n/core";
@@ -33,9 +34,7 @@ export function LeagueScreen() {
 
 const ZONE = { promote: "up", demote: "down", stay: null } as const;
 
-const DAY_MS = 86_400_000;
-
-/** «через 3 дня» / «сегодня» до конца недели лиги (format.weekEndsIn остаётся русским — здесь переводимая версия). */
+/** «через 3 дня» / «сегодня» до конца недели лиги. */
 function weekEndText(weekEndsAt: string, t: T): string {
   const days = Math.ceil((Date.parse(weekEndsAt) - Date.now()) / DAY_MS);
   if (!Number.isFinite(days) || days <= 1) return t("сегодня");

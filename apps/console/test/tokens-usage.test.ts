@@ -16,7 +16,7 @@ describe("design tokens usage in console", () => {
     expect(used.filter((v) => !defined.has(v))).toEqual([]);
   });
 
-  it("uses the shared v2 components and stylesheet from @teletau/ui (packages/ui, M1-10)", () => {
+  it("uses the shared v2 components and stylesheet from @teletau/ui (packages/ui)", () => {
     expect(layout).toContain('import "@teletau/ui/ui.css"');
     expect(layout).toContain('from "@teletau/ui"');
   });

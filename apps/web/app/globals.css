@@ -74,20 +74,19 @@
   display: flex;
   flex-direction: column;
   gap: var(--tt-space-s050);
-  overflow-wrap: anywhere;
 }
 
 .start-way__title {
   font-family: var(--tt-font-family-display);
   font-size: var(--tt-font-size-title3);
   font-weight: var(--tt-font-weight-black);
-  line-height: 1.15;
+  line-height: var(--tt-line-height-tight);
 }
 
 .start-way__text {
   color: var(--tt-color-text-secondary);
   font-size: var(--tt-font-size-footnote);
-  line-height: 1.3;
+  line-height: var(--tt-line-height-snug);
 }
 
 .start-way__caret {
@@ -157,7 +156,6 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow-wrap: anywhere;
 }
 
 .doc-list__text small {
@@ -221,8 +219,6 @@
   min-width: 0;
   margin: 0;
   color: var(--tt-color-text-primary);
-  /* Адрес почты — одно длинное «слово»: при крупном шрифте переносится, а не уводит страницу вбок. */
-  overflow-wrap: anywhere;
 }
 
 .facts {
@@ -327,50 +323,11 @@
   align-items: flex-start;
 }
 
-.joined__note {
-  max-width: 360px;
-}
-
 .joined__go {
   margin-top: var(--tt-space-s200);
 }
 
 /* ───────────── кабинет учителя ───────────── */
-.class-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-  gap: var(--tt-space-s400);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.class-card {
-  display: flex !important;
-  align-items: center;
-  gap: var(--tt-space-s400);
-}
-
-.class-card__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--tt-space-s100);
-}
-
-.class-card__chips {
-  margin-top: var(--tt-space-s150);
-  gap: var(--tt-space-s150);
-}
-
-.class-card__go {
-  flex: none;
-  width: var(--tt-size-icon-small);
-  height: var(--tt-size-icon-small);
-  color: var(--tt-color-text-tertiary);
-}
-
 .profile {
   max-width: 640px;
 }
@@ -394,22 +351,6 @@
 .class-page__back svg {
   width: var(--tt-size-icon-small);
   height: var(--tt-size-icon-small);
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--tt-space-s300);
-}
-
-.toolbar .tt-chip {
-  margin-left: var(--tt-space-s100);
-}
-
-@media (max-width: 599px) {
-  .toolbar > .tt-btn {
-    flex: 1 1 100%;
-  }
 }
 
 .seat-grid {

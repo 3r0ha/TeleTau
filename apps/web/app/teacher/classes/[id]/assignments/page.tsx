@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowsClockwise, BookOpen, Plus, Trophy } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { Button, Card, CardSub, CardTitle, Chip, Dialog, EmptyState, InlineAlert, LinkButton, ProgressBar, Skeleton, SkeletonGroup, useToast } from "@teletau/ui";
+import { Button, Card, CardSub, CardTitle, Chip, Dialog, EmptyState, InlineAlert, LinkButton, ProgressBar, Skeleton, SkeletonGroup, useReducedMotion, useToast } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { serverNow } from "@teletau/session/clock";
 import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
@@ -48,10 +48,11 @@ export default function ClassAssignmentsPage() {
   // Только что выданное задание: страница прокручивается к нему и ненадолго подсвечивает карточку.
   const [freshId, setFreshId] = useState<string | null>(null);
   const asked = useRef(params.get("new") === "1");
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     if (!freshId) return;
-    const behavior: ScrollBehavior = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    const behavior: ScrollBehavior = reduced ? "auto" : "smooth";
     const reveal = () => document.getElementById(`task-${freshId}`)?.closest("section")?.scrollIntoView({ block: "center", behavior });
     // Лист закрывается через history.back() (sheetHistory): прокручиваем после его popstate, иначе Next вернёт прокрутку.
     const onPop = () => requestAnimationFrame(reveal);
@@ -63,7 +64,7 @@ export default function ClassAssignmentsPage() {
       clearTimeout(late);
       clearTimeout(timer);
     };
-  }, [freshId]);
+  }, [freshId, reduced]);
 
   // Данные заданий (t — переводчик).
   const data = tasks.data;
@@ -99,7 +100,7 @@ export default function ClassAssignmentsPage() {
       setCancelling(null);
       tasks.reload();
     } catch (e) {
-      toast(describeProblem(e), "error");
+      toast(describeProblem(e, "adult", t), "error");
     } finally {
       setBusy(false);
     }
@@ -144,7 +145,7 @@ export default function ClassAssignmentsPage() {
             {tasks.error ? (
               <div aria-live="polite">
                 <InlineAlert tone={isNetworkError(tasks.error) ? "honey" : "danger"}>
-                  {isNetworkError(tasks.error) ? t("Нет связи. Цифры обновятся, когда сеть вернётся.") : describeProblem(tasks.error)}
+                  {isNetworkError(tasks.error) ? t("Нет связи. Цифры обновятся, когда сеть вернётся.") : describeProblem(tasks.error, "adult", t)}
                 </InlineAlert>
               </div>
             ) : null}

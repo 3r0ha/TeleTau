@@ -73,6 +73,7 @@ const mmss = (ms: number) => {
  * за раз. Код, выпуск которого закончился, когда доска уже закрыта, гасится сразу: на экране его никто не видел.
  */
 export function useJoinCode(classId: string) {
+  const t = useT();
   const [code, setCode] = useState<JoinCode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -122,12 +123,12 @@ export function useJoinCode(classId: string) {
       // Прежний код, который не удалось погасить, новый заменил на сервере (контракт createClassJoinCode).
       setCloseFailure(null);
     } catch (e) {
-      if (live.current) setError(describeProblem(e));
+      if (live.current) setError(describeProblem(e, "adult", t));
     } finally {
       issuing.current = false;
       setBusy(false);
     }
-  }, [classId, kill]);
+  }, [classId, kill, t]);
 
   /**
    * Доска закрыта: погасить код на сервере. Код ещё выпускается — его погасит issue(), когда он придёт. Постоянный код
@@ -199,10 +200,13 @@ export function JoinCodeBoard({
   const left = code ? Math.min(code.deadline - now, CLASS_CODE_TTL_SECONDS * 1000) : 0;
   const expired = Boolean(code) && !permanent && left <= 0;
 
+  // Код выпускается в момент открытия, если действующего нет; пока доска открыта, сам код не перевыпускается.
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (open && (!code || code.deadline <= Date.now())) void issue();
-    // Код выпускается при открытии, если действующего нет (зависимость — только открытие).
-  }, [open]);
+    const opening = open && !wasOpen.current;
+    wasOpen.current = open;
+    if (opening && (!code || code.deadline <= Date.now())) void issue();
+  }, [open, code, issue]);
 
   return (
     <Dialog

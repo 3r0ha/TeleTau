@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Buildings, ChalkboardTeacher, ChartBar, Exam, GraduationCap, HandHeart, MapPin, Student, Translate, Users } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { Button, Chip, EmptyState, Skeleton, SkeletonGroup } from "@teletau/ui";
+import { Chip, EmptyState, Skeleton, SkeletonGroup } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
-import { describeProblem, isNetworkError } from "@teletau/session/problem";
 import { ConsoleShell } from "../_components/ConsoleShell";
-import { ActivityCell, asOfLabel, GroupNumber, Kpi, Kpis, num, SortHeader, SuppressionLegend, useSorted, weekLabel, WeeksChart, type Column } from "./parts";
+import { LoadFailure } from "../_components/LoadFailure";
+import { ActivityCell, asOfLabel, GroupNumber, Kpi, Kpis, num, SmallGroupThresholdProvider, SortHeader, SuppressionLegend, useSorted, weekLabel, WeeksChart, type Column } from "./parts";
 
 type Summary = Schema<"RepublicSummary">;
 type DistrictList = Schema<"RepublicDistrictList">;
@@ -37,19 +37,7 @@ function Republic() {
 
   if (error && !data) {
     return (
-      <EmptyState
-        art={isNetworkError(error) ? "emptyOffline" : "emptyError"}
-        compact
-        title={isNetworkError(error) ? "Нет связи" : "Не удалось загрузить"}
-        role="alert"
-        actions={
-          <Button block onClick={() => setTick((n) => n + 1)}>
-            Попробовать снова
-          </Button>
-        }
-      >
-        {describeProblem(error)}
-      </EmptyState>
+      <LoadFailure error={error} onRetry={() => setTick((n) => n + 1)} />
     );
   }
   if (!data) {
@@ -68,60 +56,62 @@ function Republic() {
   }
   const { summary: s, districts } = data;
   return (
-    <div className="tt-stack tt-stack--loose republic">
-      <header className="console__head">
-        <div className="tt-stack tt-stack--tight">
-          <h1 className="tt-title2">Республика Башкортостан</h1>
-          <p className="tt-muted">
-            Неделя {weekLabel(s.week)} · данные на {asOfLabel(s.asOf)} по Уфе
-          </p>
-        </div>
-      </header>
+    <SmallGroupThresholdProvider value={s.smallGroupThreshold}>
+      <div className="tt-stack tt-stack--loose republic">
+        <header className="console__head">
+          <div className="tt-stack tt-stack--tight">
+            <h1 className="tt-title2">Республика Башкортостан</h1>
+            <p className="tt-muted">
+              Неделя {weekLabel(s.week)} · данные на {asOfLabel(s.asOf)} по Уфе
+            </p>
+          </div>
+        </header>
 
-      <section className="tt-stack" aria-labelledby="kpi-reach">
-        <h2 className="section-title" id="kpi-reach">
-          Охват
-        </h2>
-        <Kpis label="Охват">
-          <Kpi icon={<MapPin weight="fill" />} label="Районов и округов подключено" value={num(s.districts.connected)} note={`из ${num(s.districts.total)}`} />
-          <Kpi icon={<Buildings weight="fill" />} label="Школ подключено" value={num(s.schools.connected)} note={`из ${num(s.schools.total)}`} />
-          <Kpi icon={<Users weight="fill" />} label="Классов" value={num(s.classes)} />
-          <Kpi icon={<ChalkboardTeacher weight="fill" />} label="Учителей подтверждено" value={num(s.teachersVerified)} />
-        </Kpis>
-      </section>
+        <section className="tt-stack" aria-labelledby="kpi-reach">
+          <h2 className="section-title" id="kpi-reach">
+            Охват
+          </h2>
+          <Kpis label="Охват">
+            <Kpi icon={<MapPin weight="fill" />} label="Районов и округов подключено" value={num(s.districts.connected)} note={`из ${num(s.districts.total)}`} />
+            <Kpi icon={<Buildings weight="fill" />} label="Школ подключено" value={num(s.schools.connected)} note={`из ${num(s.schools.total)}`} />
+            <Kpi icon={<Users weight="fill" />} label="Классов" value={num(s.classes)} />
+            <Kpi icon={<ChalkboardTeacher weight="fill" />} label="Учителей подтверждено" value={num(s.teachersVerified)} />
+          </Kpis>
+        </section>
 
-      <section className="tt-stack" aria-labelledby="kpi-learners">
-        <h2 className="section-title" id="kpi-learners">
-          Ученики
-        </h2>
-        <Kpis label="Ученики">
-          <Kpi icon={<Student weight="fill" />} label="Учеников в школах" value={<GroupNumber {...s.students.school} />} />
-          <Kpi icon={<GraduationCap weight="fill" />} label="Учатся сами" value={<GroupNumber {...s.students.self} />} />
-          <Kpi
-            icon={<ChartBar weight="fill" />}
-            label="Занимались на этой неделе"
-            value={<GroupNumber value={s.learners.activeWeek} suppression={s.learners.suppression} />}
-            note={!s.learners.suppression && s.learners.students ? `${Math.round(((s.learners.activeWeek ?? 0) / s.learners.students) * 100)} % учеников` : undefined}
-          />
-          <Kpi icon={<Exam weight="fill" />} label="Уроков за неделю" value={<GroupNumber value={s.learners.lessonsWeek} suppression={s.learners.suppression} />} note={!s.learners.suppression ? `всего ${num(s.learners.lessonsTotal ?? 0)}` : undefined} />
-        </Kpis>
-      </section>
+        <section className="tt-stack" aria-labelledby="kpi-learners">
+          <h2 className="section-title" id="kpi-learners">
+            Ученики
+          </h2>
+          <Kpis label="Ученики">
+            <Kpi icon={<Student weight="fill" />} label="Учеников в школах" value={<GroupNumber {...s.students.school} />} />
+            <Kpi icon={<GraduationCap weight="fill" />} label="Учатся сами" value={<GroupNumber {...s.students.self} />} />
+            <Kpi
+              icon={<ChartBar weight="fill" />}
+              label="Занимались на этой неделе"
+              value={<GroupNumber value={s.learners.activeWeek} suppression={s.learners.suppression} />}
+              note={!s.learners.suppression && s.learners.students ? `${Math.round(((s.learners.activeWeek ?? 0) / s.learners.students) * 100)} % учеников` : undefined}
+            />
+            <Kpi icon={<Exam weight="fill" />} label="Уроков за неделю" value={<GroupNumber value={s.learners.lessonsWeek} suppression={s.learners.suppression} />} note={!s.learners.suppression ? `всего ${num(s.learners.lessonsTotal ?? 0)}` : undefined} />
+          </Kpis>
+        </section>
 
-      <section className="tt-stack" aria-labelledby="kpi-language">
-        <h2 className="section-title" id="kpi-language">
-          Учёба и помощь языку
-        </h2>
-        <Kpis label="Учёба и помощь языку">
-          <Kpi icon={<BookOpen weight="fill" />} label="Слов выучено" value={s.wordsLearned !== undefined ? num(s.wordsLearned) : <GroupNumber suppression="small_group" />} />
-          <Kpi icon={<HandHeart weight="fill" />} label="Голосов в «Помоги языку»" value={num(s.votes)} />
-          <Kpi icon={<Translate weight="fill" />} label="Пар принято в словарь" value={num(s.pairsAccepted)} note="предварительно" />
-        </Kpis>
-      </section>
+        <section className="tt-stack" aria-labelledby="kpi-language">
+          <h2 className="section-title" id="kpi-language">
+            Учёба и помощь языку
+          </h2>
+          <Kpis label="Учёба и помощь языку">
+            <Kpi icon={<BookOpen weight="fill" />} label="Слов выучено" value={s.wordsLearned !== undefined ? num(s.wordsLearned) : <GroupNumber suppression="small_group" />} />
+            <Kpi icon={<HandHeart weight="fill" />} label="Голосов в «Помоги языку»" value={num(s.votes)} />
+            <Kpi icon={<Translate weight="fill" />} label="Пар принято в словарь" value={num(s.pairsAccepted)} note="предварительно" />
+          </Kpis>
+        </section>
 
-      {s.weeks.length ? <WeeksChart weeks={s.weeks} title="По неделям" /> : null}
+        {s.weeks.length ? <WeeksChart weeks={s.weeks} title="По неделям" /> : null}
 
-      <DistrictsTable list={districts} />
-    </div>
+        <DistrictsTable list={districts} />
+      </div>
+    </SmallGroupThresholdProvider>
   );
 }
 
@@ -154,11 +144,11 @@ function DistrictsTable({ list }: { list: DistrictList }) {
             Подключено {num(connected.length)} из {num(list.items.length)}
           </p>
         </div>
-        <div className="segmented" role="group" aria-label="Какие районы показать">
-          <button type="button" aria-pressed={!all} onClick={() => setAll(false)}>
+        <div className="tt-segmented" role="group" aria-label="Какие районы показать">
+          <button type="button" className="tt-segmented__item" aria-pressed={!all} onClick={() => setAll(false)}>
             Подключённые
           </button>
-          <button type="button" aria-pressed={all} onClick={() => setAll(true)}>
+          <button type="button" className="tt-segmented__item" aria-pressed={all} onClick={() => setAll(true)}>
             Все районы
           </button>
         </div>
@@ -192,7 +182,7 @@ function DistrictsTable({ list }: { list: DistrictList }) {
                     {d.isDemo ? (
                       <>
                         {" "}
-                        <Chip tone="violet">демо</Chip>
+                        <Chip tone="neutral">демо</Chip>
                       </>
                     ) : null}
                     <span className="table__sub">{d.kind === "urban_okrug" ? "городской округ" : "муниципальный район"}</span>

@@ -33,6 +33,9 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Номер попытки включить камеру: stop() его меняет, и камера, разрешённая уже после «Выключить камеру» или фото,
+  // сразу гаснет, а цикл сканирования прежней попытки останавливается.
+  const attemptRef = useRef(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const [camera, setCamera] = useState<CameraState>({ status: "off" });
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -44,6 +47,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
   const ended = sessionState.status === "anonymous" && (sessionState.reason === "session_revoked" || sessionState.reason === "card_reissued") ? sessionState.reason : null;
 
   const stop = useCallback(() => {
+    attemptRef.current++;
     clearTimeout(timerRef.current);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
@@ -52,39 +56,55 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
 
   useEffect(() => stop, [stop]);
 
-  const scanLoop = useCallback(() => {
-    const tick = async () => {
-      const video = videoRef.current;
-      if (!video || !streamRef.current) return;
-      const text = await decodeVideoFrame(video).catch(() => null);
-      if (text) {
-        stop();
-        setCamera({ status: "off" });
-        await login(text);
-        return;
-      }
-      timerRef.current = setTimeout(tick, SCAN_INTERVAL_MS);
-    };
-    void tick();
-  }, [login, stop]);
+  const scanLoop = useCallback(
+    (attempt: number) => {
+      const tick = async () => {
+        const video = videoRef.current;
+        if (attempt !== attemptRef.current || !video || !streamRef.current) return;
+        const text = await decodeVideoFrame(video).catch(() => null);
+        if (attempt !== attemptRef.current) return;
+        if (text) {
+          stop();
+          setCamera({ status: "off" });
+          await login(text);
+          return;
+        }
+        timerRef.current = setTimeout(() => void tick(), SCAN_INTERVAL_MS);
+      };
+      void tick();
+    },
+    [login, stop],
+  );
 
   const start = async () => {
     reset();
     setPhotoError(null);
+    stop();
+    const attempt = attemptRef.current;
     if (!navigator.mediaDevices?.getUserMedia) {
       setCamera({ status: "error", message: t("В этом браузере нет камеры. Загрузи фото карточки.") });
       return;
     }
     setCamera({ status: "starting" });
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      if (attempt !== attemptRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       const video = videoRef.current!;
       video.srcObject = stream;
       await video.play();
+      if (attempt !== attemptRef.current) return;
       setCamera({ status: "on" });
-      scanLoop();
+      scanLoop(attempt);
     } catch (e) {
+      if (attempt !== attemptRef.current) {
+        stream?.getTracks().forEach((track) => track.stop());
+        return;
+      }
       stop();
       setCamera({ status: "error", message: cameraError(t, e) });
     }
@@ -125,7 +145,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
           ) : (
             <div className="scan__idle">
               <QrCode weight="duotone" aria-hidden className="scan__qr" />
-              <Button onClick={start} icon={<Camera weight="fill" />} loading={busy}>
+              <Button onClick={() => void start()} icon={<Camera weight="fill" />} loading={busy}>
                 {busy ? t("Входим…") : t("Сканировать карточку")}
               </Button>
             </div>
@@ -141,7 +161,7 @@ export default function StudentScanPage({ withSelf = false }: { withSelf?: boole
         ) : null}
 
         <div aria-live="polite" className="tt-stack tt-stack--tight">
-          {ended && state.status === "idle" ? <InlineAlert tone="honey">{describeProblem(new ApiProblem(401, { code: ended }), "child")}</InlineAlert> : null}
+          {ended && state.status === "idle" ? <InlineAlert tone="honey">{describeProblem(new ApiProblem(401, { code: ended }), "child", t)}</InlineAlert> : null}
           {busy ? <p className="tt-visually-hidden">{t("Карточка найдена, входим")}</p> : null}
           {state.status === "error" ? <InlineAlert tone="danger">{state.message}</InlineAlert> : null}
           {camera.status === "error" ? <InlineAlert tone="danger">{camera.message}</InlineAlert> : null}

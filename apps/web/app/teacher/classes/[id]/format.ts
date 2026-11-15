@@ -1,6 +1,7 @@
 import type { Schema } from "@teletau/contracts";
 import { msUntil } from "@teletau/session/clock";
 import type { T } from "../../../../i18n/core";
+import { dayMonth, timeOfDay } from "../../../_components/dates";
 
 export type ClassDetail = Schema<"ClassDetail">;
 export type Seat = Schema<"Seat">;
@@ -10,11 +11,9 @@ export type PrintJob = Schema<"PrintJob">;
 export const seatNo = (n: number) => String(n).padStart(2, "0");
 export const seatLabel = (n: number) => `№${seatNo(n)}`;
 
-/** Время показываем по Уфе (учебные сутки — Asia/Yekaterinburg, CLAUDE.md «Соглашения»). */
-const timeFmt = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Yekaterinburg" });
-const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", timeZone: "Asia/Yekaterinburg" });
-export const time = (iso: string) => timeFmt.format(new Date(iso));
-export const date = (iso: string) => dateFmt.format(new Date(iso));
+/** Время и дата — по Уфе (учебные сутки — Asia/Yekaterinburg, CLAUDE.md «Соглашения»). */
+export const time = (iso: string) => timeOfDay(iso);
+export const date = (iso: string, t: T) => dayMonth(iso, t);
 
 /** Диапазон номеров «№01–№24» или «№07». */
 export function seatRange(numbers: number[]): string {
@@ -45,6 +44,14 @@ const printKey = (classId: string) => `tt-print-${classId}`;
 export function savePrintJob(classId: string, job: PrintJob) {
   try {
     sessionStorage.setItem(printKey(classId), JSON.stringify(job));
+  } catch {
+    /* приватный режим */
+  }
+}
+
+export function forgetPrintJob(classId: string) {
+  try {
+    sessionStorage.removeItem(printKey(classId));
   } catch {
     /* приватный режим */
   }

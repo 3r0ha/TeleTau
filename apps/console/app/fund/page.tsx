@@ -6,8 +6,9 @@ import type { Schema } from "@teletau/contracts";
 import { Button, Chip, EmptyState, InlineAlert, Skeleton, SkeletonGroup } from "@teletau/ui";
 import { saveTextFile } from "@teletau/ui/files";
 import { api, unwrap } from "@teletau/session/api";
-import { describeProblem, isNetworkError } from "@teletau/session/problem";
 import { ConsoleShell } from "../_components/ConsoleShell";
+import { LoadFailure } from "../_components/LoadFailure";
+import { plural } from "../_components/plural";
 import { decisionDate, dictionaryCsv, dictionaryJson, escalatedCsv, escalatedJson, exportFileName, kindLabel, originLabel } from "./export";
 
 type Dictionary = Schema<"FundDictionary">;
@@ -75,20 +76,7 @@ function FundDictionary() {
       </header>
 
       {error && !data ? (
-        <EmptyState
-          art={isNetworkError(error) ? "emptyOffline" : "emptyError"}
-          headingAs="h2"
-          compact
-          title={isNetworkError(error) ? "Нет связи" : "Не удалось загрузить"}
-          role="alert"
-          actions={
-            <Button block onClick={() => setTick((n) => n + 1)}>
-              Попробовать снова
-            </Button>
-          }
-        >
-          {describeProblem(error)}
-        </EmptyState>
+        <LoadFailure error={error} onRetry={() => setTick((n) => n + 1)} headingAs="h2" />
       ) : !data ? (
         <SkeletonGroup label="Загружаем словарь" className="tt-stack tt-stack--tight">
           {[0, 1, 2, 3].map((i) => (
@@ -134,14 +122,10 @@ function FundDictionary() {
   );
 }
 
-function sourcesWord(n: number): string {
-  const d = n % 10;
-  const h = n % 100;
-  return d === 1 && h !== 11 ? "исходник" : d >= 2 && d <= 4 && (h < 12 || h > 14) ? "исходника" : "исходников";
-}
+const sourcesWord = (n: number) => plural(n, "исходник", "исходника", "исходников");
 
 /**
- * «Спорные случаи» (ТЗ хакатона §4.4/§5): пары, в которых голоса групп разошлись и упрощённые правила не выбрали
+ * «Спорные случаи»: пары, в которых голоса групп разошлись и упрощённые правила не выбрали
  * вариант. Загружаются отдельно от словаря; выгрузка — теми же CSV/JSON для передачи экспертам.
  */
 function FundEscalated() {
@@ -184,20 +168,7 @@ function FundEscalated() {
       </header>
 
       {error && !data ? (
-        <EmptyState
-          art={isNetworkError(error) ? "emptyOffline" : "emptyError"}
-          headingAs="h3"
-          compact
-          title={isNetworkError(error) ? "Нет связи" : "Не удалось загрузить"}
-          role="alert"
-          actions={
-            <Button block onClick={() => setTick((n) => n + 1)}>
-              Попробовать снова
-            </Button>
-          }
-        >
-          {describeProblem(error)}
-        </EmptyState>
+        <LoadFailure error={error} onRetry={() => setTick((n) => n + 1)} headingAs="h3" />
       ) : !data ? (
         <SkeletonGroup label="Загружаем спорные случаи" className="tt-stack tt-stack--tight">
           {[0, 1].map((i) => (
@@ -236,11 +207,7 @@ function FundEscalated() {
   );
 }
 
-function pluralDisputes(n: number): string {
-  const d = n % 10;
-  const h = n % 100;
-  return d === 1 && h !== 11 ? "спор" : d >= 2 && d <= 4 && (h < 12 || h > 14) ? "спора" : "споров";
-}
+const pluralDisputes = (n: number) => plural(n, "спор", "спора", "споров");
 
 function EscRowView({ item }: { item: EscRow }) {
   return (
@@ -276,11 +243,7 @@ function EscRowView({ item }: { item: EscRow }) {
   );
 }
 
-function pluralPairs(n: number): string {
-  const d = n % 10;
-  const h = n % 100;
-  return d === 1 && h !== 11 ? "пара" : d >= 2 && d <= 4 && (h < 12 || h > 14) ? "пары" : "пар";
-}
+const pluralPairs = (n: number) => plural(n, "пара", "пары", "пар");
 
 function GroupVotes({ label, v }: { label: string; v: Votes }) {
   return (

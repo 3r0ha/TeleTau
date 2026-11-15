@@ -19,9 +19,9 @@ const STEPS: Step[] = ["age", "nick"];
 
 /**
  * «Учусь сам» (ADR 0022): возраст диапазоном → ник из словаря → сразу тропа. Цель дня — 2 урока по умолчанию, меняется
- * в профиле (шаг цели убран из знакомства ради короткого старта, docs/plans/M2-copy-student.md). Ничего личного: ни
- * имени, ни почты, ни телефона. Шаг — в адресе (`?step=…`, как вход по коду класса): системная «Назад» возвращает на
- * предыдущий шаг. Выбранное живёт только на этой странице; после перезагрузки — с первого шага.
+ * в профиле. Ничего личного: ни имени, ни почты, ни телефона. Шаг — в адресе (`?step=…`, как вход по коду класса):
+ * системная «Назад» возвращает на предыдущий шаг. Выбранное живёт только на этой странице; после перезагрузки — с первого
+ * шага.
  *
  * Только дети: анонимные аккаунты без ПДн положены ребёнку (ADR 0009), взрослому — вход и регистрация по почте
  * (без пароля, ADR 0022 §4); ссылка внизу шага возраста ведёт туда.
@@ -61,7 +61,7 @@ export default function SelfStartPage() {
       await session.startSelf({ nicknameId, ageBand: age });
       router.replace(paths.learn);
     } catch (e) {
-      setError(describeProblem(e, "child"));
+      setError(describeProblem(e, "child", t));
       setBusy(false);
     }
   };
@@ -85,7 +85,7 @@ export default function SelfStartPage() {
               {t("Дальше")}
             </Button>
             {/* Взрослому анонимный аккаунт не создаём (ADR 0022): вход и регистрация по почте — без пароля. */}
-            <ButtonLink href="/teacher/login" variant="secondary" block icon={<EnvelopeSimple weight="fill" aria-hidden />}>
+            <ButtonLink href={paths.adultLogin} variant="secondary" block icon={<EnvelopeSimple weight="fill" aria-hidden />}>
               {t("Взрослым — вход по почте")}
             </ButtonLink>
           </div>

@@ -2,6 +2,8 @@
 // без ников и ПДн, ники учитель берёт из GET /classes/{id} (ADR 0009). Здесь — склейка и подписи, без запросов.
 // Подписи зависят от языка интерфейса: функции берут переводчик t (T из i18n/core).
 import type { Schema } from "@teletau/contracts";
+import { dayNumber } from "@teletau/session/clock";
+import { dayMonth, dayOfMonth, monthOf } from "../../../../_components/dates";
 import { plural } from "../../../../_components/learn/format";
 import type { T } from "../../../../../i18n/core";
 import type { Seat } from "../format";
@@ -41,11 +43,6 @@ export function ufaToday(nowMs: number): string {
   return ufaDate.format(new Date(nowMs));
 }
 
-const DAY_MS = 86_400_000;
-const dayNumber = (date: string) => Math.round(Date.parse(`${date}T00:00:00Z`) / DAY_MS);
-const dayMonth = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" });
-const dayOnly = new Intl.DateTimeFormat("ru-RU", { day: "numeric", timeZone: "UTC" });
-const noon = (date: string) => new Date(`${date}T12:00:00Z`);
 
 /** Когда ученик занимался последний раз: «сегодня», «вчера», «12 ноября»; ещё ни разу — null. */
 export function lastActiveLabel(lastActiveOn: string | undefined, today: string, t: T): string | null {
@@ -53,21 +50,18 @@ export function lastActiveLabel(lastActiveOn: string | undefined, today: string,
   const days = dayNumber(today) - dayNumber(lastActiveOn);
   if (days <= 0) return t("сегодня");
   if (days === 1) return t("вчера");
-  return dayMonth.format(noon(lastActiveOn));
+  return dayMonth(lastActiveOn, t);
 }
 
 /** «9–15 ноября» или «30 ноября – 6 декабря» — учебная неделя пн–вс. */
-export function weekLabel(week: Week): string {
-  const start = noon(week.start);
-  const end = noon(week.end);
-  if (start.getUTCMonth() === end.getUTCMonth()) return `${dayOnly.format(start)}–${dayMonth.format(end)}`;
-  return `${dayMonth.format(start)} – ${dayMonth.format(end)}`;
+export function weekLabel(week: Week, t: T): string {
+  if (monthOf(week.start) === monthOf(week.end)) return `${dayOfMonth(week.start)}–${dayMonth(week.end, t)}`;
+  return `${dayMonth(week.start, t)} – ${dayMonth(week.end, t)}`;
 }
 
 export const lessonsWord = (n: number, t: T) => plural(n, [t("урок"), t("урока"), t("уроков")]);
 export const daysWord = (n: number, t: T) => plural(n, [t("день"), t("дня"), t("дней")]);
 export const studentsWord = (n: number, t: T) => plural(n, [t("ученик"), t("ученика"), t("учеников")]);
-export const votesWord = (n: number, t: T) => plural(n, [t("голос"), t("голоса"), t("голосов")]);
 
 /** Точность ответов — целые проценты: 0.857 → «86%». */
 export function percent(x: number): string {

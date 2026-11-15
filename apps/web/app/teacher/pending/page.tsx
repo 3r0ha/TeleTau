@@ -7,11 +7,11 @@ import { api, unwrap } from "@teletau/session/api";
 import { useResource } from "@teletau/session/react";
 import { LoadError, LoadingBlock, Screen, SignOutAction, SimpleTop, isNotFound } from "../../_components/screens";
 import { useT } from "../../../i18n/client";
+import { dayMonth, timeOfDay } from "../../_components/dates";
 import { clearApplyDraft } from "../applyDraft";
 import { OnboardLayout } from "../Journey";
 import { useTeacherGate } from "../useTeacher";
 
-const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Yekaterinburg" });
 
 /**
  * Заявка на проверке: сколько ждать и что отправлено (шаги пути — в панели «Кабинет учителя»). Страница опрашивает
@@ -82,7 +82,7 @@ export default function PendingPage() {
                 </div>
                 <div>
                   <dt>{t("Отправлена")}</dt>
-                  <dd>{dateFmt.format(new Date(v.createdAt))}</dd>
+                  <dd>{t("{date}, {time}", { date: dayMonth(v.createdAt, t), time: timeOfDay(v.createdAt) })}</dd>
                 </div>
               </dl>
             ) : null}

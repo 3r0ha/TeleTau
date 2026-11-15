@@ -19,8 +19,8 @@ const BEFORE_LOGIN = ["/q", "/student", "/student/code", "/student/wait", "/self
  */
 export function uiModeFor(state: SessionState, path: string): UiMode | undefined | null {
   if (state.status === "authenticated") return state.account.kind === "child" ? (state.account.uiMode ?? "bortnik") : state.account.nickname ? state.account.uiMode : undefined;
-  // Telegram Mini App — те же экраны под префиксом /miniapp (app/miniapp, docs/plans/M2.md §3 «Ч5»).
-  if (BEFORE_LOGIN.includes(path.replace(/^\/miniapp(?=\/student)/, ""))) return "bee";
+  // Telegram Mini App — те же экраны под префиксом /miniapp (app/miniapp): /miniapp/student, /miniapp/self.
+  if (BEFORE_LOGIN.includes(path.replace(/^\/miniapp(?=\/)/, ""))) return "bee";
   return state.status === "unknown" ? null : undefined;
 }
 

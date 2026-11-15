@@ -7,18 +7,15 @@ import { serverNow } from "@teletau/session/clock";
  * Заявка на вход по коду класса — в sessionStorage вкладки: переживает перезагрузку, но не закрытие вкладки
  * и не дольше срока заявки (контракт: pollToken «не сохранять дольше срока заявки»).
  */
-export interface JoinTicket {
-  requestId: string;
-  pollToken: string;
-  expiresAt: string;
-  pollIntervalSeconds: number;
-  classTitle: string;
-  nickname: string;
-}
+type LoginTicket = Schema<"ClassCodeLoginTicket">;
+export type JoinTicket = Pick<LoginTicket, "requestId" | "pollToken" | "expiresAt" | "pollIntervalSeconds"> & {
+  classTitle: LoginTicket["class"]["title"];
+  nickname: Schema<"NicknameSuggestion">["text"];
+};
 
 const KEY = "tt-join-ticket";
 
-export function saveTicket(t: Schema<"ClassCodeLoginTicket">, nickname: string) {
+export function saveTicket(t: LoginTicket, nickname: string) {
   const ticket: JoinTicket = {
     requestId: t.requestId,
     pollToken: t.pollToken,

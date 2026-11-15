@@ -22,7 +22,7 @@ function taskLabels(t: T): Record<string, string> {
     tiles_ru_ba: t("Собрать фразу"),
     free_ru_ba: t("Написать по-башкирски"),
     match_pairs: t("Найти пары"),
-    duel: t("Помочь языку"),
+    duel: t("Помоги языку"),
   };
 }
 
@@ -126,9 +126,9 @@ function Failed({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const t = useT();
   return (
     <div className="peek__failed" aria-live="polite">
-      <InlineAlert tone="danger">{describeProblem(error)}</InlineAlert>
+      <InlineAlert tone="danger">{describeProblem(error, "adult", t)}</InlineAlert>
       <Button variant="secondary" small onClick={onRetry}>
-        {t("Повторить")}
+        {t("Попробовать ещё раз")}
       </Button>
     </div>
   );

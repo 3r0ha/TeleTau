@@ -1,7 +1,7 @@
 // Service worker: only the "Нет связи" page when the network is gone.
 //
 // - Navigations (except /api/) go to the network as usual (navigation preload when available). On a network error the
-//   cached /offline page is shown at the requested address; its "Попробовать снова" link reloads that address.
+//   cached /offline page is shown at the requested address; its "Попробовать ещё раз" link reloads that address.
 // - Styles, images and fonts of the offline page are cached with it and are served from the cache only when the network
 //   fails.
 // - Nothing else is intercepted or cached: API calls, the BFF session (/api/session), RSC requests and pages with data

@@ -1,4 +1,4 @@
-// Каркас Telegram Mini App на моках API (docs/plans/M2.md §3 «Ч5»): /miniapp в обычном браузере и «в Telegram» —
+// Каркас Telegram Mini App на моках API: /miniapp в обычном браузере и «в Telegram» —
 // мобильный клиент подменён window.TelegramWebviewProxy, события клиента — window.Telegram.WebView.receiveEvent.
 // Проверяем: параметры запуска и тема, web_app_ready/expand, системная «Назад», вход по сканеру QR Telegram через тот же
 // BFF, initData уходит только в привязку чата (POST /api/v1/telegram/link, один раз после входа — ADR 0020), заголовки
@@ -42,7 +42,7 @@ const lastBackButton = async (page: Page) => {
   return (all.at(-1)?.[1] as { is_visible: boolean } | undefined)?.is_visible;
 };
 
-test.describe("M2: Mini App в обычном браузере", () => {
+test.describe("Mini App в обычном браузере", () => {
   test("/miniapp → вход по карточке (веб-сканер) → тропа; вкладки — под /miniapp", async ({ page }) => {
     await mockBackend(page, { qr: { ok: true, account: childMe() } });
     await page.goto("/miniapp");
@@ -76,6 +76,41 @@ test.describe("M2: Mini App в обычном браузере", () => {
     await page.waitForURL("**/miniapp/student/wait");
   });
 
+  test("«Учусь сам» и «Ты в классе» ведут только на адреса /miniapp", async ({ page }) => {
+    await mockBackend(page);
+    await page.goto("/miniapp/self");
+    await expect(page.getByRole("link", { name: "Взрослым — вход по почте" })).toHaveAttribute("href", "/miniapp/student/email");
+
+    const w = await mockBackend(page, { account: childMe() });
+    await page.goto("/miniapp/student/class");
+    await expect(page.getByRole("heading", { name: /Ты в классе/ })).toBeVisible();
+    await expect(page.locator("a.tt-brand")).toHaveAttribute("href", "/miniapp");
+    expect(w.logouts).toBe(0);
+  });
+
+  test("взрослый без ника: «Я учитель» открывает сайт в новом окне, «Выйти» остаётся в /miniapp", async ({ page }) => {
+    const w = await mockBackend(page, { account: adultMe({ nickname: undefined, teacherStatus: "none", roles: [], classes: [] }) });
+    await page.goto("/miniapp/welcome");
+    await expect(page.getByRole("heading", { name: "Что дальше?" })).toBeVisible();
+    const teacher = page.getByRole("link", { name: /Я учитель/ });
+    await expect(teacher).toHaveAttribute("href", "/teacher/apply");
+    await expect(teacher).toHaveAttribute("target", "_blank");
+    await page.getByRole("button", { name: "Выйти" }).click();
+    await page.waitForURL("**/miniapp/student");
+    expect(w.logouts).toBe(1);
+  });
+
+  test("учитель в Mini App: кабинет открывается в браузере, экран остаётся в /miniapp", async ({ page }) => {
+    await mockBackend(page, { account: adultMe({ nickname: undefined }) });
+    await page.goto("/miniapp/learn");
+    await page.waitForURL("**/miniapp/welcome");
+    await expect(page.getByRole("heading", { name: "Кабинет учителя" })).toBeVisible();
+    const open = page.getByRole("link", { name: "Открыть в браузере" });
+    await expect(open).toHaveAttribute("href", "/teacher");
+    await expect(open).toHaveAttribute("target", "_blank");
+    await expect(page).toHaveURL(/\/miniapp\/welcome$/);
+  });
+
   test("встраивать можно только /miniapp/* и только Telegram Web; остальные страницы — никому", async ({ request }) => {
     const mini = await request.get("/miniapp/learn");
     expect(mini.headers()["content-security-policy"]).toContain("frame-ancestors https://web.telegram.org");
@@ -88,7 +123,7 @@ test.describe("M2: Mini App в обычном браузере", () => {
   });
 });
 
-test.describe("M2: Mini App в Telegram", () => {
+test.describe("Mini App в Telegram", () => {
   test("тёмная тема Telegram и тёмная система — Mini App светлая, ready/expand, шапка в цвет светлого фона; initData убран из адреса и ушёл только в привязку", async ({ page }) => {
     await inTelegram(page);
     const urls: string[] = [];
@@ -210,7 +245,7 @@ test.describe("M2: Mini App в Telegram", () => {
     await expect(page.getByRole("heading", { name: "Выбери ник" })).toBeVisible();
     // Взрослому без класса — подпись про дуэли, не «увидят в классе».
     await expect(page.getByText("Так тебя увидят в дуэлях")).toBeVisible();
-    // Регрессия (кнопка застревала в загрузке): «Начать» доступна сразу после выбора ника.
+    // «Начать» доступна сразу после выбора ника, без загрузки.
     await page.getByRole("radio").first().check();
     const start = page.getByRole("button", { name: "Начать", exact: true });
     await expect(start).toBeEnabled();
@@ -223,8 +258,17 @@ test.describe("M2: Mini App в Telegram", () => {
     expect(linked[0]).toContain("hash=");
   });
 
+  test("вход по привязке чата: взрослый без ника попадает на выбор «Учиться / Я учитель», а не на детский выбор ника", async ({ page }) => {
+    await inTelegram(page);
+    const w = await mockBackend(page, { telegramAccount: adultMe({ nickname: undefined, teacherStatus: "none", roles: [], classes: [] }) });
+    await page.goto(launch(LIGHT));
+    await page.waitForURL("**/miniapp/welcome");
+    await expect(page.getByRole("heading", { name: "Что дальше?" })).toBeVisible();
+    expect(w.bffCalls.telegram).toBe(1);
+  });
+
   test("вошедший без ника: /miniapp ведёт на выбор пути, а не в 404; «Учиться» → ник → тропа", async ({ page }) => {
-    // Регрессия: StudentShell отправляет взрослого без ника на paths.welcome, а маршрута /miniapp/welcome не было.
+    // StudentShell отправляет взрослого без ника на paths.welcome — маршрут есть и под /miniapp.
     await mockBackend(page, { account: adultMe({ nickname: undefined, teacherStatus: "none", roles: [], classes: [] }) });
     await page.goto("/miniapp");
     await page.waitForURL("**/miniapp/welcome");

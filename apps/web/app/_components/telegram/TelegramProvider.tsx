@@ -39,7 +39,7 @@ export function useTelegram(): TelegramState {
 const SHEET_POLL_MS = 250;
 
 /**
- * Telegram Mini App поверх экранов ученика (docs/plans/M2.md §3 «Ч5»): web_app_ready и web_app_expand, всегда светлая
+ * Telegram Mini App поверх экранов ученика: web_app_ready и web_app_expand, всегда светлая
  * тема (`data-theme="light"` на <html>, тема Telegram не учитывается), шапка и фон Telegram — в цвет светлого фона из
  * токенов, системная кнопка «Назад» и привязка чата с ботом после входа (initData — один раз, ADR 0020). Вне Telegram
  * ничего не делает — /miniapp работает как обычный веб.

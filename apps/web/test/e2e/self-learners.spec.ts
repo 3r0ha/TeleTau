@@ -106,8 +106,9 @@ test.describe("«Учусь сам» — потоки", () => {
     expect((await download).suggestedFilename()).toBe("teletau-karta-1.png");
     await page.getByRole("button", { name: "Сделать новую карточку" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Сделать новую" }).click();
-    await expect(page.getByText("Выпуск 2")).toBeVisible();
-    expect(w.loginCard?.version).toBe(2);
+    await expect.poll(() => w.loginCard?.version).toBe(2);
+    await expect(page.getByRole("img", { name: "QR-код карточки входа" })).toBeVisible();
+    await expect(page.getByText(/Выпуск/)).toHaveCount(0);
   });
 
   test("тот же сканер входа ученика принимает личную карточку TP1 и ведёт на тропу", async ({ page }) => {
@@ -123,7 +124,8 @@ test.describe("«Учусь сам» — потоки", () => {
     await mockBackend(page, { loginCard: null, bffReplies: { card: [{ status: 403, code: "card_revoked" }] } });
     await page.goto("/student");
     await page.getByLabel("Фото карточки").setInputFiles(await qrPhoto(DEMO_LOGIN_CARD.payload));
-    await expect(page.getByText("ты сделал новую")).toBeVisible();
+    await expect(page.getByText("Старая карточка не действует. Войди по новой.")).toBeVisible();
+    await expect(page.getByText(/учител/)).toHaveCount(0);
   });
 
   test("«Класс» без класса → «Вступить в класс» по коду → ждём учителя → улей класса", async ({ page }) => {
@@ -150,8 +152,8 @@ test.describe("«Учусь сам» — потоки", () => {
     await expect(page.getByRole("heading", { name: "Мудрая сова" })).toBeVisible();
     await page.getByRole("button", { name: "Выйти" }).click();
     await page.getByRole("dialog", { name: "Уже уходишь?" }).getByRole("button", { name: "Выйти", exact: true }).click();
-    // Гард useRequireAccount и кнопка «Выйти» реагируют на один выход одновременно: раньше два конкурирующих
-    // router.replace (на /student и на /) взаимно отменяли навигацию, и /me оставался со скелетом загрузки.
+    // Гард useRequireAccount и кнопка «Выйти» реагируют на один выход одновременно: два конкурирующих router.replace
+    // (на /student и на /) взаимно отменяют навигацию, и /me остаётся со скелетом загрузки — уходит только кнопка.
     await page.waitForURL((u) => u.pathname === "/");
     expect(w.logouts).toBe(1);
   });

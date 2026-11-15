@@ -2,7 +2,7 @@
 import { expect, test } from "@playwright/test";
 import { API, CLASS_ID, adultMe, classDetail, mockBackend } from "./mock-api";
 
-test.describe("M1-18: сроки — по часам сервера, а не устройства", () => {
+test.describe("сроки считаются по часам сервера", () => {
   test("часы школьного ПК спешат на 20 минут: свежий код класса (15 мин) не «истёк»", async ({ page }) => {
     // Время устройства +20 мин; сервер (моки BFF) отвечает с Date по настоящим часам.
     await page.clock.install({ time: Date.now() + 20 * 60_000 });
@@ -41,7 +41,7 @@ test.describe("M1-18: сроки — по часам сервера, а не у�
   });
 });
 
-test.describe("M1-24: таймауты запросов", () => {
+test.describe("таймауты запросов", () => {
   test("API завис — через таймаут страница показывает «Нет связи», а не вечную загрузку", async ({ page }) => {
     test.setTimeout(45_000);
     await mockBackend(page, { account: adultMe() });
@@ -49,6 +49,6 @@ test.describe("M1-24: таймауты запросов", () => {
     await page.route(`${API}/api/v1/classes/${CLASS_ID}`, () => new Promise(() => undefined));
     await page.goto(`/teacher/classes/${CLASS_ID}`);
     await expect(page.getByRole("heading", { name: "Нет связи" })).toBeVisible({ timeout: 25_000 });
-    await expect(page.getByRole("button", { name: "Попробовать снова" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Попробовать ещё раз" })).toBeVisible();
   });
 });

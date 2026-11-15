@@ -46,8 +46,8 @@ describe("«Прогресс»: склейка мест и прогресса", 
   it("неделя ученика и класса", () => {
     expect(weekSummary(progress(7, { lessonsThisWeek: 3, honeyThisWeek: 36, accuracy: 0.857 }), t)).toBe("На неделе: 3 урока · 36 мёда · точность 86%");
     expect(weekSummary(progress(7, { lessonsThisWeek: 0 }), t)).toBe("На неделе без уроков");
-    expect(weekLabel({ start: "2026-11-09", end: "2026-11-15" })).toBe("9–15 ноября");
-    expect(weekLabel({ start: "2026-11-30", end: "2026-12-06" })).toBe("30 ноября – 6 декабря");
+    expect(weekLabel({ start: "2026-11-09", end: "2026-11-15" }, t)).toBe("9–15 ноября");
+    expect(weekLabel({ start: "2026-11-30", end: "2026-12-06" }, t)).toBe("30 ноября – 6 декабря");
     expect(percent(1.2)).toBe("100%");
   });
 

@@ -19,7 +19,7 @@ import { JoinRequestsDialog } from "./JoinRequestsDialog";
 import { RequestsBanner, SetupSteps, TodayCards } from "./Overview";
 import { SeatDialog } from "./SeatDialog";
 import { SeatGrid } from "./SeatGrid";
-import { isUuid, loadPrintJob, pdfName, printJobLive, savePrintJob, seatLabel, seatRange, time, type PrintJob, type Seat } from "./format";
+import { forgetPrintJob, isUuid, loadPrintJob, pdfName, printJobLive, savePrintJob, seatLabel, seatRange, time, type PrintJob, type Seat } from "./format";
 import { studentRows, ufaToday } from "./progress/model";
 
 /** Опрос класса: новые ученики появляются без перезагрузки не позже чем через 5 с (критерий приёмки 3). */
@@ -63,7 +63,7 @@ export default function ClassPage() {
   const requestList = useResource(
     () => unwrap(api.GET("/api/v1/classes/{id}/join-requests", { params: { path: { id }, query: { status: "pending" } } })),
     [id, pendingRequests],
-    { enabled: enabled && pendingRequests > 0 },
+    { enabled: enabled && pendingRequests > 0, keepPrevious: true },
   );
   useDocumentTitle(klass.data?.title);
   const [printJob, setPrintJob] = useState<PrintJob | null>(null);
@@ -91,6 +91,13 @@ export default function ClassPage() {
     if (what === "cards") setIssuing(true);
   }, [klass.data]);
 
+  // Подсветка новых учеников гаснет через 15 с; таймеры снимаются при уходе со страницы.
+  const freshTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => {
+    const timers = freshTimers.current;
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   // Новый ученик на месте — подсветка плитки и тост (только после первой загрузки).
   useEffect(() => {
     const seats = klass.data?.seats;
@@ -101,7 +108,11 @@ export default function ClassPage() {
       if (joined.length) {
         setFresh((prev) => new Set([...prev, ...joined.map((s) => s.number)]));
         for (const s of joined.slice(0, 3)) toast(t("{seat} · {nick} — в классе", { seat: seatLabel(s.number), nick: s.student!.nickname ?? t("новый ученик") }), "info");
-        setTimeout(() => setFresh((prev) => new Set([...prev].filter((n) => !joined.some((s) => s.number === n)))), 15_000);
+        const timer = setTimeout(() => {
+          freshTimers.current.delete(timer);
+          setFresh((prev) => new Set([...prev].filter((n) => !joined.some((s) => s.number === n))));
+        }, 15_000);
+        freshTimers.current.add(timer);
       }
     }
     known.current = now;
@@ -122,9 +133,12 @@ export default function ClassPage() {
       await downloadFile(job.pdfPath, pdfName(klass.data.title));
       return null;
     } catch (e) {
-      const message = describeProblem(e);
+      const message = describeProblem(e, "adult", t);
       toast(message, "error");
+      // Файл устарел или заменён — задание печати забывается и во вкладке, и в sessionStorage (после перезагрузки
+      // кнопка «Скачать PDF» не вернётся).
       if (!isNetworkError(e)) {
+        forgetPrintJob(id);
         setPrintJob(null);
       }
       return message;
@@ -200,7 +214,7 @@ export default function ClassPage() {
               {!online || (klass.error && isNetworkError(klass.error)) ? (
                 <InlineAlert tone="honey">{t("Нет связи. Список обновится, когда сеть вернётся.")}</InlineAlert>
               ) : klass.error ? (
-                <InlineAlert tone="danger">{describeProblem(klass.error)}</InlineAlert>
+                <InlineAlert tone="danger">{describeProblem(klass.error, "adult", t)}</InlineAlert>
               ) : null}
             </div>
 
@@ -213,6 +227,7 @@ export default function ClassPage() {
                 today={today}
                 tasks={tasks.data ?? null}
                 progressError={Boolean(progress.error) && !progress.data}
+                tasksError={Boolean(tasks.error) && !tasks.data}
                 onRetry={() => {
                   progress.reload();
                   tasks.reload();
@@ -320,7 +335,7 @@ export default function ClassPage() {
             onClose={() => setOpenSeat(null)}
             onChanged={klass.reload}
             onReissued={(j) => rememberJob(j)}
-            onDownload={(j) => download(j)}
+            onDownload={(j) => void download(j)}
             downloading={downloading}
           />
         </>

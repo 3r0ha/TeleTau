@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { ArrowsClockwise } from "@phosphor-icons/react/ssr";
+import type { Schema } from "@teletau/contracts";
 import { Button, ChoiceGroup, HexAvatar, InlineAlert, LinkButton, Skeleton, SkeletonGroup, avatarFor, toneFor } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { describeProblem } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
 import { useT } from "../../i18n/client";
 
-export interface PickedNickname {
-  id: string;
-  text: string;
-}
+export type PickedNickname = Schema<"NicknameSuggestion">;
 
 /**
  * Выбор ника из словаря: три варианта из GET /nicknames/suggest и «Другие варианты».
@@ -48,9 +46,9 @@ export function NicknamePicker({
       ) : suggestions.error && !items.length ? (
         // Повтор — рядом с ошибкой, а не спрятан в «Другие варианты».
         <div className="tt-stack tt-stack--tight">
-          <InlineAlert tone="danger">{describeProblem(suggestions.error, "child")}</InlineAlert>
+          <InlineAlert tone="danger">{describeProblem(suggestions.error, "child", t)}</InlineAlert>
           <Button variant="secondary" icon={<ArrowsClockwise weight="bold" />} loading={suggestions.loading} onClick={suggestions.reload}>
-            {t("Попробовать снова")}
+            {t("Попробовать ещё раз")}
           </Button>
         </div>
       ) : (

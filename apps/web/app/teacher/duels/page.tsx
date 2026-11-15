@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, ButtonLink, Card, EmptyState, Illustration, ProgressBar, Skeleton, SkeletonGroup, useToast } from "@teletau/ui";
+import { Button, ButtonLink, Card, EmptyState, Illustration, ProgressBar, Skeleton, SkeletonGroup, useReducedMotion, useToast } from "@teletau/ui";
+import type { Schema } from "@teletau/contracts";
 import { api, unwrap } from "@teletau/session/api";
 import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
@@ -19,14 +20,14 @@ const BATCH = 3;
 
 const duelsApi = {
   list: () => unwrap(api.GET("/api/v1/corpus/duels", { params: { query: { limit: BATCH } } })),
-  vote: (body: { judgmentId: string; itemId: string; shown: [string, string]; choice: DuelChoice; latencyMs: number }) => unwrap(api.POST("/api/v1/corpus/judgments", { body })),
+  vote: (body: Schema<"JudgmentRequest">) => unwrap(api.POST("/api/v1/corpus/judgments", { body })),
   votes: (itemId: string) => unwrap(api.GET("/api/v1/corpus/items/{id}/votes", { params: { path: { id: itemId } } })),
 };
 
 const shownOf = (d: CorpusDuel): [string, string] => [d.variants[0]!.variantId, d.variants[1]!.variantId];
 
 /**
- * «Помогите языку» для учителя (docs/plans/M2.md §1, шаг 5): та же дуэль, что у детей в уроке, — компонент Duel. Одна
+ * «Помогите языку» для учителя: та же дуэль, что у детей в уроке, — компонент Duel. Одна
  * колонка по центру: до голоса — дуэль, после — на её месте голоса по группам числами и статус словами продукта: «Ещё
  * собираем голоса», «Пару приняли» или «Мнения разошлись» (правила подсчёта на экране не объясняются). Детям распределение голосов не показывается (защита от конформизма), учителю — только после его
  * собственного голоса. Клавиши 1–4 и Enter работают без подсказки на экране.
@@ -46,6 +47,7 @@ export default function TeacherDuelsPage() {
   const shownAt = useRef(Date.now());
   const duelHeading = useRef<HTMLHeadingElement>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
+  const reduced = useReducedMotion();
 
   const items = duels.data?.items ?? [];
   const duel: CorpusDuel | undefined = items[index];
@@ -70,10 +72,10 @@ export default function TeacherDuelsPage() {
         try {
           setResult(await duelsApi.votes(duel.itemId));
         } catch (e2) {
-          toast(describeProblem(e2), "error");
+          toast(describeProblem(e2, "adult", t), "error");
         }
       } else {
-        toast(isNetworkError(e) ? t("Нет связи. Голос не отправлен, попробуйте ещё раз.") : describeProblem(e), "error");
+        toast(isNetworkError(e) ? t("Нет связи. Голос не отправлен, попробуйте ещё раз.") : describeProblem(e, "adult", t), "error");
       }
     } finally {
       setSending(false);
@@ -96,16 +98,17 @@ export default function TeacherDuelsPage() {
   useEffect(() => {
     if (!result) return;
     resultHeading.current?.focus({ preventScroll: true });
-    revealResults(layout.current, resultHeading.current?.closest("section") ?? null);
-  }, [result]);
+    revealResults(layout.current, resultHeading.current?.closest("section") ?? null, reduced);
+  }, [result, reduced]);
   const first = useRef(true);
+  const duelId = duel?.itemId;
   useEffect(() => {
     if (first.current) {
       first.current = false;
       return;
     }
-    if (duel) duelHeading.current?.focus({ preventScroll: true });
-  }, [duel?.itemId, round]);
+    if (duelId) duelHeading.current?.focus({ preventScroll: true });
+  }, [duelId, round]);
 
   // Enter: отдать голос, после голоса — следующая пара (кнопки и ссылки обрабатывают Enter сами).
   useEffect(() => {
@@ -201,9 +204,9 @@ export default function TeacherDuelsPage() {
  * страницы — прокрутка наверх (видно и заголовок «Помогите языку»), иначе — к началу колонки (полоса пар и голоса). Место
  * под шапкой задаёт scroll-padding-top (teacher.css).
  */
-function revealResults(layout: HTMLElement | null, card: HTMLElement | null) {
+function revealResults(layout: HTMLElement | null, card: HTMLElement | null, reduced: boolean) {
   if (!layout || !card) return;
-  const behavior: ScrollBehavior = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  const behavior: ScrollBehavior = reduced ? "auto" : "smooth";
   if (card.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight) {
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior });
     return;

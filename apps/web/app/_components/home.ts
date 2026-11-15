@@ -1,5 +1,14 @@
 import type { Me } from "@teletau/session/types";
-import { nextTeacherStep } from "../teacher/useTeacher";
+
+export type TeacherStep = "/teacher/terms" | "/teacher/apply" | "/teacher/pending" | "/teacher";
+
+/** Куда должен попасть взрослый: условия → заявка → ожидание → кабинет. */
+export function nextTeacherStep(me: Me): TeacherStep {
+  if (me.pendingConsents.length > 0) return "/teacher/terms";
+  if (me.teacherStatus === "none") return "/teacher/apply";
+  if (me.teacherStatus === "pending" || me.teacherStatus === "rejected") return "/teacher/pending";
+  return "/teacher";
+}
 
 /**
  * Куда вернуть вошедшего (ADR 0022): ребёнок — на тропу (без ника — выбор ника); взрослый, который учится (выбрал

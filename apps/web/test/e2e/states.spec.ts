@@ -5,13 +5,13 @@ import { adultMe, childMe, mockBackend } from "./mock-api";
 
 const applicant = () => adultMe({ teacherStatus: "none", roles: [], classes: [], profile: { email: "teacher@school7.example" } });
 
-test.describe("M1-43: ошибка загрузки — текст и «Попробовать снова»", () => {
+test.describe("ошибка загрузки — текст и «Попробовать ещё раз»", () => {
   test("профиль: нет связи с API — «Нет связи» с повтором, после повтора — данные", async ({ page }) => {
     const w = await mockBackend(page, { account: adultMe(), failures: { "GET /me": "offline" } });
     await page.goto("/teacher/profile");
     await expect(page.getByRole("heading", { name: "Нет связи" })).toBeVisible();
     delete w.failures["GET /me"];
-    await page.getByRole("button", { name: "Попробовать снова" }).click();
+    await page.getByRole("button", { name: "Попробовать ещё раз" }).click();
     await expect(page.getByText("teacher@school7.example")).toBeVisible();
   });
 
@@ -23,7 +23,7 @@ test.describe("M1-43: ошибка загрузки — текст и «Попр
     await page.getByRole("button", { name: "Дальше" }).click();
     await expect(page.getByText("Нет связи. Проверьте интернет.")).toBeVisible();
     delete w.failures["GET /districts"];
-    await page.getByRole("button", { name: "Попробовать снова" }).click();
+    await page.getByRole("button", { name: "Попробовать ещё раз" }).click();
     await expect(page.getByRole("radio", { name: /Уфа/ })).toBeVisible();
   });
 
@@ -37,16 +37,16 @@ test.describe("M1-43: ошибка загрузки — текст и «Попр
     await page.getByRole("button", { name: "Дальше" }).click();
     await expect(page.getByText("Что-то пошло не так")).toBeVisible();
     delete w.failures["GET /schools"];
-    await page.getByRole("button", { name: "Попробовать снова" }).click();
+    await page.getByRole("button", { name: "Попробовать ещё раз" }).click();
     await expect(page.getByRole("radio", { name: /Школа № 7/ })).toBeVisible();
   });
 
-  test("выбор ника: варианты не загрузились — «Попробовать снова» рядом с ошибкой", async ({ page }) => {
+  test("выбор ника: варианты не загрузились — «Попробовать ещё раз» рядом с ошибкой", async ({ page }) => {
     const w = await mockBackend(page, { account: childMe({ nickname: undefined }), failures: { "GET /nicknames/suggest": "offline" } });
     await page.goto("/student/nickname");
     await expect(page.getByText("Нет связи. Проверь интернет.")).toBeVisible();
     delete w.failures["GET /nicknames/suggest"];
-    await page.getByRole("button", { name: "Попробовать снова" }).click();
+    await page.getByRole("button", { name: "Попробовать ещё раз" }).click();
     await expect(page.getByRole("radio")).toHaveCount(3);
   });
 
@@ -59,7 +59,7 @@ test.describe("M1-43: ошибка загрузки — текст и «Попр
     await expect(page.getByRole("heading", { name: "Что-то пошло не так" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Заявка на проверке" })).toHaveCount(0);
     delete w.failures["GET /teacher/verification"];
-    await page.getByRole("button", { name: "Попробовать снова" }).click();
+    await page.getByRole("button", { name: "Попробовать ещё раз" }).click();
     await expect(page.getByRole("heading", { name: "Заявка на проверке" })).toBeVisible();
     await expect(page.getByText("Школа № 7")).toBeVisible();
   });

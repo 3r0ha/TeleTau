@@ -107,7 +107,7 @@ export function LearnFlow() {
         setStartError({
           node: state.node,
           runId: state.runId,
-          message: isNetworkError(e) ? t("Нет связи. Урок не открылся.") : describeProblem(e, "child"),
+          message: isNetworkError(e) ? t("Нет связи. Урок не открылся.") : describeProblem(e, "child", t),
         });
       },
     );
@@ -138,7 +138,7 @@ export function LearnFlow() {
         (result) => dispatch({ type: "verdict", result }),
         (e: unknown) => {
           dispatch({ type: "attemptFailed" });
-          toast(isNetworkError(e) ? t("Нет связи. Нажми «Проверить» ещё раз.") : describeProblem(e, "child"), "error");
+          toast(isNetworkError(e) ? t("Нет связи. Нажми «Проверить» ещё раз.") : describeProblem(e, "child", t), "error");
         },
       );
     },
@@ -186,6 +186,8 @@ export function LearnFlow() {
   // Вернулись на тропу после урока — свежие узлы и счётчики.
   const onTrail = state.screen === "trail";
   const wasAway = useRef(false);
+  const { reload: reloadCourse } = course;
+  const { reload: reloadProgress } = progress;
   useEffect(() => {
     if (!onTrail) {
       wasAway.current = true;
@@ -194,11 +196,10 @@ export function LearnFlow() {
     if (wasAway.current) {
       wasAway.current = false;
       // Куда прокрутить, решает сама тропа (Trail): после урока — к запечатанному узлу, иначе — к текущему месту.
-      course.reload();
-      progress.reload();
+      reloadCourse();
+      reloadProgress();
     }
-    // course и progress — новые объекты на каждой отрисовке; reload у них стабилен
-  }, [onTrail]);
+  }, [onTrail, reloadCourse, reloadProgress]);
 
   const [leagueBusy, setLeagueBusy] = useState(false);
   // Первый заход на тропу: знакомство с пчелой (ни одного пройденного урока).
@@ -236,12 +237,14 @@ export function LearnFlow() {
         <LeagueUpScreen
           summary={state.summary}
           busy={leagueBusy}
-          onContinue={async () => {
+          onContinue={() => {
             setLeagueBusy(true);
             const week = state.summary.leagueResult?.weekStart;
-            if (week) await learnApi.leagueResultSeen(week).catch(() => undefined);
-            setLeagueBusy(false);
-            dispatch({ type: "continue" });
+            const seen = week ? learnApi.leagueResultSeen(week).catch(() => undefined) : Promise.resolve();
+            void seen.then(() => {
+              setLeagueBusy(false);
+              dispatch({ type: "continue" });
+            });
           }}
         />
       );

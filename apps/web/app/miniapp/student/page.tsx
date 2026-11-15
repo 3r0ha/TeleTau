@@ -54,7 +54,8 @@ function useTelegramLogin(bridge: ReturnType<typeof useTelegram>["bridge"]): "ch
       .then((me) => {
         // Вход по привязке уже связал чат: initData больше не нужен.
         bridge.takeInitData();
-        router.replace(me.nickname ? paths.learn : paths.nickname);
+        // Без ника: ребёнку — выбор ника, взрослому — «Учиться / Я учитель».
+        router.replace(me.nickname ? paths.learn : me.kind === "adult" ? paths.welcome : paths.nickname);
       })
       .catch(() => setStatus("skip"));
   }, [bridge, router, paths]);

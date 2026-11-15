@@ -36,36 +36,6 @@
   font-size: var(--tt-font-size-body);
 }
 
-/* сегменты статуса: настоящие кнопки с aria-pressed */
-.segmented {
-  display: inline-flex;
-  gap: var(--tt-space-s100);
-  padding: var(--tt-space-s100);
-  border: 2px solid var(--tt-color-border-subtle);
-  border-radius: var(--tt-radius-tile);
-  background: var(--tt-color-surface);
-}
-
-.segmented button {
-  min-height: var(--tt-size-touch-min);
-  padding: 0 var(--tt-space-s350);
-  border: 2px solid transparent;
-  border-radius: var(--tt-radius-icon-button);
-  background: none;
-  color: var(--tt-color-text-secondary);
-  font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-footnote);
-  font-weight: var(--tt-font-weight-extrabold);
-  cursor: pointer;
-}
-
-/* Выбранный статус — сплошная граница accent.text (≥ 3:1 к фону), а не только бледная подложка (WCAG 1.4.11). */
-.segmented button[aria-pressed="true"] {
-  border-color: var(--tt-color-accent-text);
-  background: var(--tt-color-accent-soft);
-  color: var(--tt-color-accent-text);
-}
-
 /* таблицы */
 .table-wrap {
   display: flex;
@@ -128,10 +98,12 @@ code.table__sub {
   white-space: nowrap;
 }
 
+/* Служебные данные записи журнала (идентификаторы, JSON) — без пробелов, переносятся в любом месте. */
 .table__meta {
   max-width: 360px;
   color: var(--tt-color-text-secondary);
   overflow-wrap: anywhere;
+  hyphens: manual;
 }
 
 .table__actions {
@@ -158,8 +130,15 @@ code.table__sub {
 }
 
 @media (max-width: 720px) {
+  /* Таблица — карточками: подписи значений дают data-label ячеек, строка заголовков скрыта только визуально
+     (читалки по-прежнему слышат заголовки столбцов). */
   .table thead {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .table,
@@ -168,6 +147,36 @@ code.table__sub {
   .table td {
     display: block;
     width: 100%;
+  }
+
+  /* Сортировка остаётся и на телефоне: заголовки со стрелками — рядом кнопок над карточками. */
+  .table thead:has(th[aria-sort]) {
+    position: static;
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .table thead:has(th[aria-sort]) tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--tt-space-s400);
+    padding: var(--tt-space-s100) var(--tt-space-s400);
+    border-bottom: 2px solid var(--tt-color-border-subtle);
+  }
+
+  .table thead:has(th[aria-sort]) th {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .table thead:has(th[aria-sort]) th.table__num .sort-btn {
+    justify-content: flex-start;
+    text-align: left;
   }
 
   .table tr {

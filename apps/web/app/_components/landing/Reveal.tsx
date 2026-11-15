@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-
-const REDUCE = "(prefers-reduced-motion: reduce)";
+import { useReducedMotion } from "@teletau/ui";
 
 /**
  * Появление разделов при прокрутке: блоки с атрибутом data-reveal, которые ещё ниже экрана, прячутся
@@ -11,8 +10,9 @@ const REDUCE = "(prefers-reduced-motion: reduce)";
  * Без JS и при «Уменьшении движения» ничего не прячется.
  */
 export function Reveal() {
+  const reduced = useReducedMotion();
   useEffect(() => {
-    if (window.matchMedia?.(REDUCE).matches) return;
+    if (reduced) return;
     const waiting = new Set(Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]")).filter((el) => el.getBoundingClientRect().top > window.innerHeight));
     if (!waiting.size) return;
     for (const el of waiting) el.dataset.reveal = "wait";
@@ -40,6 +40,6 @@ export function Reveal() {
     window.addEventListener("resize", schedule);
     schedule();
     return stop;
-  }, []);
+  }, [reduced]);
   return null;
 }

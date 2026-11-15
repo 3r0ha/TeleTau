@@ -29,7 +29,7 @@ const toCodeNick = async (page: Page) => {
   await page.getByRole("radio").first().check();
 };
 
-test.describe("M1-55: Retry-After — короткий 429 повторяется молча", () => {
+test.describe("Retry-After: короткий 429 повторяется молча", () => {
   test("вход по QR: 429 Retry-After: 1, затем 200 — ник без текста ошибки", async ({ page }) => {
     const alerts = await recordAlerts(page);
     const w = await mockBackend(page, { bffReplies: { qr: [{ status: 429, code: "rate_limited", retryAfter: 1 }] } });
@@ -77,7 +77,7 @@ test.describe("M1-55: Retry-After — короткий 429 повторяетс�
   });
 });
 
-test.describe("M1-49: в классе уже 40 заявок ждут решения", () => {
+test.describe("в классе уже 40 заявок ждут решения", () => {
   test("429 join_queue_full — текст для ребёнка, без повтора, ник и код не теряются", async ({ page }) => {
     const w = await mockBackend(page, { bffReplies: { "class-code": [{ status: 429, code: "join_queue_full", retryAfter: 1 }] } });
     await toCodeNick(page);
@@ -90,7 +90,7 @@ test.describe("M1-49: в классе уже 40 заявок ждут решен
   });
 });
 
-test.describe("M1-60: сбой сервера или сети — не ошибка верного поля", () => {
+test.describe("сбой сервера или сети — не ошибка верного поля", () => {
   const cases: [string, Failure, RegExp][] = [
     ["500", { status: 500, code: "internal" }, /Что-то пошло не так/],
     ["обрыв сети", "offline", /Нет связи\. Проверьте интернет/],
@@ -143,7 +143,7 @@ test.describe("M1-60: сбой сервера или сети — не ошиб�
   });
 });
 
-test.describe("M1-50: «Показать ещё» в списке школ", () => {
+test.describe("«Показать ещё» в списке школ", () => {
   test("двойной щелчок — один запрос страницы, школы без дублей; затем последняя страница", async ({ page }) => {
     await mockBackend(page, {
       account: adultMe({ teacherStatus: "none", roles: [], classes: [], profile: { email: "teacher@school7.example" } }),

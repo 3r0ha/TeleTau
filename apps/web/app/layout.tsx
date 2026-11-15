@@ -2,10 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { getLocale } from "../i18n/server";
+import { tFor } from "../i18n/registry";
 import { LocaleProvider } from "../i18n/client";
 import type { ReactNode } from "react";
 import tokens from "@teletau/design-tokens/tokens.json";
-import { THEME_COOKIE, ToastProvider, parseTheme } from "@teletau/ui";
+import { THEME_COOKIE, ToastProvider, UiStringsProvider, parseTheme, uiStringsFrom } from "@teletau/ui";
 // Компоненты v2 + токены + локальные шрифты (packages/design-tokens/fonts: полные файлы со всеми башкирскими буквами).
 import "@teletau/ui/ui.css";
 // Оболочка на компьютере и планшете: боковая навигация вместо нижних вкладок, правая колонка.
@@ -71,16 +72,19 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   // Язык интерфейса из cookie (i18n/server); без неё — русский. Провайдер даёт локаль клиентским компонентам.
   const locale = await getLocale();
+  const t = tFor(locale);
   return (
     <html lang={locale} data-theme={theme ?? undefined}>
       <body>
         <a className="tt-skip-link" href="#main">
-          К основному содержимому
+          {t("К основному содержимому")}
         </a>
         <UiModeSync />
         <ServiceWorkerRegistration />
         <LocaleProvider locale={locale}>
-          <ToastProvider>{children}</ToastProvider>
+          <UiStringsProvider strings={uiStringsFrom(t)}>
+            <ToastProvider>{children}</ToastProvider>
+          </UiStringsProvider>
         </LocaleProvider>
       </body>
     </html>

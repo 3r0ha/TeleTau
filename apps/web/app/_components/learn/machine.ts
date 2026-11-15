@@ -1,4 +1,4 @@
-// Один автомат состояний тропы, урока и потока после урока (docs/plans/M2.md §3 «Ч4»):
+// Один автомат состояний тропы, урока и потока после урока:
 //
 //   trail ─start→ starting ─runReady→ lesson ⟲ (check → verdict → next) ─последнее упражнение→ completing
 //     ↑              └─runFailed→ trail                                                         │ completed

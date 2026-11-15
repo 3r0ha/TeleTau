@@ -10,6 +10,7 @@ import { parseLoginCard } from "@teletau/auth-codes";
 import { session } from "@teletau/session/client";
 import { ApiProblem, describeProblem } from "@teletau/session/problem";
 import { useStudentPaths } from "../_components/learn/paths";
+import { useT } from "../../i18n/client";
 
 interface DetectedBarcode {
   rawValue: string;
@@ -106,7 +107,7 @@ export async function decodeImageFile(file: File): Promise<string | null> {
 /** Отказы по личной карточке — без «покажи учителю»: её делает сам ученик в профиле (ADR 0022). */
 const PERSONAL_CARD_ERRORS: Record<string, string> = {
   card_invalid: "Карточка не найдена. Сделай новую в профиле на устройстве, где ты уже вошёл.",
-  card_revoked: "Ты сделал новую карточку — старая не действует. Войди по новой.",
+  card_revoked: "Старая карточка не действует. Войди по новой.",
 };
 
 export type QrLoginState = { status: "idle" } | { status: "pending" } | { status: "error"; message: string };
@@ -118,12 +119,13 @@ export type QrLoginState = { status: "idle" } | { status: "pending" } | { status
 export function useQrLogin() {
   const router = useRouter();
   const paths = useStudentPaths();
+  const t = useT();
   const [state, setState] = useState<QrLoginState>({ status: "idle" });
   const login = useCallback(
     async (raw: string): Promise<boolean> => {
       const parsed = parseLoginCard(raw);
       if (!parsed.ok) {
-        setState({ status: "error", message: "Это не карточка ученика. Попробуй ещё раз." });
+        setState({ status: "error", message: t("Это не карточка ученика. Попробуй ещё раз.") });
         return false;
       }
       setState({ status: "pending" });
@@ -140,11 +142,11 @@ export function useQrLogin() {
         return true;
       } catch (e) {
         const personal = parsed.kind === "personal" && e instanceof ApiProblem ? PERSONAL_CARD_ERRORS[e.code ?? ""] : undefined;
-        setState({ status: "error", message: personal ?? describeProblem(e, "child") });
+        setState({ status: "error", message: personal ? t(personal) : describeProblem(e, "child", t) });
         return false;
       }
     },
-    [router, paths],
+    [router, paths, t],
   );
   const reset = useCallback(() => setState({ status: "idle" }), []);
   return { state, login, reset };

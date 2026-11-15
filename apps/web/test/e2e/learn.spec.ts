@@ -31,7 +31,7 @@ async function pastNewWords(page: Page, n = 2) {
   }
 }
 
-test.describe("M2: тропа", () => {
+test.describe("тропа", () => {
   test("после повторного входа по карточке ученик сразу на тропе: экспедиция, узлы по состояниям, места с lang=ba", async ({ page }) => {
     await mockBackend(page, { qr: { ok: true, account: childMe() } });
     await page.goto("/student");
@@ -117,17 +117,17 @@ test.describe("M2: тропа", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
-  test("нет сети — «Нет связи», сеть вернулась — «Попробовать снова» открывает тропу", async ({ page }) => {
+  test("нет сети — «Нет связи», сеть вернулась — «Попробовать ещё раз» открывает тропу", async ({ page }) => {
     const w = await mockBackend(page, { account: childMe(), failures: { "GET /course": "offline" } });
     await page.goto("/learn");
     await expect(page.getByRole("heading", { name: "Нет связи" })).toBeVisible();
     delete w.failures["GET /course"];
-    await page.getByRole("button", { name: "Попробовать снова" }).click();
+    await page.getByRole("button", { name: "Попробовать ещё раз" }).click();
     await expect(page.getByRole("button", { name: CURRENT_NODE })).toBeVisible();
   });
 });
 
-test.describe("M2: урок", () => {
+test.describe("урок", () => {
   test("новые слова → плитки с подсказкой (верно) → выбор (неверно, вернётся в конце) → новое слово → ввод («почти») → дуэль → повтор → итог → серия → лига → узел запечатан", async ({ page }) => {
     const w = await mockBackend(page, { account: childMe() });
     await openTrail(page);
@@ -296,6 +296,21 @@ test.describe("M2: урок", () => {
     await page.getByRole("button", { name: "Дальше" }).click();
   });
 
+  test("«Пчёлка»: под ошибкой нет «Почему так?» — только верный ответ и «Дальше»", async ({ page }) => {
+    await mockBackend(page, { account: childMe({ uiMode: "bee" }) });
+    await openTrail(page);
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.mode)).toBe("bee");
+    await page.getByRole("button", { name: CURRENT_NODE }).click();
+    await pastNewWords(page);
+    const bank = page.getByRole("group", { name: "Слова" });
+    for (const word of ["мәктәпкә", "Мин", "барам"]) await bank.getByRole("button", { name: word, exact: true }).click();
+    await page.getByRole("button", { name: "Проверить" }).click();
+    await expect(page.getByRole("heading", { name: "Пока не так" })).toBeVisible();
+    await expect(page.getByText("Правильно:")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Почему так?" })).toHaveCount(0);
+    await expect(page.locator(".feedback-explain")).toHaveCount(0);
+  });
+
   test("всё неверно: упражнение возвращается один раз, после второй ошибки — верный ответ и дальше; урок завершается", async ({ page }) => {
     const w = await mockBackend(page, { account: childMe() });
     await openTrail(page);
@@ -416,7 +431,7 @@ test.describe("M2: урок", () => {
   });
 });
 
-test.describe("M2: вкладки", () => {
+test.describe("вкладки", () => {
   test("«Лига»: тир, зоны повышения и понижения, «ты» — по контракту; навигация по вкладкам", async ({ page }) => {
     await mockBackend(page, { account: childMe() });
     await page.goto("/league");
@@ -454,7 +469,8 @@ test.describe("M2: вкладки", () => {
   test("«Мёд созрел!»: первый заход в профиль только запоминает, после созревания — плашка с мёдом", async ({ page }) => {
     const w = await mockBackend(page, { account: childMe() });
     await page.goto("/me");
-    await expect(page.getByRole("heading", { name: "Мой вклад в словарь" })).toBeVisible();
+    // Вклад грузится отдельно от профиля: запоминается после прихода данных (соты в карточке).
+    await expect(page.getByRole("region", { name: "Мой вклад в словарь" }).locator(".tab-card__comb")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Мёд созрел!" })).toHaveCount(0);
     w.learn.cells.summary = { ...w.learn.cells.summary, matured: 8, pending: 4, honeyFinal: 22, honeyPending: 12 };
     await page.reload();
@@ -463,6 +479,19 @@ test.describe("M2: вкладки", () => {
     await page.reload();
     await expect(page.getByRole("heading", { name: "Мой вклад в словарь" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Мёд созрел!" })).toHaveCount(0);
+  });
+
+  test("«Мой вклад» не загрузился — профиль открыт: ошибка в карточке, повтор, настройки и «Выйти» на месте", async ({ page }) => {
+    const w = await mockBackend(page, { account: childMe(), failures: { "GET /corpus/my-cells": { status: 500, code: "internal" } } });
+    await page.goto("/me");
+    const cells = page.getByRole("region", { name: "Мой вклад в словарь" });
+    await expect(cells.getByRole("button", { name: "Попробовать ещё раз" })).toBeVisible();
+    await expect(page.getByRole("switch", { name: "Звуки" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Выйти" })).toBeVisible();
+    delete w.failures["GET /corpus/my-cells"];
+    await cells.getByRole("button", { name: "Попробовать ещё раз" }).click();
+    await expect(cells.getByRole("button", { name: "Попробовать ещё раз" })).toHaveCount(0);
+    await expect(cells.locator(".tab-card__comb")).toBeVisible();
   });
 
   test("«Звуки» в профиле: выключатель запоминается на устройстве", async ({ page }) => {

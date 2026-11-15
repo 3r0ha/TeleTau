@@ -28,7 +28,7 @@ function dueChoices(today: string, t: T): { value: string; label: string; descri
     { value: addDays(today, 14), label: t("Через две недели") },
   ];
   const seen = new Set<string>();
-  return raw.filter((c) => !seen.has(c.value) && seen.add(c.value)).map((c) => ({ ...c, description: dueLong(c.value) }));
+  return raw.filter((c) => !seen.has(c.value) && seen.add(c.value)).map((c) => ({ ...c, description: dueLong(c.value, t) }));
 }
 
 /**
@@ -74,9 +74,13 @@ export function GiveAssignmentDialog({
   const [busy, setBusy] = useState(false);
   const idempotencyKey = useRef<string>(uuidv7());
 
-  // Каждое открытие — с начала: урок первого места и срок «до пятницы».
+  // Каждое открытие — с начала: урок первого места и срок «до пятницы». Только в момент открытия: опрос заданий
+  // приносит новый массив вариантов, и выбор учителя в открытом диалоге не сбрасывается.
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    const opening = open && !wasOpen.current;
+    wasOpen.current = open;
+    if (!opening) return;
     setKind("lesson");
     setPlace(places[0] ? String(places[0].order) : null);
     setLessonId(places[0]?.lessons[0]?.lessonId ?? null);
@@ -109,8 +113,8 @@ export function GiveAssignmentDialog({
       onGiven(given);
       onClose();
     } catch (e) {
-      const fields = fieldErrors(e);
-      setError(fields["dueOn"] ?? fields["lessonId"] ?? describeProblem(e));
+      const fields = fieldErrors(e, t);
+      setError(fields["dueOn"] ?? fields["lessonId"] ?? describeProblem(e, "adult", t));
     } finally {
       setBusy(false);
     }

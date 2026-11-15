@@ -28,7 +28,7 @@ async function smallTargets(page: Page, min: number) {
 
 const mode = (page: Page) => page.evaluate(() => document.documentElement.dataset.mode ?? null);
 
-test.describe("M1-16: режим «Пчёлка» (1–4 класс)", () => {
+test.describe("режим «Пчёлка» (1–4 класс)", () => {
   test("ученик с uiMode=bee: data-mode на <html>, все цели нажатия ≥ 56 px, текст крупнее", async ({ page }) => {
     await mockBackend(page, { account: childMe({ uiMode: "bee", nickname: undefined }) });
     await page.goto("/student/nickname");
@@ -74,7 +74,7 @@ test.describe("M1-16: режим «Пчёлка» (1–4 класс)", () => {
   });
 });
 
-test.describe("M1-32: размер шрифта браузера", () => {
+test.describe("размер шрифта браузера", () => {
   test("при html{font-size:32px} текст растёт вдвое, а вёрстка на 320 px не даёт горизонтальной прокрутки", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 });
     await mockBackend(page, { account: adultMe() });
@@ -102,7 +102,7 @@ test.describe("M1-32: размер шрифта браузера", () => {
     return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   };
 
-  test("M1-42: условия, ввод кода из письма, профиль и /q — без горизонтальной прокрутки при 200 % на 320 px", async ({ page }) => {
+  test("условия, ввод кода из письма, профиль и /q — без горизонтальной прокрутки при 200 % на 320 px", async ({ page }) => {
     const cases: [string, Parameters<typeof mockBackend>[1], (p: Page) => Promise<unknown>][] = [
       ["/teacher/terms", { account: adultMe({ teacherStatus: "none", roles: [], classes: [], pendingConsents: ["terms", "privacy", "consent_adult"] }) }, (p) => p.getByRole("heading", { name: "Примите условия" }).waitFor()],
       [
@@ -129,7 +129,7 @@ test.describe("M1-32: размер шрифта браузера", () => {
     }
   });
 
-  test("M1-42: ссылка «К основному содержимому» не видна без фокуса (и при 200 %), с фокусом — видна", async ({ page }) => {
+  test("ссылка «К основному содержимому» не видна без фокуса (и при 200 %), с фокусом — видна", async ({ page }) => {
     // Узкий экран: при 200 % текст ссылки переносится на несколько строк, и она выше фиксированного отступа.
     await page.setViewportSize({ width: 375, height: 700 });
     await mockBackend(page);
@@ -149,7 +149,7 @@ test.describe("M1-32: размер шрифта браузера", () => {
   });
 });
 
-test.describe("M1-12: выбранное состояние и фокус видны не только бледным цветом", () => {
+test.describe("выбранное состояние и фокус видны не только бледным цветом", () => {
   test("выбранная плитка — граница accent.text и галочка; невыбранная — без галочки", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "light" });
     await mockBackend(page, { account: childMe({ nickname: undefined }) });

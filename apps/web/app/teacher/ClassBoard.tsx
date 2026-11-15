@@ -2,18 +2,16 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight, BellRinging, CaretRight, Cards, Check, CheckCircle, ClipboardText, ProjectorScreen, Sun, Warning } from "@phosphor-icons/react/ssr";
+import { ArrowRight, CaretRight, Cards, Check, CheckCircle, ClipboardText, ProjectorScreen, Sun, Warning } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { ButtonLink, HexAvatar, Illustration, LinkButton, ProgressBar, Skeleton, avatarFor, toneFor } from "@teletau/ui";
+import { ButtonLink, HexAvatar, Illustration, Skeleton, toneFor } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { serverNow } from "@teletau/session/clock";
 import { useResource } from "@teletau/session/react";
-import { useT } from "../../i18n/client";
-import type { T } from "../../i18n/core";
-import { assignmentTitle, dueForTeacher } from "../_components/assignments";
+import { fillNodes, useT } from "../../i18n/client";
 import { ClassTitle } from "../_components/screens";
-import { seatLabel } from "./classes/[id]/format";
 import { IDLE_SHOWN, behindHref, classToday, studentRows, studentsWord, ufaToday, type StudentRow } from "./classes/[id]/progress/model";
+import { IdleChips, PulseRetry, RequestsBanner, TaskList, TodayAvatars, ofStudents, singleTaskDone } from "./ClassPulse";
 import { programLabels } from "./CreateClassDialog";
 
 type ClassSummary = Schema<"ClassSummary">;
@@ -22,9 +20,6 @@ type Assignment = Schema<"ClassAssignment">;
 /** Заявки и новые ученики — чаще, прогресс и задания — раз в полминуты: главная висит открытой весь урок. */
 const CLASS_POLL_MS = 15_000;
 const PROGRESS_POLL_MS = 30_000;
-
-/** «из 1 ученика», «из 22 учеников». */
-const ofStudents = (n: number, t: T) => (n % 10 === 1 && n % 100 !== 11 ? t("ученика") : t("учеников"));
 
 /**
  * Класс на главной кабинета: кто занимался сегодня, активное задание с выполнением, кто не занимался на неделе и заявки
@@ -46,7 +41,7 @@ export function ClassBoardCard({ c, solo }: { c: ClassSummary; solo: boolean }) 
   const requests = useResource(
     () => unwrap(api.GET("/api/v1/classes/{id}/join-requests", { params: { path: { id: c.id }, query: { status: "pending" } } })),
     [c.id, pending],
-    { enabled: pending > 0 },
+    { enabled: pending > 0, keepPrevious: true },
   );
 
   const href = `/teacher/classes/${c.id}`;
@@ -84,7 +79,7 @@ export function ClassBoardCard({ c, solo }: { c: ClassSummary; solo: boolean }) 
         </ButtonLink>
       </header>
 
-      {pending > 0 ? <RequestsStrip href={`${href}?open=requests`} count={pending} names={(requests.data?.items ?? []).map((r) => r.nickname)} /> : null}
+      <RequestsBanner className="klass__requests" href={`${href}?open=requests`} count={pending} names={(requests.data?.items ?? []).map((r) => r.nickname)} />
 
       {!working ? (
         <SetupHint href={href} hasCards={seatCount > 0} />
@@ -96,25 +91,6 @@ export function ClassBoardCard({ c, solo }: { c: ClassSummary; solo: boolean }) 
         </div>
       )}
     </article>
-  );
-}
-
-/** Заявки на вход по коду класса — заметно, с никами: кого подтвердить. «Посмотреть» открывает лист заявок класса. */
-function RequestsStrip({ href, count, names }: { href: string; count: number; names: string[] }) {
-  const t = useT();
-  return (
-    <div className="requests-banner klass__requests" role="status">
-      <span className="requests-banner__icon" aria-hidden>
-        <BellRinging weight="fill" />
-      </span>
-      <p className="requests-banner__text">
-        <b>{count === 1 ? t("{count} {word} ждёт подтверждения", { count, word: studentsWord(count, t) }) : t("{count} {word} ждут подтверждения", { count, word: studentsWord(count, t) })}</b>
-        {names.length ? <span className="requests-banner__names">{names.join(", ")}</span> : null}
-      </p>
-      <ButtonLink href={href} small>
-        {t("Посмотреть")}
-      </ButtonLink>
-    </div>
   );
 }
 
@@ -175,8 +151,6 @@ function Tile({ id, kind, icon, title, big, children, attention, more }: { id: s
   );
 }
 
-const nick = (r: StudentRow, t: T) => r.nickname ?? t("ник не выбран");
-
 function TodayTile({ id, classId, rows, today, failed, onRetry, shown }: { id: string; classId: string; rows: StudentRow[] | null; today: string; failed: boolean; onRetry: () => void; shown: number }) {
   const t = useT();
   const split = rows ? classToday(rows, today) : null;
@@ -190,7 +164,7 @@ function TodayTile({ id, classId, rows, today, failed, onRetry, shown }: { id: s
       big={
         split ? (
           <>
-            <b>{split.today.length}</b> {t("из")} {rows!.length}
+            {fillNodes(t("{done} из {total}"), { done: <b>{split.today.length}</b>, total: rows!.length })}
             <span className="pulse__unit"> {ofStudents(rows!.length, t)}</span>
           </>
         ) : undefined
@@ -198,25 +172,12 @@ function TodayTile({ id, classId, rows, today, failed, onRetry, shown }: { id: s
     >
       {!split ? (
         failed ? (
-          <Retry onRetry={onRetry} />
+          <PulseRetry onRetry={onRetry} />
         ) : (
           <Skeleton height={44} />
         )
-      ) : split.today.length ? (
-        <ul className="avatars" aria-label={t("Занимались сегодня")}>
-          {split.today.slice(0, shown).map((r) => (
-            <li key={r.seatNumber}>
-              <Link href={`/teacher/classes/${classId}/seats/${r.seatNumber}`} className="avatars__item" title={`${seatLabel(r.seatNumber)} · ${nick(r, t)}`}>
-                <HexAvatar size={40} tone={toneFor(r.toneKey)} art={avatarFor(r.nickname)} lip label={`${seatLabel(r.seatNumber)} · ${nick(r, t)}`}>
-                  {String(r.seatNumber).padStart(2, "0")}
-                </HexAvatar>
-              </Link>
-            </li>
-          ))}
-          {split.today.length > shown ? <li className="avatars__more">+{split.today.length - shown}</li> : null}
-        </ul>
       ) : (
-        <p className="tt-muted">{t("Пока никто.")}</p>
+        <TodayAvatars classId={classId} rows={split.today} shown={shown} />
       )}
     </Tile>
   );
@@ -225,8 +186,7 @@ function TodayTile({ id, classId, rows, today, failed, onRetry, shown }: { id: s
 function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string; classId: string; active: Assignment[] | null; today: string; failed: boolean; onRetry: () => void }) {
   const t = useT();
   // Одно задание — «9 из 22 сделали» крупно, как «Занимались сегодня»; два — по полосе на каждое.
-  const single = active?.length === 1 ? active[0]! : null;
-  const singleDone = single ? single.summary.done + single.summary.late : 0;
+  const single = singleTaskDone(active);
   return (
     <Tile
       id={id}
@@ -237,7 +197,7 @@ function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string;
       big={
         single ? (
           <>
-            <b>{singleDone}</b> {t("из")} {single.summary.total}
+            {fillNodes(t("{done} из {total}"), { done: <b>{single.done}</b>, total: single.total })}
             <span className="pulse__unit"> {t("сделали")}</span>
           </>
         ) : undefined
@@ -245,7 +205,7 @@ function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string;
     >
       {!active ? (
         failed ? (
-          <Retry onRetry={onRetry} />
+          <PulseRetry onRetry={onRetry} />
         ) : (
           <Skeleton height={44} />
         )
@@ -257,22 +217,7 @@ function TaskTile({ id, classId, active, today, failed, onRetry }: { id: string;
           </ButtonLink>
         </div>
       ) : (
-        <ul className="today-tasks">
-          {active.map((a) => {
-            const done = a.summary.done + a.summary.late;
-            return (
-              <li key={a.id} className="today-task">
-                <p className="today-task__title">
-                  <Link href={`/teacher/classes/${classId}/assignments`} className="pulse__link">
-                    {assignmentTitle(a, t)}
-                  </Link>
-                  <span className="tt-muted">{dueForTeacher(a.dueOn, today, t)}</span>
-                </p>
-                <ProgressBar value={done} max={a.summary.total} label={t("Сделали: {title}", { title: assignmentTitle(a, t) })} valueText={t("{done} из {total}", { done, total: a.summary.total })} showValue={!single} />
-              </li>
-            );
-          })}
-        </ul>
+        <TaskList classId={classId} active={active} today={today} linked />
       )}
     </Tile>
   );
@@ -302,40 +247,16 @@ function IdleTile({ id, classId, rows, today, failed, onRetry }: { id: string; c
     >
       {!idle ? (
         failed ? (
-          <Retry onRetry={onRetry} />
+          <PulseRetry onRetry={onRetry} />
         ) : (
           <Skeleton height={44} />
         )
       ) : idle.length ? (
-        <ul className="seat-chips seat-chips--compact" aria-label={t("Не занимались на этой неделе: {n}", { n: idle.length })}>
-          {idle.slice(0, shown).map((r) => (
-            <li key={r.seatNumber}>
-              <Link href={`/teacher/classes/${classId}/seats/${r.seatNumber}`} className="seat-chip seat-chip--overdue">
-                <b>{seatLabel(r.seatNumber)}</b> {nick(r, t)}
-              </Link>
-            </li>
-          ))}
-          {rest > 0 ? (
-            // В узкой карточке ссылки внизу блока нет — «ещё N» чипом (в широкой он скрыт, teacher.css).
-            <li>
-              <Link href={behindHref(classId)} className="seat-chip seat-chip--more">
-                {t("ещё")} {rest}
-              </Link>
-            </li>
-          ) : null}
-        </ul>
+        // В узкой карточке ссылки внизу блока нет — «ещё N» чипом (в широкой он скрыт, teacher.css).
+        <IdleChips classId={classId} rows={idle} shown={shown} moreHref={behindHref(classId)} />
       ) : (
         <p className="today-card__ok">{t("Все занимались.")}</p>
       )}
     </Tile>
-  );
-}
-
-function Retry({ onRetry }: { onRetry: () => void }) {
-  const t = useT();
-  return (
-    <p className="tt-muted">
-      {t("Не получилось загрузить.")} <LinkButton onClick={onRetry}>{t("Обновить")}</LinkButton>
-    </p>
   );
 }

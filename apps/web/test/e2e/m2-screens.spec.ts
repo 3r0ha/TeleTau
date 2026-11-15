@@ -412,7 +412,7 @@ const SHOTS: Shot[] = [
 ];
 
 for (const shot of SHOTS) {
-  test(`M2 ${shot.name}`, async ({ page }) => {
+  test(`снимок ${shot.name}`, async ({ page }) => {
     if (shot.width) await page.setViewportSize({ width: shot.width, height: 860 });
     // Без анимаций, чтобы кадр не попал на середину перехода (как ?static=1 у прототипа).
     await page.emulateMedia({ reducedMotion: "reduce" });

@@ -1,7 +1,7 @@
 // Язык интерфейса (i18n): cookie tt_locale читает сервер (html lang и все строки — без вспышки другого языка),
 // переключатель в шапке лендинга пишет cookie и обновляет страницу, неизвестное значение — фолбэк на русский.
 import { expect, test } from "@playwright/test";
-import { mockBackend } from "./mock-api";
+import { childMe, mockBackend } from "./mock-api";
 import { WEB_PORT as PORT } from "./servers";
 
 const BASE = `http://localhost:${PORT}`;
@@ -31,7 +31,7 @@ test.describe("язык интерфейса", () => {
     await mockBackend(page);
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("lang", "ba");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Башҡортса өйрәнергә — еңел һәм көн һайын");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Башҡортса көн һайын өйрәнергә");
     await expect(page.getByRole("heading", { level: 2, name: "Һуҡмаҡ урындары" })).toHaveCount(1);
     await expect(page.getByRole("heading", { level: 2, name: "Мәктәптәр өсөн" })).toHaveCount(1);
     await expect(page.getByRole("region", { name: "Һуҡмаҡ урындары" }).getByRole("listitem").first()).toContainText("Өфө");
@@ -42,7 +42,7 @@ test.describe("язык интерфейса", () => {
     await mockBackend(page);
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("lang", "kk");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Башқортша үйрену — жеңіл және күн сайын");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Башқортшаны күн сайын үйрен");
     await expect(page.getByRole("heading", { level: 2, name: "Жол бойындағы орындар" })).toHaveCount(1);
     await expect(page.getByRole("region", { name: "Жол бойындағы орындар" }).getByRole("listitem").first()).toContainText("Уфа");
   });
@@ -57,9 +57,10 @@ test.describe("язык интерфейса", () => {
     await expect(group.getByRole("button", { name: "Русский" })).toHaveAttribute("aria-pressed", "true");
     await group.getByRole("button", { name: "Башҡортса" }).click();
 
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Башҡортса өйрәнергә — еңел һәм көн һайын");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Башҡортса көн һайын өйрәнергә");
     await expect(page.locator("html")).toHaveAttribute("lang", "ba");
-    await expect(group.getByRole("button", { name: "Башҡортса" })).toHaveAttribute("aria-pressed", "true");
+    // Подпись группы теперь тоже по-башкирски — кнопку ищем в шапке по её названию (оно на самом языке).
+    await expect(page.getByRole("banner").getByRole("button", { name: "Башҡортса" })).toHaveAttribute("aria-pressed", "true");
 
     const cookie = (await page.context().cookies(BASE)).find((c) => c.name === "tt_locale");
     expect(cookie?.value).toBe("ba");
@@ -73,5 +74,31 @@ test.describe("язык интерфейса", () => {
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "ba");
     await expect(page.getByRole("heading", { level: 2, name: "Һуҡмаҡ урындары" })).toHaveCount(1);
+  });
+
+  test("ba: вкладки и подписи packages/ui, награды, цель дня, лига — по-башкирски", async ({ page }) => {
+    await setLocale(page, "ba");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await mockBackend(page, { account: childMe() });
+    await page.goto("/me");
+    const tabs = page.getByRole("navigation", { name: "Бүлектәр" });
+    await expect(tabs.getByRole("link")).toHaveText(["Юл", "Лига", "Класс", "Профиль"]);
+    const awards = page.getByRole("region", { name: "Бүләктәр" });
+    await expect(awards.getByText("Урын үтелде")).toBeVisible();
+    await expect(awards.getByText("Место пройдено")).toHaveCount(0);
+    await expect(page.getByText("2 урока в день")).toHaveCount(0);
+    await page.goto("/league");
+    await expect(page.locator(".tt-lzone--up")).toHaveText("Күтәрелеү зонаһы");
+  });
+
+  test("ba: экран ошибки — заголовок и кнопка повтора, текст не повторяет заголовок", async ({ page }) => {
+    await setLocale(page, "ba");
+    await mockBackend(page, { account: childMe(), failures: { "GET /leagues/current": { status: 500, code: "internal" } } });
+    await page.goto("/league");
+    const alert = page.getByRole("alert").filter({ has: page.getByRole("heading", { name: "Нимәлер яңылыш сыҡты" }) });
+    await expect(alert).toBeVisible();
+    await expect(alert.getByRole("button", { name: "Тағы бер тапҡыр ҡарарға" })).toBeVisible();
+    await expect(alert).not.toContainText("Нимәлер яңылыш сыҡты. Тағы");
+    await expect(alert.locator(".tt-empty__text")).toHaveCount(0);
   });
 });

@@ -114,8 +114,11 @@ export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, 
   const headRef = useRef<HTMLElement>(null);
 
   // Открылась тропа. После урока — запечатанный узел в центре (а не верх страницы). Текущее место не первое — сразу
-  // «ты здесь»: плашки, шапка места и его узлы под верхней панелью. Иначе — верх тропы.
+  // «ты здесь»: плашки, шапка места и его узлы под верхней панелью. Иначе — верх тропы. Прокрутка — только при
+  // появлении тропы, поэтому эффекты читают значения первой отрисовки.
+  const opened = useRef({ sealed, placeIndex, reduced });
   useLayoutEffect(() => {
+    const { sealed, placeIndex } = opened.current;
     if (sealed) return;
     const here = todayRef.current ?? headRef.current;
     if (placeIndex <= 0 || !here) {
@@ -124,13 +127,12 @@ export function Trail({ course, onStart, sealed, busy, reviewDue = 0, onReview, 
     }
     const bar = document.querySelector(".learn-top")?.getBoundingClientRect().bottom ?? 0;
     window.scrollTo({ top: Math.max(0, here.getBoundingClientRect().top + window.scrollY - Math.max(0, bar) - 8) });
-    // Только при появлении тропы.
   }, []);
   useEffect(() => {
+    const { sealed, reduced } = opened.current;
     if (!sealed) return;
     const el = document.querySelector(`[data-node="${CSS.escape(sealed)}"]`);
     el?.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
-    // Только при появлении тропы: sealed и reduced к этому моменту уже известны.
   }, []);
 
   const [bar, setBar] = useState<{ show: boolean; unitId: string | undefined }>({ show: false, unitId: unit?.id });

@@ -1,7 +1,7 @@
 // Публичный словарь (/dictionary, ТЗ §5): витрина принятых пар без входа. Заголовок и счётчики пар по языковым
-// парам, две секции ba-ru и ba-kz («башкирское слово — исходник», источник подписью), поиск фильтрует по обеим
-// сторонам. Пустой ответ или молчащий API — «Словарь скоро наполнится», страница живая. Данные — свой page.route
-// поверх mockBackend (как в соседних тестах): адрес печатает сид демо-мира (teletau.study/dictionary).
+// парам, две секции ba-ru и ba-kz («башкирское слово — исходник», источников на экране нет — они в выгрузке), поиск
+// фильтрует по обеим сторонам. Пустой ответ — «Словарь скоро наполнится»; сбой сети или API — ошибка с повтором.
+// Данные — свой page.route поверх mockBackend: адрес печатает сид демо-мира (teletau.study/dictionary).
 import { expect, test, type Page } from "@playwright/test";
 import type { Schema } from "@teletau/contracts";
 import { API, mockBackend } from "./mock-api";
@@ -10,7 +10,7 @@ type Entry = Schema<"PublicDictionaryEntry">;
 
 /** Пара словаря, как демо-корпус: исходник и башкирский вариант, источник один на все строки. */
 function entry(fragmentId: string, langPair: "ba-ru" | "ba-kz", translation: string, textBa: string): Entry {
-  return { fragmentId, langPair, translation, textBa, sources: [{ title: "Демо-корпус ТелеТау" }], confirmed: true, status: "confirmed" };
+  return { fragmentId, langPair, translation, textBa, sources: [{ title: "Демо-корпус ТелеТау" }], confirmed: 3, status: "confirmed" };
 }
 
 const RU: Entry[] = [
@@ -25,9 +25,8 @@ const KZ: Entry[] = [
   entry("0193f7a4-0000-7000-8000-00000000f013", "ba-kz", "Рахмет", "Рәхмәт"),
 ];
 
-/** Подменить GET /public/dictionary поверх mockBackend: поздний page.route приоритетнее раннего. */
-async function mockDictionary(page: Page, items: Entry[]) {
-  await mockBackend(page);
+/** Ответ GET /public/dictionary поверх mockBackend: поздний page.route приоритетнее раннего. */
+async function serveDictionary(page: Page, items: Entry[]) {
   await page.route(`${API}/api/v1/public/dictionary`, (route) =>
     route.fulfill({
       status: 200,
@@ -37,8 +36,13 @@ async function mockDictionary(page: Page, items: Entry[]) {
   );
 }
 
+async function mockDictionary(page: Page, items: Entry[]) {
+  await mockBackend(page);
+  await serveDictionary(page, items);
+}
+
 test.describe("публичный словарь", () => {
-  test("заголовок, счётчики пар и две секции: башкирское слово — исходник, источник подписью", async ({ page }) => {
+  test("заголовок, счётчики пар и две секции: башкирское слово — исходник, без источника", async ({ page }) => {
     await mockDictionary(page, [...RU, ...KZ]);
     await page.goto("/dictionary");
     await expect(page.getByRole("heading", { name: "Словарь", level: 1 })).toBeVisible();
@@ -52,7 +56,7 @@ test.describe("публичный словарь", () => {
     await expect(ru.locator("tbody tr")).toHaveCount(3);
     const ruRow = ru.locator("tr").filter({ hasText: "Привет" });
     await expect(ruRow.locator("[lang='ba']")).toHaveText("Сәләм");
-    await expect(ruRow).toContainText("Демо-корпус ТелеТау");
+    await expect(ruRow).not.toContainText("Демо-корпус ТелеТау");
 
     const kz = page.getByRole("region", { name: "Казахско-башкирский" });
     await expect(kz.getByRole("columnheader", { name: "Казахский" })).toBeVisible();
@@ -94,11 +98,24 @@ test.describe("публичный словарь", () => {
     await expect(page.locator("tbody")).toHaveCount(0);
   });
 
-  test("API молчит (мок без словаря) — витрина живая, не 500", async ({ page }) => {
-    await mockBackend(page);
+  test("нет связи — ошибка с повтором, а не пустой словарь; повтор загружает пары", async ({ page }) => {
+    await mockBackend(page, { failures: { "GET /public/dictionary": "offline" } });
     await page.goto("/dictionary");
     await expect(page.getByRole("heading", { name: "Словарь", level: 1 })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Словарь скоро наполнится" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Нет связи" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Словарь скоро наполнится" })).toHaveCount(0);
+    await serveDictionary(page, RU);
+    await page.getByRole("button", { name: "Попробовать ещё раз" }).click();
+    await expect(page.getByRole("region", { name: "Русско-башкирский" }).locator("tbody tr")).toHaveCount(3);
+  });
+
+  test("API отвечает ошибкой — экран ошибки, страница живая", async ({ page }) => {
+    await mockBackend(page, { failures: { "GET /public/dictionary": { status: 500, code: "internal" } } });
+    await page.goto("/dictionary");
+    await expect(page.getByRole("heading", { name: "Словарь", level: 1 })).toBeVisible();
+    await expect(page.locator(".tt-empty[role=alert]")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Попробовать ещё раз" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Словарь скоро наполнится" })).toHaveCount(0);
   });
 
   test("в подвале лендинга — ссылка «Словарь»", async ({ page }) => {

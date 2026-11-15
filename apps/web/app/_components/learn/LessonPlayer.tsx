@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { Fire, Sparkle, X } from "@phosphor-icons/react/ssr";
+import { toComparable } from "@teletau/bashkir-text";
+import { useSession } from "@teletau/session/react";
 import { Button, Dialog, EmptyState, FeedbackSheet, IconButton, LinkButton, ProgressBar, Skeleton, SkeletonGroup, SpeakButton, illustrations } from "@teletau/ui";
 import { useT } from "../../../i18n/client";
+import { uiModeFor } from "../UiMode";
 import { learnApi } from "./api";
 import { localAudio } from "./audio";
 import { Duel } from "./Duel";
@@ -37,6 +41,8 @@ export function LessonPlayer({ lesson, onCheck, onNext, onQuit, onStay, onLeave 
   const exercise = currentExercise(lesson);
   const retry = isRetry(lesson);
   const intro = isIntro(lesson);
+  // «Пчёлка» (1–4 класс): без «Почему так?» — объяснение длиннее, чем допускает режим (docs/05 §7).
+  const bee = uiModeFor(useSession(), usePathname()) === "bee";
   const stepKey = `${exercise?.id}:${lesson.shownBefore[exercise?.id ?? ""] ?? 0}`;
   const [answer, setAnswer] = useState<Answer | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -67,7 +73,7 @@ export function LessonPlayer({ lesson, onCheck, onNext, onQuit, onStay, onLeave 
     heading.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
     if (intro) playSound("newWord");
-  }, [stepKey]);
+  }, [stepKey, intro]);
 
   const canCheck = Boolean(answer) && !feedback && !checking;
   const check = () => {
@@ -142,6 +148,7 @@ export function LessonPlayer({ lesson, onCheck, onNext, onQuit, onStay, onLeave 
             retryLater={willRetry(lesson)}
             index={lesson.finished.length}
             combo={combo}
+            explain={!bee}
             onNext={onNext}
           />
         ) : intro ? (
@@ -229,7 +236,7 @@ function PairsFix({ exercise, result, links }: { exercise: Extract<Exercise, { t
 }
 
 /** Строка листа с записью носителя: текст и «Послушать» рядом. */
-function WithListen({ audio, word, children }: { audio?: { url: string }; word: string; children: ReactNode }) {
+function WithListen({ audio, word, children }: { audio?: Parameters<typeof localAudio>[0]; word: string; children: ReactNode }) {
   const t = useT();
   if (localAudio(audio).length === 0) return <>{children}</>;
   return (
@@ -255,7 +262,7 @@ function HintedAnswer({ text, hint }: { text: string; hint?: AttemptResult["hint
     let letter = -1;
     const chars = [...w];
     const at = chars.findIndex((c) => /\p{L}/u.test(c) && ++letter === hint.index);
-    if (at < 0 || chars[at]!.toLocaleLowerCase("ba") !== hint.expected) return w;
+    if (at < 0 || toComparable(chars[at]!) !== hint.expected) return w;
     return (
       <span key={wi}>
         {chars.slice(0, at).join("")}
@@ -295,9 +302,11 @@ function AiExplain({ runId, attemptId }: { runId: string; attemptId: string }) {
   if (state.failed) return <p className="feedback-explain feedback-explain--down">{t("Подсказка сейчас недоступна.")}</p>;
   if (!state.text) {
     return (
-      <Button small variant="secondary" loading={state.loading} onClick={load}>
-        {t("Почему так?")}
-      </Button>
+      <div className="feedback-explain">
+        <Button small variant="secondary" loading={state.loading} onClick={load}>
+          {t("Почему так?")}
+        </Button>
+      </div>
     );
   }
   return (
@@ -338,6 +347,7 @@ function Feedback({
   retryLater,
   index,
   combo,
+  explain,
   onNext,
 }: {
   exercise: Exercise;
@@ -348,6 +358,8 @@ function Feedback({
   retryLater: boolean;
   index: number;
   combo: number;
+  /** Кнопка «Почему так?» под ошибкой. */
+  explain: boolean;
   onNext: () => void;
 }) {
   const t = useT();
@@ -401,7 +413,7 @@ function Feedback({
               </p>
             </WithListen>
           ) : null}
-          <AiExplain runId={runId} attemptId={result.attemptId} />
+          {explain ? <AiExplain runId={runId} attemptId={result.attemptId} /> : null}
         </FeedbackSheet>
       );
     case "almost":
@@ -422,7 +434,7 @@ function Feedback({
           ) : (
             <p>{t("Засчитано. Сравни со своим ответом.")}</p>
           )}
-          <AiExplain runId={runId} attemptId={result.attemptId} />
+          {explain ? <AiExplain runId={runId} attemptId={result.attemptId} /> : null}
         </FeedbackSheet>
       );
     case "wrong":
@@ -435,7 +447,7 @@ function Feedback({
               </p>
             </WithListen>
           ) : null}
-          <AiExplain runId={runId} attemptId={result.attemptId} />
+          {explain ? <AiExplain runId={runId} attemptId={result.attemptId} /> : null}
           {retryLater ? <Extra>{t("Повторим в конце урока.")}</Extra> : null}
         </FeedbackSheet>
       );
@@ -514,7 +526,7 @@ export function LessonSaving({ failed, onRetry, onLeave }: { failed?: boolean; o
               actions={
                 <>
                   <Button block onClick={onRetry}>
-                    {t("Попробовать снова")}
+                    {t("Попробовать ещё раз")}
                   </Button>
                   <LinkButton tone="neutral" onClick={onLeave}>
                     {t("На тропу")}

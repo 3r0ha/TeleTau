@@ -5,11 +5,13 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Buildings, ChartBar, Exam, Student } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { Button, ButtonLink, Chip, EmptyState, Skeleton, SkeletonGroup } from "@teletau/ui";
+import { ButtonLink, Chip, EmptyState, Skeleton, SkeletonGroup } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
-import { ApiProblem, describeProblem, isNetworkError } from "@teletau/session/problem";
+import { ApiProblem } from "@teletau/session/problem";
 import { ConsoleShell } from "../../_components/ConsoleShell";
-import { ActivityCell, asOfLabel, GroupNumber, Kpi, Kpis, num, plural, SortHeader, SuppressionLegend, useSorted, weekLabel, WeeksChart, type Column } from "../parts";
+import { LoadFailure } from "../../_components/LoadFailure";
+import { plural } from "../../_components/plural";
+import { ActivityCell, asOfLabel, GroupNumber, Kpi, Kpis, num, SmallGroupThresholdProvider, SortHeader, SuppressionLegend, useSorted, weekLabel, WeeksChart, type Column } from "../parts";
 
 type Detail = Schema<"RepublicDistrictDetail">;
 type SchoolRow = Schema<"RepublicSchoolRow">;
@@ -51,25 +53,21 @@ function District() {
     return (
       <div className="tt-stack tt-stack--loose">
         <BackLink />
-        <EmptyState
-          art={missing ? "beeThink" : isNetworkError(error) ? "emptyOffline" : "emptyError"}
-          compact
-          title={missing ? "Такого района нет" : isNetworkError(error) ? "Нет связи" : "Не удалось загрузить"}
-          role="alert"
-          actions={
-            missing ? (
+        {missing ? (
+          <EmptyState
+            art="beeThink"
+            compact
+            title="Такого района нет"
+            role="alert"
+            actions={
               <ButtonLink href="/republic" block>
                 К списку районов
               </ButtonLink>
-            ) : (
-              <Button block onClick={() => setTick((n) => n + 1)}>
-                Попробовать снова
-              </Button>
-            )
-          }
-        >
-          {missing ? null : describeProblem(error)}
-        </EmptyState>
+            }
+          />
+        ) : (
+          <LoadFailure error={error} onRetry={() => setTick((n) => n + 1)} />
+        )}
       </div>
     );
   }
@@ -90,48 +88,50 @@ function District() {
   const d = data.district;
   const a = d.activity;
   return (
-    <div className="tt-stack tt-stack--loose republic">
-      <BackLink />
-      <header className="console__head">
-        <div className="tt-stack tt-stack--tight">
-          <h1 className="tt-title2">
-            {d.nameRu}
-            {d.isDemo ? (
-              <>
-                {" "}
-                <Chip tone="violet">демо</Chip>
-              </>
-            ) : null}
-          </h1>
-          <p className="tt-muted">
-            {d.kind === "urban_okrug" ? "Городской округ" : "Муниципальный район"} · неделя {weekLabel(data.week)} · данные на {asOfLabel(data.asOf)} по Уфе
-          </p>
-        </div>
-      </header>
+    <SmallGroupThresholdProvider value={data.smallGroupThreshold}>
+      <div className="tt-stack tt-stack--loose republic">
+        <BackLink />
+        <header className="console__head">
+          <div className="tt-stack tt-stack--tight">
+            <h1 className="tt-title2">
+              {d.nameRu}
+              {d.isDemo ? (
+                <>
+                  {" "}
+                  <Chip tone="neutral">демо</Chip>
+                </>
+              ) : null}
+            </h1>
+            <p className="tt-muted">
+              {d.kind === "urban_okrug" ? "Городской округ" : "Муниципальный район"} · неделя {weekLabel(data.week)} · данные на {asOfLabel(data.asOf)} по Уфе
+            </p>
+          </div>
+        </header>
 
-      <Kpis label="Район в цифрах">
-        <Kpi icon={<Buildings weight="fill" />} label="Школ подключено" value={num(d.schools.connected)} note={`из ${num(d.schools.total)} · ${num(d.classes)} ${plural(d.classes, "класс", "класса", "классов")}`} />
-        <Kpi icon={<Student weight="fill" />} label="Учеников" value={<GroupNumber value={a.students} suppression={a.suppression} />} />
-        <Kpi
-          icon={<ChartBar weight="fill" />}
-          label="Занимались на этой неделе"
-          value={<GroupNumber value={a.activeWeek} suppression={a.suppression} />}
-          note={!a.suppression && a.students ? `${Math.round(((a.activeWeek ?? 0) / a.students) * 100)} % учеников` : undefined}
-        />
-        <Kpi icon={<Exam weight="fill" />} label="Уроков за неделю" value={<GroupNumber value={a.lessonsWeek} suppression={a.suppression} />} note={!a.suppression ? `всего ${num(a.lessonsTotal ?? 0)}` : undefined} />
-      </Kpis>
+        <Kpis label="Район в цифрах">
+          <Kpi icon={<Buildings weight="fill" />} label="Школ подключено" value={num(d.schools.connected)} note={`из ${num(d.schools.total)} · ${num(d.classes)} ${plural(d.classes, "класс", "класса", "классов")}`} />
+          <Kpi icon={<Student weight="fill" />} label="Учеников" value={<GroupNumber value={a.students} suppression={a.suppression} />} />
+          <Kpi
+            icon={<ChartBar weight="fill" />}
+            label="Занимались на этой неделе"
+            value={<GroupNumber value={a.activeWeek} suppression={a.suppression} />}
+            note={!a.suppression && a.students ? `${Math.round(((a.activeWeek ?? 0) / a.students) * 100)} % учеников` : undefined}
+          />
+          <Kpi icon={<Exam weight="fill" />} label="Уроков за неделю" value={<GroupNumber value={a.lessonsWeek} suppression={a.suppression} />} note={!a.suppression ? `всего ${num(a.lessonsTotal ?? 0)}` : undefined} />
+        </Kpis>
 
-      {a.suppression ? (
-        <EmptyState art="beeThink" headingAs="h2" compact title={a.suppression === "small_group" ? `В районе меньше ${data.smallGroupThreshold} учеников` : "Числа района скрыты"}>
-          {a.suppression === "small_group" ? "Числа по школам скрыты." : "Иначе малый район вычислят из итога республики."}
-        </EmptyState>
-      ) : (
-        <>
-          {data.weeks.length ? <WeeksChart weeks={data.weeks} title="По неделям" /> : null}
-          <SchoolsTable detail={data} />
-        </>
-      )}
-    </div>
+        {a.suppression ? (
+          <EmptyState art="beeThink" headingAs="h2" compact title={a.suppression === "small_group" ? `В районе меньше ${data.smallGroupThreshold} учеников` : "Числа района скрыты"}>
+            {a.suppression === "small_group" ? "Числа по школам скрыты." : "Иначе малый район вычислят из итога республики."}
+          </EmptyState>
+        ) : (
+          <>
+            {data.weeks.length ? <WeeksChart weeks={data.weeks} title="По неделям" /> : null}
+            <SchoolsTable detail={data} />
+          </>
+        )}
+      </div>
+    </SmallGroupThresholdProvider>
   );
 }
 
@@ -170,7 +170,7 @@ function SchoolsTable({ detail }: { detail: Detail }) {
                   {x.isDemo ? (
                     <>
                       {" "}
-                      <Chip tone="violet">демо</Chip>
+                      <Chip tone="neutral">демо</Chip>
                     </>
                   ) : null}
                 </td>

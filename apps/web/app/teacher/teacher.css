@@ -10,8 +10,27 @@
 }
 
 .teacher-shell .tt-tab {
-  overflow-wrap: anywhere;
   text-align: center;
+}
+
+/* Вкладки одной высоты, даже если длинная подпись переносится; на 320 px — без разрядки и с узкими полями, чтобы
+   «Помогите языку» помещалась в строку. */
+.teacher-shell .tt-tabbar li {
+  display: flex;
+}
+
+.teacher-shell .tt-tabbar li > .tt-tab {
+  flex: 1;
+}
+
+@media (max-width: 359px) {
+  .teacher-shell .tt-tabbar {
+    padding-inline: var(--tt-space-s100);
+  }
+
+  .teacher-shell .tt-tab {
+    letter-spacing: 0;
+  }
 }
 
 /* ───────────── разделы класса: «Места» / «Прогресс» ───────────── */
@@ -78,7 +97,6 @@
     width: 100%;
     padding: var(--tt-space-s150) var(--tt-space-s100);
     font-size: var(--tt-font-size-footnote);
-    overflow-wrap: anywhere;
     text-align: center;
   }
 
@@ -88,35 +106,6 @@
 }
 
 /* ───────────── «Прогресс» ───────────── */
-.progress-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--tt-space-s400);
-  align-items: start;
-}
-
-@media (min-width: 960px) {
-  .progress-layout {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  }
-}
-
-.progress-layout__side {
-  gap: var(--tt-space-s400);
-}
-
-/* На ноутбуке сводка недели и уроки остаются на виду, пока учитель листает список учеников. */
-@media (min-width: 960px) {
-  .progress-layout__side {
-    position: sticky;
-    top: var(--tt-space-s400);
-  }
-}
-
-.progress-layout .tab-card {
-  margin-bottom: 0;
-}
-
 .week-card .tt-stiles {
   margin-top: var(--tt-space-s200);
 }
@@ -170,21 +159,6 @@
   border-top: 0;
 }
 
-.pupil__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--tt-space-s050);
-}
-
-.pupil__name {
-  font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-body);
-  font-weight: var(--tt-font-weight-extrabold);
-  line-height: var(--tt-line-height-snug);
-}
-
 .pupil__meta {
   color: var(--tt-color-text-primary);
   font-size: var(--tt-font-size-callout);
@@ -209,7 +183,7 @@
   padding: var(--tt-space-s150) var(--tt-space-s250);
   border-radius: var(--tt-radius-chip);
   background: var(--tt-color-bg-sunken);
-  color: var(--tt-color-text-tertiary);
+  color: var(--tt-color-text-secondary);
   font-family: var(--tt-font-family-display);
   font-size: var(--tt-font-size-callout);
   font-weight: var(--tt-font-weight-black);
@@ -554,7 +528,6 @@ html:has(.teacher-shell) {
   border-radius: var(--tt-radius-small);
 }
 
-
 /* ───────────── «Прогресс»: строка ученика — ссылка на его карточку ───────────── */
 .pupil {
   position: relative;
@@ -586,27 +559,7 @@ html:has(.teacher-shell) {
   outline-offset: 2px;
 }
 
-.pupil__go {
-  flex: none;
-  width: var(--tt-size-icon-small);
-  height: var(--tt-size-icon-small);
-  color: var(--tt-color-text-tertiary);
-}
-
 /* ───────────── «Задания» класса (ADR 0021) ───────────── */
-.tasks-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--tt-space-s400);
-  align-items: start;
-}
-
-@media (min-width: 960px) {
-  .tasks-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-}
-
 .task.tt-card {
   display: flex;
   flex-direction: column;
@@ -675,11 +628,6 @@ html:has(.teacher-shell) {
   font-weight: var(--tt-font-weight-extrabold);
 }
 
-.task__foot {
-  display: flex;
-  justify-content: flex-end;
-}
-
 /* Места в группе — чипы со ссылкой на карточку ученика. Цвет группы дублирует подпись группы (WCAG 1.4.1). */
 .seat-chips {
   display: flex;
@@ -694,7 +642,7 @@ html:has(.teacher-shell) {
   display: inline-flex;
   align-items: center;
   gap: var(--tt-space-s100);
-  min-height: 36px;
+  min-height: var(--tt-size-touch-min);
   padding: var(--tt-space-s100) var(--tt-space-s300);
   border: 2px solid var(--tt-color-border-subtle);
   border-radius: var(--tt-radius-chip);
@@ -839,7 +787,6 @@ html:has(.teacher-shell) {
   .tt-toasts,
   .class-tabs,
   .class-page__back,
-  .toolbar,
   .no-print,
   .page-head .tt-row {
     display: none !important;
@@ -864,13 +811,8 @@ html:has(.teacher-shell) {
     padding: 0;
   }
 
-  .progress-layout,
   .seat-card__grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .progress-layout__side {
-    position: static;
   }
 
   .tt-card {
@@ -1576,29 +1518,6 @@ html:has(.teacher-shell) {
   font-size: var(--tt-font-size-title2);
 }
 
-.class-card__stats {
-  margin-top: var(--tt-space-s150);
-  color: var(--tt-color-text-secondary);
-}
-
-.class-card__stats b {
-  color: var(--tt-color-text-primary);
-  font-family: var(--tt-font-family-display);
-  font-weight: var(--tt-font-weight-black);
-}
-
-.class-card__next {
-  align-self: flex-start;
-  margin-top: var(--tt-space-s150);
-  padding: var(--tt-space-s050) var(--tt-space-s250);
-  border-radius: var(--tt-radius-chip);
-  background: var(--tt-color-accent-soft);
-  color: var(--tt-color-accent-text);
-  font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-footnote);
-  font-weight: var(--tt-font-weight-extrabold);
-}
-
 /* ───────────── «Прогресс»: неделя и уроки рядом, ниже — таблица учеников ───────────── */
 /* Каждая карточка — по своему содержимому: неделя не тянется на высоту списка мест. */
 .progress-top {
@@ -1822,45 +1741,6 @@ button.place__head:focus-visible {
   margin-bottom: var(--tt-space-s300);
 }
 
-/* Переключатель порядка — сегменты, текущий — медовый. */
-.segmented {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--tt-space-s100);
-  padding: var(--tt-space-s100);
-  border: 2px solid var(--tt-color-border-subtle);
-  border-radius: var(--tt-radius-chip);
-  background: var(--tt-color-bg-sunken);
-}
-
-.segmented__item {
-  min-height: var(--tt-size-touch-min);
-  padding: 0 var(--tt-space-s400);
-  border: 2px solid transparent;
-  border-radius: var(--tt-radius-chip);
-  background: transparent;
-  color: var(--tt-color-text-secondary);
-  font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-footnote);
-  font-weight: var(--tt-font-weight-extrabold);
-  cursor: pointer;
-}
-
-.segmented__item:hover {
-  color: var(--tt-color-text-primary);
-}
-
-.segmented__item[aria-pressed="true"] {
-  border-color: var(--tt-color-accent-text);
-  background: var(--tt-color-accent-soft);
-  color: var(--tt-color-accent-text);
-}
-
-.segmented__item:focus-visible {
-  outline: 3px solid var(--tt-color-focus);
-  outline-offset: 2px;
-}
-
 .pupils-table {
   width: 100%;
   border-collapse: collapse;
@@ -2035,7 +1915,7 @@ button.place__head:focus-visible {
   }
 
   .class-head__actions,
-  .segmented {
+  .tt-segmented {
     display: none !important;
   }
 }
@@ -2280,15 +2160,6 @@ button.place__head:focus-visible {
     flex: 1 1 auto;
   }
 
-  .segmented {
-    display: flex;
-    width: 100%;
-  }
-
-  .segmented__item {
-    flex: 1 1 0;
-    padding: 0 var(--tt-space-s200);
-  }
 }
 
 /* «Сегодня»: аватары — соты внахлёст в один ряд. */
@@ -2298,28 +2169,6 @@ button.place__head:focus-visible {
 
 .avatars > li + li {
   margin-left: calc(-1 * var(--tt-space-s150));
-}
-
-/* Новый класс без учеников: свободные места — плотной сеткой. */
-.seat-grid--compact {
-  grid-template-columns: repeat(auto-fill, minmax(min(168px, 100%), 1fr));
-  gap: var(--tt-space-s200);
-}
-
-@media (max-width: 599px) {
-  .seat-grid--compact {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.seat-grid--compact .seat {
-  min-height: 64px;
-  padding: var(--tt-space-s200) var(--tt-space-s300);
-  gap: var(--tt-space-s250);
-}
-
-.seat-grid--compact .seat__name {
-  font-size: var(--tt-font-size-footnote);
 }
 
 /* Завершённое задание с тремя группами: «Сделали» — во всю ширину, остальные — рядом под ней. */
@@ -2382,17 +2231,6 @@ button.place__head:focus-visible {
   font-size: var(--tt-font-size-footnote);
 }
 
-/* Крупный шрифт на узком экране: длинные слова («Государственный») переносятся, а не уводят страницу вбок. */
-.class-card__body,
-.class-head__titles,
-.today-card,
-.step__body,
-.first-class__steps li,
-.journey__body,
-.requests-banner__text {
-  overflow-wrap: anywhere;
-}
-
 @media (max-width: 599px) {
   .class-card.tt-card {
     padding: var(--tt-space-s400);
@@ -2433,7 +2271,7 @@ button.place__head:focus-visible {
   display: flex;
   flex-direction: column;
   gap: var(--tt-space-s050);
-  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .free-seats__title b {
@@ -2511,6 +2349,7 @@ button.place__head:focus-visible {
 /* Карточка класса — колонка: заголовок, заявки, сводка. Раскладка сводки — по ширине самой карточки. */
 .klass.tt-card {
   container: klass / inline-size;
+  display: flex;
   flex: 1;
   flex-direction: column;
   align-items: stretch;
@@ -2536,7 +2375,6 @@ button.place__head:focus-visible {
   display: flex;
   flex-direction: column;
   gap: var(--tt-space-s100);
-  overflow-wrap: anywhere;
 }
 
 .klass__title {
@@ -2549,6 +2387,15 @@ button.place__head:focus-visible {
 
 .klass[data-solo] .klass__title {
   font-size: var(--tt-font-size-title1);
+}
+
+/* Ссылки-заголовки в карточках: область нажатия — не ниже size.touchMin за счёт полей, строка не растёт
+   (поля компенсированы отрицательными отступами). */
+.klass__link,
+.pulse__link {
+  display: inline-block;
+  padding-block: max(0px, calc((var(--tt-size-touch-min) - 1lh) / 2));
+  margin-block: min(0px, calc((1lh - var(--tt-size-touch-min)) / 2));
 }
 
 .klass__link {
@@ -2932,7 +2779,6 @@ button.place__head:focus-visible {
 }
 
 .seat-chips--compact .seat-chip {
-  min-height: 30px;
   padding: 0 var(--tt-space-s250);
 }
 
@@ -2941,14 +2787,6 @@ button.place__head:focus-visible {
   .pulse .seat-chips > li:has(> .seat-chip--more) {
     display: none;
   }
-}
-
-/* Одно задание — крупное «сделали N из M», как «Занимались сегодня»; полоса — без повтора числа. */
-.pulse__big-label,
-.today-card__unit--task {
-  font-family: var(--tt-font-family-text);
-  font-size: var(--tt-font-size-callout);
-  font-weight: var(--tt-font-weight-semibold);
 }
 
 /* ───────────── заявки на вход: решённые остаются в списке с итогом ───────────── */
@@ -3163,7 +3001,6 @@ button.place__head:focus-visible {
   font-size: var(--tt-font-size-headline);
   font-weight: var(--tt-font-weight-black);
   line-height: var(--tt-line-height-snug);
-  overflow-wrap: anywhere;
 }
 
 .peek__text span {
@@ -3230,7 +3067,7 @@ button.place__head:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: var(--tt-space-s100);
-  min-height: 36px;
+  min-height: var(--tt-size-touch-min);
   padding: 0 var(--tt-space-s250);
   border: 0;
   border-radius: var(--tt-radius-chip);

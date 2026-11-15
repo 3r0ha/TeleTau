@@ -6,6 +6,7 @@ import { BookOpen, Books, Fire, FlagBanner, Footprints, MapPin, Scales, SealChec
 import { Card, Dialog, ProgressBar, hexPath } from "@teletau/ui";
 import { AfterScreen, useScreenSound } from "./AfterLesson";
 import { useT } from "../../../i18n/client";
+import { dayMonth } from "../dates";
 import type { Achievement, LessonSummary, MyAchievements } from "./model";
 import "./achievements.css";
 
@@ -47,10 +48,6 @@ type BadgeSize = keyof typeof SIZES;
 
 const earned = (a: Achievement): boolean => Boolean(a.earnedOn);
 
-/** «5 ноября» — день учебных суток (сервер уже посчитал его по Уфе). */
-export function dayLong(date: string): string {
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" });
-}
 
 /** Соты-ореол за крупным значком экрана «Новая награда». */
 const HALO = { w: 260, h: 226 };
@@ -115,11 +112,11 @@ export function AchievementsCard({ data }: { data: MyAchievements }) {
             {/* Имя кнопки — видимый текст (WCAG 2.5.3); «получена» и «ещё нет» читалке — скрытым текстом. */}
             <button type="button" className={["award", earned(a) && "award--earned"].filter(Boolean).join(" ")} onClick={() => setOpen(a)}>
               <AchievementBadge achievement={a} />
-              <span className="award__name">{a.titleRu}</span>
+              <span className="award__name">{t(a.titleRu)}</span>
               {a.earnedOn ? (
                 <span className="award__meta">
                   <span className="tt-visually-hidden">{t("Получена")} </span>
-                  {dayLong(a.earnedOn)}
+                  {dayMonth(a.earnedOn, t)}
                 </span>
               ) : a.target > 1 ? (
                 <>
@@ -135,15 +132,15 @@ export function AchievementsCard({ data }: { data: MyAchievements }) {
           </li>
         ))}
       </ul>
-      <Dialog open={Boolean(open)} onClose={() => setOpen(null)} title={open?.titleRu ?? ""} centered>
+      <Dialog open={Boolean(open)} onClose={() => setOpen(null)} title={open ? t(open.titleRu) : ""} centered>
         {open ? (
           <div className="award-sheet">
             <AchievementBadge achievement={open} size="medium" />
-            <p className="award-sheet__text">{open.descriptionRu}</p>
+            <p className="award-sheet__text">{t(open.descriptionRu)}</p>
             {open.earnedOn ? (
-              <p className="award-sheet__done">{t("Получена {date}", { date: dayLong(open.earnedOn) })}</p>
+              <p className="award-sheet__done">{t("Получена {date}", { date: dayMonth(open.earnedOn, t) })}</p>
             ) : open.target > 1 ? (
-              <ProgressBar value={open.progress} max={open.target} label={open.titleRu} valueText={t("{n} из {total}", { n: open.progress, total: open.target })} showValue />
+              <ProgressBar value={open.progress} max={open.target} label={t(open.titleRu)} valueText={t("{n} из {total}", { n: open.progress, total: open.target })} showValue />
             ) : null}
           </div>
         ) : null}
@@ -172,13 +169,13 @@ export function NewAchievementScreen({ summary, onContinue }: { summary: LessonS
         {single ? t("Новая награда!") : t("Новые награды!")}
       </h1>
       {single ? (
-        <p className="after__lead award-new__name">{single.titleRu}</p>
+        <p className="after__lead award-new__name">{t(single.titleRu)}</p>
       ) : (
         <ul className="award-new__list">
           {list.map((a) => (
             <li key={a.id}>
               <AchievementBadge achievement={a} size="medium" rise />
-              <span>{a.titleRu}</span>
+              <span>{t(a.titleRu)}</span>
             </li>
           ))}
         </ul>

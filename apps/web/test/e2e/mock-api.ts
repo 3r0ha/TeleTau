@@ -127,6 +127,8 @@ export interface World {
   qr: { ok: true; account: Me } | { ok: false; status: number; code: string };
   /** Кого впускает вход по коду из письма (BFF otp): например, ребёнка с привязанной почтой. Нет — нового взрослого. */
   otpAccount?: Me;
+  /** Кого впускает вход по привязке чата Telegram (BFF telegram). Нет — 404 chat_not_linked: чат не связан. */
+  telegramAccount?: Me;
   /** Постоянный код класса стенда показа (AUTH_DEMO_CLASS_CODE): «Показать код класса» выдаёт «000-000» на год. */
   permanentJoinCode?: boolean;
   /** Статусы заявки по коду класса при опросе (по очереди; последний повторяется). */
@@ -288,6 +290,11 @@ export async function mockBackend(page: Page, init: Partial<World> = {}): Promis
       w.account = adult
         ? adultMe({ id: "0193f7a4-0000-7000-8000-0000000a0042", roles: [], teacherStatus: "none", classes: [], profile: undefined, nickname, uiMode: "keeper", ageBand: "adult", loginCard: "none", pendingConsents: ["terms", "privacy", "consent_adult"], ...(body.dailyGoal ? { dailyGoal: body.dailyGoal } : {}) })
         : soloMe({ nickname, uiMode: mode, ageBand: body.ageBand, ...(body.dailyGoal ? { dailyGoal: body.dailyGoal } : {}) });
+      return ok(200, browserSession(w.account));
+    }
+    if (action === "telegram") {
+      if (!w.telegramAccount) return fail(404, "chat_not_linked");
+      w.account = w.telegramAccount;
       return ok(200, browserSession(w.account));
     }
     if (action === "card") {

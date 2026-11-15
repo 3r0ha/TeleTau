@@ -43,7 +43,7 @@ export const TEACHER_CLASS_NICKS = [
 
 const iso = (offsetMs = 0) => new Date(Date.parse("2026-11-03T09:12:00Z") + offsetMs).toISOString();
 
-/** Места 5 «Б» демо-показа: 24 места, 22 ученика, на №07 — «Смелая пчела» (docs/plans/M2.md §1). */
+/** Места 5 «Б» демо-мира: 24 места, 22 ученика, на №07 — «Смелая пчела». */
 export function demoSeats(total = 24): Seat[] {
   return Array.from({ length: total }, (_, i) => {
     const number = i + 1;
@@ -239,7 +239,7 @@ const previewWord = ([text, translationRu, audio]: PreviewRow): Schema<"LessonPr
     text,
     review: REVIEW,
     ...(audio
-      ? { audio: { url: `/audio/${audio}.m4a`, files: [{ url: `/audio/${audio}.m4a`, type: 'audio/mp4; codecs="mp4a.40.2"' }, { url: `/audio/${audio}.ogg`, type: 'audio/ogg; codecs="vorbis"' }] } }
+      ? { audio: { origin: "native" as const, url: `/audio/${audio}.m4a`, files: [{ url: `/audio/${audio}.m4a`, type: 'audio/mp4; codecs="mp4a.40.2"' }, { url: `/audio/${audio}.ogg`, type: 'audio/ogg; codecs="vorbis"' }] } }
       : {}),
   },
   translationRu,
@@ -392,7 +392,7 @@ const WEIGHT: Record<Group, number> = { child: 1, adult: 2, teacher: 3 };
 const majority = (t: { a: number; b: number }): "a" | "b" | null => (t.a > t.b ? "a" : t.b > t.a ? "b" : null);
 
 /**
- * duel-v0 «сервера» мока — упрощённо, как в векторах consensus/duel-v0 (docs/plans/M2.md §3 «Ч0»): веса 1/2/3, «оба» —
+ * duel-v0 «сервера» мока — упрощённо, как в векторах consensus/duel-v0: веса 1/2/3, «оба» —
  * по 0,5 обоим; без учителей и взрослых — voting; большинства учителей и взрослых расходятся — escalated; иначе при ≥ 3
  * голосах и перевесе ≥ 2 — accepted; большинство детей не совпало с итогом — children_prefer. Настоящие правила — в модуле consensus API.
  */

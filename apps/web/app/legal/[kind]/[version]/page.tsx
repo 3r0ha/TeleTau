@@ -6,6 +6,8 @@ import type { Schema, paths } from "@teletau/contracts";
 import { ButtonLink, Card, EmptyState } from "@teletau/ui";
 import { API_BASE_URL } from "@teletau/session/config";
 import { Screen, SimpleTop } from "../../../_components/screens";
+import { dayMonth } from "../../../_components/dates";
+import { getT } from "../../../../i18n/server";
 
 type Kind = Schema<"LegalDocumentKind">;
 type LegalText = Schema<"LegalDocumentText">;
@@ -17,7 +19,6 @@ export const dynamic = "force-dynamic";
 const KINDS: readonly Kind[] = ["terms", "privacy", "consent_adult", "consent_child"];
 const VERSION_RE = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
 const BRAND = "ТелеТау";
-const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Yekaterinburg" });
 
 type Loaded = { status: "ok"; doc: LegalText } | { status: "missing" } | { status: "unavailable" };
 
@@ -50,7 +51,8 @@ type Params = { params: Promise<{ kind: string; version: string }> };
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { kind, version } = await params;
   const loaded = await load(kind, version);
-  return { title: loaded.status === "ok" ? loaded.doc.title : "Документ" };
+  const t = await getT();
+  return { title: loaded.status === "ok" ? loaded.doc.title : t("Документ") };
 }
 
 /** Страница юридического документа: `LegalDocument.url` = `${PUBLIC_WEB_URL}/legal/<вид>/<версия>`. */
@@ -58,26 +60,27 @@ export default async function LegalDocumentPage({ params }: Params) {
   const { kind, version } = await params;
   const loaded = await load(kind, version);
   if (loaded.status === "missing") notFound();
+  const t = await getT();
 
   return (
-    <Screen top={<SimpleTop back="/" title="Документы" />}>
+    <Screen top={<SimpleTop back="/" title={t("Документы")} />}>
       {loaded.status === "unavailable" ? (
         <EmptyState
           art="emptyError"
-          title="Документ временно недоступен"
+          title={t("Документ временно недоступен")}
           role="alert"
           actions={
             <>
               <ButtonLink href={`/legal/${kind}/${version}`} block>
-                Попробовать снова
+                {t("Попробовать ещё раз")}
               </ButtonLink>
               <ButtonLink href="/" variant="secondary" block>
-                На главную
+                {t("На главную")}
               </ButtonLink>
             </>
           }
         >
-          Не удалось загрузить текст. Попробуйте ещё раз через минуту.
+          {t("Не удалось загрузить текст. Попробуйте ещё раз через минуту.")}
         </EmptyState>
       ) : (
         <Card roomy>
@@ -85,7 +88,7 @@ export default async function LegalDocumentPage({ params }: Params) {
             <header className="tt-stack tt-stack--tight">
               <h1 className="tt-title2">{loaded.doc.title}</h1>
               <p className="tt-muted">
-                Редакция {loaded.doc.version}, действует с {dateFmt.format(new Date(loaded.doc.effectiveFrom))}
+                {t("Редакция {version}, действует с {date}", { version: loaded.doc.version, date: dayMonth(loaded.doc.effectiveFrom, t, { year: true }) })}
               </p>
             </header>
             {loaded.doc.body.map((paragraph, i) => (

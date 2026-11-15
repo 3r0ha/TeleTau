@@ -20,7 +20,7 @@ export default function GlobalError({ retry }: { error: unknown; retry: () => vo
                 actions={
                   <>
                     <Button block onClick={retry}>
-                      Попробовать снова
+                      Попробовать ещё раз
                     </Button>
                     {/* Полная загрузка: роутер приложения после такого сбоя мог не подняться. */}
                     <a href="/" className={buttonClass({ variant: "secondary", block: true })}>

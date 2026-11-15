@@ -146,7 +146,7 @@ const WALK: Shot[] = [
 for (const width of [1280, 1440, 390]) for (const w of WALK) SHOTS.push({ ...w, name: `walk-${width}-${w.name}`, width });
 
 for (const shot of SHOTS) {
-  test(`M2 учитель и Mini App ${shot.name}`, async ({ page }) => {
+  test(`снимок учителя и Mini App ${shot.name}`, async ({ page }) => {
     if (shot.width) await page.setViewportSize({ width: shot.width, height: 860 });
     await page.emulateMedia({ reducedMotion: "reduce", ...(shot.print ? { media: "print" as const } : {}) });
     if (shot.dark) await chooseTheme(page, "dark");

@@ -230,13 +230,13 @@ function WeekDay({ day, today }: { day: StreakDay; today: boolean }) {
   const lip = state === "empty" ? 0 : 3;
   return (
     <li className={["week__day", today && "week__day--today"].filter(Boolean).join(" ")}>
-      <span aria-hidden>{weekdayShort(day.date)}</span>
+      <span aria-hidden>{t(weekdayShort(day.date))}</span>
       <svg width={DAY_W} height={DAY_H + lip} viewBox={`0 0 ${DAY_W} ${DAY_H + lip}`} aria-hidden focusable="false" className={`week__hex week__hex--${state}`}>
         {lip ? <path className="week__lip" d={hexPath(DAY_W, DAY_H, 3.5, 0, lip)} /> : null}
         <path className="week__face" d={state === "empty" ? hexPath(DAY_W - 2, DAY_H - 2, 3.5, 1, 1) : hexPath(DAY_W, DAY_H, 3.5)} />
       </svg>
       <span className="tt-visually-hidden">
-        {weekdayShort(day.date)}: {text}
+        {t(weekdayShort(day.date))}: {text}
       </span>
     </li>
   );
@@ -263,10 +263,10 @@ export function LeagueUpScreen({ summary, onContinue, busy }: { summary: LessonS
       busy={busy}
     >
       <h1 className="after__title" tabIndex={-1}>
-        {t("Новая лига — {league}!", { league: to.nom })}
+        {t("Новая лига — {league}!", { league: t(to.nom) })}
       </h1>
-      <p className="after__lead">{t("Ты среди лучших в Лиге {league}.", { league: from.gen })}</p>
-      <GlintBadge name={leagueBadges[result.tierAfter]} alt={t("Значок Лиги {league}", { league: to.gen })} width={96} rise className="after__badge" />
+      <p className="after__lead">{t("Ты среди лучших в Лиге {league}.", { league: t(from.gen) })}</p>
+      <GlintBadge name={leagueBadges[result.tierAfter]} alt={t("Значок Лиги {league}", { league: t(to.gen) })} width={96} rise className="after__badge" />
     </AfterScreen>
   );
 }

@@ -17,8 +17,6 @@ describe("отчёт по классу (CSV)", () => {
 
   it("строка на место: прогресс, статусы заданий и итог «сделано из всех»; BOM и CRLF", () => {
     const csv = classReportCsv({
-      classTitle: "5 «Б»",
-      week: { start: "2026-11-02", end: "2026-11-08" },
       rows: [
         { seatNumber: 7, nickname: "Смелая пчела", toneKey: 7, progress: { seatNumber: 7, lessonsCompleted: 3, wordsLearned: 21, lessonsThisWeek: 2, honeyThisWeek: 24, streak: 6, lastActiveOn: "2026-11-05", accuracy: 0.857 } },
         { seatNumber: 8, nickname: null, toneKey: 8, progress: null },

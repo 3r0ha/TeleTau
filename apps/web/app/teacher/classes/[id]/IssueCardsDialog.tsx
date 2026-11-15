@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle, DownloadSimple } from "@phosphor-icons/react/ssr";
-import { Button, Dialog, Form, InlineAlert, TextField, useInvalidFocus } from "@teletau/ui";
+import { Button, Dialog, Form, InlineAlert, TextField, useFocusRescue, useInvalidFocus } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { describeProblem, fieldErrors } from "@teletau/session/problem";
 import { cardsWord, seatRange, time, type PrintJob } from "./format";
@@ -49,15 +49,26 @@ export function IssueCardsDialog({
   const idempotencyKey = useRef(uuidv7());
   const invalid = useInvalidFocus();
 
+  // Сброс — только в момент открытия: после выпуска свободных мест меньше (max меняется), а лист должен остаться
+  // на «Карточки готовы».
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (open) {
-      setJob(null);
-      setSaved(null);
-      setError(null);
-      setFormError(null);
-      setCount(String(Math.min(24, max) || 1));
-    }
+    const opening = open && !wasOpen.current;
+    wasOpen.current = open;
+    if (!opening) return;
+    setJob(null);
+    setSaved(null);
+    setError(null);
+    setFormError(null);
+    setCount(String(Math.min(24, max) || 1));
   }, [open, max]);
+
+  // Форма сменилась итогом («Карточки готовы») — фокус на «Скачать PDF»; после скачивания — на «Готово».
+  const actions = useRef<HTMLDivElement>(null);
+  useFocusRescue(actions);
+  useEffect(() => {
+    if (job) actions.current?.querySelector<HTMLButtonElement>("button")?.focus();
+  }, [job]);
 
   const n = Number(count);
   const valid = Number.isInteger(n) && n >= 1 && n <= max;
@@ -84,11 +95,11 @@ export function IssueCardsDialog({
     } catch (e) {
       // Число отклонил сервер (422 /count) — ошибка у поля, фокус туда же, чтобы читалка её прочитала.
       // Остальное — сообщением; фокус остаётся на кнопке.
-      const countProblem = fieldErrors(e).count;
+      const countProblem = fieldErrors(e, t).count;
       if (countProblem) {
         setError(countProblem);
         invalid.request();
-      } else setFormError(describeProblem(e));
+      } else setFormError(describeProblem(e, "adult", t));
     } finally {
       setBusy(false);
     }
@@ -118,7 +129,7 @@ export function IssueCardsDialog({
           ) : (
             <p className="tt-muted">{t("PDF можно скачать до {time}.", { time: time(job.expiresAt) })}</p>
           )}
-          <div className="tt-dialog__actions">
+          <div className="tt-dialog__actions" ref={actions}>
             {saved === "ok" ? (
               <>
                 <Button block onClick={onClose}>

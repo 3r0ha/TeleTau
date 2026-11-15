@@ -7,7 +7,7 @@ import { EmptyState, TextField } from "@teletau/ui";
 import { useResource } from "@teletau/session/react";
 import { useT } from "../../../i18n/client";
 import type { T } from "../../../i18n/core";
-import { LoadingBlock, Screen, SimpleTop } from "../screens";
+import { LoadError, LoadingBlock, Screen, SimpleTop } from "../screens";
 import { learnApi } from "./api";
 import { plural } from "./format";
 import type { PublicDictionaryEntry } from "./model";
@@ -19,8 +19,8 @@ const SECTIONS: { pair: PublicDictionaryEntry["langPair"]; title: string; source
 ];
 
 /**
- * Публичный словарь (ТЗ §5): витрина принятых пар «исходник — башкирский вариант» с источниками, без входа —
- * как доска почёта, но строки — слова. Башкирские слова — контент, не переводятся, размечены lang="ba";
+ * Публичный словарь (ТЗ §5): витрина принятых пар «исходник — башкирский вариант» без входа — как доска почёта, но
+ * строки — слова. Источники пар — только в выгрузке (/api/v1/public/dictionary), не на экране. Башкирские слова — контент, не переводятся, размечены lang="ba";
  * ключи интерфейса — русские строки через t(). Пары грузятся в браузере: витрина работает и без токена.
  */
 export function DictionaryScreen() {
@@ -35,8 +35,9 @@ export function DictionaryScreen() {
       </header>
       {items && items.length > 0 ? (
         <DictionaryView items={items} />
-      ) : dict.data || dict.error ? (
-        // Пусто или API молчит — витрина без пар, страница живая (не 500).
+      ) : dict.error && !dict.data ? (
+        <LoadError error={dict.error} onRetry={dict.reload} audience="child" />
+      ) : dict.data ? (
         <EmptyState art="beeIdle" title={t("Словарь скоро наполнится")} headingAs="h2" compact>
           {t("Как только первые пары будут приняты, они появятся здесь.")}
         </EmptyState>
@@ -96,7 +97,7 @@ function DictionaryView({ items }: { items: PublicDictionaryEntry[] }) {
   );
 }
 
-/** Секция языковой пары: «башкирское слово — исходник», источник каждой пары — мелкой подписью. */
+/** Секция языковой пары: «башкирское слово — исходник». */
 function DictTable({ id, title, sourceHeader, rows }: { id: string; title: string; sourceHeader: string; rows: PublicDictionaryEntry[] }) {
   const t = useT();
   return (
@@ -126,7 +127,6 @@ function DictTable({ id, title, sourceHeader, rows }: { id: string; title: strin
                 </td>
                 <td className="dict__td">
                   <span className="dict__ru">{row.translation}</span>
-                  {row.sources.length > 0 ? <span className="dict__src">{row.sources.map((s) => s.title).join(", ")}</span> : null}
                 </td>
               </tr>
             ))}

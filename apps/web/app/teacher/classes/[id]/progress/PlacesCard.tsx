@@ -99,13 +99,7 @@ function Place({
           ) : null}
         </span>
         <span className="place__sub">{sub}</span>
-        <span className="tt-progress place__bar" aria-hidden>
-          <span className="tt-progress__track">
-            <svg className="tt-progress__fill" width={`${pct}%`} height="100%" focusable="false">
-              <rect className="tt-progress__shine" x={8} y={3} width="100%" height={3} rx={1.5} />
-            </svg>
-          </span>
-        </span>
+        <ProgressBar decorative value={pct} max={100} className="place__bar" />
       </span>
       <span className="place__share">
         {pct}%<span className="tt-visually-hidden"> {t("пройдено классом")}</span>

@@ -74,7 +74,7 @@ for (const viewport of [
       await expect(first.locator("[lang=ba]")).toHaveText("мәктәп");
       await expect(first).toContainText("школа");
       await expect(phrases(dialog).getByRole("listitem")).toHaveText(["Тоғро дуҫ.Верный друг.", "Урта мәктәпСредняя школа"]);
-      await expect(tasks(dialog).getByRole("listitem")).toHaveText(["Собрать фразу 2", "Выбрать перевод 3", "Написать по-башкирски 2", "Помочь языку"]);
+      await expect(tasks(dialog).getByRole("listitem")).toHaveText(["Собрать фразу 2", "Выбрать перевод 3", "Написать по-башкирски 2", "Помоги языку"]);
       // Без технических названий видов заданий.
       await expect(dialog).not.toContainText(/tiles|choice|free_ru|duel/);
       // Кнопка «Дать задание» остаётся на виду.
@@ -141,7 +141,7 @@ test("ошибка загрузки — «Повторить», и содерж�
   const sheet = page.getByRole("dialog", { name: "Моя школа" });
   await expect(sheet).toContainText("Нет связи");
   delete w.failures["GET /lessons/u01-moya-shkola/preview"];
-  await sheet.getByRole("button", { name: "Повторить" }).click();
+  await sheet.getByRole("button", { name: "Попробовать ещё раз" }).click();
   await expect(words(sheet).getByRole("listitem")).toHaveCount(5);
 });
 

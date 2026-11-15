@@ -14,9 +14,7 @@ type Assignment = Schema<"ClassAssignment">;
 
 const pct = (x: number | undefined) => (x === undefined ? "" : String(Math.round(x * 100)));
 
-export interface ClassReportInput {
-  classTitle: string;
-  week: Schema<"Week">;
+interface ClassReportInput {
   rows: readonly StudentRow[];
   /** Задания: сначала активные, затем завершённые — по столбцу на задание. */
   assignments: readonly Assignment[];

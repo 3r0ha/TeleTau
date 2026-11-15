@@ -9,7 +9,7 @@ import { settleAnimations } from "./settle";
 import { chooseTheme } from "./theme";
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-const TITLE = "Учи башкирский — легко и каждый день";
+const TITLE = "Учи башкирский каждый день";
 
 async function expectNoSeriousViolations(page: Page, label: string) {
   await settleAnimations(page);

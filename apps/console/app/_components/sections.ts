@@ -4,7 +4,7 @@ import type { Me } from "@teletau/session/types";
 
 export type SectionKey = "republic" | "fund" | "verifications" | "audit";
 
-export interface Section {
+interface Section {
   key: SectionKey;
   href: string;
   label: string;
@@ -21,7 +21,7 @@ export const SECTIONS: readonly Section[] = [
 ];
 
 /** Роли сотрудника: `staffRoles` (все роли, в том числе новые) или, у старого ответа, `roles`. */
-export function staffRolesOf(me: Me): string[] {
+function staffRolesOf(me: Me): string[] {
   if (me.kind !== "staff") return [];
   return me.staffRoles ?? me.roles;
 }

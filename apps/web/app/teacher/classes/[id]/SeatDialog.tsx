@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowsClockwise, Cards, ChartBar, DownloadSimple, FileText } from "@phosphor-icons/react/ssr";
-import { Button, ButtonLink, Chip, Dialog, HexAvatar, InlineAlert, LinkButton, avatarFor, toneFor, useToast } from "@teletau/ui";
+import { Button, ButtonLink, Chip, Dialog, HexAvatar, InlineAlert, LinkButton, avatarFor, toneFor, useFocusRescue, useToast } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { describeProblem } from "@teletau/session/problem";
 import { date, seatLabel, seatNo, time, type PrintJob, type Seat } from "./format";
@@ -40,6 +40,9 @@ export function SeatDialog({
   // Выпущенный файл и была ли это первая карточка места (после обновления класса место уже «с карточкой»).
   const [newJob, setNewJob] = useState<{ job: PrintJob; first: boolean } | null>(null);
   const number = seat?.number;
+  // Подтверждение, отмена и выпуск меняют набор кнопок — фокус остаётся в действиях листа, а не падает на страницу.
+  const actions = useRef<HTMLDivElement>(null);
+  useFocusRescue(actions);
 
   useEffect(() => {
     setConfirm(null);
@@ -56,7 +59,7 @@ export function SeatDialog({
       await fn();
       onChanged();
     } catch (e) {
-      setError(describeProblem(e));
+      setError(describeProblem(e, "adult", t));
     } finally {
       setBusy(false);
     }
@@ -102,7 +105,7 @@ export function SeatDialog({
           </HexAvatar>
           <div className="tt-stack tt-stack--tight">
             <p className="tt-headline">{seat.student ? (seat.student.nickname ?? t("Ник ещё не выбран")) : t("Ученик ещё не вошёл")}</p>
-            {seat.student ? <p className="tt-muted">{t("В классе с {date}", { date: date(seat.student.joinedAt) })}</p> : null}
+            {seat.student ? <p className="tt-muted">{t("В классе с {date}", { date: date(seat.student.joinedAt, t) })}</p> : null}
           </div>
           {seat.student ? (
             // Переход из открытого листа — replace: «Назад» с карточки ученика ведёт на страницу класса (sheetHistory.ts).
@@ -129,9 +132,9 @@ export function SeatDialog({
             <dd>
               {seat.consent ? (
                 consentGiven ? (
-                  <Chip tone="water">{t("Есть, {date}", { date: date(seat.consent.givenAt) })}</Chip>
+                  <Chip tone="water">{t("Есть, {date}", { date: date(seat.consent.givenAt, t) })}</Chip>
                 ) : (
-                  <Chip tone="coral">{seat.consent.revokedAt ? t("Отозвано {date}", { date: date(seat.consent.revokedAt) }) : t("Отозвано")}</Chip>
+                  <Chip tone="coral">{seat.consent.revokedAt ? t("Отозвано {date}", { date: date(seat.consent.revokedAt, t) }) : t("Отозвано")}</Chip>
                 )
               ) : (
                 <Chip tone="neutral">{t("Не отмечено")}</Chip>
@@ -161,7 +164,7 @@ export function SeatDialog({
         ) : null}
         {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
 
-        <div className="tt-dialog__actions">
+        <div className="tt-dialog__actions" ref={actions}>
           {newJob ? (
             <Button block icon={<DownloadSimple weight="bold" />} loading={downloading} onClick={() => onDownload(newJob.job)}>
               {t("Скачать PDF")}

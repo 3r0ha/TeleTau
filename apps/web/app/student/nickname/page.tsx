@@ -11,7 +11,7 @@ import { useRequireAccount } from "@teletau/session/react";
 import { useT } from "../../../i18n/client";
 import { LoadingBlock, Screen, SimpleTop } from "../../_components/screens";
 import { useStudentPaths } from "../../_components/learn/paths";
-import { NicknamePicker } from "../NicknamePicker";
+import { NicknamePicker, type PickedNickname } from "../NicknamePicker";
 
 /**
  * Первый вход по карточке: выбор ника (PATCH /me { nicknameId }). Дети путают карточки: если карточка чужая,
@@ -32,6 +32,20 @@ export default function NicknamePage() {
     router.replace(paths.login);
   };
 
+  const pick = async (nick: PickedNickname) => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const updated = await unwrap(api.PATCH("/api/v1/me", { body: { nicknameId: nick.id } }));
+      session.updateAccount(updated);
+      // Ник выбирают при первом входе — дальше «Ты в классе» с кнопкой «На тропу».
+      router.replace(paths.joined);
+    } catch (e) {
+      setError(describeProblem(e, "child", t));
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Screen top={<SimpleTop title={t("Твой ник")} />}>
       {!me ? (
@@ -46,19 +60,7 @@ export default function NicknamePage() {
             submitLabel={t("Выбрать")}
             submitting={submitting}
             error={error}
-            onPick={async (nick) => {
-              setSubmitting(true);
-              setError(null);
-              try {
-                const updated = await unwrap(api.PATCH("/api/v1/me", { body: { nicknameId: nick.id } }));
-                session.updateAccount(updated);
-                // Ник выбирают при первом входе — дальше «Ты в классе» с кнопкой «На тропу».
-                router.replace(paths.joined);
-              } catch (e) {
-                setError(describeProblem(e, "child"));
-                setSubmitting(false);
-              }
-            }}
+            onPick={(nick) => void pick(nick)}
           />
           <LinkButton tone="neutral" icon={<SignOut weight="bold" aria-hidden />} onClick={() => void leave()} disabled={leaving || submitting}>
             {t("Это не моя карточка")}

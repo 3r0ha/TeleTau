@@ -136,7 +136,7 @@ export default function ApplyPage() {
         unwrap(api.GET("/api/v1/schools", { params: { query: { district: districtId, cursor, limit: 30, ...(deferredSchoolQuery.length >= 2 ? { q: deferredSchoolQuery } : {}) } } })),
       );
     } catch (e) {
-      setSubmitError(describeProblem(e));
+      setSubmitError(describeProblem(e, "adult", t));
     }
   };
 
@@ -154,12 +154,12 @@ export default function ApplyPage() {
       else if (e instanceof ApiProblem && (e.code === "verification_pending" || e.code === "already_verified")) router.replace(e.code === "already_verified" ? "/teacher" : "/teacher/pending");
       else {
         // ФИО или должность отклонил сервер (validation_failed) — на шаг 1, ошибка у поля и фокус на нём.
-        const { fullName: nameError, position: positionError } = fieldErrors(e);
+        const { fullName: nameError, position: positionError } = fieldErrors(e, t);
         if (nameError || positionError) {
           setErrors({ fullName: nameError, position: positionError });
           invalid.request();
           flow.go("1");
-        } else setSubmitError(describeProblem(e));
+        } else setSubmitError(describeProblem(e, "adult", t));
       }
     }
   };
@@ -250,8 +250,11 @@ export default function ApplyPage() {
                       hideLegend
                       value={districtId}
                       onChange={(id) => {
+                        if (id === districtId) return;
                         setDistrictId(id);
                         setSchoolId(null);
+                        // Школы прежнего района не показываются, пока грузятся школы нового.
+                        resetSchools(null);
                       }}
                       options={filteredDistricts.map((d) => ({ value: d.id, label: d.nameRu, description: districtKindLabels(t)[d.kind] }))}
                     />
@@ -270,7 +273,7 @@ export default function ApplyPage() {
                   icon={<MagnifyingGlass weight="bold" aria-hidden />}
                   value={schoolQuery}
                   onChange={(e) => setSchoolQuery(e.target.value)}
-                  placeholder="7, гимназия…"
+                  placeholder={t("7, гимназия…")}
                 />
                 {schoolPage.error && !schools.length ? (
                   <RetryAlert error={schoolPage.error} onRetry={schoolPage.reload} busy={schoolPage.loading} />
@@ -295,7 +298,7 @@ export default function ApplyPage() {
                             {s.isDemo ? (
                               <>
                                 {" "}
-                                <Chip tone="violet">{t("демо")}</Chip>
+                                <Chip tone="neutral">{t("демо")}</Chip>
                               </>
                             ) : null}
                           </>
@@ -332,9 +335,9 @@ function RetryAlert({ error, onRetry, busy }: { error: unknown; onRetry: () => v
   const t = useT();
   return (
     <div className="tt-stack tt-stack--tight">
-      <InlineAlert tone="danger">{describeProblem(error)}</InlineAlert>
+      <InlineAlert tone="danger">{describeProblem(error, "adult", t)}</InlineAlert>
       <Button variant="secondary" icon={<ArrowsClockwise weight="bold" />} loading={busy} onClick={onRetry}>
-        {t("Попробовать снова")}
+        {t("Попробовать ещё раз")}
       </Button>
     </div>
   );

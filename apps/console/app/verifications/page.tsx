@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, X } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { Button, Chip, Dialog, EmptyState, Form, InlineAlert, LinkButton, Skeleton, SkeletonGroup, TextArea, useInvalidFocus, useToast } from "@teletau/ui";
+import { Button, Chip, Dialog, EmptyState, Form, InlineAlert, LinkButton, Skeleton, SkeletonGroup, TextArea, useFocusRescue, useInvalidFocus, useToast } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
-import { describeProblem, fieldErrors, isNetworkError } from "@teletau/session/problem";
+import { describeProblem, fieldErrors } from "@teletau/session/problem";
 import { useCursorList } from "@teletau/session/react";
 import { ConsoleShell } from "../_components/ConsoleShell";
+import { LoadFailure } from "../_components/LoadFailure";
 
 type Verification = Schema<"TeacherVerification">;
 type Status = Schema<"TeacherVerificationStatus">;
@@ -41,7 +42,10 @@ function Queue() {
   const [rejectError, setRejectError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const invalid = useInvalidFocus();
-  const { reset } = list;
+  const { reset, loadMore, hasMore } = list;
+  // Решённая строка пропадает — фокус переходит на кнопки следующей заявки.
+  const table = useRef<HTMLDivElement>(null);
+  useFocusRescue(table);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,10 +59,19 @@ function Queue() {
     };
   }, [status, tick, reset]);
 
-  const more = () =>
-    list
-      .loadMore((cursor) => unwrap(api.GET("/api/v1/moderation/teacher-verifications", { params: { query: { status, cursor, limit: PAGE } } })))
-      .catch((e: unknown) => toast(describeProblem(e), "error"));
+  const more = useCallback(
+    () =>
+      loadMore((cursor) => unwrap(api.GET("/api/v1/moderation/teacher-verifications", { params: { query: { status, cursor, limit: PAGE } } }))).catch(
+        (e: unknown) => toast(describeProblem(e), "error"),
+      ),
+    [loadMore, status, toast],
+  );
+
+  // Решена вся показанная страница, а в очереди есть ещё — следующая страница сама, без «Очередь пуста».
+  const emptied = items?.length === 0 && hasMore;
+  useEffect(() => {
+    if (emptied) void more();
+  }, [emptied, more]);
 
   const drop = (id: string) => list.update((rows) => rows.filter((v) => v.id !== id));
 
@@ -78,7 +91,7 @@ function Queue() {
   const reject = async () => {
     if (!rejecting) return;
     if (reason.trim().length < 3) {
-      setReasonError("Напишите причину подробнее — её увидит учитель.");
+      setReasonError("Напишите причину подробнее.");
       invalid.request();
       return;
     }
@@ -105,9 +118,9 @@ function Queue() {
     <div className="tt-stack tt-stack--loose">
       <header className="console__head">
         <h1 className="tt-title2">Заявки учителей</h1>
-        <div className="segmented" role="group" aria-label="Статус заявок">
+        <div className="tt-segmented" role="group" aria-label="Статус заявок">
           {TABS.map((t) => (
-            <button key={t.status} type="button" aria-pressed={status === t.status} onClick={() => setStatus(t.status)}>
+            <button key={t.status} type="button" className="tt-segmented__item" aria-pressed={status === t.status} onClick={() => setStatus(t.status)}>
               {t.label}
             </button>
           ))}
@@ -115,30 +128,27 @@ function Queue() {
       </header>
 
       {error && !items ? (
-        <EmptyState
-          art={isNetworkError(error) ? "emptyOffline" : "emptyError"}
-          headingAs="h2"
-          compact
-          title={isNetworkError(error) ? "Нет связи" : "Не удалось загрузить"}
-          role="alert"
-          actions={
-            <Button block onClick={() => setTick((n) => n + 1)}>
-              Попробовать снова
-            </Button>
-          }
-        >
-          {describeProblem(error)}
-        </EmptyState>
+        <LoadFailure error={error} onRetry={() => setTick((n) => n + 1)} headingAs="h2" />
       ) : !items ? (
         <SkeletonGroup label="Загружаем заявки" className="tt-stack tt-stack--tight">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} height={64} radius="tile" />
           ))}
         </SkeletonGroup>
+      ) : items.length === 0 && hasMore ? (
+        list.loadingMore ? (
+          <SkeletonGroup label="Загружаем заявки" className="tt-stack tt-stack--tight">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} height={64} radius="tile" />
+            ))}
+          </SkeletonGroup>
+        ) : (
+          <LinkButton onClick={() => void more()}>Показать ещё</LinkButton>
+        )
       ) : items.length === 0 ? (
         <EmptyState art="emptyAllDone" headingAs="h2" compact title={status === "pending" ? "Очередь пуста" : "Заявок нет"} />
       ) : (
-        <div className="table-wrap">
+        <div className="table-wrap" ref={table}>
           <table className="table">
             <caption className="tt-visually-hidden">Заявки учителей: {TABS.find((t) => t.status === status)!.label.toLowerCase()}</caption>
             <thead>
@@ -154,14 +164,14 @@ function Queue() {
                 <tr key={v.id}>
                   <td>
                     <b>{v.applicant.fullName}</b>
-                    <span className="table__sub">{v.applicant.email}</span>
+                    <span className="table__sub tt-break-anywhere">{v.applicant.email}</span>
                   </td>
                   <td>
                     {v.school.shortNameRu}
                     {v.school.isDemo ? (
                       <>
                         {" "}
-                        <Chip tone="violet">демо</Chip>
+                        <Chip tone="neutral">демо</Chip>
                       </>
                     ) : null}
                     <span className="table__sub">{v.position}</span>
@@ -200,7 +210,7 @@ function Queue() {
               ))}
             </tbody>
           </table>
-          {list.hasMore ? (
+          {hasMore ? (
             <LinkButton loading={list.loadingMore} onClick={() => void more()}>
               Показать ещё
             </LinkButton>

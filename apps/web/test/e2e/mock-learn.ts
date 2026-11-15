@@ -64,7 +64,7 @@ const node = (id: string, kind: TrailNode["kind"], state: TrailNode["state"], ti
   ...(icon ? { icon } : {}),
 });
 
-/** Тропа демо-ученика «Смелая пчела»: пройдены 3 узла юнита 1 (docs/plans/M2.md §1, подготовка). */
+/** Тропа демо-ученика «Смелая пчела»: пройдены 3 узла юнита 1. */
 export function demoCourse(): Course {
   return {
     id: "ba-ru",
@@ -236,6 +236,7 @@ export function demoLesson(): MockLesson {
  * Это настоящая копия записи «көн»; в моке она висит на другом слове — важна только кнопка и откуда грузится файл.
  */
 export const MOCK_AUDIO: Schema<"AudioClip"> = {
+  origin: "native",
   url: "/audio/288218d294ae3224.m4a",
   files: [
     { url: "/audio/288218d294ae3224.m4a", type: 'audio/mp4; codecs="mp4a.40.2"' },

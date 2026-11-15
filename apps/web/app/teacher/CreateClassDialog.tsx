@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Schema } from "@teletau/contracts";
 import { Button, ChoiceGroup, Dialog, Form, HexAvatar, InlineAlert, TextField, useInvalidFocus } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
@@ -40,6 +40,20 @@ export function CreateClassDialog({ open, onClose, onCreated }: { open: boolean;
   const t = useT();
   const programs = programLabels(t);
 
+  // Каждое открытие — с начала: прошлая литера и ошибка к новому классу не относятся.
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    const opening = open && !wasOpen.current;
+    wasOpen.current = open;
+    if (!opening) return;
+    setGrade("5");
+    setLetter("");
+    setProgram("native");
+    setLetterError(null);
+    setError(null);
+    setBusy(false);
+  }, [open]);
+
   const submit = async () => {
     const l = letter.trim();
     if (!l) {
@@ -62,11 +76,11 @@ export function CreateClassDialog({ open, onClose, onCreated }: { open: boolean;
       onCreated(created.id);
     } catch (e) {
       setBusy(false);
-      const letterProblem = fieldErrors(e).letter;
+      const letterProblem = fieldErrors(e, t).letter;
       if (letterProblem) {
         setLetterError(letterProblem);
         invalid.request();
-      } else setError(describeProblem(e));
+      } else setError(describeProblem(e, "adult", t));
     }
   };
 

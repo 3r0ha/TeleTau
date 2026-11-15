@@ -1,4 +1,4 @@
-// Консоль: кабинет министерства «Республика» и «Словарь для Фонда» + «Спорные случаи» (ADR 0023, ТЗ хакатона §4.4/§5) —
+// Консоль: кабинет министерства «Республика» и «Словарь для Фонда» + «Спорные случаи» (ADR 0023, ТЗ §4.4/§5) —
 // axe, сортировка, переход к школам района, скрытые малые группы, скачивание CSV и JSON, доступ по ролям. API и BFF
 // сессии — сетевые моки по контракту. Пары словаря — из демо-контента (content/corpus/duels/01-ufa.yaml, needs_native_review).
 import AxeBuilder from "@axe-core/playwright";
@@ -390,4 +390,20 @@ test("доступ по ролям: Фонд не видит «Республи�
   await expect(page.getByRole("heading", { name: "Раздел недоступен" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Заявки учителей" }).first()).toBeVisible();
   expect(requests.filter((p) => p.startsWith("/ministry/"))).toEqual([]);
+});
+
+test("телефон 390: сортировка районов остаётся (заголовки — рядом кнопок над карточками), прокрутки вбок нет", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mock(page, ministry);
+  await page.goto("/republic");
+  const table = page.getByRole("table", { name: /Районы и городские округа/ });
+  await table.locator("tbody tr").first().waitFor();
+  const sort = table.getByRole("button", { name: "Район или округ" });
+  await expect(sort).toBeVisible();
+  expect((await sort.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await sort.click();
+  await expect(table.getByRole("columnheader", { name: "Район или округ" })).toHaveAttribute("aria-sort", "ascending");
+  // Подключённые районы по алфавиту (неподключённые — только во «Все районы»).
+  await expect(table.locator("tbody tr").first().locator("td").first()).toContainText("Баймакский район");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
 });

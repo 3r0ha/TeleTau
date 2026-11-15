@@ -11,7 +11,7 @@ import { assignmentTitle, dueForStudent, ufaDay } from "../assignments";
 import { ClassTitle } from "../screens";
 import { useT } from "../../../i18n/client";
 import { learnApi } from "./api";
-import { plural, questTask, TIER_NAMES, weekdayShort } from "./format";
+import { plural, TIER_NAMES, weekdayShort } from "./format";
 import type { ClassHive, Course, CourseNode, LeagueStanding, MyProgress, StreakDay } from "./model";
 import { useStudentPaths } from "./paths";
 
@@ -50,8 +50,8 @@ export function StudentRail({ tab, course: givenCourse, progress: givenProgress,
   const lessons = progress?.lessonsCompleted;
   const showLeague = tab !== "league";
   const showQuest = tab !== "hive" && Boolean(klass);
-  const leagueRes = useResource(() => learnApi.league(), [me?.id, honey], { enabled: on && showLeague && !givenLeague && honey !== undefined });
-  const hiveRes = useResource(() => learnApi.hive(klass!.id), [klass?.id, lessons], { enabled: on && showQuest && !givenHive && lessons !== undefined });
+  const leagueRes = useResource(() => learnApi.league(), [me?.id, honey], { enabled: on && showLeague && !givenLeague && honey !== undefined, keepPrevious: true });
+  const hiveRes = useResource(() => learnApi.hive(klass!.id), [klass?.id, lessons], { enabled: on && showQuest && !givenHive && lessons !== undefined, keepPrevious: true });
   const league = givenLeague ?? leagueRes.data;
   const hive = givenHive ?? hiveRes.data;
 
@@ -88,9 +88,9 @@ function RailError({ error, onRetry }: { error: unknown; onRetry: () => void }) 
   const t = useT();
   return (
     <div className="tt-stack tt-stack--tight">
-      <InlineAlert tone="danger">{describeProblem(error, "child")}</InlineAlert>
+      <InlineAlert tone="danger">{describeProblem(error, "child", t)}</InlineAlert>
       <Button small variant="secondary" onClick={onRetry}>
-        {t("Обновить")}
+        {t("Попробовать ещё раз")}
       </Button>
     </div>
   );
@@ -137,7 +137,7 @@ function RailStats({ progress }: { progress: MyProgress }) {
       </li>
       {tier ? (
         <li className="rail-stat rail-stat--league">
-          <Illustration name={leagueBadges[tier]} width={36} alt={t("Лига {name}", { name: TIER_NAMES[tier].gen })} />
+          <Illustration name={leagueBadges[tier]} width={36} alt={t("Лига {name}", { name: t(TIER_NAMES[tier].gen) })} />
         </li>
       ) : null}
     </ul>
@@ -199,9 +199,9 @@ function GoalCard({ progress }: { progress: MyProgress }) {
               <svg width={28} height={25} viewBox="0 0 28 25" aria-hidden focusable="false">
                 <path className="rail-week__hex" d={hexPath(26, 23, 3, 1, 1)} />
               </svg>
-              <span aria-hidden>{weekdayShort(d.date)}</span>
+              <span aria-hidden>{t(weekdayShort(d.date))}</span>
               <span className="tt-visually-hidden">
-                {weekdayShort(d.date)}: {dayText[d.status]}
+                {t(weekdayShort(d.date))}: {dayText[d.status]}
               </span>
             </li>
           ))}
@@ -310,14 +310,14 @@ function LeagueCard({ league }: { league: LeagueStanding }) {
   else if (lastUp) {
     const need = Math.max(1, lastUp.points - mine.points + 1);
     status = { text: t("До повышения — {n} мёда", { n: need }) };
-  } else status = { text: t("Первые {n} перейдут в Лигу {name}.", { n: league.zones.promote, name: TIER_NAMES[next].gen }) };
+  } else status = { text: t("Первые {n} перейдут в Лигу {name}.", { n: league.zones.promote, name: t(TIER_NAMES[next].gen) }) };
   return (
     <Card as="section" className="rail-card rail-league" aria-labelledby="rail-league-title">
       <div className="rail-league__row">
         <Illustration name={leagueBadges[league.tier]} width={60} className="rail-league__badge" />
         <div>
           <h2 className="rail-card__title" id="rail-league-title">
-            {t("Лига {name}", { name: name.gen })}
+            {t("Лига {name}", { name: t(name.gen) })}
           </h2>
           {mine ? (
             <p className="rail-card__sub">
@@ -357,7 +357,7 @@ function QuestCard({ hive, classTitle }: { hive: ClassHive; classTitle: string }
         </div>
         <Illustration name="sceneClassHive" width={64} className="rail-quest__art" />
       </div>
-      <p className="rail-card__sub">{questTask(goal)}</p>
+      <p className="rail-card__sub">{t("Пройдите всем классом {n} {lessons}", { n: goal, lessons: plural(goal, [t("урок"), t("урока"), t("уроков")]) })}</p>
       <ProgressBar value={value} max={goal} label={t("Квест класса")} valueText={t("{n} из {total}", { n: progress, total: goal })} showValue />
       <Link href={paths.hive} className="rail-card__link">
         {t("Открыть улей")}

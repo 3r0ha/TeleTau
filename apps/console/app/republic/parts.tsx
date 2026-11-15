@@ -2,9 +2,10 @@
 
 // Общие части раздела «Республика» (ADR 0023): плитки с крупными числами, столбчатая диаграмма по неделям,
 // ячейки со скрытыми малыми группами и сортировка таблиц. Только агрегаты — никаких ников и номеров мест.
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { CaretDown, CaretUp, CaretUpDown } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
+import { plural } from "../_components/plural";
 
 export type Activity = Schema<"LearnerActivity">;
 export type RepublicWeek = Schema<"RepublicWeek">;
@@ -23,11 +24,6 @@ export const weekLabel = (w: Schema<"Week">) => `${shortDate(w.start)} – ${sho
 export const asOfLabel = (iso: string) => asOfFmt.format(new Date(iso));
 
 /** Склонение: 1 урок, 2 урока, 5 уроков. */
-export function plural(n: number, one: string, few: string, many: string): string {
-  const d = n % 10;
-  const h = n % 100;
-  return d === 1 && h !== 11 ? one : d >= 2 && d <= 4 && (h < 12 || h > 14) ? few : many;
-}
 
 // ── плитки ──
 
@@ -59,9 +55,16 @@ export function Kpi({ label, value, note, icon }: { label: string; value: ReactN
   );
 }
 
-/** Число группы: «< 5» у малой группы, «скрыто» — при дополнительном скрытии. */
+/** Порог малой группы из ответа API (smallGroupThreshold): страница раздела задаёт его для всех чисел внутри. */
+const SmallGroupThreshold = createContext<number | null>(null);
+export const SmallGroupThresholdProvider = SmallGroupThreshold.Provider;
+
+/** Число группы: «< N» у малой группы (N — порог из API), «скрыто» — при дополнительном скрытии. */
 export function GroupNumber({ value, suppression }: { value?: number; suppression?: Suppression }) {
-  if (suppression === "small_group") return <Hidden text="< 5" spoken="меньше пяти" />;
+  const threshold = useContext(SmallGroupThreshold);
+  if (suppression === "small_group") {
+    return threshold === null ? <Hidden text="скрыто" spoken="скрыто" /> : <Hidden text={`< ${threshold}`} spoken={`меньше ${threshold}`} />;
+  }
   if (suppression === "complementary") return <Hidden text="скрыто" spoken="скрыто" />;
   return <>{num(value ?? 0)}</>;
 }
@@ -238,9 +241,9 @@ export function WeeksChart({ weeks, title }: { weeks: readonly RepublicWeek[]; t
             ) : null}
           </p>
         </div>
-        <div className="segmented" role="group" aria-label="Что показать">
+        <div className="tt-segmented" role="group" aria-label="Что показать">
           {MEASURES.map((x) => (
-            <button key={x.key} type="button" aria-pressed={measure === x.key} onClick={() => setMeasure(x.key)}>
+            <button key={x.key} type="button" className="tt-segmented__item" aria-pressed={measure === x.key} onClick={() => setMeasure(x.key)}>
               {x.label}
             </button>
           ))}

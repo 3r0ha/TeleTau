@@ -49,7 +49,7 @@ type Failure = "offline" | { status: number; code: string };
  */
 async function mock(
   page: Page,
-  opts: { loggedIn?: boolean; extraPending?: number; slowPagesMs?: number; failures?: Record<string, Failure>; audit?: Schema<"AuditEntry">[] } = {},
+  opts: { loggedIn?: boolean; extraPending?: number; slowPagesMs?: number; pageSize?: number; keyset?: boolean; failures?: Record<string, Failure>; audit?: Schema<"AuditEntry">[] } = {},
 ) {
   const log = opts.audit ?? audit;
   let account: Schema<"Me"> | null = opts.loggedIn ? moderator : null;
@@ -87,13 +87,20 @@ async function mock(
     if (path === "/auth/otp/request") return json(route, 202, { challengeId: "0193f7a4-0000-7000-8000-0000000o0001", expiresAt: inMinutes(10), resendAfterSeconds: 30, codeLength: 4 });
     if (path === "/moderation/teacher-verifications") {
       const status = url.searchParams.get("status") ?? "pending";
-      const limit = Number(url.searchParams.get("limit") ?? 50);
+      const limit = opts.pageSize ?? Number(url.searchParams.get("limit") ?? 50);
       const cursor = url.searchParams.get("cursor");
       queueRequests.push(cursor ?? "first");
       const all = queue.filter((v) => v.status === status);
+      if (cursor && opts.slowPagesMs) await new Promise((r) => setTimeout(r, opts.slowPagesMs));
+      if (opts.keyset) {
+        // Курсор — последняя показанная заявка (как у API): решения на прежних страницах не сдвигают следующие.
+        const after = cursor ? queue.findIndex((x) => x.id === cursor.replace("after-", "")) : -1;
+        const rest = all.filter((v) => queue.indexOf(v) > after);
+        const items = rest.slice(0, limit);
+        return json(route, 200, { items, ...(rest.length > limit ? { nextCursor: `after-${items[items.length - 1]!.id}` } : {}) });
+      }
       const start = cursor ? Number(cursor.replace("offset-", "")) : 0;
       const next = start + limit < all.length ? `offset-${start + limit}` : undefined;
-      if (cursor && opts.slowPagesMs) await new Promise((r) => setTimeout(r, opts.slowPagesMs));
       return json(route, 200, { items: all.slice(start, start + limit), ...(next ? { nextCursor: next } : {}) });
     }
     const m = /^\/moderation\/teacher-verifications\/([^/]+)\/(approve|reject)$/.exec(path);
@@ -191,7 +198,7 @@ test("журнал аудита: фильтр по действию и стра�
   await expect(page.getByText("Страница 1", { exact: true })).toBeVisible();
 });
 
-test("переключатель статусов: выбранный — сплошная граница (≥ 3:1), не только бледная подложка (M1-12)", async ({ page }) => {
+test("переключатель статусов: выбранный — сплошная граница (≥ 3:1), не только бледная подложка", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await mock(page, { loggedIn: true });
   await page.goto("/verifications");
@@ -208,7 +215,7 @@ test("переключатель статусов: выбранный — спл
   expect(off).not.toBe(on);
 });
 
-test("заголовки безопасности: CSP с nonce, камера запрещена, встраивание запрещено (M1-11); заголовок вкладки у раздела (M1-15)", async ({ page, request }) => {
+test("заголовки безопасности: CSP с nonce, камера запрещена, встраивание запрещено; заголовок вкладки у раздела", async ({ page, request }) => {
   const res = await request.get("/login");
   const h = res.headers();
   expect(h["content-security-policy"]).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/);
@@ -233,7 +240,7 @@ test("заголовки безопасности: CSP с nonce, камера з
   expect(violations).toEqual([]);
 });
 
-test.describe("M1-38: ошибка проверки — фокус на неверном поле, ошибка в его описании", () => {
+test.describe("ошибка проверки — фокус на неверном поле, ошибка в его описании", () => {
   test("вход сотрудника: неверный адрес почты", async ({ page }) => {
     await mock(page);
     await page.goto("/login");
@@ -258,7 +265,7 @@ test.describe("M1-38: ошибка проверки — фокус на неве
   });
 });
 
-test("M1-45: «Назад» при открытом диалоге отказа закрывает диалог, страница остаётся", async ({ page }) => {
+test("«Назад» при открытом диалоге отказа закрывает диалог, страница остаётся", async ({ page }) => {
   await mock(page, { loggedIn: true });
   await page.goto("/verifications");
   await page.getByText("teacher@school7.example").waitFor();
@@ -272,7 +279,7 @@ test("M1-45: «Назад» при открытом диалоге отказа 
   await expect(page.getByRole("heading", { name: "Заявки учителей" })).toBeVisible();
 });
 
-test("M1-46: журнал аудита — роли по-русски, не кодами", async ({ page }) => {
+test("журнал аудита — роли по-русски, не кодами", async ({ page }) => {
   await mock(page, { loggedIn: true });
   await page.goto("/audit");
   await page.getByRole("cell", { name: /Заявка учителя одобрена/ }).waitFor();
@@ -281,7 +288,7 @@ test("M1-46: журнал аудита — роли по-русски, не ко
   await expect(page.getByRole("cell", { name: /moderator|teacher\b/ })).toHaveCount(0);
 });
 
-test.describe("M1-50: «Показать ещё» и страницы журнала — один запрос за раз, без дублей", () => {
+test.describe("«Показать ещё» и страницы журнала — один запрос за раз, без дублей", () => {
   const ids = (page: Page) => page.locator("tbody tr").evaluateAll((rows) => rows.map((r) => r.querySelector("td b")?.textContent ?? ""));
 
   test("очередь из 72 заявок: двойной щелчок по «Показать ещё» — один запрос страницы, строк ровно 72, дублей нет", async ({ page }) => {
@@ -332,7 +339,7 @@ test.describe("M1-50: «Показать ещё» и страницы журна
   });
 });
 
-test.describe("M1-60: сбой сервера или сети — сообщение, а не ошибка верного поля", () => {
+test.describe("сбой сервера или сети — сообщение, а не ошибка верного поля", () => {
   for (const [label, failure] of [
     ["500", { status: 500, code: "internal" }],
     ["обрыв сети", "offline"],
@@ -375,7 +382,7 @@ test.describe("M1-60: сбой сервера или сети — сообщен
   });
 });
 
-test("журнал аудита: учитель погасил код класса (M1-49) — подпись по-русски и пункт фильтра", async ({ page }) => {
+test("журнал аудита: учитель погасил код класса — подпись по-русски и пункт фильтра", async ({ page }) => {
   const closed: Schema<"AuditEntry"> = {
     id: "0193f7a4-0000-7000-8000-0000000l0009",
     at: "2026-11-03T06:10:00Z",
@@ -389,4 +396,97 @@ test("журнал аудита: учитель погасил код класс
   await page.getByLabel("Действие").selectOption({ label: "Код класса погашен" });
   await expect(page.getByLabel("Действие")).toHaveValue("class.join_code_closed");
   await expect(page.getByRole("cell", { name: /Код класса погашен/ })).toBeVisible();
+});
+
+test.describe("вход сотрудника: ошибки по шагам", () => {
+  /** Та же сборка с демо-входом без TOTP: «почта → код» (playwright.config.ts, второй сервер). */
+  const noTotp = `http://localhost:${Number(process.env.E2E_WEB_PORT ?? 3155) + 1}`;
+
+  for (const [label, failure, text] of [
+    ["500", { status: 500, code: "internal" }, "Что-то пошло не так"],
+    ["обрыв сети", "offline", "Нет связи. Проверьте интернет"],
+    ["лимит попыток", { status: 429, code: "rate_limited" }, "Слишком много попыток"],
+  ] as const) {
+    test(`без TOTP: сбой входа на шаге кода (${label}) — сообщение видно на этом шаге`, async ({ page }) => {
+      await mock(page, { failures: { "BFF otp": failure } });
+      await page.goto(`${noTotp}/login`);
+      await page.getByLabel("Рабочая почта").fill("moderator@teletau.example");
+      await page.getByRole("button", { name: "Получить код" }).click();
+      await page.getByRole("heading", { name: "Код из письма" }).waitFor();
+      await page.keyboard.type("0000");
+      await expect(page.getByRole("alert").filter({ hasText: text })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Код из письма" })).toBeVisible();
+      await expect(page.locator('[aria-invalid="true"]')).toHaveCount(0);
+    });
+  }
+
+  test("«Изменить адрес» и «Назад к коду из письма» не переносят ошибку прежнего шага", async ({ page }) => {
+    await mock(page);
+    await page.goto("/login");
+    await page.getByLabel("Рабочая почта").fill("moderator@teletau.example");
+    await page.getByRole("button", { name: "Получить код" }).click();
+    await page.getByRole("heading", { name: "Код из письма" }).waitFor();
+    await page.keyboard.type("0000");
+    await page.getByRole("heading", { name: "Код из приложения" }).waitFor();
+    await page.keyboard.type("000000");
+    await expect(page.getByText("Неверный код из приложения-аутентификатора")).toBeVisible();
+    await page.getByRole("button", { name: "Назад к коду из письма" }).click();
+    await page.getByRole("heading", { name: "Код из письма" }).waitFor();
+    await expect(page.getByText("Неверный код из приложения-аутентификатора")).toHaveCount(0);
+    await expect(page.locator('[aria-invalid="true"]')).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Изменить адрес" }).click();
+    const email = page.getByLabel("Рабочая почта");
+    await expect(email).toBeVisible();
+    await expect(email).not.toHaveAttribute("aria-invalid", "true");
+  });
+});
+
+test.describe("очередь заявок: решения по страницам", () => {
+  test("решена вся первая страница, а заявки ещё есть — следующая страница сама, не «Очередь пуста»", async ({ page }) => {
+    await mock(page, { loggedIn: true, extraPending: 1, pageSize: 2, keyset: true });
+    await page.goto("/verifications");
+    await page.getByText("teacher@school7.example").waitFor();
+    await page.getByRole("button", { name: "Одобрить: Учитель Демонстрационный" }).click();
+    await expect(page.getByText("teacher@school7.example")).toBeHidden();
+    // Нажатая кнопка ушла вместе со строкой — фокус на кнопке следующей заявки, а не на начале страницы.
+    await expect(page.getByRole("button", { name: "Одобрить: Второй Учитель Тестовый" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("queue001@school.example")).toBeVisible();
+    await expect(page.getByText("Очередь пуста")).toHaveCount(0);
+    await page.getByRole("button", { name: "Одобрить: Учитель Очереди 001" }).click();
+    await expect(page.getByText("Очередь пуста")).toBeVisible();
+  });
+});
+
+test("журнал аудита: листание с клавиатуры — фокус остаётся в кнопках страниц", async ({ page }) => {
+  await mock(page, { loggedIn: true, slowPagesMs: 300 });
+  await page.goto("/audit");
+  await page.getByRole("cell", { name: /Заявка учителя одобрена/ }).waitFor();
+  const older = page.getByRole("button", { name: "Более ранние" });
+  await older.focus();
+  await page.keyboard.press("Enter");
+  // Пока грузится страница 2, нажатая кнопка в загрузке и с фокусом.
+  await expect(older).toHaveAttribute("aria-busy", "true");
+  await expect(older).toBeFocused();
+  // Страница 2 последняя: «Более ранние» недоступна — фокус на «Более новые».
+  await expect(older).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Более новые" })).toBeFocused();
+});
+
+test("телефон 390: статусы заявок — один ряд, «На проверке» в одну строку", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mock(page, { loggedIn: true });
+  await page.goto("/verifications");
+  await page.getByText("teacher@school7.example").waitFor();
+  const group = page.getByRole("group", { name: "Статус заявок" });
+  const boxes = await group.getByRole("button").evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => ({ top: Math.round(r.top), h: r.height })));
+  expect(new Set(boxes.map((b) => b.top)).size).toBe(1);
+  const pending = group.getByRole("button", { name: "На проверке" });
+  const lines = await pending.evaluate((el) => {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+  });
+  expect(lines).toBe(1);
 });

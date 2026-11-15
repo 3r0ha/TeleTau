@@ -60,11 +60,6 @@ button.start-way {
   width: min(70vw, 260px);
 }
 
-.login-card__meta {
-  color: var(--tt-color-text-tertiary);
-  font-size: var(--tt-font-size-footnote);
-}
-
 .login-card__warn {
   display: flex;
   align-items: flex-start;

@@ -37,6 +37,7 @@
   justify-content: space-between;
   gap: var(--tt-space-s200);
   min-height: 72px;
+  padding-block: var(--tt-space-s200);
   transition: min-height var(--tt-duration-base) var(--tt-easing-out);
 }
 
@@ -47,16 +48,44 @@
 .lp-head__end {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--tt-space-s100);
   margin-inline-start: auto;
+}
+
+.lp-head__prefs {
+  display: flex;
   align-items: center;
   gap: var(--tt-space-s100);
 }
 
-/* Сегмент языков в ряду действий: на узком экране и при крупном шрифте кнопки переносятся
-   внутри сегмента (сам сегмент — не шире ряда), вёрстка не вылезает за экран. */
-.lp-head__end .lang-switch {
-  flex: 0 1 auto;
-  flex-wrap: wrap;
+/* Телефон и узкий планшет: шапка — один ряд «логотип + настройки + Войти», язык и тема — в меню настроек. */
+.lp-prefs {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  .lp-head__prefs {
+    display: none;
+  }
+
+  .lp-prefs {
+    display: block;
+  }
+}
+
+/* 320–359 px: логотип чуть меньше, чтобы ряд «логотип, настройки, Войти» поместился в одну строку. */
+@media (max-width: 359px) {
+  .lp-head .tt-brand {
+    gap: var(--tt-space-s200);
+    font-size: var(--tt-font-size-headline);
+  }
+
+  .lp-head .tt-brand img {
+    width: 32px;
+    height: 32px;
+  }
 }
 
 /* Кнопка «Войти» в шапке — без нижнего отступа под «губу»: шапка тонкая, кнопка по центру. */
@@ -65,11 +94,12 @@
   translate: 0 calc(var(--tt-size-lip) / 2);
 }
 
-.lp-signin {
+/* Меню шапки («Войти», настройки): панель под кнопкой, у правого края. */
+.lp-menu {
   position: relative;
 }
 
-.lp-signin__menu {
+.lp-menu__panel {
   position: absolute;
   top: calc(100% + var(--tt-space-s200));
   right: 0;
@@ -78,6 +108,7 @@
   flex-direction: column;
   gap: var(--tt-space-s050);
   min-width: 13.5rem;
+  max-width: calc(100vw - 2 * var(--tt-space-s400));
   padding: var(--tt-space-s200);
   border: 2px solid var(--tt-color-border-default);
   border-radius: var(--tt-radius-panel);
@@ -85,11 +116,16 @@
   box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-border-default);
 }
 
-.lp-signin__menu[hidden] {
+/* Меню настроек: «Тёмная тема» и выключатель — в одну строку. */
+.lp-prefs .lp-menu__panel {
+  min-width: 16rem;
+}
+
+.lp-menu__panel[hidden] {
   display: none;
 }
 
-.lp-signin__item {
+.lp-menu__item {
   display: flex;
   align-items: center;
   gap: var(--tt-space-s300);
@@ -103,15 +139,32 @@
   text-decoration: none;
 }
 
-.lp-signin__item:hover {
+.lp-menu__item:hover {
   background: var(--tt-color-accent-soft);
 }
 
-.lp-signin__item svg {
+.lp-menu__item svg,
+.lp-menu__row > svg {
   flex: none;
   width: var(--tt-size-icon);
   height: var(--tt-size-icon);
   color: var(--tt-color-accent-lip);
+}
+
+.lp-menu__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s300);
+  min-height: var(--tt-size-touch-min);
+  margin-top: var(--tt-space-s100);
+  padding: var(--tt-space-s200) var(--tt-space-s100) 0;
+  border-top: 2px solid var(--tt-color-border-subtle);
+}
+
+.lp-menu__label {
+  flex: 1;
+  min-width: 0;
+  font-weight: var(--tt-font-weight-semibold);
 }
 
 /* ───────────── герой ───────────── */
@@ -163,7 +216,6 @@
   font-size: var(--tt-font-size-headline);
   font-weight: var(--tt-font-weight-black);
   line-height: var(--tt-line-height-tight);
-  overflow-wrap: anywhere;
 }
 
 /* Русский исходник фразы дня: та же семейка шрифта, но спокойнее. */
@@ -253,43 +305,6 @@
   color: var(--tt-color-text-secondary);
 }
 
-/* Переключатель периода — ссылки-«чипы»: активный медовый, остальные — карточки. */
-.lp-board__periods {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--tt-space-s200);
-}
-
-.lp-board__period {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--tt-size-touch-min);
-  padding-inline: var(--tt-space-s500);
-  border: 2px solid var(--tt-color-border-default);
-  border-radius: var(--tt-radius-chip);
-  background: var(--tt-color-surface);
-  color: var(--tt-color-text-primary);
-  font-family: var(--tt-font-family-display);
-  font-size: var(--tt-font-size-body);
-  font-weight: var(--tt-font-weight-extrabold);
-  text-decoration: none;
-  transition:
-    background var(--tt-duration-base) var(--tt-easing-out),
-    border-color var(--tt-duration-base) var(--tt-easing-out);
-}
-
-.lp-board__period:hover {
-  background: var(--tt-color-accent-soft);
-}
-
-.lp-board__period[aria-current="page"] {
-  border-color: var(--tt-color-accent-fill);
-  background: var(--tt-color-accent-soft);
-  color: var(--tt-color-accent-text);
-}
-
 .lp-board__tops {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -359,7 +374,6 @@
 .lp-board__who {
   color: var(--tt-color-text-primary);
   font-weight: var(--tt-font-weight-extrabold);
-  overflow-wrap: anywhere;
 }
 
 .lp-board__sub {
@@ -367,7 +381,6 @@
   color: var(--tt-color-text-secondary);
   font-size: var(--tt-font-size-caption);
   line-height: var(--tt-line-height-snug);
-  overflow-wrap: anywhere;
 }
 
 .lp-board__metric {
@@ -376,26 +389,26 @@
   white-space: nowrap;
 }
 
-/* Мелкая строка под группами: ссылка в приложение и порог малых групп — одним рядом. */
+/* Ссылка на полную доску в приложении под группами. */
 .lp-board__all {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  column-gap: var(--tt-space-s300);
   margin: 0;
-  color: var(--tt-color-text-secondary);
-  font-size: var(--tt-font-size-caption);
+  font-size: var(--tt-font-size-footnote);
   line-height: var(--tt-line-height-snug);
 }
 
 .lp-board__all-link {
-  color: var(--tt-color-highlight);
-  font-weight: var(--tt-font-weight-semibold);
-  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tt-size-touch-min);
+  color: var(--tt-color-accent-text);
+  font-weight: var(--tt-font-weight-bold);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 .lp-board__all-link:hover {
-  text-decoration: underline;
+  text-decoration-color: var(--tt-color-accent-fill);
 }
 
 /* ───────────── полоса мест ───────────── */
@@ -427,12 +440,10 @@
   font-size: var(--tt-font-size-callout);
   font-weight: var(--tt-font-weight-black);
   line-height: var(--tt-line-height-tight);
-  overflow-wrap: anywhere;
 }
 
 .lp-place__topic {
   margin-top: var(--tt-space-s050);
-  overflow-wrap: anywhere;
   color: var(--tt-color-text-secondary);
   font-size: var(--tt-font-size-caption);
   line-height: var(--tt-line-height-snug);
@@ -830,18 +841,17 @@
   list-style: none;
 }
 
-.lp-foot a {
+/* Ссылки разделов; логотип ниже — со своим начертанием .tt-brand. */
+.lp-foot__cols a {
   display: inline-flex;
   align-items: center;
   min-height: var(--tt-size-touch-min);
   color: var(--tt-color-highlight);
   font-weight: var(--tt-font-weight-semibold);
   text-decoration: none;
-  /* Слово переносится, только если не помещается в экран целиком (крупный шрифт браузера на 320 px). */
-  overflow-wrap: anywhere;
 }
 
-.lp-foot a:hover {
+.lp-foot__cols a:hover {
   text-decoration: underline;
 }
 
@@ -944,12 +954,6 @@
     padding-block: calc(var(--tt-space-s1600) * 1.25);
   }
 
-  /* Школы и классы — рядом, по листу на группу. */
-  .lp-board__groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--tt-space-s800);
-  }
-
   .lp-row__in {
     flex-direction: row;
     justify-content: space-between;
@@ -1011,7 +1015,7 @@
   .lp-hero {
     display: grid;
     align-items: center;
-    /* Первый экран: герой и полоса мест (Duolingo-ритм) — полоса видна внизу экрана. */
+    /* Первый экран: герой и полоса мест — полоса видна внизу экрана. */
     min-height: calc(100dvh - 72px - 11rem);
     padding-block: var(--tt-space-s800) var(--tt-space-s1200);
   }

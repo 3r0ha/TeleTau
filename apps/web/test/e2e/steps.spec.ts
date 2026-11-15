@@ -6,7 +6,7 @@ import { CLASS_ID, adultMe, childMe, mockBackend } from "./mock-api";
 
 const activeHeading = (page: Page) => page.evaluate(() => (document.activeElement?.tagName === "H1" ? document.activeElement.textContent : null));
 
-test.describe("M1-14/M1-15: код класса → ник", () => {
+test.describe("код класса → ник: шаги в адресе, «Назад» и заголовки", () => {
   test("шаг в адресе; «Назад» браузера возвращает к коду, код сохранён; заголовок и фокус следуют за шагом", async ({ page }) => {
     await mockBackend(page);
     await page.goto("/student");
@@ -56,7 +56,7 @@ test.describe("M1-14/M1-15: код класса → ник", () => {
   });
 });
 
-test.describe("M1-14/M1-15: заявка учителя", () => {
+test.describe("заявка учителя: шаги в адресе и черновик", () => {
   test("«Назад» браузера между шагами не стирает введённое; черновик переживает перезагрузку", async ({ page }) => {
     await mockBackend(page, { account: adultMe({ teacherStatus: "none", roles: [], classes: [], profile: { email: "teacher@school7.example" } }) });
     await page.goto("/teacher/apply");
@@ -94,7 +94,7 @@ test.describe("M1-14/M1-15: заявка учителя", () => {
   });
 });
 
-test.describe("M1-15: у каждой страницы свой заголовок вкладки", () => {
+test.describe("у каждой страницы свой заголовок вкладки", () => {
   test("заголовки различаются и описывают страницу", async ({ page }) => {
     // Инвентаризация заголовков: 11 полных загрузок страниц подряд. В одиночку ~10 с, под нагрузкой
     // параллельных воркеров (4 браузера с axe) — кратно дольше; 30 с общего бюджета тесту мало.
@@ -136,7 +136,7 @@ test.describe("M1-15: у каждой страницы свой заголово
   });
 });
 
-test.describe("M1-13: выход с экранов-тупиков", () => {
+test.describe("выход с экранов-тупиков", () => {
   test("выбор ника: «Это не моя карточка» — выход", async ({ page }) => {
     const w = await mockBackend(page, { account: childMe({ nickname: undefined }) });
     await page.goto("/student/nickname");
@@ -161,7 +161,7 @@ test.describe("M1-13: выход с экранов-тупиков", () => {
   }
 });
 
-test.describe("M1-30, M1-34: мелочи", () => {
+test.describe("класс и ожидание заявки: подписи, разметка и пустые случаи", () => {
   test("номера в плитках «Класс» — по центру плитки; у литеры подсказка, а не значение-образец", async ({ page }) => {
     // Без анимации появления диалога (масштаб 0,96 → 1 искажает размеры).
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -219,7 +219,7 @@ test.describe("M1-30, M1-34: мелочи", () => {
   });
 });
 
-test.describe("M1-35: вход на место закрыт во время ожидания", () => {
+test.describe("вход на место закрыт во время ожидания", () => {
   const waitForTeacher = async (page: Page) => {
     await page.goto("/student/code");
     await page.getByLabel("Код класса: символ 1 из 6").fill("K7Q4MZ");
@@ -255,7 +255,7 @@ test.describe("M1-35: вход на место закрыт во время ож
   });
 });
 
-test.describe("M1-38: ошибка проверки — фокус на первом неверном поле, ошибка в его описании", () => {
+test.describe("ошибка проверки — фокус на первом неверном поле, ошибка в его описании", () => {
   /** Поле с ошибкой: в фокусе, aria-invalid, текст ошибки — в доступном описании (aria-describedby). */
   const expectInvalidFocus = async (field: ReturnType<Page["getByLabel"]>, error: RegExp) => {
     await expect(field).toBeFocused();
@@ -332,7 +332,7 @@ test.describe("M1-38: ошибка проверки — фокус на перв
   });
 });
 
-test.describe("M1-45: «Назад» при открытом листе закрывает лист", () => {
+test.describe("«Назад» при открытом листе закрывает лист", () => {
   const openClass = async (page: Page) => {
     await mockBackend(page, { account: adultMe() });
     await page.goto("/teacher");
@@ -401,7 +401,7 @@ test.describe("M1-45: «Назад» при открытом листе закр
   });
 });
 
-test.describe("M1-46: заголовок вкладки шага «Введите код»", () => {
+test.describe("заголовок вкладки шага «Введите код»", () => {
   test("после отправки почты заголовок вкладки — шаг ввода кода; «Изменить адрес» возвращает прежний", async ({ page }) => {
     await mockBackend(page);
     await page.goto("/teacher/login");

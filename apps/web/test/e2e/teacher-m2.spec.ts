@@ -1,5 +1,4 @@
-// Кабинет учителя на моках API по контракту (mock-api.ts, mock-teacher.ts): «Прогресс» класса и «Помогите языку»
-// (docs/plans/M2.md §1, шаг 5).
+// Кабинет учителя на моках API по контракту (mock-api.ts, mock-teacher.ts): «Прогресс» класса и «Помогите языку».
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import type { Schema } from "@teletau/contracts";
@@ -19,7 +18,7 @@ async function expectAccessible(page: Page, label: string) {
 
 const teacher = (init: Partial<World> = {}) => ({ account: adultMe(), classDetail: classDetail({ seats: demoSeats() }), ...init });
 
-test.describe("M2: учитель — «Мои классы»", () => {
+test.describe("учитель — «Мои классы»", () => {
   test("у класса — сегодня N из M, задание с выполнением, кто не занимался, заявки; новый класс — шаги к первому уроку", async ({ page }) => {
     await mockBackend(page, teacher());
     await page.goto("/teacher");
@@ -57,7 +56,7 @@ test.describe("M2: учитель — «Мои классы»", () => {
   });
 });
 
-test.describe("M2: учитель — «Прогресс» класса", () => {
+test.describe("учитель — «Прогресс» класса", () => {
   test("класс → «Прогресс»: «№07 · Смелая пчела — 3 урока, сегодня, серия 6», сводка недели, прохождение уроков", async ({ page }) => {
     await mockBackend(page, teacher());
     await page.goto(`/teacher/classes/${CLASS_ID}`);
@@ -100,7 +99,7 @@ test.describe("M2: учитель — «Прогресс» класса", () => 
   });
 });
 
-test.describe("M2: учитель — «Помогите языку»", () => {
+test.describe("учитель — «Помогите языку»", () => {
   test("голос → голоса раздельно (дети / взрослые / учителя) и статус «Пару приняли»", async ({ page }) => {
     const w = await mockBackend(page, teacher());
     const sent: Schema<"JudgmentRequest">[] = [];

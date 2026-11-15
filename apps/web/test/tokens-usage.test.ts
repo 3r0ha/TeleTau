@@ -31,7 +31,7 @@ describe("design tokens usage in web", () => {
     }
   });
 
-  it("uses the shared components and stylesheet from @teletau/ui (packages/ui, M1-10)", () => {
+  it("uses the shared components and stylesheet from @teletau/ui (packages/ui)", () => {
     expect(layout).toContain('import "@teletau/ui/ui.css"');
     expect(layout).toContain('import "@teletau/ui/shell.css"');
     expect(layout).toContain('from "@teletau/ui"');

@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { BookOpen, BookOpenText, CaretRight, ChalkboardTeacher, Drop, EnvelopeSimple, Fire, IdentificationCard, Moon, Scales, SignOut, SpeakerHigh, SpeakerSlash, Target, TelegramLogo } from "@phosphor-icons/react/ssr";
-import { Button, Card, CardSub, CardTitle, Dialog, HexAvatar, HoneyComb, Illustration, InlineAlert, LinkButton, ThemeSwitch, avatarFor, hexPath, illustrations, toneFor } from "@teletau/ui";
+import { Button, Card, CardSub, CardTitle, Dialog, HexAvatar, HoneyComb, Illustration, InlineAlert, LinkButton, Skeleton, Switch, ThemeSwitch, avatarFor, hexPath, illustrations, toneFor } from "@teletau/ui";
 import { describeProblem } from "@teletau/session/problem";
 import { session } from "@teletau/session/client";
-import { useResource } from "@teletau/session/react";
+import { useResource, type Resource } from "@teletau/session/react";
 import type { Me } from "@teletau/session/types";
 import { ClassTitle, LoadError, LoadingBlock } from "../screens";
 import { LanguageRow } from "../LanguageSwitcher";
@@ -21,7 +21,7 @@ import { useStudentPaths } from "./paths";
 import { StudentShell, studentClass, useStudent } from "./StudentShell";
 import { asGoal, GoalPicker, goalTitle, type Goal } from "./GoalPicker";
 import { selfApi } from "./self-api";
-import { nextTeacherStep } from "../../teacher/useTeacher";
+import { nextTeacherStep } from "../home";
 import { playSound, setSoundsOn, useSoundsOn } from "./sound";
 
 /** «Звуки»: выключатель звуков урока на этом устройстве (запись носителя «Послушать» играет всегда). */
@@ -34,19 +34,14 @@ function SoundsRow() {
       <span className="settings__name" id="sounds-label">
         {t("Звуки")}
       </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        aria-labelledby="sounds-label"
-        className="tt-switch"
-        onClick={() => {
-          setSoundsOn(!on);
-          if (!on) playSound("correct");
+      <Switch
+        checked={on}
+        labelledBy="sounds-label"
+        onChange={(next) => {
+          setSoundsOn(next);
+          if (next) playSound("correct");
         }}
-      >
-        <span className="tt-switch__knob" aria-hidden />
-      </button>
+      />
     </div>
   );
 }
@@ -85,12 +80,21 @@ function TelegramRow({ canLink }: { canLink: boolean }) {
 
   useEffect(() => {
     if (!open) return;
+    // Диалог закрыли и открыли снова раньше ответа: прежний код API уже погасил, показывать его нельзя.
+    let cancelled = false;
     setCode(null);
     setFailed(false);
     selfApi
       .issueTelegramLinkCode()
-      .then(({ code: issued }) => setCode(issued))
-      .catch(() => setFailed(true));
+      .then(({ code: issued }) => {
+        if (!cancelled) setCode(issued);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   if (!canLink || paths.prefix) return null;
@@ -139,8 +143,8 @@ function TelegramRow({ canLink }: { canLink: boolean }) {
 
 /**
  * Вкладка «Профиль» (prototype 18-profile): серия, мёд, слова, голоса, «Мой вклад в словарь», настройки. Карточки
- * «Экспедиция» нет: места и прогресс уже на тропе (без повторов, docs/plans/M2-copy-student.md). Курс грузится только
- * для правой колонки на компьютере.
+ * «Экспедиция» нет: места и прогресс уже на тропе. Курс для правой колонки грузит сама колонка — только на компьютере.
+ * Без «Моего вклада» (ошибка /corpus/my-cells) профиль открывается: ошибка — в его карточке, настройки и «Выйти» на месте.
  */
 export function ProfileScreen() {
   const account = useStudent();
@@ -148,25 +152,16 @@ export function ProfileScreen() {
   const enabled = Boolean(account);
   const progress = useResource(() => learnApi.progress(), [account?.id], { enabled });
   const cells = useResource(() => learnApi.myCells(), [account?.id], { enabled });
-  const course = useResource(() => learnApi.course(), [account?.id], { enabled });
   // Словарь не обязателен для профиля: без него карточка «Мой словарь» — без чисел.
   const words = useResource(() => learnApi.words(), [account?.id], { enabled });
   // Награды тоже: не загрузились — профиль без них.
   const achievements = useResource(() => learnApi.achievements(), [account?.id], { enabled });
-  const error = progress.error ?? cells.error;
   return (
-    <StudentShell tab="me" className="profile" rail={{ progress: progress.data, course: course.data }}>
-      {account && progress.data && cells.data ? (
-        <ProfileView me={account} progress={progress.data} cells={cells.data} words={words.data} achievements={achievements.data} />
-      ) : error ? (
-        <LoadError
-          error={error}
-          audience="child"
-          onRetry={() => {
-            progress.reload();
-            cells.reload();
-          }}
-        />
+    <StudentShell tab="me" className="profile" rail={{ progress: progress.data }}>
+      {account && progress.data ? (
+        <ProfileView me={account} progress={progress.data} cells={cells} words={words.data} achievements={achievements.data} />
+      ) : progress.error ? (
+        <LoadError error={progress.error} audience="child" onRetry={progress.reload} />
       ) : (
         <LoadingBlock rows={4} label={t("Загружаем профиль")} />
       )}
@@ -208,7 +203,7 @@ function ProfileView({
 }: {
   me: Me;
   progress: MyProgress;
-  cells: MyCellsPage;
+  cells: Resource<MyCellsPage>;
   words?: MyWords;
   achievements?: MyAchievements;
 }) {
@@ -224,9 +219,6 @@ function ProfileView({
   // Слова — как в «Моём словаре» (слова пройденных уроков); пока словарь не загрузился — счётчик профиля.
   const words = dictionary?.summary.total ?? progress.wordsLearned;
   const votes = progress.votes.total;
-  const { matured, pending, honeyPending } = cells.summary;
-
-  const cellsTotal = Math.min(24, matured + pending);
 
   return (
     <>
@@ -320,37 +312,16 @@ function ProfileView({
         </Link>
       ) : null}
 
-      <MaturedHoney accountId={me.id} cells={cells} />
+      {cells.data ? <MaturedHoney accountId={me.id} cells={cells.data} /> : null}
 
-      <Card as="section" className="tab-card cells-card" aria-labelledby="cells-title">
-        {matured ? <Illustration name="sceneWordAccepted" width={96} className="cells-card__art" /> : null}
-        <CardTitle id="cells-title">{t("Мой вклад в словарь")}</CardTitle>
-        {cellsTotal ? (
-          <>
-            <CardSub>
-              {[
-                t("{n} в словаре", { n: matured }),
-                pending ? t("{n} {word} итога", { n: pending, word: plural(pending, [t("ждёт"), t("ждут"), t("ждут")]) }) : null,
-                honeyPending ? t("+{n} мёда созревает", { n: honeyPending }) : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </CardSub>
-            <div className="tab-card__comb">
-              <HoneyComb total={cellsTotal} filled={Math.min(matured, cellsTotal)} nectar={Math.max(0, cellsTotal - matured)} />
-            </div>
-          </>
-        ) : (
-          <CardSub>{t("Голосуй в «Помоги языку» на тропе.")}</CardSub>
-        )}
-      </Card>
+      <CellsCard cells={cells} />
 
       <Card as="section" className="tab-card settings" aria-label={t("Настройки")}>
         <div className="settings__row">
           <Target weight="fill" aria-hidden />
           <span className="settings__text">
             <span className="settings__name">{t("Цель дня")}</span>
-            <span className="settings__val">{goalTitle(me.dailyGoal)}</span>
+            <span className="settings__val">{goalTitle(me.dailyGoal, t)}</span>
           </span>
           <LinkButton onClick={() => setGoalOpen(true)}>{t("Изменить")}</LinkButton>
         </div>
@@ -362,9 +333,16 @@ function ProfileView({
         {me.kind === "adult" && me.teacherStatus === "none" && me.profile ? (
           <div className="settings__row">
             <ChalkboardTeacher weight="fill" aria-hidden />
-            <Link href={nextTeacherStep(me)} className="settings__name settings__link">
-              {t("Я учитель")}
-            </Link>
+            {paths.prefix ? (
+              // Кабинет учителя есть только на сайте: из Mini App — в браузере, Mini App остаётся открытым.
+              <a href={nextTeacherStep(me)} target="_blank" rel="noopener noreferrer" className="settings__name settings__link">
+                {t("Я учитель")}
+              </a>
+            ) : (
+              <Link href={nextTeacherStep(me)} className="settings__name settings__link">
+                {t("Я учитель")}
+              </Link>
+            )}
           </div>
         ) : null}
         <div className="settings__row">
@@ -397,13 +375,15 @@ function ProfileView({
             )}
             <LinkButton
               tone="danger"
-              onClick={async () => {
+              onClick={() => {
                 // Ошибка сети не должна оставлять на /me: сессия уже разорвана локально, уводим на старт.
-                await session.logout().catch(() => undefined);
                 // Полная загрузка, а не router.replace: закрытие диалога убирает свою запись истории (history.back
-                // в sheetHistory), и пришедший popstate отменяет клиентский переход — страница оставалась на /me со
-                // скелетом. При выходе и так нужно снести всё состояние вкладки: токены в памяти, кеш экранов.
-                window.location.replace(paths.start);
+                // в sheetHistory), и пришедший popstate отменяет клиентский переход. При выходе и так нужно снести
+                // всё состояние вкладки: токены в памяти, кеш экранов.
+                void session
+                  .logout()
+                  .catch(() => undefined)
+                  .then(() => window.location.replace(paths.start));
               }}
             >
               {t("Выйти")}
@@ -412,6 +392,51 @@ function ProfileView({
         }
       />
     </>
+  );
+}
+
+/** «Мой вклад в словарь»: соты голосов; не загрузился — ошибка и повтор здесь же, остальной профиль работает. */
+function CellsCard({ cells }: { cells: Resource<MyCellsPage> }) {
+  const t = useT();
+  const summary = cells.data?.summary;
+  const matured = summary?.matured ?? 0;
+  const pending = summary?.pending ?? 0;
+  const honeyPending = summary?.honeyPending ?? 0;
+  const cellsTotal = Math.min(24, matured + pending);
+  return (
+    <Card as="section" className="tab-card cells-card" aria-labelledby="cells-title">
+      {matured ? <Illustration name="sceneWordAccepted" width={96} className="cells-card__art" /> : null}
+      <CardTitle id="cells-title">{t("Мой вклад в словарь")}</CardTitle>
+      {!summary ? (
+        cells.error ? (
+          <div className="tt-stack tt-stack--tight">
+            <InlineAlert tone="danger">{describeProblem(cells.error, "child", t)}</InlineAlert>
+            <Button small variant="secondary" onClick={cells.reload}>
+              {t("Попробовать ещё раз")}
+            </Button>
+          </div>
+        ) : (
+          <Skeleton height={16} width="60%" />
+        )
+      ) : cellsTotal ? (
+        <>
+          <CardSub>
+            {[
+              t("{n} в словаре", { n: matured }),
+              pending ? t("{n} {word} итога", { n: pending, word: plural(pending, [t("ждёт"), t("ждут"), t("ждут")]) }) : null,
+              honeyPending ? t("+{n} мёда созревает", { n: honeyPending }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </CardSub>
+          <div className="tab-card__comb">
+            <HoneyComb total={cellsTotal} filled={Math.min(matured, cellsTotal)} nectar={Math.max(0, cellsTotal - matured)} />
+          </div>
+        </>
+      ) : (
+        <CardSub>{t("Голосуй в «Помоги языку» на тропе.")}</CardSub>
+      )}
+    </Card>
   );
 }
 
@@ -432,6 +457,18 @@ function GoalDialog({ open, me, onClose }: { open: boolean; me: Me; onClose: () 
   useEffect(() => {
     if (open) setGoal(asGoal(me.dailyGoal));
   }, [open, me.dailyGoal]);
+  const save = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      session.updateAccount(await selfApi.updateMe({ dailyGoal: goal }));
+      onClose();
+    } catch (e) {
+      setError(describeProblem(e, "child", t));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Dialog
       open={open}
@@ -440,22 +477,7 @@ function GoalDialog({ open, me, onClose }: { open: boolean; me: Me; onClose: () 
       actions={
         <>
           {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
-          <Button
-            block
-            loading={busy}
-            onClick={async () => {
-              setBusy(true);
-              setError(null);
-              try {
-                session.updateAccount(await selfApi.updateMe({ dailyGoal: goal }));
-                onClose();
-              } catch (e) {
-                setError(describeProblem(e, "child"));
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
+          <Button block loading={busy} onClick={() => void save()}>
             {t("Сохранить")}
           </Button>
         </>
@@ -494,7 +516,7 @@ function writeSeen(accountId: string, seen: CellsSeen) {
 
 /**
  * «Мёд созрел!» (scene-honey-matured): с прошлого захода в профиль созрели варианты, за которые голосовал ученик, —
- * мёд за голос из «ждёт» стал начисленным (docs/demo/M2.md, шаг 6). Что уже видено — счётчики в localStorage этого
+ * мёд за голос из «ждёт» стал начисленным. Что уже видено — счётчики в localStorage этого
  * устройства (только номер аккаунта и числа, без ПДн); первый заход ничего не показывает, а запоминает.
  */
 function MaturedHoney({ accountId, cells }: { accountId: string; cells: MyCellsPage }) {

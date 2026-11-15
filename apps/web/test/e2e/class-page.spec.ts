@@ -23,7 +23,7 @@ async function decodeQr(page: Page, target: Locator): Promise<string | null> {
   return jsQR(Uint8ClampedArray.from(data), width, height)?.data ?? null;
 }
 
-test.describe("M1-37: место без карточки (вход по коду класса)", () => {
+test.describe("место без карточки (вход по коду класса)", () => {
   test("«Выпустить карточку»: честное предупреждение — ученик выйдет на всех устройствах", async ({ page }) => {
     const w = await mockBackend(page, { account: adultMe() });
     w.classDetail.seats!.push({
@@ -55,7 +55,7 @@ test.describe("M1-37: место без карточки (вход по коду
   });
 });
 
-test.describe("M1-44, M1-46: доска с кодом класса", () => {
+test.describe("доска с кодом класса", () => {
   test("адрес сайта крупно и QR корня сайта (с текстовой альтернативой); код для читалки — без aria-label на span", async ({ page, baseURL }) => {
     await mockBackend(page, { account: adultMe() });
     await page.goto(`/teacher/classes/${CLASS_ID}`);
@@ -78,7 +78,7 @@ test.describe("M1-44, M1-46: доска с кодом класса", () => {
   });
 });
 
-test.describe("M1-44: одно слово — «сайт»", () => {
+test.describe("одно слово — «сайт»", () => {
   test("старая ссылка карточки /q не говорит «приложение»", async ({ page }) => {
     await mockBackend(page);
     await page.goto("/q");
@@ -87,7 +87,7 @@ test.describe("M1-44: одно слово — «сайт»", () => {
   });
 });
 
-test.describe("M1-49: закрытая доска гасит код класса на сервере", () => {
+test.describe("закрытая доска гасит код класса на сервере", () => {
   const JOIN_CODE = `/classes/${CLASS_ID}/join-code`;
   const deletes = (w: World) => w.calls.filter((c) => c === `DELETE ${JOIN_CODE}`).length;
 
@@ -101,7 +101,7 @@ test.describe("M1-49: закрытая доска гасит код класса
 
   const closers: [string, (page: Page, board: Locator) => Promise<unknown>][] = [
     ["кнопкой «Закрыть код класса»", (_page, board) => board.getByRole("button", { name: "Закрыть код класса" }).click()],
-    ["«Назад» (M1-45)", (page) => page.goBack()],
+    ["«Назад»", (page) => page.goBack()],
     ["Esc", (page) => page.keyboard.press("Escape")],
   ];
   for (const [how, close] of closers) {
@@ -181,7 +181,7 @@ test.describe("M1-49: закрытая доска гасит код класса
   }
 });
 
-test.describe("M1-58: отзыв согласия — вход на место закрыт, ученик выйдет на всех устройствах", () => {
+test.describe("отзыв согласия — вход на место закрыт, ученик выйдет на всех устройствах", () => {
   const revoke = async (page: Page, seat: string) => {
     await page.goto(`/teacher/classes/${CLASS_ID}`);
     await page.getByRole("button", { name: new RegExp(`^Место №${seat}`) }).click();

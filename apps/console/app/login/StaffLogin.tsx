@@ -7,11 +7,11 @@ import type { Schema } from "@teletau/contracts";
 import { Brand, Button, Card, CodeInput, Form, InlineAlert, LinkButton, ProgressBar, TextField, TopBar, useInvalidFocus } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { session } from "@teletau/session/client";
+import { isEmail } from "@teletau/session/email";
 import { ApiProblem, describeProblem, fieldErrors } from "@teletau/session/problem";
 import { homeOf, isStaff } from "../_components/sections";
 
 type Step = "email" | "code" | "totp";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function StaffLogin({ demoCode, totpDisabled }: { demoCode: string | null; totpDisabled: boolean }) {
   const router = useRouter();
@@ -27,8 +27,15 @@ export function StaffLogin({ demoCode, totpDisabled }: { demoCode: string | null
   // Ошибка шага почты — у поля почты; фокус переходит на него. Ячейки кода переводят фокус сами (CodeInput).
   const invalid = useInvalidFocus();
 
+  // Переход по кнопке «Дальше», «Изменить адрес» или «Назад»: ошибки прежнего шага к новому не относятся.
+  const goTo = (next: Step) => {
+    setError(null);
+    setAlert(null);
+    setStep(next);
+  };
+
   const requestCode = async () => {
-    if (!EMAIL_RE.test(email.trim())) {
+    if (!isEmail(email)) {
       setError("Проверьте адрес почты.");
       invalid.request();
       return;
@@ -40,7 +47,7 @@ export function StaffLogin({ demoCode, totpDisabled }: { demoCode: string | null
       setChallenge(await unwrap(api.POST("/api/v1/auth/otp/request", { body: { email: email.trim() } })));
       setCode("");
       setTotp("");
-      setStep("code");
+      goTo("code");
     } catch (e) {
       const emailProblem = fieldErrors(e).email;
       if (emailProblem) {
@@ -122,7 +129,7 @@ export function StaffLogin({ demoCode, totpDisabled }: { demoCode: string | null
                     e.preventDefault();
                     if (code.length !== challenge?.codeLength) return;
                     if (totpDisabled) void verify("");
-                    else setStep("totp");
+                    else goTo("totp");
                   }}
                 >
                   <header className="tt-stack tt-stack--tight">
@@ -147,21 +154,16 @@ export function StaffLogin({ demoCode, totpDisabled }: { demoCode: string | null
                     onComplete={(v) => {
                       if (v.length !== challenge?.codeLength) return;
                       if (totpDisabled) void verify("");
-                      else setStep("totp");
+                      else goTo("totp");
                     }}
                     error={error}
                     autoFocus
                   />
+                  {alert ? <InlineAlert tone="danger">{alert}</InlineAlert> : null}
                   <Button type="submit" block loading={busy && totpDisabled} disabled={code.length !== challenge?.codeLength}>
                     {totpDisabled ? "Войти" : "Дальше"}
                   </Button>
-                  <LinkButton
-                    tone="neutral"
-                    onClick={() => {
-                      setAlert(null);
-                      setStep("email");
-                    }}
-                  >
+                  <LinkButton tone="neutral" onClick={() => goTo("email")}>
                     Изменить адрес
                   </LinkButton>
                 </form>
@@ -196,13 +198,7 @@ export function StaffLogin({ demoCode, totpDisabled }: { demoCode: string | null
                   <Button type="submit" block loading={busy} disabled={totp.length !== 6}>
                     Войти
                   </Button>
-                  <LinkButton
-                    tone="neutral"
-                    onClick={() => {
-                      setAlert(null);
-                      setStep("code");
-                    }}
-                  >
+                  <LinkButton tone="neutral" onClick={() => goTo("code")}>
                     Назад к коду из письма
                   </LinkButton>
                 </form>

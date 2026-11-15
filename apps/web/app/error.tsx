@@ -18,7 +18,7 @@ export default function ErrorPage({ retry }: { error: unknown; retry: () => void
         actions={
           <>
             <Button block onClick={retry}>
-              {t("Попробовать снова")}
+              {t("Попробовать ещё раз")}
             </Button>
             <ButtonLink href={home} variant="secondary" block>
               {t("На главную")}

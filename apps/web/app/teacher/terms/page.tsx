@@ -34,7 +34,7 @@ export default function TermsPage() {
       session.updateAccount(fresh);
       router.replace(nextTeacherStep(fresh));
     } catch (e) {
-      setError(describeProblem(e));
+      setError(describeProblem(e, "adult", t));
       setBusy(false);
     }
   };

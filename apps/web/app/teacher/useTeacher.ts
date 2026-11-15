@@ -6,16 +6,9 @@ import { api, unwrap } from "@teletau/session/api";
 import { session } from "@teletau/session/client";
 import { useRequireAccount, useResource, type Resource } from "@teletau/session/react";
 import type { Me } from "@teletau/session/types";
+import { nextTeacherStep } from "../_components/home";
 
-export type TeacherStep = "/teacher/terms" | "/teacher/apply" | "/teacher/pending" | "/teacher";
-
-/** Куда должен попасть взрослый: условия → заявка → ожидание → кабинет. */
-export function nextTeacherStep(me: Me): TeacherStep {
-  if (me.pendingConsents.length > 0) return "/teacher/terms";
-  if (me.teacherStatus === "none") return "/teacher/apply";
-  if (me.teacherStatus === "pending" || me.teacherStatus === "rejected") return "/teacher/pending";
-  return "/teacher";
-}
+export { nextTeacherStep, type TeacherStep } from "../_components/home";
 
 const ALLOWED: Record<string, (me: Me) => boolean> = {
   terms: (me) => me.pendingConsents.length > 0,

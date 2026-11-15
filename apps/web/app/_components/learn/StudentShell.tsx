@@ -113,7 +113,7 @@ export function LearnTopBar({ progress }: { progress: MyProgress | undefined }) 
           <span className="tt-visually-hidden">{t("Мёд: {n}", { n: honey })}</span>
         </p>
         {tier ? (
-          <Link href={paths.league} className="learn-stat learn-stat--league" aria-label={t("Лига {name}", { name: TIER_NAMES[tier].gen })}>
+          <Link href={paths.league} className="learn-stat learn-stat--league" aria-label={t("Лига {name}", { name: t(TIER_NAMES[tier].gen) })}>
             <Illustration name={leagueBadges[tier]} width={30} />
           </Link>
         ) : (

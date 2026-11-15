@@ -7,9 +7,11 @@ import createClient from "openapi-fetch";
 import { Brand, ButtonLink, hexPath, illustrations } from "@teletau/ui";
 import type { paths, Schema } from "@teletau/contracts";
 import { API_BASE_URL } from "@teletau/session/config";
-import { getT } from "../i18n/server";
+import { getLocale, getT } from "../i18n/server";
 import type { T } from "../i18n/core";
+import { formatCount } from "./_components/dates";
 import { plural } from "./_components/learn/format";
+import { keepTogether } from "./_components/typography";
 import { androidApkUrl } from "./_components/landing/apk";
 import { HeroActions, StartButton } from "./_components/landing/HeroActions";
 import { landingImages as img } from "./_components/landing/images";
@@ -72,8 +74,6 @@ async function loadLeaderboard(period: BoardPeriod): Promise<Schema<"PublicLeade
   }
 }
 
-/** Число с разрядами по-русски: 1234 → «1 234». */
-const fmt = (n: number) => n.toLocaleString("ru-RU");
 
 /** Строка доски почёта: место, группа (школа или класс) и уроки за период — без имён и ников (правило 13). */
 type BoardRow = { rank: number; name: string; sub: string; lessons: number };
@@ -132,7 +132,7 @@ function BoardTop({ title, rows, t }: { title: string; rows: BoardRow[]; t: T })
                 <span className="lp-board__sub">{r.sub}</span>
               </span>
               <span className="lp-board__metric">
-                {fmt(r.lessons)} {plural(r.lessons, [t("урок"), t("урока"), t("уроков")])}
+                {formatCount(r.lessons)} {plural(r.lessons, [t("урок"), t("урока"), t("уроков")])}
               </span>
             </li>
           ))}
@@ -152,7 +152,7 @@ function Feature({ id, title, text, art, flip, children }: { id: string; title: 
           <h2 id={id} className="lp-h2">
             {title}
           </h2>
-          <p className="lp-lead">{text}</p>
+          <p className="lp-lead">{keepTogether(text)}</p>
           {children}
         </div>
       </div>
@@ -178,6 +178,7 @@ function AndroidButton({ href, t }: { href: string; t: T }) {
 export default async function StartPage({ searchParams }: { searchParams: Promise<{ period?: string | string[] }> }) {
   await connection();
   const t = await getT();
+  const locale = await getLocale();
   const apk = androidApkUrl(process.env.ANDROID_APK_URL);
   const hero = illustrations.heroLanding;
   // Период доски из адреса; невалидное или потерянное значение — неделя (контракт getPublicLeaderboard).
@@ -203,13 +204,13 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 alt={t("Пчела с планшетом летит над рекой и холмами")}
                 fetchPriority="high"
               />
-              {/* Пчела «произносит» фразу дня (ТЗ §3.6): башкирский вариант крупно, русский исходник — подписью.
+              {/* Пчела «произносит» фразу дня (ТЗ §3.6): башкирский вариант крупно, русский исходник — подписью в русском интерфейсе.
                   Фразы нет или API молчит — приветствие «Сәләм!» (слово из урока «Привет!», needs_native_review,
                   docs/native-review-queue.md, №20). */}
               {phrase ? (
                 <span className="lp-hero__hello">
                   <span lang="ba">{phrase.textBa}</span>
-                  <span className="lp-hero__hello-ru">«{phrase.sourceRu}»</span>
+                  {locale === "ru" ? <span className="lp-hero__hello-ru">«{phrase.sourceRu}»</span> : null}
                 </span>
               ) : (
                 <span className="lp-hero__hello" lang="ba" aria-hidden>
@@ -219,7 +220,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             </div>
             <div className="lp-hero__text">
               <h1 id="lp-title" className="lp-hero__title">
-                {t("Учи башкирский\u00A0— легко и\u00A0каждый день")}
+                {t("Учи башкирский каждый день")}
               </h1>
               <HeroActions />
             </div>
@@ -355,21 +356,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
           </div>
         </section>
 
-        <section className="lp-final" aria-labelledby="lp-final" data-reveal="">
-          <div className="lp-wrap lp-final__in">
-            <Pic src={img.artBeeFly} className="lp-final__bee lp-final__bee--fly" />
-            <div className="lp-final__text">
-              <h2 id="lp-final" className="lp-final__title">
-                {t("Первый урок\u00A0— пять минут")}
-              </h2>
-              <StartButton />
-            </div>
-            <Pic src={img.artBeeCheer} className="lp-final__bee lp-final__bee--cheer" />
-          </div>
-        </section>
-
-        {/* Доска почёта — в самом низу витрины: сначала гость разбирается, как устроено приложение,
-            и доходит до достижений школ и классов в конце пути. */}
+        {/* Доска почёта — после разделов о продукте, перед финальным призывом. */}
         {board && (
           <section className="lp-board" aria-labelledby="lp-board-title" data-reveal="">
             <div className="lp-wrap lp-board__in">
@@ -378,9 +365,9 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                   {t("Доска почёта")}
                 </h2>
                 {/* Период — обычные ссылки на ту же страницу: серверный компонент, без состояния. */}
-                <nav className="lp-board__periods" aria-label={t("Период доски почёта")}>
+                <nav className="tt-segmented" aria-label={t("Период доски почёта")}>
                   {BOARD_PERIODS.map((p) => (
-                    <Link key={p.value} className="lp-board__period" href={`/?period=${p.value}`} aria-current={p.value === period ? "page" : undefined}>
+                    <Link key={p.value} className="tt-segmented__item" href={`/?period=${p.value}`} aria-current={p.value === period ? "page" : undefined}>
                       {t(p.label)}
                     </Link>
                   ))}
@@ -399,6 +386,19 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
             </div>
           </section>
         )}
+
+        <section className="lp-final" aria-labelledby="lp-final" data-reveal="">
+          <div className="lp-wrap lp-final__in">
+            <Pic src={img.artBeeFly} className="lp-final__bee lp-final__bee--fly" />
+            <div className="lp-final__text">
+              <h2 id="lp-final" className="lp-final__title">
+                {t("Первый урок\u00A0— пять минут")}
+              </h2>
+              <StartButton />
+            </div>
+            <Pic src={img.artBeeCheer} className="lp-final__bee lp-final__bee--cheer" />
+          </div>
+        </section>
       </main>
 
       <footer className="lp-foot">
@@ -444,6 +444,9 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 </li>
                 <li>
                   <Link href={`/legal/privacy/${LEGAL_VERSION}`}>{t("Конфиденциальность")}</Link>
+                </li>
+                <li>
+                  <Link href="/api-docs">{t("API")}</Link>
                 </li>
               </ul>
             </div>

@@ -1,14 +1,12 @@
 // Свой мост Telegram Mini Apps (app/_components/telegram/telegram-bridge.ts): параметры запуска из #tgWebApp…,
-// события веба → клиент и клиент → веб, тема по colorScheme. Главное для ПДн детей: initData сразу уходит из адреса,
+// события веба → клиент и клиент → веб; тема Telegram не учитывается (Mini App всегда светлая). Главное для ПДн детей: initData сразу уходит из адреса,
 // не хранится (ни в sessionStorage, ни в параметрах запуска, ни в событиях клиенту) и отдаётся ровно один раз — для
 // привязки чата POST /api/v1/telegram/link после входа (ADR 0020).
 import { describe, expect, it } from "vitest";
+import { TELEGRAM_WEB_ORIGIN } from "@teletau/session/telegram";
 import {
   LAUNCH_STORAGE_KEY,
-  TELEGRAM_WEB_ORIGIN,
-  colorSchemeOf,
   connectTelegram,
-  isColorDark,
   parseLaunchParams,
   readInitData,
   stripLaunchParams,
@@ -71,27 +69,20 @@ function fakeWindow(opts: { hash?: string; native?: boolean; iframe?: boolean; d
     ...(opts.native ? { TelegramWebviewProxy: { postEvent: (type: string, data: string) => void sent.push({ type, data }) } } : {}),
     ...(opts.desktop ? { external: { notify: (msg: string) => void sent.push({ type: "notify", data: msg }) } } : {}),
     addEventListener: (_t, fn) => void messageListeners.push(fn),
-    removeEventListener: (_t, fn) => void messageListeners.splice(messageListeners.indexOf(fn), 1),
   };
   return { win, sent, urls, storage, messageListeners, parentMessages };
 }
 
 describe("параметры запуска", () => {
-  it("читает версию, платформу и тему из #tgWebApp…, initData — нет", () => {
+  it("читает версию и платформу из #tgWebApp…; тему и initData — нет", () => {
     const p = parseLaunchParams(launchHash())!;
-    expect(p).toEqual({ version: "7.10", platform: "android", themeParams: DARK_THEME });
-    expect(JSON.stringify(p)).not.toMatch(/Айгуль|aigul|userpic|query_id|auth_date/);
+    expect(p).toEqual({ version: "7.10", platform: "android" });
+    expect(JSON.stringify(p)).not.toMatch(/Айгуль|aigul|userpic|query_id|auth_date|17212b/);
   });
 
   it("обычный адрес — не Telegram", () => {
     expect(parseLaunchParams("")).toBeNull();
     expect(parseLaunchParams("#step=nick")).toBeNull();
-  });
-
-  it("тема: только цвета #rrggbb — остальное отбрасывается", () => {
-    const hash = launchHash({ theme: { bg_color: "17212B", text_color: "red; background:url(x)", "bad-key": "#ffffff" } });
-    expect(parseLaunchParams(hash)!.themeParams).toEqual({ bg_color: "#17212b" });
-    expect(parseLaunchParams("#tgWebAppVersion=7.0&tgWebAppThemeParams=%7Bbroken")!.themeParams).toEqual({});
   });
 
   it("stripLaunchParams убирает все tgWebApp…, свои параметры хеша остаются", () => {
@@ -108,25 +99,14 @@ describe("параметры запуска", () => {
   });
 });
 
-describe("тема по colorScheme", () => {
-  it("тёмная — по цвету фона (HSP < 120, как у telegram-web-app.js)", () => {
-    expect(isColorDark(DARK_THEME.bg_color)).toBe(true);
-    expect(isColorDark(LIGHT_THEME.bg_color)).toBe(false);
-    expect(colorSchemeOf(DARK_THEME)).toBe("dark");
-    expect(colorSchemeOf(LIGHT_THEME)).toBe("light");
-    expect(colorSchemeOf({})).toBe("light");
-  });
-
-  it("theme_changed меняет схему и запоминается во вкладке (без initData)", () => {
+describe("тема Telegram", () => {
+  it("theme_changed принимается молча: ничего не сохраняется во вкладке и не уходит клиенту", () => {
     const f = fakeWindow({ hash: launchHash({ theme: LIGHT_THEME }), native: true });
-    const bridge = connectTelegram(f.win);
-    expect(bridge.colorScheme).toBe("light");
-    const seen: string[] = [];
-    bridge.on("theme_changed", (d) => seen.push(colorSchemeOf(d.theme_params)));
+    connectTelegram(f.win);
+    const stored = f.storage.get(LAUNCH_STORAGE_KEY);
     f.win.Telegram!.WebView!.receiveEvent!("theme_changed", { theme_params: DARK_THEME });
-    expect(seen).toEqual(["dark"]);
-    expect(bridge.colorScheme).toBe("dark");
-    expect(JSON.parse(f.storage.get(LAUNCH_STORAGE_KEY)!).themeParams).toEqual(DARK_THEME);
+    expect(f.storage.get(LAUNCH_STORAGE_KEY)).toBe(stored);
+    expect(f.sent).toEqual([]);
   });
 });
 
@@ -157,13 +137,13 @@ describe("initData — только в памяти и один раз в при
     expect(readInitData(launchHash())).toBe(INIT_DATA);
   });
 
-  it("уходит из адреса сразу, состояние истории Next.js сохраняется; в sessionStorage — только версия, платформа, тема", () => {
+  it("уходит из адреса сразу, состояние истории Next.js сохраняется; в sessionStorage — только версия и платформа", () => {
     const f = fakeWindow({ hash: launchHash(), native: true });
     connectTelegram(f.win);
     expect(f.urls).toEqual(["/miniapp"]);
     expect(f.win.location.hash).toBe("");
     const stored = f.storage.get(LAUNCH_STORAGE_KEY)!;
-    expect(JSON.parse(stored)).toEqual({ version: "7.10", platform: "android", themeParams: DARK_THEME });
+    expect(JSON.parse(stored)).toEqual({ version: "7.10", platform: "android" });
     expect(stored).not.toMatch(/Айгуль|aigul|query_id|hash|tgWebAppData|demo/);
   });
 
@@ -234,7 +214,6 @@ describe("события веба → клиент", () => {
     const f = fakeWindow({ hash: "#step=nick" });
     const bridge = connectTelegram(f.win);
     expect(bridge.inTelegram).toBe(false);
-    expect(bridge.colorScheme).toBeNull();
     expect(bridge.post("web_app_ready")).toBe(false);
     expect(f.urls).toEqual([]);
     expect(f.win.Telegram).toBeUndefined();
@@ -301,14 +280,5 @@ describe("события клиента → веб", () => {
     send({}, TELEGRAM_WEB_ORIGIN);
     send(f.win.parent, TELEGRAM_WEB_ORIGIN, "{not json");
     expect(pressed).toBe(1);
-  });
-
-  it("destroy снимает обработчики и возвращает глобальные объекты", () => {
-    const f = fakeWindow({ hash: launchHash({ platform: "weba" }), iframe: true });
-    const bridge = connectTelegram(f.win);
-    expect(f.messageListeners).toHaveLength(1);
-    bridge.destroy();
-    expect(f.messageListeners).toHaveLength(0);
-    expect(f.win.Telegram).toBeUndefined();
   });
 });

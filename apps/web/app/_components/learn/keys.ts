@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Клавиши 1…count выбирают вариант (docs/plans/M2.md §3 «Ч4»: клавиатура 1–4 и Enter). Не срабатывает, пока фокус
+ * Клавиши 1…count выбирают вариант (вместе с Enter урок проходится с клавиатуры). Не срабатывает, пока фокус
  * в поле ввода или открыт модальный диалог, и с модификаторами (Ctrl+1 — переключение вкладок браузера).
  */
 export function useDigitKeys(count: number, onPick: (index: number) => void, enabled: boolean) {

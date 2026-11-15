@@ -1,4 +1,4 @@
-// Выгрузка словаря и спорных случаев для Фонда (ADR 0023, ТЗ хакатона §4.4/§5): CSV для Excel и JSON — те же данные,
+// Выгрузка словаря и спорных случаев для Фонда (ADR 0023): CSV для Excel и JSON — те же данные,
 // что GET /fund/dictionary и GET /fund/escalated. Чистые функции без запросов; голосующих в выгрузке нет — только
 // числа по группам.
 import type { Schema } from "@teletau/contracts";
@@ -17,8 +17,10 @@ const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-dig
 export const originLabel = (o: string | undefined) => (o ? (ORIGIN[o] ?? o) : "");
 export const kindLabel = (k: string) => KIND[k] ?? k;
 export const decisionDate = (iso: string) => dateFmt.format(new Date(iso));
-export const statusLabel = (p: Pair) => (p.preliminary ? "предварительно" : "принято");
-export const reviewLabel = (p: Pair) => (p.review === "native_approved" ? "проверено носителем" : "ждёт проверки носителем");
+const statusLabel = (p: Pair) => (p.preliminary ? "предварительно" : "принято");
+/** Проверка носителем — словами: пара словаря или вариант спора. */
+const reviewLabel = (review: string | undefined) =>
+  review === "native_approved" ? "проверено носителем" : review === "native_rejected" ? "отклонено носителем" : "ждёт проверки носителем";
 
 const group = (v: Votes) => [v.votesFor, v.both, v.total];
 
@@ -59,7 +61,7 @@ export function dictionaryCsv(d: Dictionary): string {
       kindLabel(p.kind),
       p.main ? "да" : "нет",
       statusLabel(p),
-      reviewLabel(p),
+      reviewLabel(p.review),
       ...group(p.votes.child),
       ...group(p.votes.adult),
       ...group(p.votes.teacher),
@@ -85,9 +87,6 @@ export function dictionaryJson(d: Dictionary): string {
   return `${JSON.stringify({ note, ...d }, null, 2)}\n`;
 }
 
-const lastVoteDate = (iso: string) => dateFmt.format(new Date(iso));
-const reviewOf = (review: string | undefined) =>
-  review === "native_approved" ? "проверено носителем" : review === "native_rejected" ? "отклонено носителем" : "ждёт проверки носителем";
 
 /** Спорные случаи для Excel: строка на вариант спора; голоса — «за вариант», «оба подходят», «всего» по каждой группе. */
 export function escalatedCsv(e: Escalated): string {
@@ -115,12 +114,12 @@ export function escalatedCsv(e: Escalated): string {
       item.sourceRu,
       v.text,
       kindLabel(item.kind),
-      reviewOf(v.review),
+      reviewLabel(v.review),
       originLabel(v.origin),
       ...group(v.votes.child),
       ...group(v.votes.adult),
       ...group(v.votes.teacher),
-      lastVoteDate(item.lastVoteAt),
+      decisionDate(item.lastVoteAt),
       item.itemId,
       v.variantId,
     ]),

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { Button, EmptyState, Skeleton, SkeletonGroup } from "@teletau/ui";
+import { Button, EmptyState, Skeleton, SkeletonGroup, useFocusRescue } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
-import { describeProblem, isNetworkError } from "@teletau/session/problem";
 import { ConsoleShell } from "../_components/ConsoleShell";
+import { LoadFailure } from "../_components/LoadFailure";
 
 type Entry = Schema<"AuditEntry">;
 
@@ -64,21 +64,28 @@ function AuditLog() {
   const [action, setAction] = useState("");
   // Курсоры пройденных страниц: назад — по стеку, вперёд — по nextCursor.
   const [stack, setStack] = useState<(string | undefined)[]>([undefined]);
-  // Страница — вместе с тем, для какого запроса она загружена: сразу после перехода на экране не остаётся прежняя
-  // страница с её кнопками, и второе нажатие не перелистывает ещё раз.
-  const [loaded, setLoaded] = useState<{ key: string; page: Schema<"AuditLogPage"> } | null>(null);
+  // Страница — вместе с тем, для какого запроса она загружена (key), фильтром и номером повтора.
+  const [loaded, setLoaded] = useState<{ key: string; action: string; tick: number; page: Schema<"AuditLogPage"> } | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [tick, setTick] = useState(0);
+  // Какую кнопку листания нажали: индикатор — на ней.
+  const [going, setGoing] = useState<"newer" | "older" | null>(null);
   const cursor = stack[stack.length - 1];
   const depth = stack.length;
   const key = `${tick}|${action}|${stack.length}|${cursor ?? ""}`;
-  const data = loaded?.key === key ? loaded.page : null;
+  const current = loaded?.key === key ? loaded.page : null;
+  // Листание: пока грузится соседняя страница, на экране прежняя (aria-busy), кнопки листания на месте — фокус
+  // остаётся на нажатой, а повторное нажатие гасится (кнопка в загрузке). Новый фильтр — скелетон.
+  const paging = !current && loaded !== null && loaded.action === action && loaded.tick === tick;
+  const data = current ?? (paging && loaded ? loaded.page : null);
+  const pager = useRef<HTMLElement>(null);
+  useFocusRescue(pager);
 
   useEffect(() => {
     let cancelled = false;
     setError(null);
     unwrap(api.GET("/api/v1/admin/audit-log", { params: { query: { limit: PAGE, ...(action ? { action } : {}), ...(cursor ? { cursor } : {}) } } }))
-      .then((page) => !cancelled && setLoaded({ key, page }))
+      .then((page) => !cancelled && setLoaded({ key, action, tick, page }))
       .catch((e: unknown) => !cancelled && setError(e));
     return () => {
       cancelled = true;
@@ -115,21 +122,8 @@ function AuditLog() {
         </div>
       </header>
 
-      {error && !data ? (
-        <EmptyState
-          art={isNetworkError(error) ? "emptyOffline" : "emptyError"}
-          headingAs="h2"
-          compact
-          title={isNetworkError(error) ? "Нет связи" : "Не удалось загрузить"}
-          role="alert"
-          actions={
-            <Button block onClick={() => setTick((n) => n + 1)}>
-              Попробовать снова
-            </Button>
-          }
-        >
-          {describeProblem(error)}
-        </EmptyState>
+      {error && !current ? (
+        <LoadFailure error={error} onRetry={() => setTick((n) => n + 1)} headingAs="h2" />
       ) : !data ? (
         <SkeletonGroup label="Загружаем журнал" className="tt-stack tt-stack--tight">
           {[0, 1, 2, 3, 4].map((i) => (
@@ -139,7 +133,7 @@ function AuditLog() {
       ) : data.items.length === 0 ? (
         <EmptyState art="emptyAllDone" headingAs="h2" compact title="Записей нет" />
       ) : (
-        <div className="table-wrap">
+        <div className="table-wrap" aria-busy={paging || undefined}>
           <table className="table table--dense">
             <caption className="tt-visually-hidden">Журнал аудита, страница {stack.length}</caption>
             <thead>
@@ -185,15 +179,34 @@ function AuditLog() {
               ))}
             </tbody>
           </table>
-          <nav className="pager" aria-label="Страницы журнала">
+          <nav className="pager" aria-label="Страницы журнала" ref={pager}>
             {/* Переход — от страницы, на которой нажали: двойное нажатие не перелистывает дважды. */}
-            <Button small variant="secondary" icon={<CaretLeft weight="bold" />} disabled={depth === 1} onClick={() => setStack((s) => (s.length === depth ? s.slice(0, -1) : s))}>
+            <Button
+              small
+              variant="secondary"
+              icon={<CaretLeft weight="bold" />}
+              loading={paging && going === "newer"}
+              disabled={depth === 1 || paging}
+              onClick={() => {
+                setGoing("newer");
+                setStack((s) => (s.length === depth ? s.slice(0, -1) : s));
+              }}
+            >
               Более новые
             </Button>
             <span className="tt-muted" aria-live="polite">
               Страница {stack.length}
             </span>
-            <Button small variant="secondary" disabled={!data.nextCursor} onClick={() => setStack((s) => (s.length === depth ? [...s, data.nextCursor] : s))}>
+            <Button
+              small
+              variant="secondary"
+              loading={paging && going === "older"}
+              disabled={!data.nextCursor || paging}
+              onClick={() => {
+                setGoing("older");
+                setStack((s) => (s.length === depth ? [...s, data.nextCursor] : s));
+              }}
+            >
               Более ранние
               <CaretRight weight="bold" aria-hidden />
             </Button>

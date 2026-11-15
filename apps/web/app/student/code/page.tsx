@@ -9,7 +9,7 @@ import { ApiProblem, describeProblem } from "@teletau/session/problem";
 import { useT } from "../../../i18n/client";
 import type { T } from "../../../i18n/core";
 import { BackButton, BackLink, Screen, SimpleTop, useDocumentTitle } from "../../_components/screens";
-import { NicknamePicker } from "../NicknamePicker";
+import { NicknamePicker, type PickedNickname } from "../NicknamePicker";
 import { useFlowSteps } from "../../_components/steps";
 import { saveTicket } from "../ticket";
 import { useStudentPaths } from "../../_components/learn/paths";
@@ -88,6 +88,25 @@ export default function ClassCodePage() {
     flow.go("nick");
   };
 
+  const submit = async (nick: PickedNickname) => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const ticket = await session.requestClassCode(code, nick.id);
+      saveTicket(ticket, nick.text);
+      saveDraft("");
+      router.replace(paths.wait);
+    } catch (e) {
+      setSubmitting(false);
+      if (e instanceof ApiProblem && e.code === "class_code_not_found") {
+        setCodeError(describeProblem(e, "child", t));
+        flow.back("code");
+      } else {
+        setSubmitError(describeProblem(e, "child", t));
+      }
+    }
+  };
+
   return (
     <Screen
       top={
@@ -144,24 +163,7 @@ export default function ClassCodePage() {
               submitLabel={t("Отправить заявку")}
               submitting={submitting}
               error={submitError}
-              onPick={async (nick) => {
-                setSubmitting(true);
-                setSubmitError(null);
-                try {
-                  const ticket = await session.requestClassCode(code, nick.id);
-                  saveTicket(ticket, nick.text);
-                  saveDraft("");
-                  router.replace(paths.wait);
-                } catch (e) {
-                  setSubmitting(false);
-                  if (e instanceof ApiProblem && e.code === "class_code_not_found") {
-                    setCodeError(describeProblem(e, "child"));
-                    flow.back("code");
-                  } else {
-                    setSubmitError(describeProblem(e, "child"));
-                  }
-                }
-              }}
+              onPick={(nick) => void submit(nick)}
             />
           </div>
         )}

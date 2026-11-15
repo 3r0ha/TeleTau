@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CircleNotch } from "@phosphor-icons/react/ssr";
 import { normalizeCodeInput, parseClassCode } from "@teletau/auth-codes";
 import type { Schema } from "@teletau/contracts";
 import { Button, CodeInput, EmptyState, InlineAlert, LinkButton, StepHeading } from "@teletau/ui";
@@ -92,7 +91,7 @@ export function JoinClassScreen() {
       saveTicket(t);
       setTicket(t);
     } catch (e) {
-      setCodeError(describeProblem(e, "child"));
+      setCodeError(describeProblem(e, "child", t));
     } finally {
       setBusy(false);
     }
@@ -133,19 +132,17 @@ export function JoinClassScreen() {
             <>
               {/* Опрос продолжается сам; сеть пропала — заявка не теряется, а страница проверит снова, когда связь вернётся. */}
               {offline ? <InlineAlert tone="honey">{t("Нет связи. Заявка не потеряется.")}</InlineAlert> : null}
-              {status.error && !offline ? <InlineAlert tone="danger">{describeProblem(status.error, "child")}</InlineAlert> : null}
+              {status.error && !offline ? <InlineAlert tone="danger">{describeProblem(status.error, "child", t)}</InlineAlert> : null}
               <LinkButton tone="neutral" onClick={again}>
                 {t("Отменить")}
               </LinkButton>
             </>
           }
         >
-          {t("Класс")} <ClassTitle title={ticket.class.title} />. {t("Скажи учителю свой ник:")} <b>«{me.nickname}»</b>.
-          {t("Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.")}
-          <p className="tt-pulse">
-            <CircleNotch weight="bold" size={16} className="tt-spin" aria-hidden />
-            {t("Проверяем каждые несколько секунд")}
+          <p>
+            {t("Класс")} <ClassTitle title={ticket.class.title} />. {t("Скажи учителю свой ник:")} <b>«{me.nickname}»</b>.
           </p>
+          <p>{t("Как только учитель примет, эта страница сама обновится и ты попадёшь в класс.")}</p>
         </EmptyState>
       ) : (
         <form

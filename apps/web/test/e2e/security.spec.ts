@@ -27,7 +27,7 @@ async function watchCsp(page: Page): Promise<() => Promise<string[]>> {
   return async () => [...console, ...(await page.evaluate(() => (window as unknown as { __csp?: string[] }).__csp ?? []))];
 }
 
-test.describe("M1-02: секрет QR-карточки", () => {
+test.describe("секрет QR-карточки", () => {
   test("вход по фото карточки: в BFF уходит сырая нагрузка, в адресах и истории вкладки нет TT1.", async ({ page }) => {
     const w = await mockBackend(page);
     const card = generateQrCard();
@@ -88,7 +88,7 @@ test.describe("M1-02: секрет QR-карточки", () => {
   });
 });
 
-test.describe("M1-11: заголовки безопасности и CSP", () => {
+test.describe("заголовки безопасности и CSP", () => {
   test("страница: CSP с nonce, запрет встраивания, камера только этому сайту; inline-скрипты — с тем же nonce", async ({ page, request }) => {
     const res = await request.get("/student");
     const h = res.headers();
@@ -144,7 +144,7 @@ test.describe("M1-11: заголовки безопасности и CSP", () =>
     await page.goto("/teacher/classes/not-a-uuid");
     await expect(page.getByRole("heading", { name: "Класс не найден" })).toBeVisible();
     await page.goto("/no-such-page");
-    await expect(page.getByRole("heading", { name: "Такой страницы нет" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Страница не найдена" })).toBeVisible();
     expect(await violations()).toEqual([]);
   });
 });

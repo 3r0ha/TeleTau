@@ -60,7 +60,7 @@ export function JumpResultScreen({ course, summary, onContinue }: { course: Cour
   }
   const art = unit ? placeArt(unit.place.slug) : undefined;
   return (
-    <AfterScreen art={art?.hero ?? "beeCheer"} artAlt={art?.heroAlt ?? ""} wide={Boolean(art?.hero)} artMotion={art?.hero ? undefined : "hop"} confetti action={t("Дальше")} onAction={onContinue}>
+    <AfterScreen art={art?.hero ?? "beeCheer"} artAlt={art?.heroAlt ? t(art.heroAlt) : ""} wide={Boolean(art?.hero)} artMotion={art?.hero ? undefined : "hop"} confetti action={t("Дальше")} onAction={onContinue}>
       <h1 className="after__title" tabIndex={-1}>
         {t("Место открыто")}
       </h1>

@@ -7,7 +7,7 @@ import { ArrowLeft, SignOut } from "@phosphor-icons/react/ssr";
 import { FOLD_MAP } from "@teletau/bashkir-text";
 import { Button, ButtonLink, EmptyState, IconButton, LinkButton, Skeleton, SkeletonGroup, TopBar } from "@teletau/ui";
 import { session } from "@teletau/session/client";
-import { ApiProblem, describeProblem, isNetworkError, type Audience } from "@teletau/session/problem";
+import { ApiProblem, describeProblem, isGenericProblem, isNetworkError, type Audience } from "@teletau/session/problem";
 import { useT } from "../../i18n/client";
 
 /** Каркас экрана: верхняя панель + основная область (id="main" — цель ссылки «К основному содержимому»). */
@@ -63,18 +63,14 @@ export function SignOutAction({ onBeforeLogout, to = "/" }: { onBeforeLogout?: (
   const router = useRouter();
   const t = useT();
   const [busy, setBusy] = useState(false);
+  const signOut = async () => {
+    setBusy(true);
+    onBeforeLogout?.();
+    await session.logout();
+    router.replace(to);
+  };
   return (
-    <LinkButton
-      tone="neutral"
-      icon={<SignOut weight="bold" aria-hidden />}
-      disabled={busy}
-      onClick={async () => {
-        setBusy(true);
-        onBeforeLogout?.();
-        await session.logout();
-        router.replace(to);
-      }}
-    >
+    <LinkButton tone="neutral" icon={<SignOut weight="bold" aria-hidden />} disabled={busy} onClick={() => void signOut()}>
       {t("Выйти")}
     </LinkButton>
   );
@@ -108,7 +104,7 @@ export function LoadError({ error, onRetry, audience = "adult", home }: { error:
         title={t("Нет связи")}
         actions={
           <Button block onClick={onRetry}>
-            {t("Попробовать снова")}
+            {t("Попробовать ещё раз")}
           </Button>
         }
       >
@@ -124,7 +120,7 @@ export function LoadError({ error, onRetry, audience = "adult", home }: { error:
       actions={
         <>
           <Button block onClick={onRetry}>
-            {t("Попробовать снова")}
+            {t("Попробовать ещё раз")}
           </Button>
           {home ? (
             <ButtonLink href={home} variant="secondary" block>
@@ -134,7 +130,7 @@ export function LoadError({ error, onRetry, audience = "adult", home }: { error:
         </>
       }
     >
-      {describeProblem(error, audience)}
+      {isGenericProblem(error) ? null : describeProblem(error, audience, t)}
     </EmptyState>
   );
 }
@@ -145,12 +141,6 @@ export function isForbidden(e: unknown): boolean {
 
 export function isNotFound(e: unknown): boolean {
   return e instanceof ApiProblem && e.status === 404;
-}
-
-/** Переход «на главную» по роли — для экранов, где сессия уже есть. */
-export function useGo() {
-  const router = useRouter();
-  return (href: string) => router.replace(href);
 }
 
 const TITLE_SUFFIX = " · ТелеТау";

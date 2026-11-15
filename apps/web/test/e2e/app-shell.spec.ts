@@ -163,7 +163,7 @@ test.describe("сбой экрана", () => {
     await page.goto("/learn");
     const alert = page.getByRole("alert").filter({ has: page.getByRole("heading", { name: "Что-то пошло не так" }) });
     await expect(alert).toBeVisible();
-    await expect(alert.getByRole("button", { name: "Попробовать снова" })).toBeVisible();
+    await expect(alert.getByRole("button", { name: "Попробовать ещё раз" })).toBeVisible();
     await expect(alert.getByRole("link", { name: "На главную" })).toHaveAttribute("href", "/");
     const text = (await page.locator("body").innerText()).toLowerCase();
     for (const technical of ["typeerror", "cannot read", "undefined", "null", "digest", "stack", "error"]) {
@@ -178,7 +178,7 @@ test.describe("сбой экрана", () => {
 test.describe("без сети", () => {
   test.use({ serviceWorkers: "allow" });
 
-  test("«Нет связи» по открытому адресу, «Попробовать снова» его перезагружает; в кеше только статика", async ({ page, context }) => {
+  test("«Нет связи» по открытому адресу, «Попробовать ещё раз» его перезагружает; в кеше только статика", async ({ page, context }) => {
     await mockBackend(page);
     await page.goto("/student");
     await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
@@ -197,7 +197,7 @@ test.describe("без сети", () => {
     expect(new URL(page.url()).pathname).toBe("/learn");
     // Стили и картинка — из кеша: иллюстрация загружена, кнопка оформлена.
     await expect.poll(() => page.locator(".tt-empty__art").evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
-    const retry = page.getByRole("link", { name: "Попробовать снова" });
+    const retry = page.getByRole("link", { name: "Попробовать ещё раз" });
     expect(await retry.evaluate((a) => getComputedStyle(a).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
     // Скриптов у офлайн-страницы нет.
     expect(await page.locator("script").count()).toBe(0);

@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 /**
- * Префикс адресов экранов ученика: "" — обычный веб, "/miniapp" — Telegram Mini App (docs/plans/M2.md §3 «Ч4»/«Ч5»).
+ * Префикс адресов экранов ученика: "" — обычный веб, "/miniapp" — Telegram Mini App.
  * Mini App переиспользует страницы ученика реэкспортом и оборачивает их в <RoutePrefix prefix="/miniapp">, поэтому
  * все ссылки и переходы экранов ученика строятся только через useStudentPaths().
  */
@@ -54,6 +54,8 @@ export interface LearnerPaths extends StudentPaths {
   email: string;
   /** «Вступить в класс» по коду — ученик без класса. */
   joinClass: string;
+  /** Вход взрослого по почте: на сайте — вход учителя и взрослого, в Mini App — loginEmail. */
+  adultLogin: string;
 }
 
 export function useStudentPaths(): LearnerPaths {
@@ -72,6 +74,7 @@ export function useStudentPaths(): LearnerPaths {
       nickname: `${prefix}/student/nickname`,
       code: `${prefix}/student/code`,
       loginEmail: `${prefix}/student/email`,
+      adultLogin: prefix ? `${prefix}/student/email` : "/teacher/login",
       wait: `${prefix}/student/wait`,
       joined: `${prefix}/student/class`,
       start: prefix || "/",

@@ -50,7 +50,7 @@ export default function TeacherProfilePage() {
               </div>
               <div>
                 <dt>{t("Почта")}</dt>
-                <dd>{me.profile?.email ?? "—"}</dd>
+                <dd className="tt-break-anywhere">{me.profile?.email ?? "—"}</dd>
               </div>
               <div>
                 <dt>{t("Школа")}</dt>

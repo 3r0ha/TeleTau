@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ProjectorScreen, X } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
-import { Button, Dialog, EmptyState, HexAvatar, InlineAlert, Skeleton, SkeletonGroup, avatarFor, toneFor, useToast } from "@teletau/ui";
+import { Button, Dialog, EmptyState, HexAvatar, InlineAlert, Skeleton, SkeletonGroup, avatarFor, toneFor, useFocusRescue, useToast } from "@teletau/ui";
 import { api, unwrap } from "@teletau/session/api";
 import { describeProblem } from "@teletau/session/problem";
 import { useResource } from "@teletau/session/react";
@@ -34,7 +34,11 @@ export function JoinRequestsDialog({
 }) {
   const toast = useToast();
   const t = useT();
-  const [busy, setBusy] = useState<string | null>(null);
+  // Заявка в работе и какое решение по ней отправлено: индикатор — на нажатой кнопке.
+  const [busy, setBusy] = useState<{ id: string; approve: boolean } | null>(null);
+  // Решённая строка заменяется итогом — фокус переходит на кнопки следующей заявки или «Готово».
+  const body = useRef<HTMLDivElement>(null);
+  useFocusRescue(body);
   const [decided, setDecided] = useState<ReadonlyMap<string, Decision>>(new Map());
   // Порядок заявок, увиденных за это открытие листа: решённая заявка не прыгает в начало или конец списка.
   const seen = useRef(new Map<string, JoinRequest>());
@@ -57,7 +61,7 @@ export function JoinRequestsDialog({
   const waiting = rows.filter((r) => !decided.has(r.id)).length;
 
   const decide = async (r: JoinRequest, approve: boolean) => {
-    setBusy(r.id);
+    setBusy({ id: r.id, approve });
     try {
       const params = { params: { path: { id: classId, rid: r.id } } };
       const res = approve
@@ -76,7 +80,7 @@ export function JoinRequestsDialog({
       list.setData((d) => (d ? { ...d, items: d.items.filter((x) => x.id !== r.id) } : d));
       onChanged();
     } catch (e) {
-      toast(describeProblem(e), "error");
+      toast(describeProblem(e, "adult", t), "error");
       list.reload();
     } finally {
       setBusy(null);
@@ -86,7 +90,7 @@ export function JoinRequestsDialog({
   return (
     <Dialog open={open} onClose={onClose} title={t("Заявки на вход")} description={rows.length ? t("Примите тех, кто у вас на уроке.") : undefined} wide>
       {list.error && !list.data ? (
-        <InlineAlert tone="danger">{describeProblem(list.error)}</InlineAlert>
+        <InlineAlert tone="danger">{describeProblem(list.error, "adult", t)}</InlineAlert>
       ) : !list.data ? (
         <SkeletonGroup label={t("Загружаем заявки")} className="tt-stack tt-stack--tight">
           {[0, 1].map((i) => (
@@ -108,7 +112,7 @@ export function JoinRequestsDialog({
           {t("Новые появятся здесь сами.")}
         </EmptyState>
       ) : (
-        <div className="tt-stack">
+        <div className="tt-stack" ref={body}>
           <ul className="requests" aria-live="polite">
             {rows.map((r) => {
               const d = decided.get(r.id);
@@ -126,10 +130,10 @@ export function JoinRequestsDialog({
                     </span>
                   ) : (
                     <span className="request__actions">
-                      <Button small variant="success" icon={<Check weight="bold" />} loading={busy === r.id} disabled={Boolean(busy)} onClick={() => void decide(r, true)} aria-label={t("Принять: {nick}", { nick: r.nickname })}>
+                      <Button small variant="success" icon={<Check weight="bold" />} loading={busy?.id === r.id && busy.approve} disabled={Boolean(busy)} onClick={() => void decide(r, true)} aria-label={t("Принять: {nick}", { nick: r.nickname })}>
                         {t("Принять")}
                       </Button>
-                      <Button small variant="secondary" icon={<X weight="bold" />} disabled={Boolean(busy)} onClick={() => void decide(r, false)} aria-label={t("Отклонить: {nick}", { nick: r.nickname })}>
+                      <Button small variant="secondary" icon={<X weight="bold" />} loading={busy?.id === r.id && !busy.approve} disabled={Boolean(busy)} onClick={() => void decide(r, false)} aria-label={t("Отклонить: {nick}", { nick: r.nickname })}>
                         {t("Отклонить")}
                       </Button>
                     </span>

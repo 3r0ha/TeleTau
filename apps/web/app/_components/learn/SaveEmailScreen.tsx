@@ -6,6 +6,7 @@ import { EnvelopeSimple } from "@phosphor-icons/react/ssr";
 import type { Schema } from "@teletau/contracts";
 import { Button, CodeInput, EmptyState, Form, InlineAlert, LinkButton, StepHeading, TextField, useInvalidFocus } from "@teletau/ui";
 import { session } from "@teletau/session/client";
+import { isEmail } from "@teletau/session/email";
 import { ApiProblem, describeProblem, fieldErrors } from "@teletau/session/problem";
 import { LoadingBlock, Screen, SimpleTop, useDocumentTitle } from "../screens";
 import { useT } from "../../../i18n/client";
@@ -13,12 +14,10 @@ import { useStudentPaths } from "./paths";
 import { selfApi } from "./self-api";
 import { useStudent } from "./StudentShell";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 /**
  * «Сохранить прогресс по почте» (ADR 0022 §10): аккаунт без почты привязывает адрес — код из письма, как при входе.
- * Дальше вход по почте с любого устройства; карточка входа больше не нужна. Детям привязка разрешена по решению
- * владельца: сам адрес не хранится, поэтому на экране он не показывается (у ребёнка о привязке знает только сервер).
+ * Дальше вход по почте с любого устройства; карточка входа больше не нужна. Привязка доступна и детям: сам адрес не
+ * хранится, поэтому на экране он не показывается (у ребёнка о привязке знает только сервер).
  */
 export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
   const me = useStudent();
@@ -36,7 +35,7 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
   useDocumentTitle(challenge ? t("Код из письма") : t("Сохранить по почте"));
 
   const request = async () => {
-    if (!EMAIL_RE.test(email.trim())) {
+    if (!isEmail(email)) {
       setEmailError(t("Нужен адрес почты, например name@mail.ru"));
       invalid.request();
       return;
@@ -48,11 +47,11 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
       setChallenge(await selfApi.requestOtp(email.trim()));
       setCode("");
     } catch (e) {
-      const bad = fieldErrors(e).email;
+      const bad = fieldErrors(e, t).email;
       if (bad) {
         setEmailError(bad);
         invalid.request();
-      } else setFormError(describeProblem(e));
+      } else setFormError(describeProblem(e, "child", t));
     } finally {
       setBusy(false);
     }
@@ -69,8 +68,8 @@ export function SaveEmailScreen({ demoCode }: { demoCode: string | null }) {
       router.replace(paths.me);
     } catch (e) {
       const c = e instanceof ApiProblem ? e.code : undefined;
-      if (c === "otp_invalid" || c === "otp_expired" || c === "otp_attempts_exceeded") setCodeError(describeProblem(e));
-      else setFormError(describeProblem(e));
+      if (c === "otp_invalid" || c === "otp_expired" || c === "otp_attempts_exceeded") setCodeError(describeProblem(e, "child", t));
+      else setFormError(describeProblem(e, "child", t));
       setCode("");
       setBusy(false);
     }

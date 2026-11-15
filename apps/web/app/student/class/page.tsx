@@ -11,7 +11,8 @@ import { useT } from "../../../i18n/client";
 import { useStudentPaths } from "../../_components/learn/paths";
 import { ClassTitle, LoadError, LoadingBlock, Screen } from "../../_components/screens";
 
-const seatLabel = (n: number) => `№${String(n).padStart(2, "0")}`;
+/** Номер ученика в классе — как на карточке: «07». */
+const seatNo = (n: number) => String(n).padStart(2, "0");
 
 /**
  * «Ты в классе 5 «Б»»: итог первого входа ученика (после выбора ника или подтверждения заявки). Учитель видит его как
@@ -38,7 +39,7 @@ export default function StudentClassPage() {
 
   return (
     <Screen
-      top={<TopBar start={<Brand href="/" />} end={<IconButton label={t("Выйти")} icon={<SignOut weight="bold" />} onClick={() => setLeaving(true)} />} />}
+      top={<TopBar start={<Brand href={paths.start} />} end={<IconButton label={t("Выйти")} icon={<SignOut weight="bold" />} onClick={() => setLeaving(true)} />} />}
       className="joined"
     >
       {!current || (me.loading && !me.data) ? (
@@ -62,11 +63,11 @@ export default function StudentClassPage() {
           {klass ? <p className="tt-lead">{klass.schoolName}</p> : null}
           <Card className="joined__card">
             <HexAvatar size={64} tone={toneFor(nickname ?? current.id)} art={avatarFor(nickname)} lip>
-              {klass?.seatNumber ? String(klass.seatNumber).padStart(2, "0") : undefined}
+              {klass?.seatNumber ? seatNo(klass.seatNumber) : undefined}
             </HexAvatar>
             <div className="tt-stack tt-stack--tight">
               <p className="tt-headline">{nickname ?? t("Ник не выбран")}</p>
-              {klass?.seatNumber ? <Chip tone="honey">{t("Место {n}", { n: seatLabel(klass.seatNumber) })}</Chip> : null}
+              {klass?.seatNumber ? <Chip tone="honey">{t("Номер {n}", { n: seatNo(klass.seatNumber) })}</Chip> : null}
             </div>
           </Card>
           <ButtonLink href={paths.learn} block icon={<Path weight="fill" aria-hidden />} className="joined__go">
@@ -89,12 +90,11 @@ export default function StudentClassPage() {
             </Button>
             <LinkButton
               tone="danger"
-              onClick={async () => {
-                await session.logout();
+              onClick={() =>
                 // Полная загрузка, а не router.replace: закрытие диалога убирает свою запись истории (history.back
                 // в sheetHistory), и пришедший popstate отменяет клиентский переход — страница оставалась на месте.
-                window.location.replace(paths.start);
-              }}
+                void session.logout().then(() => window.location.replace(paths.start))
+              }
             >
               {t("Выйти")}
             </LinkButton>

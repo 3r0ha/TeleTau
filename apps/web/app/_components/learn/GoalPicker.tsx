@@ -17,7 +17,7 @@ const goalLabels = (t: T): Record<Goal, { title: string; minutes: string }> => (
 });
 
 export const asGoal = (g: number | undefined): Goal => (GOALS.includes(g as Goal) ? (g as Goal) : DEFAULT_GOAL);
-export const goalTitle = (g: number | undefined) => goalLabels((ru) => ru)[asGoal(g)].title;
+export const goalTitle = (g: number | undefined, t: T) => goalLabels(t)[asGoal(g)].title;
 
 /** Выбор цели дня плитками; слева — соты: сколько уроков, столько ячеек мёда. */
 export function GoalPicker({ value, onChange, legend }: { value: Goal; onChange: (g: Goal) => void; legend?: string }) {

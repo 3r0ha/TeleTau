@@ -1,12 +1,13 @@
-/* Переключатель языка (LanguageSwitcher): сегмент из трёх кнопок — как сегмент статусов в консоли.
-   Активный язык — на «сотовом» акценте, остальные — обычные. Компактный (шапка лендинга) — тот же сегмент. */
+/* Переключатель языка (LanguageSwitcher): три кнопки, активная — граница и текст accent.text (docs/05 §3).
+   Цель нажатия — не меньше size.touchMin. */
 .lang-switch {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: var(--tt-space-s100);
 }
 
 .lang-switch button {
-  min-height: 36px;
+  min-height: var(--tt-size-touch-min);
   padding: 0 var(--tt-space-s300);
   border: 2px solid var(--tt-color-border-default);
   border-radius: var(--tt-radius-chip);
@@ -15,6 +16,7 @@
   font-family: inherit;
   font-size: var(--tt-font-size-callout);
   font-weight: var(--tt-font-weight-semibold);
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -28,13 +30,25 @@
   color: var(--tt-color-accent-text);
 }
 
-/* В строке настроек сегмент прижат вправо — имя «Язык» занимает строку (settings__row в learn.css). */
-.settings__row .lang-switch {
-  flex: none;
+/* Строка профиля: сегмент под подписью, кнопки делят ширину поровну. */
+.lang-switch--fill {
+  display: flex;
+  flex: 1 0 100%;
 }
 
-/* Шапка лендинга: сегмент в ряду действий, крошечный. */
-.lang-switch--compact button {
-  min-height: 32px;
-  padding: 0 var(--tt-space-s200);
+.lang-switch--fill button {
+  flex: 1 1 auto;
+  padding-inline: var(--tt-space-s100);
+  font-size: var(--tt-font-size-footnote);
+}
+
+/* Меню шапки на телефоне: языки столбиком. */
+.lang-switch--list {
+  display: flex;
+  flex-direction: column;
+}
+
+.lang-switch--list button {
+  border-radius: var(--tt-radius-tile);
+  text-align: start;
 }
