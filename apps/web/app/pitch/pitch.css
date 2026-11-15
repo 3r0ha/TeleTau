@@ -1,0 +1,93 @@
+/* Листалка слайдов (/pitch): слайд вписан в окно целиком, вокруг — фон страницы (у слайдов тот же кремовый фон).
+ * Цвета, отступы, радиусы и длительности — только из дизайн-токенов (--tt-*). */
+
+.pitch {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--tt-color-bg);
+  /* Свайп листает слайды: браузер не прокручивает и не масштабирует страницу двойным касанием. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pitch[data-idle="true"] {
+  cursor: none;
+}
+
+.pitch__stage {
+  position: absolute;
+  inset: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.pitch__slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+}
+
+/* Соседние слайды загружены и раскодированы, но не видны: смена слайда — без задержки и без анимации. */
+.pitch__slide:not([data-current="true"]) {
+  visibility: hidden;
+}
+
+/* Номер и кнопка — в правом нижнем углу: на слайдах там пусто (бренд и номер слайда — слева). */
+.pitch__bar {
+  position: absolute;
+  right: calc(var(--tt-space-s400) + env(safe-area-inset-right));
+  bottom: calc(var(--tt-space-s400) + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s050);
+  min-height: var(--tt-size-touch-min);
+  padding-inline: var(--tt-space-s400) var(--tt-space-s050);
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: var(--tt-radius-chip);
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-size-lip-small) 0 var(--tt-color-border-subtle);
+  cursor: default;
+}
+
+.pitch__bar[hidden] {
+  display: none;
+}
+
+/* Без кнопки полноэкранного режима (iPhone) — номер по центру панели. */
+.pitch__bar:not(:has(.pitch__btn)) {
+  padding-inline-end: var(--tt-space-s400);
+}
+
+.pitch__count {
+  color: var(--tt-color-text-secondary);
+  font-family: var(--tt-font-family-display);
+  font-size: var(--tt-font-size-callout);
+  font-weight: var(--tt-font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pitch__btn {
+  border-radius: var(--tt-radius-chip);
+}
+
+.pitch__btn svg {
+  width: var(--tt-size-icon-small);
+  height: var(--tt-size-icon-small);
+}
+
+/* Покой: панель прозрачна и не перехватывает клики — тап в углу листает слайд. Фокус с клавиатуры её показывает. */
+.pitch[data-idle="true"] .pitch__bar:not(:focus-within) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pitch__bar {
+    transition: opacity var(--tt-duration-slow) var(--tt-easing-out);
+  }
+}

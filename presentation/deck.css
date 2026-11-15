@@ -1,4 +1,6 @@
-/* Слайды 1920×1080 на токенах дизайн-системы (packages/design-tokens): цвета, шрифты, отступы — только переменные --tt-*. */
+/* Слайды 1920×1080 на токенах дизайн-системы (packages/design-tokens): цвета, шрифты, отступы — переменные --tt-*.
+ * Тени устройств — сплошная «губа» без размытия и прозрачности: размытую тень Chromium пишет в PDF растровой маской,
+ * и просмотрщики (Preview) рисуют её серым прямоугольником. */
 
 @page {
   size: 1920px 1080px;
@@ -22,8 +24,8 @@ body {
 
 h1,
 h2,
-h3,
-p {
+p,
+figure {
   margin: 0;
 }
 
@@ -32,11 +34,11 @@ img {
 }
 
 .slide {
+  --lip: var(--tt-color-border-default);
   position: relative;
   width: 1920px;
   height: 1080px;
   overflow: hidden;
-  padding: 80px 120px;
   background: var(--tt-color-bg);
   break-after: page;
 }
@@ -45,59 +47,31 @@ img {
   break-after: auto;
 }
 
-/* ───── типографика ───── */
-.kicker {
-  margin-bottom: var(--tt-space-s500);
-  color: var(--tt-color-accent-text);
-  font-family: var(--tt-font-family-display);
-  font-size: 24px;
-  font-weight: var(--tt-font-weight-black);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
+/* ───── текст ───── */
 .title {
-  max-width: 1400px;
   font-family: var(--tt-font-family-display);
-  font-size: 68px;
+  font-size: 72px;
   font-weight: var(--tt-font-weight-black);
-  line-height: 1.05;
-  letter-spacing: -0.01em;
+  line-height: 1.04;
+  letter-spacing: -0.012em;
   text-wrap: balance;
 }
 
-.lead {
+.body {
+  font-size: 30px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.body + .body {
   margin-top: var(--tt-space-s800);
-  max-width: 1100px;
-  color: var(--tt-color-text-secondary);
-  font-size: 34px;
-  line-height: 1.35;
 }
 
-.accent {
-  color: var(--tt-color-accent-text);
-}
-
-/* ───── номер слайда и знак ───── */
-.foot {
-  position: absolute;
-  right: 120px;
-  bottom: 44px;
-  left: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--tt-color-text-tertiary);
-  font-family: var(--tt-font-family-display);
-  font-size: 22px;
-  font-weight: var(--tt-font-weight-extrabold);
-}
-
+/* ───── знак и подвал ───── */
 .brand {
   display: flex;
   align-items: center;
   gap: var(--tt-space-s400);
-  color: var(--tt-color-text-primary);
   font-family: var(--tt-font-family-display);
   font-weight: var(--tt-font-weight-black);
 }
@@ -106,8 +80,22 @@ img {
   border-radius: 22%;
 }
 
+.foot {
+  position: absolute;
+  bottom: 52px;
+  left: 112px;
+  display: flex;
+  align-items: center;
+  gap: var(--tt-space-s600);
+  color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
+  font-size: 22px;
+  font-weight: var(--tt-font-weight-extrabold);
+}
+
 .foot .brand {
   gap: var(--tt-space-s300);
+  color: var(--tt-color-text-primary);
   font-size: 24px;
 }
 
@@ -116,46 +104,18 @@ img {
   height: 36px;
 }
 
-/* ───── соты ───── */
-.hex {
-  position: relative;
-  display: grid;
-  flex: none;
-  place-items: center;
-}
-
-.hex svg.hex__shape {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.hex__icon {
-  position: relative;
-  display: grid;
-  place-items: center;
-  color: var(--tt-color-text-on-fill);
-}
-
-.hex__icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* ───── телефон и окно браузера ───── */
+/* ───── устройства ───── */
 .phone {
   position: relative;
   flex: none;
   box-sizing: content-box;
-  width: 320px;
+  width: var(--w, 320px);
   aspect-ratio: 390 / 844;
   overflow: hidden;
-  border: 12px solid var(--tt-color-text-primary);
-  border-radius: 56px;
+  border: 13px solid var(--tt-color-text-primary);
+  border-radius: 54px;
   background: var(--tt-color-surface);
-  box-shadow: 0 var(--tt-space-s400) 0 var(--tt-color-border-default);
+  box-shadow: 0 16px 0 var(--lip);
 }
 
 .phone img {
@@ -165,137 +125,165 @@ img {
   object-position: top;
 }
 
-.phone--sm {
-  width: 248px;
-  border-width: 10px;
-  border-radius: 44px;
-}
-
-.phone--row {
-  width: 248px;
-  border-width: 10px;
-  border-radius: 46px;
-}
-
-.phone--md {
-  width: 350px;
-}
-
-.phone--lg {
-  width: 370px;
-}
-
-/* Полноэкранный снимок: один скрин на слайд, вписан целиком (фон слайда и приложения один). */
-.slide--full {
-  display: flex;
-  flex-direction: column;
-  padding: 40px 0 0;
-}
-
-.slide--full .title {
-  margin: 0 0 24px;
-  text-align: center;
-}
-
-.slide--full .full__img {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  object-fit: contain;
-  object-position: center;
-}
-
-.window {
+.win {
   position: relative;
+  flex: none;
   overflow: hidden;
   border: 2px solid var(--tt-color-border-default);
-  border-radius: var(--tt-radius-card);
+  border-radius: 20px;
   background: var(--tt-color-surface);
-  box-shadow: 0 var(--tt-space-s400) 0 var(--tt-color-border-default);
+  box-shadow: 0 16px 0 var(--lip);
 }
 
-.window__bar {
+.win__bar {
   display: flex;
-  gap: var(--tt-space-s200);
+  gap: 9px;
   align-items: center;
-  height: 40px;
-  padding-inline: var(--tt-space-s500);
+  height: 36px;
+  padding-inline: 18px;
   border-bottom: 2px solid var(--tt-color-border-subtle);
   background: var(--tt-color-bg-sunken);
 }
 
-.window__bar i {
-  width: 14px;
-  height: 14px;
+.win__bar i {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--tt-color-border-default);
 }
 
-.window img {
+.win__bar span {
+  margin-left: var(--tt-space-s400);
+  color: var(--tt-color-text-tertiary);
+  font-size: 16px;
+}
+
+.win img {
   width: 100%;
-  height: calc(100% - 40px);
-  object-fit: cover;
-  object-position: top left;
+  height: auto;
 }
 
-.caption {
-  margin-top: var(--tt-space-s600);
-  font-family: var(--tt-font-family-display);
-  font-size: 30px;
-  font-weight: var(--tt-font-weight-black);
-  text-align: center;
+.at {
+  position: absolute;
 }
 
-.caption small {
-  display: block;
-  margin-top: var(--tt-space-s200);
+/* ───── текст слева, экраны справа ───── */
+.side {
+  display: grid;
+  grid-template-columns: 640px 1fr;
+}
+
+.side__text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 56px 140px 112px;
+}
+
+.side__text .title {
+  margin-bottom: var(--tt-space-s1000);
+}
+
+.stage {
+  --lip: var(--tt-color-accent-soft-border);
+  position: relative;
+  margin: 48px 48px 48px 0;
+  overflow: hidden;
+  border: 3px solid var(--tt-color-accent-soft-border);
+  border-radius: 56px;
+  background: var(--tt-color-accent-soft);
+}
+
+.stage__row {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ───── заголовок сверху, экраны с подписями ───── */
+.top {
+  padding: 80px 112px 0;
+}
+
+.note {
+  max-width: 1300px;
+  margin-top: var(--tt-space-s500);
   color: var(--tt-color-text-secondary);
-  font-family: var(--tt-font-family-text);
-  font-size: 24px;
-  font-weight: var(--tt-font-weight-regular);
+  font-size: 28px;
+  line-height: 1.4;
 }
 
-/* ───── карточки ───── */
-.card {
-  border: 2px solid var(--tt-color-border-subtle);
-  border-radius: var(--tt-radius-card);
-  background: var(--tt-color-surface);
-  box-shadow: 0 var(--tt-space-s200) 0 var(--tt-color-border-default);
+.row {
+  display: flex;
+  gap: 64px;
+  align-items: flex-end;
+  justify-content: center;
+  margin-top: 56px;
+}
+
+.shot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shot figcaption {
+  margin-top: var(--tt-space-s800);
+  color: var(--tt-color-text-secondary);
+  font-size: 25px;
+  line-height: 1.3;
+  text-align: center;
 }
 
 /* ───── обложка ───── */
 .cover {
   display: grid;
-  grid-template-columns: 1fr 780px;
-  gap: 80px;
-  align-items: center;
-  padding: 0 0 0 120px;
+  grid-template-columns: 1fr 900px;
+}
+
+.cover__text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 96px 64px 96px 112px;
 }
 
 .cover .brand {
-  font-size: 56px;
+  gap: var(--tt-space-s800);
+  font-size: 128px;
+  letter-spacing: -0.02em;
 }
 
 .cover .brand img {
-  width: 88px;
-  height: 88px;
+  width: 150px;
+  height: 150px;
 }
 
 .cover__sub {
-  margin-top: var(--tt-space-s400);
-  color: var(--tt-color-text-secondary);
+  margin-top: var(--tt-space-s1000);
   font-family: var(--tt-font-family-display);
-  font-size: 32px;
-  font-weight: var(--tt-font-weight-extrabold);
+  font-size: 48px;
+  font-weight: var(--tt-font-weight-black);
+  line-height: 1.12;
+  text-wrap: balance;
 }
 
-.cover__title {
-  margin-top: 112px;
+.cover__lead {
+  margin-top: var(--tt-space-s600);
+  color: var(--tt-color-text-secondary);
+  font-size: 30px;
+  line-height: 1.4;
+}
+
+.cover__url {
+  margin-top: 64px;
+  color: var(--tt-color-accent-text);
   font-family: var(--tt-font-family-display);
-  font-size: 80px;
+  font-size: 34px;
   font-weight: var(--tt-font-weight-black);
-  line-height: 1.02;
-  letter-spacing: -0.015em;
 }
 
 .cover__art {
@@ -309,7 +297,7 @@ img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 90% 50%;
+  object-position: 80% 50%;
 }
 
 .bubble {
@@ -317,415 +305,45 @@ img {
   padding: var(--tt-space-s400) var(--tt-space-s800);
   border-radius: 999px;
   background: var(--tt-color-surface);
-  color: var(--tt-color-text-primary);
   font-family: var(--tt-font-family-display);
-  font-size: 44px;
+  font-size: 48px;
   font-weight: var(--tt-font-weight-black);
   box-shadow: 0 var(--tt-space-s200) 0 var(--tt-color-border-default);
 }
 
-/* ───── проблема ───── */
-.stats {
+/* ───── как сделано ───── */
+.tech {
+  padding: 80px 112px 0;
+}
+
+.tech__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--tt-space-s1000);
-  margin-top: 72px;
+  grid-template-columns: 1fr 520px;
+  gap: 88px;
+  margin-top: 64px;
 }
 
-.stat {
-  padding: var(--tt-space-s1000) var(--tt-space-s1000) var(--tt-space-s1200);
-}
-
-.stat__num {
-  font-family: var(--tt-font-family-display);
-  font-size: 72px;
-  white-space: nowrap;
-  font-weight: var(--tt-font-weight-black);
-  line-height: 1;
-}
-
-.stat__text {
-  margin-top: var(--tt-space-s600);
-  color: var(--tt-color-text-secondary);
-  font-size: 30px;
-  line-height: 1.3;
-}
-
-.stat__src {
-  margin-top: var(--tt-space-s600);
+.layer__label {
+  margin: var(--tt-space-s1000) 0 var(--tt-space-s400);
   color: var(--tt-color-text-tertiary);
+  font-family: var(--tt-font-family-display);
   font-size: 20px;
-}
-
-.note {
-  display: flex;
-  gap: var(--tt-space-s500);
-  align-items: center;
-  margin-top: 56px;
-  padding: var(--tt-space-s600) var(--tt-space-s1000);
-  border-radius: var(--tt-radius-card);
-  background: var(--tt-color-accent-soft);
-  font-family: var(--tt-font-family-display);
-  font-size: 32px;
-  font-weight: var(--tt-font-weight-extrabold);
-}
-
-.note svg {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  color: var(--tt-color-accent-text);
-}
-
-/* ───── цикл ───── */
-.loop {
-  display: flex;
-  gap: 0;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-top: 96px;
-}
-
-.loop__step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 300px;
-  text-align: center;
-}
-
-.loop__label {
-  margin-top: var(--tt-space-s800);
-  font-family: var(--tt-font-family-display);
-  font-size: 34px;
   font-weight: var(--tt-font-weight-black);
-  line-height: 1.12;
-}
-
-.loop__hint {
-  margin-top: var(--tt-space-s300);
-  color: var(--tt-color-text-secondary);
-  font-size: 24px;
-  line-height: 1.3;
-}
-
-.loop__arrow {
-  flex: none;
-  width: 72px;
-  height: 72px;
-  margin-top: 64px;
-  color: var(--tt-color-border-strong);
-}
-
-.loop__back {
-  display: flex;
-  gap: var(--tt-space-s400);
-  align-items: center;
-  justify-content: center;
-  margin-top: 64px;
-  padding: var(--tt-space-s600) var(--tt-space-s1000);
-  border: 3px dashed var(--tt-color-accent-soft-border);
-  border-radius: 999px;
-  color: var(--tt-color-accent-text);
-  font-family: var(--tt-font-family-display);
-  font-size: 30px;
-  font-weight: var(--tt-font-weight-black);
-}
-
-.loop__back svg {
-  width: 40px;
-  height: 40px;
-}
-
-/* ───── текст + телефоны ───── */
-.split {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 96px;
-  align-items: center;
-  height: 100%;
-}
-
-.points {
-  display: grid;
-  gap: var(--tt-space-s1000);
-  margin: 72px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.points li {
-  display: flex;
-  gap: var(--tt-space-s800);
-  align-items: center;
-  font-size: 34px;
-  line-height: 1.25;
-}
-
-.points b {
-  font-family: var(--tt-font-family-display);
-  font-weight: var(--tt-font-weight-black);
-}
-
-.phones {
-  display: flex;
-  gap: var(--tt-space-s1200);
-  align-items: flex-start;
-}
-
-.phones--row {
-  justify-content: center;
-  margin-top: 48px;
-}
-
-.places {
-  display: grid;
-  grid-template-columns: repeat(6, 140px);
-  gap: var(--tt-space-s200);
-  margin-top: 72px;
-}
-
-.place {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.place__art {
-  position: relative;
-  width: 66px;
-  height: 66px;
-  margin-bottom: 8px;
-  object-fit: contain;
-}
-
-.place b {
-  margin-top: var(--tt-space-s300);
-  font-family: var(--tt-font-family-display);
-  font-size: 21px;
-  white-space: nowrap;
-  font-weight: var(--tt-font-weight-black);
-}
-
-.place span {
-  color: var(--tt-color-text-secondary);
-  font-size: 17px;
-}
-
-/* Слайд с коротким содержимым — по центру по высоте (место под подвал снизу). */
-.slide--center {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-bottom: 140px;
-}
-
-/* ───── учитель, консоль ───── */
-.screens {
-  position: relative;
-  height: 100%;
-}
-
-.duo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--tt-space-s1200);
-  margin-top: 56px;
-}
-
-.duo .window {
-  height: 590px;
-}
-
-.duo .caption {
-  text-align: left;
-}
-
-/* ───── каналы ───── */
-.devices {
-  display: flex;
-  gap: var(--tt-space-s800);
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-top: 72px;
-}
-
-.devices .window {
-  width: 780px;
-  height: 557px;
-}
-
-.device {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Только телефоны (без окна): центрируем ряд, иначе space-between раскидает их по краям. */
-.devices--phones {
-  justify-content: center;
-  gap: var(--tt-space-s1200);
-}
-
-/* Доска почёта: широкое окно сайта + телефон приложения, выровнены по низу подписей. */
-.board {
-  display: flex;
-  gap: var(--tt-space-s1200);
-  align-items: flex-end;
-  justify-content: center;
-  margin-top: 88px;
-}
-
-/* ───── цифры ───── */
-.numbers {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 72px var(--tt-space-s1200);
-  margin-top: 88px;
-}
-
-.number {
-  display: flex;
-  gap: var(--tt-space-s800);
-  align-items: center;
-}
-
-.number__val {
-  font-family: var(--tt-font-family-display);
-  font-size: 64px;
-  white-space: nowrap;
-  font-weight: var(--tt-font-weight-black);
-  line-height: 1;
-}
-
-.number__text {
-  margin-top: var(--tt-space-s200);
-  color: var(--tt-color-text-secondary);
-  font-size: 28px;
-  line-height: 1.25;
-}
-
-/* ───── дальше ───── */
-.next {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--tt-space-s1200);
-  margin-top: 88px;
-}
-
-.next .card {
-  padding: var(--tt-space-s1200);
-}
-
-.next h3 {
-  margin-top: var(--tt-space-s800);
-  font-family: var(--tt-font-family-display);
-  font-size: 38px;
-  font-weight: var(--tt-font-weight-black);
-  line-height: 1.1;
-}
-
-.next p {
-  margin-top: var(--tt-space-s400);
-  color: var(--tt-color-text-secondary);
-  font-size: 27px;
-  line-height: 1.35;
-}
-
-/* ───── финал ───── */
-.final {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: var(--tt-color-accent-soft);
-}
-
-.final__bees {
-  display: flex;
-  gap: 120px;
-  align-items: flex-end;
-}
-
-.final__bees img {
-  width: 300px;
-  height: auto;
-}
-
-.final__title {
-  margin-top: var(--tt-space-s1200);
-  font-family: var(--tt-font-family-display);
-  font-size: 112px;
-  font-weight: var(--tt-font-weight-black);
-  line-height: 1.02;
-}
-
-.final__url {
-  display: inline-block;
-  margin-top: 72px;
-  padding: var(--tt-space-s600) var(--tt-space-s1600);
-  border-radius: var(--tt-radius-card);
-  background: var(--tt-color-accent-fill);
-  box-shadow: 0 var(--tt-space-s200) 0 var(--tt-color-accent-lip);
-  color: var(--tt-color-text-on-fill);
-  font-family: var(--tt-font-family-display);
-  font-size: 48px;
-  font-weight: var(--tt-font-weight-black);
-}
-
-.final .brand {
-  margin-top: 88px;
-  font-size: 40px;
-}
-
-.final .brand img {
-  width: 64px;
-  height: 64px;
-}
-
-/* ───── архитектура ───── */
-.arch {
-  display: grid;
-  grid-template-columns: 1fr 470px;
-  gap: var(--tt-space-s1200);
-  margin-top: var(--tt-space-s1000);
-}
-
-.arch__label {
-  margin: var(--tt-space-s500) 0 var(--tt-space-s300);
-  color: var(--tt-color-text-tertiary);
-  font-family: var(--tt-font-family-display);
-  font-size: 18px;
-  font-weight: var(--tt-font-weight-black);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.arch__label:first-child {
+.layer__label:first-child {
   margin-top: 0;
 }
 
-.arch__row {
+.layer__row {
   display: grid;
   gap: var(--tt-space-s400);
 }
 
-.arch__row--5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.arch__row--4 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
 .box {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--tt-space-s100);
-  padding: var(--tt-space-s500);
+  padding: var(--tt-space-s600);
   border: 2px solid var(--tt-color-border-subtle);
   border-radius: var(--tt-radius-tile);
   background: var(--tt-color-surface);
@@ -733,158 +351,208 @@ img {
 }
 
 .box b {
+  display: block;
   font-family: var(--tt-font-family-display);
-  font-size: 21px;
+  font-size: 26px;
   font-weight: var(--tt-font-weight-black);
-  line-height: 1.15;
 }
 
-.box span:not(.box__icon) {
+.box span {
+  display: block;
+  margin-top: var(--tt-space-s100);
   color: var(--tt-color-text-secondary);
-  font-size: 17px;
-  line-height: 1.3;
-}
-
-.box__icon {
-  width: 30px;
-  height: 30px;
-  margin-bottom: var(--tt-space-s100);
-  color: var(--tt-color-accent-text);
-}
-
-.box__icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.box--later {
-  border-style: dashed;
-  border-color: var(--tt-color-border-strong);
-  background: transparent;
-  box-shadow: none;
-}
-
-.box--later .box__icon {
-  color: var(--tt-color-text-tertiary);
-}
-
-.box__tag {
-  position: absolute;
-  top: var(--tt-space-s400);
-  right: var(--tt-space-s400);
-  padding: var(--tt-space-s050) var(--tt-space-s250);
-  border-radius: 999px;
-  background: var(--tt-color-bg-sunken);
-  color: var(--tt-color-text-secondary);
-  font-family: var(--tt-font-family-display);
-  font-size: 15px;
-  font-style: normal;
-  font-weight: var(--tt-font-weight-extrabold);
-}
-
-.arch__contract {
-  display: flex;
-  gap: var(--tt-space-s400);
-  align-items: center;
-  margin-top: var(--tt-space-s500);
-  padding: var(--tt-space-s400) var(--tt-space-s600);
-  border-radius: var(--tt-radius-tile);
-  background: var(--tt-color-accent-soft);
   font-size: 20px;
   line-height: 1.3;
 }
 
-.arch__contract svg {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  color: var(--tt-color-accent-text);
-}
-
-.arch__api {
-  padding: var(--tt-space-s500) var(--tt-space-s600);
-  border: 2px solid var(--tt-color-accent-soft-border);
-  border-radius: var(--tt-radius-tile);
-  background: var(--tt-color-surface);
+.box--api {
+  border-color: var(--tt-color-accent-soft-border);
+  background: var(--tt-color-accent-soft);
   box-shadow: 0 var(--tt-size-lip) 0 var(--tt-color-accent-soft-border);
 }
 
-.arch__api-head {
-  display: flex;
-  gap: var(--tt-space-s400);
-  align-items: baseline;
+.tech__notes {
+  padding-top: var(--tt-space-s1200);
 }
 
-.arch__api-head b {
+.tech__notes .body {
+  font-size: 27px;
+}
+
+.tech__notes .body + .body {
+  margin-top: var(--tt-space-s600);
+}
+
+/* ───── финал ───── */
+.final {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 0 160px;
+  background: var(--tt-color-bg);
+}
+
+.final .brand {
+  gap: var(--tt-space-s600);
+  margin-bottom: 64px;
+  font-size: 104px;
+  letter-spacing: -0.02em;
+}
+
+.final .brand img {
+  width: 124px;
+  height: 124px;
+}
+
+.final__link {
   font-family: var(--tt-font-family-display);
-  font-size: 24px;
+  font-size: 44px;
+  font-weight: var(--tt-font-weight-black);
+  line-height: 1.6;
+}
+
+.final__qr {
+  padding: 40px;
+  border: 3px solid var(--tt-color-accent-soft-border);
+  border-radius: 48px;
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-space-s300) 0 var(--tt-color-accent-soft-border);
+}
+
+.final__qr svg {
+  display: block;
+  width: 420px;
+  height: 420px;
+}
+
+.final__bee {
+  position: absolute;
+  width: 240px;
+}
+
+/* ───── полный цикл ───── */
+.flow {
+  padding: 80px 112px 0;
+}
+
+.steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 40px;
+  margin: 96px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+/* Линия через все шаги — по центрам меток. */
+.steps::before {
+  position: absolute;
+  top: 27px;
+  right: 10%;
+  left: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--tt-color-accent-soft-border);
+  content: "";
+}
+
+.steps li {
+  position: relative;
+  counter-increment: step;
+}
+
+.steps li::before {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: var(--tt-space-s800);
+  border: 4px solid var(--tt-color-accent-lip);
+  border-radius: 50%;
+  background: var(--tt-color-accent-fill);
+  color: var(--tt-color-text-on-fill);
+  font-family: var(--tt-font-family-display);
+  font-size: 26px;
+  font-weight: var(--tt-font-weight-black);
+  content: counter(step);
+}
+
+.steps b {
+  display: block;
+  font-family: var(--tt-font-family-display);
+  font-size: 36px;
   font-weight: var(--tt-font-weight-black);
 }
 
-.arch__api-head span {
-  color: var(--tt-color-text-secondary);
-  font-size: 19px;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--tt-space-s200);
+.steps p {
   margin-top: var(--tt-space-s400);
+  font-size: 27px;
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
-.chip {
+.flow__pairs {
+  position: absolute;
+  bottom: 140px;
+  left: 112px;
+  color: var(--tt-color-text-secondary);
+  font-size: 28px;
+}
+
+/* ───── данные и API ───── */
+.api {
+  padding: 80px 112px 0;
+}
+
+.api__grid {
+  display: grid;
+  grid-template-columns: 980px 1fr;
+  gap: 64px;
+  margin-top: 56px;
+}
+
+.code {
+  margin: 0;
+  padding: var(--tt-space-s1000);
+  overflow: hidden;
+  border: 2px solid var(--tt-color-border-subtle);
+  border-radius: 28px;
+  background: var(--tt-color-surface);
+  box-shadow: 0 var(--tt-space-s300) 0 var(--tt-color-border-default);
+  color: var(--tt-color-text-primary);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 20px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.endpoints {
+  display: grid;
+  gap: var(--tt-space-s1000);
+  margin: var(--tt-space-s400) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.endpoints code {
+  display: inline-block;
   padding: var(--tt-space-s150) var(--tt-space-s400);
-  border-radius: 999px;
+  border-radius: var(--tt-radius-tile);
   background: var(--tt-color-accent-soft);
-  font-size: 17px;
-  font-weight: var(--tt-font-weight-medium);
-}
-
-.arch__note {
-  margin-top: var(--tt-space-s400);
-  color: var(--tt-color-text-secondary);
-  font-size: 17px;
-}
-
-.arch__side {
-  display: flex;
-  flex-direction: column;
-  gap: var(--tt-space-s800);
-  padding-top: var(--tt-space-s200);
-}
-
-.rule {
-  display: flex;
-  gap: var(--tt-space-s500);
-}
-
-.rule > svg {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  color: var(--tt-color-accent-text);
-}
-
-.rule b {
-  font-family: var(--tt-font-family-display);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 23px;
-  font-weight: var(--tt-font-weight-black);
 }
 
-.rule p {
-  margin-top: var(--tt-space-s150);
-  color: var(--tt-color-text-secondary);
-  font-size: 18px;
+.endpoints p {
+  margin-top: var(--tt-space-s300);
+  font-size: 27px;
   line-height: 1.4;
 }
 
-.final .final__brand {
-  margin-top: var(--tt-space-s1200);
-  font-size: 88px;
-}
-
-.final .final__brand img {
-  width: 110px;
-  height: 110px;
+.api__stack {
+  margin-top: 56px;
+  color: var(--tt-color-text-secondary);
+  font-size: 27px;
 }

@@ -20,6 +20,14 @@ const report = await page.evaluate(() => {
       return r.bottom > sr.bottom + 1 || r.right > sr.right + 1 || r.left < sr.left - 1 || r.top < sr.top - 1;
     }).map((c) => `${c.className?.toString().split(" ")[0] || c.tagName}: bottom=${Math.round(c.getBoundingClientRect().bottom)} right=${Math.round(c.getBoundingClientRect().right)}`);
     const phones = [...slide.querySelectorAll(".phone")].map((p) => Math.round(p.getBoundingClientRect().width));
+    // Экраны, вылезающие за цветную сцену (кроме намеренно обрезанных окон — у них overflow внутри сцены).
+    const stage = slide.querySelector(".stage")?.getBoundingClientRect();
+    const outOfStage = stage
+      ? [...slide.querySelectorAll(".stage .phone, .stage .win")].filter((d) => {
+          const r = d.getBoundingClientRect();
+          return r.left < stage.left - 1 || r.right > stage.right + 1 || r.top < stage.top - 1 || r.bottom > stage.bottom + 1;
+        }).length
+      : 0;
     const fulls = [...slide.querySelectorAll(".full__img")].map((img) => {
       const r = img.getBoundingClientRect();
       const box = { w: Math.round(r.width), h: Math.round(r.height) };
@@ -27,13 +35,14 @@ const report = await page.evaluate(() => {
       const rendered = { w: Math.round(r.height * c), h: Math.round(r.height) };
       return { box, rendered };
     });
-    const title = slide.querySelector(".title")?.textContent?.trim() ?? "(без заголовка)";
-    return { n: i + 1, title, phones, fulls, overflows };
+    const title = slide.querySelector(".feat__title, .tech__title, .brand")?.textContent?.trim() ?? "(без заголовка)";
+    return { n: i + 1, title, phones, fulls, overflows, outOfStage };
   });
 });
 for (const r of report) {
   const flags = [];
   if (r.overflows.length) flags.push(`ПЕРЕПОЛНЕНИЕ: ${r.overflows.join("; ")}`);
+  if (r.outOfStage) flags.push(`ЗА СЦЕНОЙ: ${r.outOfStage}`);
   if (r.phones.length) flags.push(`телефоны ${r.phones.map((w) => `${w}px`).join(", ")}`);
   if (r.fulls.length) flags.push(r.fulls.map((f) => `скрин в ${f.rendered.w}×${f.rendered.h} (box ${f.box.w}×${f.box.h})`).join("; "));
   console.log(`${String(r.n).padStart(2)}. ${r.title} — ${flags.join(" | ") || "ок"}`);
