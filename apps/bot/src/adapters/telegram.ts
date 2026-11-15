@@ -5,7 +5,7 @@
 import { Bot, GrammyError } from "grammy";
 import type { BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, UserFromGetMe } from "grammy/types";
 import type { Button, Incoming, MenuButton, Outgoing } from "../core/messages.js";
-import { ChatUnreachableError, type SendFn } from "../core/reminders.js";
+import { ChatUnreachableError, NotDeliveredError, RetryLaterError, type SendFn } from "../core/reminders.js";
 import { handle, type BotContext } from "../core/scenarios.js";
 
 export interface TelegramMessage {
@@ -73,9 +73,11 @@ export function createTelegramBot(token: string, ctx: BotContext, opts: { botInf
 
   // Нажатие кнопки: ответ — правкой того же сообщения (чат не засоряется), остальное — новыми сообщениями.
   // editMessageText принимает только inline-разметку: меню-клавиатуру с ответа снимаем (она и так постоянная).
+  // На нажатие отвечаем сразу, до похода в API: иначе «часики» на кнопке висят весь запрос, а при ошибке — до таймаута
+  // Telegram. Сбой самого ответа (устаревшее нажатие) обработку не прерывает.
   personal.on("callback_query:data", async (tg) => {
+    await tg.answerCallbackQuery().catch(() => undefined);
     const [first, ...rest] = await handle({ chatId: String(tg.chat.id), kind: "callback", data: tg.callbackQuery.data }, ctx);
-    await tg.answerCallbackQuery();
     if (first) {
       const m = toTelegram(first);
       const markup = m.reply_markup && "inline_keyboard" in m.reply_markup ? { reply_markup: m.reply_markup } : {};
@@ -106,7 +108,8 @@ export async function configureBot(bot: Bot, ctx: Pick<BotContext, "miniAppUrl">
 
 /**
  * Отправка напоминания. Telegram ответил «бот заблокирован», «пользователь удалён» или «чат не найден» — чат недоступен
- * навсегда (ChatUnreachableError): рассылка его отвяжет.
+ * навсегда (ChatUnreachableError): рассылка его отвяжет. 429 — RetryLaterError с retry_after; другая ошибка Bot API —
+ * NotDeliveredError (сообщение точно не ушло). Обрыв сети (HttpError) пробрасывается как есть: исход неизвестен.
  */
 export function telegramSender(bot: Bot): SendFn {
   return async (chatId, out) => {
@@ -117,6 +120,8 @@ export function telegramSender(bot: Bot): SendFn {
       if (e instanceof GrammyError && (e.error_code === 403 || (e.error_code === 400 && /chat not found|user is deactivated/i.test(e.description)))) {
         throw new ChatUnreachableError();
       }
+      if (e instanceof GrammyError && e.error_code === 429) throw new RetryLaterError(Number(e.parameters?.retry_after ?? 1));
+      if (e instanceof GrammyError) throw new NotDeliveredError(e.error_code);
       throw e;
     }
   };

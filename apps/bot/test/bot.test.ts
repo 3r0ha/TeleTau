@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { configureBot, createTelegramBot, fromTelegram, telegramSender, toTelegram, COMMANDS } from "../src/adapters/telegram.js";
 import { loadConfig, miniAppUrlFor, MISSING_TOKEN_MESSAGE } from "../src/config.js";
 import type { Outgoing } from "../src/core/messages.js";
-import { ChatUnreachableError } from "../src/core/reminders.js";
+import { ChatUnreachableError, NotDeliveredError, RetryLaterError } from "../src/core/reminders.js";
 import { CALLBACK, handle, MENU, TEXT, type BotContext } from "../src/core/scenarios.js";
 import { BOT_INFO, callbackUpdate, fakeTelegram, FakeApi, textUpdate, USER_PII } from "./fakes.js";
 
@@ -418,6 +418,20 @@ describe("адаптер Telegram: настоящий grammY, подменённ
     expect(api.calls).toEqual(["daily 4242", `answer ${data.slice(3, -2)} a`]);
   });
 
+  it("на нажатие отвечаем до похода в API: и при сбое обработки, и если сам answerCallbackQuery не прошёл", async () => {
+    const broken = new FakeApi().link("4242");
+    broken.setReminders = async () => {
+      throw new Error("unexpected");
+    };
+    const failing = setup(broken);
+    // Ошибка обработки уходит в обработчик ошибок бота (bot.catch при long polling); ответ на нажатие уже отправлен.
+    await expect(failing.bot.handleUpdate(callbackUpdate(CALLBACK.on) as never)).rejects.toThrow(/unexpected/);
+    expect(failing.calls.map((c) => c.method)).toEqual(["answerCallbackQuery"]);
+    const stale = setup(new FakeApi().link("4242"), (c) => (c.method === "answerCallbackQuery" ? { error_code: 400, description: "Bad Request: query is too old" } : true));
+    await stale.bot.handleUpdate(callbackUpdate(CALLBACK.on) as never);
+    expect(stale.calls.map((c) => c.method)).toEqual(["answerCallbackQuery", "editMessageText"]);
+  });
+
   it("повторное нажатие того же часа («message is not modified») — без нового сообщения", async () => {
     const { bot, calls } = setup(new FakeApi().link("4242", { enabled: true, hour: 19 }), (c) =>
       c.method === "editMessageText" ? { error_code: 400, description: "Bad Request: message is not modified" } : true,
@@ -436,14 +450,18 @@ describe("адаптер Telegram: настоящий grammY, подменённ
     expect(calls.map((c) => c.method)).toEqual(["setMyCommands"]);
   });
 
-  it("отправка напоминания: заблокировал бота (403) или чат удалён — ChatUnreachableError; прочие ошибки — как есть", async () => {
+  it("отправка напоминания: заблокировал бота (403) или чат удалён — ChatUnreachableError; 429 — RetryLaterError, другая ошибка Bot API — NotDeliveredError", async () => {
     const out = { text: TEXT.reminder };
     const blocked = setup(undefined, () => ({ error_code: 403, description: "Forbidden: bot was blocked by the user" }));
     await expect(telegramSender(blocked.bot)("4242", out)).rejects.toBeInstanceOf(ChatUnreachableError);
     const gone = setup(undefined, () => ({ error_code: 400, description: "Bad Request: chat not found" }));
     await expect(telegramSender(gone.bot)("4242", out)).rejects.toBeInstanceOf(ChatUnreachableError);
-    const busy = setup(undefined, () => ({ error_code: 429, description: "Too Many Requests: retry after 5" }));
-    await expect(telegramSender(busy.bot)("4242", out)).rejects.not.toBeInstanceOf(ChatUnreachableError);
+    const busy = setup(undefined, () => ({ error_code: 429, description: "Too Many Requests: retry after 5", parameters: { retry_after: 5 } }));
+    const wait = await telegramSender(busy.bot)("4242", out).catch((e: unknown) => e);
+    expect(wait).toBeInstanceOf(RetryLaterError);
+    expect((wait as RetryLaterError).retryAfterSeconds).toBe(5);
+    const refused = setup(undefined, () => ({ error_code: 400, description: "Bad Request: message text is empty" }));
+    await expect(telegramSender(refused.bot)("4242", out)).rejects.toBeInstanceOf(NotDeliveredError);
     const ok = setup();
     await telegramSender(ok.bot)("4242", out);
     expect(ok.calls[0]).toEqual({ method: "sendMessage", payload: { chat_id: 4242, text: TEXT.reminder } });

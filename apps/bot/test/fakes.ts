@@ -102,11 +102,20 @@ export class FakeApi implements TeleTauApi {
     this.links.delete(chatId);
   }
 
+  /** Возвращённые в выдачу чаты (releaseReminders): сутки и чаты. */
+  readonly released: { day: string; chatIds: string[] }[] = [];
+
   async claimReminders() {
     this.check("claim");
     const due = this.due;
     this.due = [];
-    return due;
+    return { day: `day-${this.day}`, chatIds: due };
+  }
+
+  async releaseReminders(day: string, chatIds: string[]) {
+    this.check(`release ${day} ${chatIds.join(",")}`);
+    this.released.push({ day, chatIds: [...chatIds] });
+    this.due.push(...chatIds);
   }
 
   async dailyDuel(chatId: string): Promise<DailyDuel | null> {

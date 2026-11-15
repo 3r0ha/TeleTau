@@ -22,7 +22,7 @@ export const CALLBACK = {
   hour: (h: number) => `rem:h:${h}`,
   daily: "dd:menu",
   dailyCancel: "dd:cancel",
-  /** Отвязка чата из меню напоминаний (была командой /unlink). */
+  /** Отвязка чата из меню напоминаний (команда /unlink — запасной путь). */
   unlink: "chat:unlink",
   /** `dd:<uuid>:<choice>` — 44 байта максимум: влезает в лимит callback_data. */
   duel: (dialogId: string, choice: DuelChoice) => `dd:${dialogId}:${choice}`,
@@ -246,7 +246,7 @@ async function phrase(ctx: BotContext): Promise<Outgoing> {
   return withMenu({ text: `Фраза дня\n\n«${pair.textBa}»\n— «${pair.sourceRu}»` }, ctx);
 }
 
-/** Отвязка чата (кнопка «❌ Отвязать чат» в меню напоминаний, была командой /unlink). */
+/** Отвязка чата: кнопка «❌ Отвязать чат» в меню напоминаний или команда /unlink. */
 async function unlinkChat(chatId: string, ctx: BotContext): Promise<Outgoing> {
   if (!ctx.api) return { text: TEXT.remindersDisabled };
   await ctx.api.unlink(chatId);

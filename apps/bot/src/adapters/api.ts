@@ -69,7 +69,11 @@ export function createTeleTauApi(o: ApiOptions): TeleTauApi {
     },
     async claimReminders() {
       const batch = settle(await client.POST("/api/v1/telegram/bot/reminders/claim", {}), false);
-      return (batch?.items ?? []).map((i) => i.chatId);
+      return { day: batch?.day ?? "", chatIds: (batch?.items ?? []).map((i) => i.chatId) };
+    },
+    async releaseReminders(day, chatIds) {
+      if (chatIds.length === 0) return;
+      settle(await client.POST("/api/v1/telegram/bot/reminders/release", { body: { day, chatIds } }), false);
     },
     async dailyDuel(chatId) {
       return settle<DailyDuel>(await client.POST("/api/v1/telegram/bot/chats/{chatId}/daily-duel", { params: { path: { chatId } } }), true);
@@ -80,7 +84,8 @@ export function createTeleTauApi(o: ApiOptions): TeleTauApi {
       const r = await client.POST("/api/v1/telegram/bot/dialogs/{dialogId}/answer", { params: { path: { dialogId } }, body: { choice } });
       if (r.response.ok) return { kind: "ok", replay: r.data?.replay === true };
       if (r.response.status === 404) return null;
-      if (r.response.status === 409) return problemCode(r.data) === "already_voted" ? { kind: "voted" } : { kind: "closed" };
+      // Тело ошибки openapi-fetch кладёт в r.error (r.data у не-2xx нет).
+      if (r.response.status === 409) return problemCode(r.error) === "already_voted" ? { kind: "voted" } : { kind: "closed" };
       return fail(r.response.status);
     },
     async cancelDaily(chatId) {

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTeleTauApi } from "../src/adapters/api.js";
 import type { Outgoing } from "../src/core/messages.js";
 import { ApiUnavailableError } from "../src/core/ports.js";
-import { ChatUnreachableError, sendDueReminders, startReminderLoop, type ReminderRun } from "../src/core/reminders.js";
+import { ChatUnreachableError, NotDeliveredError, RetryLaterError, sendDueReminders, startReminderLoop, type ReminderRun } from "../src/core/reminders.js";
 import { CALLBACK, MENU, TEXT } from "../src/core/scenarios.js";
 import { FakeApi } from "./fakes.js";
 
@@ -17,7 +17,7 @@ describe("отбор и отправка напоминаний", () => {
     api.due = ["101", "102"];
     const sent: [string, Outgoing][] = [];
     const run = await sendDueReminders({ api, ctx, sleep: noSleep, send: async (id, m) => void sent.push([id, m]) });
-    expect(run).toEqual({ sent: 2, failed: 0, unlinked: 0, apiUnavailable: false });
+    expect(run).toEqual({ sent: 2, failed: 0, unlinked: 0, released: 0, apiUnavailable: false });
     expect(sent.map(([id]) => id)).toEqual(["101", "102"]);
     const [, message] = sent[0]!;
     expect(message.text).toBe("Сегодня ещё не было урока. Пройди один, чтобы не прервать серию.");
@@ -40,7 +40,7 @@ describe("отбор и отправка напоминаний", () => {
     expect(api.calls).toEqual(["claim", "claim"]);
   });
 
-  it("заблокировал бота — чат отвязывается; временная ошибка — нет", async () => {
+  it("заблокировал бота — чат отвязывается; обрыв сети — не отвязывается и не возвращается (исход неизвестен)", async () => {
     const api = new FakeApi().link("101", { enabled: true }).link("102", { enabled: true }).link("103", { enabled: true });
     api.due = ["101", "102", "103"];
     const run = await sendDueReminders({
@@ -49,18 +49,52 @@ describe("отбор и отправка напоминаний", () => {
       sleep: noSleep,
       send: async (id) => {
         if (id === "102") throw new ChatUnreachableError();
-        if (id === "103") throw new Error("429 Too Many Requests");
+        if (id === "103") throw new Error("network down");
       },
     });
-    expect(run).toEqual({ sent: 1, failed: 2, unlinked: 1, apiUnavailable: false });
+    expect(run).toEqual({ sent: 1, failed: 2, unlinked: 1, released: 0, apiUnavailable: false });
     expect([...api.links.keys()]).toEqual(["101", "103"]);
+    expect(api.released).toEqual([]);
+  });
+
+  it("429 — ждём retry_after и повторяем; Telegram отказал и после повторов — чат возвращается в выдачу суток", async () => {
+    const api = new FakeApi().link("101", { enabled: true }).link("102", { enabled: true }).link("103", { enabled: true });
+    api.due = ["101", "102", "103"];
+    const tries = new Map<string, number>();
+    const pauses: number[] = [];
+    const run = await sendDueReminders({
+      api,
+      ctx,
+      sleep: async (ms) => void pauses.push(ms),
+      send: async (id) => {
+        tries.set(id, (tries.get(id) ?? 0) + 1);
+        // 101: один 429 и успех; 102: 429 всегда; 103: ошибка Bot API (не 429) — точно не доставлено.
+        if (id === "101" && tries.get(id) === 1) throw new RetryLaterError(3);
+        if (id === "102") throw new RetryLaterError(2);
+        if (id === "103") throw new NotDeliveredError(400);
+      },
+    });
+    expect(run).toEqual({ sent: 1, failed: 2, unlinked: 0, released: 2, apiUnavailable: false });
+    expect(tries).toEqual(new Map([["101", 2], ["102", 3], ["103", 1]]));
+    expect(pauses.filter((ms) => ms >= 1000)).toEqual([3000, 2000, 2000]);
+    expect(api.released).toEqual([{ day: "day-1", chatIds: ["102", "103"] }]);
+    // Следующий шаг тех же суток выдаёт возвращённые чаты снова.
+    const again = await sendDueReminders({ api, ctx, sleep: noSleep, send: async () => undefined });
+    expect(again.sent).toBe(2);
+  });
+
+  it("слишком длинный retry_after не ждём — чат возвращается в выдачу", async () => {
+    const api = new FakeApi();
+    api.due = ["101"];
+    const run = await sendDueReminders({ api, ctx, sleep: noSleep, send: async () => { throw new RetryLaterError(600); } });
+    expect(run.released).toBe(1);
   });
 
   it("API недоступно — шаг пропускается без ошибки и без отправок", async () => {
     const api = new FakeApi();
     api.down = true;
     const send = vi.fn(async () => undefined);
-    expect(await sendDueReminders({ api, ctx, send, sleep: noSleep })).toEqual({ sent: 0, failed: 0, unlinked: 0, apiUnavailable: true });
+    expect(await sendDueReminders({ api, ctx, send, sleep: noSleep })).toEqual({ sent: 0, failed: 0, unlinked: 0, released: 0, apiUnavailable: true });
     expect(send).not.toHaveBeenCalled();
   });
 
@@ -88,7 +122,7 @@ describe("цикл напоминаний", () => {
       () =>
         new Promise<ReminderRun>((resolve) => {
           runs.push(Date.now());
-          release = () => resolve({ sent: 2, failed: 1, unlinked: 1, apiUnavailable: false });
+          release = () => resolve({ sent: 2, failed: 1, unlinked: 1, released: 0, apiUnavailable: false });
         }),
     );
     const log = vi.fn();
@@ -131,7 +165,7 @@ describe("клиент API (openapi-fetch по контракту, подмен�
       if (r.method === "DELETE") return respond(204);
       return respond(200, { chatId: "101", reminders: { enabled: true, hour: 19 } });
     });
-    expect(await api.claimReminders()).toEqual(["101", "102"]);
+    expect(await api.claimReminders()).toEqual({ day: "2026-11-04", chatIds: ["101", "102"] });
     expect(await api.chat("101")).toEqual({ chatId: "101", reminders: { enabled: true, hour: 19 } });
     expect(await api.setReminders("101", { enabled: true, hour: 19 })).toMatchObject({ reminders: { hour: 19 } });
     await api.unlink("101");
@@ -143,6 +177,22 @@ describe("клиент API (openapi-fetch по контракту, подмен�
     ]);
     expect(recorded.every((r) => r.headers.get("x-service-token") === "test-service-token-0123456789")).toBe(true);
     expect(await recorded[2]!.json()).toEqual({ enabled: true, hour: 19 });
+  });
+
+  it("возврат недоставленных: POST /telegram/bot/reminders/release с сутками и чатами; пустой список — без запроса", async () => {
+    recorded.length = 0;
+    const api = client(() => new Response(null, { status: 204 }));
+    await api.releaseReminders("2026-11-04", ["101", "102"]);
+    await api.releaseReminders("2026-11-04", []);
+    expect(recorded.map((r) => `${r.method} ${new URL(r.url).pathname}`)).toEqual(["POST /api/v1/telegram/bot/reminders/release"]);
+    expect(await recorded[0]!.json()).toEqual({ day: "2026-11-04", chatIds: ["101", "102"] });
+  });
+
+  it("ответ дуэли 409: код Problem из тела ошибки — already_voted → voted, dialog_closed → closed", async () => {
+    const problem = (code: string) => () => respond(409, { type: "about:blank", title: "—", status: 409, code });
+    const id = "00000000-0000-4000-8000-000000000001";
+    expect(await client(problem("already_voted")).answerDuel(id, "a")).toEqual({ kind: "voted" });
+    expect(await client(problem("dialog_closed")).answerDuel(id, "a")).toEqual({ kind: "closed" });
   });
 
   it("фраза дня: публичный путь из контракта, ответ без pair — null", async () => {

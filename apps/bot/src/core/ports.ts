@@ -19,6 +19,12 @@ export class ApiUnavailableError extends Error {
   }
 }
 
+/** Выдача напоминаний: сутки по Уфе и чаты, которым пора напомнить (API уже отметил их напомненными). */
+export interface ReminderBatch {
+  day: string;
+  chatIds: string[];
+}
+
 /** Ответ на диалог ежедневки: ok — голос учтён (replay — уже был учтён этой же кнопкой); closed — диалог закрыт; voted — за пару уже голосовали. */
 export type DuelAnswer = { kind: "ok"; replay: boolean } | { kind: "closed" } | { kind: "voted" };
 
@@ -32,7 +38,9 @@ export interface TeleTauApi {
   /** Удалить привязку целиком (вместе с настройками). */
   unlink(chatId: string): Promise<void>;
   /** Чаты, которым пора напомнить сейчас; API сразу отмечает их напомненными на эти сутки. */
-  claimReminders(): Promise<string[]>;
+  claimReminders(): Promise<ReminderBatch>;
+  /** Telegram точно не доставил напоминания: снять отметку суток `day`, следующая выдача вернёт эти чаты. */
+  releaseReminders(day: string, chatIds: string[]): Promise<void>;
   /** Ежедневное задание (ADR 0024): выданный диалог, «на сегодня всё» или «нерешённых дуэлей нет»; null — чат не привязан. */
   dailyDuel(chatId: string): Promise<DailyDuel | null>;
   /** Ответ кнопкой выбора: диалог исчез (отвязка) — null. */
